@@ -52,8 +52,16 @@ object DocumentJson {
     private fun objectToJson(o: CanvasObject): JSONObject = JSONObject().apply {
         put("id", o.id); put("bounds", rect(o.bounds))
         when (o) {
-            is CanvasObject.InkStroke -> { put("type","ink"); put("color",o.color); put("width",o.width); put("alpha",o.alpha)
-                put("points", JSONArray().apply { o.points.forEach { p -> put(JSONArray().apply { put(p.x); put(p.y); put(p.pressure) }) } }) }
+            is CanvasObject.InkStroke -> {
+                put("type", "ink")
+                put("color", o.color)
+                put("width", o.width)
+                put("alpha", o.alpha)
+                put("points", JSONArray().apply {
+                    o.points.forEach { p ->
+                        put(JSONArray().apply { put(p.x); put(p.y); put(p.pressure) })
+                    }
+                })
             }
             is CanvasObject.ImageObject -> { put("type","image"); put("path",o.localPath); put("rotation",o.rotation) }
             is CanvasObject.PdfObject -> { put("type","pdf"); put("path",o.localPath); put("pageIndex",o.pageIndex); put("pageCount",o.pageCount) }
