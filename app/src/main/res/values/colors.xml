@@ -1,0 +1,8 @@
+<resources>
+    <color name="vv_bg">#111315</color>
+    <color name="vv_surface">#1A1D21</color>
+    <color name="vv_surface2">#24282E</color>
+    <color name="vv_orange">#FF8A24</color>
+    <color name="vv_text">#F5F7FA</color>
+    <color name="vv_muted">#A9B0BA</color>
+</resources>

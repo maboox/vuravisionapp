@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ویوراویژن</string><string name="whiteboard">تخته سفید</string>
+    <string name="undo">بازگشت</string><string name="redo">انجام دوباره</string><string name="clear">پاک کردن</string>
+    <string name="pen">قلم</string><string name="eraser">پاک‌کن</string><string name="select">انتخاب</string>
+    <string name="menu">منو</string><string name="files">فایل‌ها</string><string name="share">اشتراک</string>
+    <string name="lab">آزمایشگاه</string><string name="games">بازی‌ها</string><string name="settings">تنظیمات</string>
+    <string name="engineering">مهندسی</string><string name="save">ذخیره</string><string name="open">باز کردن</string>
+    <string name="export_pdf">خروجی PDF</string><string name="import_pdf">وارد کردن PDF</string><string name="import_image">وارد کردن تصویر</string>
+</resources>
