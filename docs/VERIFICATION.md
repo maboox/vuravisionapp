@@ -30,3 +30,7 @@ Real VuraVision touch latency, maximum simultaneous contacts, palm calibration, 
 - SHA-256: `6d9bd5d5d2e00f93087ab6f751a032d5e6dc35f8cfa9983c5913676863bcf45f`
 
 Raw build, test, lint and APK inspection evidence is in `verification/`. The beta has a defined scope and is not a guarantee that every device or input is bug-free.
+
+## Subsequent CI correction
+
+The setup failure reported from GitHub was corrected by explicitly setting supported SDK packages in both workflow jobs. See `CI_FIX.md`. Application source/APK and the test results above are unchanged; no new hosted run is claimed.

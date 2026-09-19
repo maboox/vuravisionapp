@@ -8,6 +8,8 @@ The delivery ZIP includes `install/VuraVision-beta.apk`. Open it on Android and,
 
 ## Build an APK on GitHub
 
+**Updated workflow:** if an earlier run failed with `Failed to find package 'tools'`, replace `.github/workflows/android.yml` from this ZIP and push a new commit. See [CI fix](docs/CI_FIX.md).
+
 1. Extract this ZIP.
 2. Create a GitHub repository. Push **the contents inside `VuraVision-beta`** to its root. The root must contain `gradlew`, `app/`, `gradle/`, `settings.gradle.kts` and **`.github/workflows/android.yml`**. Uploading the ZIP itself does not trigger a build. Git or GitHub Desktop preserves the `.github` folder.
 3. Open **Actions → Android beta APK** after pushing. The workflow runs automatically.

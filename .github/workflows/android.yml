@@ -19,8 +19,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Install SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        with:
+          # Override v3's obsolete default: tools platform-tools.
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Build, test, and lint
         run: |
@@ -89,6 +90,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          # Override v3's obsolete default: tools platform-tools.
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Enable KVM
         run: |

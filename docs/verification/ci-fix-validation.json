@@ -1,0 +1,11 @@
+{
+  "workflow_yaml": "passed",
+  "explicit_sdk_packages_jobs": [
+    "build",
+    "device-tests"
+  ],
+  "obsolete_tools_package_requested": false,
+  "bundled_apk_sha256": "6d9bd5d5d2e00f93087ab6f751a032d5e6dc35f8cfa9983c5913676863bcf45f",
+  "bundled_apk_unchanged": true,
+  "hosted_execution": "not_run"
+}
