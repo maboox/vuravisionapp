@@ -1,28 +1,9 @@
-# GitHub Actions setup fix
+# Build and CI
 
-The supplied run failed before compilation with:
+Use JDK 17, Gradle 8.11.1, Android platform 35 and build-tools 35.0.0. The workflow explicitly installs current SDK packages, overriding setup-android v3's obsolete `tools` default. Unit tests, release lint, release APK and instrumentation APK compile run on push. Manual workflow dispatch additionally runs emulator instrumentation tests.
 
-```
-Warning: Failed to find package 'tools'
-Error: The process '.../sdkmanager' failed with exit code 1
-```
+Release APKs use an owner-provided keystore when the four documented secrets exist. Otherwise they use the runner's development key. Development keys can differ between runs; export lessons before uninstalling an incompatible previously signed build. Keep your production key private and stable.
 
-`android-actions/setup-android@v3` defaults its `packages` input to `tools platform-tools`. The legacy `tools` package is unavailable in the SDK repository used by that run. The Node 20/24 message was a warning, not this failure's cause.
+The hosted workflow has not been executed from this workspace. Included verification is from the local equivalent Gradle tasks.
 
-Both the APK build job and the manual device-test job now explicitly request:
-
-```yaml
-- uses: android-actions/setup-android@v3
-  with:
-    packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
-```
-
-The redundant separate SDK-install step was removed. App source, Gradle versions, signing, tests, and the included APK are unchanged.
-
-## Apply to an existing repository
-
-Replace `.github/workflows/android.yml` with the file in this ZIP and commit/push it. Open the new Actions run created by that commit. Re-running the old failed run uses its old workflow and will not apply the fix.
-
-Validation: the workflow parses; both jobs explicitly override the obsolete default. The input and splitting behavior were checked against the upstream v3 action definition/source. This correction has not been executed in your GitHub account.
-
-Primary references: [action definition](https://github.com/android-actions/setup-android/blob/v3/action.yml), [action implementation](https://github.com/android-actions/setup-android/blob/v3/src/main.ts).
+If a local incremental build fails in `compileReleaseArtProfile`, remove generated output with `./gradlew clean` and rebuild. The final package is verified with a clean build; no generated build caches are included.

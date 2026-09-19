@@ -6,8 +6,8 @@ android {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0-beta"
+        versionCode = 3
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -22,7 +22,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (!signingPath.isNullOrBlank()) signingConfig = signingConfigs.getByName("production")
+            signingConfig = signingConfigs.getByName(if(!signingPath.isNullOrBlank())"production" else "debug")
         }
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }

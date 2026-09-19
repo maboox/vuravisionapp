@@ -56,6 +56,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
         result = ""
         start = now
         go = now + if (key == "reaction") random.nextLong(1500, 4501) else 0
+        if(key in QuizCatalog.keys) { val q=QuizCatalog.question(key,random);question=q.prompt;options=q.options;correct=q.correct;return }
         when (key) {
             "math_race" -> {
                 val a = random.nextInt(2, 20)
@@ -95,6 +96,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
 
     fun answer(player: Int, choice: Int, now: Long) {
         if (player !in 0..1 || resolved || finished || key == "tictac") return
+        if(choice !in options.indices)return
         tick(now)
         if (resolved) return
         if (key == "tap_race") {
@@ -173,7 +175,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
             }
             else -> {
                 val good = (0..1).filter { answers[it] == correct }
-                win = good.minByOrNull { times[it] } ?: -1
+                win = if(good.size==2 && times[0]==times[1])-1 else good.minByOrNull { times[it] } ?: -1
             }
         }
         if (win >= 0) scores[win]++
@@ -213,8 +215,8 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
 }
 
 object Games {
-    private val keys =
-        listOf("reaction", "tap_race", "math_race", "bigger", "even_odd", "timing", "tictac", "rps")
+    val keys =
+        listOf("reaction", "tap_race", "math_race", "bigger", "even_odd", "timing", "tictac", "rps") + QuizCatalog.keys
 
     fun show(context: Context) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
@@ -250,13 +252,14 @@ object Games {
                                 "tap_race" -> "tap"
                                 "math_race" -> "math"
                                 "even_odd" -> "evenodd"
-                                else -> key
+                                else -> if(key in QuizCatalog.keys) "math" else key
                             }
                     ),
                     13f,
                     MUTED,
                 )
             )
+            if(key in QuizCatalog.keys || key=="math_race") { val example=GameEngine(key,Random(42)).apply{next(0)};words.addView(context.label(example.question,16f,TEAL,true)) }
             card.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
             card.addView(
                 context.button(context.s("start"), true) {
@@ -292,6 +295,7 @@ object Games {
         root.addView(header)
         val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
         root.addView(score)
+        root.addView(context.label(context.s("game_layout_help"),13f,MUTED))
         val area = context.column()
         val prompts = mutableListOf<TextView>()
         root.addView(area, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -313,7 +317,7 @@ object Games {
                                         "tap_race" -> "tap"
                                         "math_race" -> "math"
                                         "even_odd" -> "evenodd"
-                                        else -> key
+                                        else -> if(key in QuizCatalog.keys) "math" else key
                                     }
                             ),
                             24f,
@@ -384,6 +388,7 @@ object Games {
             }
             val players =
                 LinearLayout(context).apply {
+                    isMotionEventSplittingEnabled=true
                     orientation = if (face) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                 }
             for (player in 0..1) {
@@ -414,7 +419,7 @@ object Games {
                         else -> context.s(game.question)
                     }
                 col.addView(
-                    context.label(prompt, 30f, NAVY, true).apply {
+                    context.label(prompt, 26f, NAVY, true).apply {
                         gravity = Gravity.CENTER
                         prompts.add(this)
                     }

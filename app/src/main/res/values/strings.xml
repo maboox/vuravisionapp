@@ -1,5 +1,5 @@
 <resources>
-<string name="app_name">VuraVision Beta</string>
+<string name="app_name">VuraVision</string>
 <string name="board">Whiteboard</string>
 <string name="lesson">Untitled lesson</string>
 <string name="workspace">Workspace</string>
@@ -100,7 +100,7 @@
 <string name="english">English</string>
 <string name="persian">Persian</string>
 <string name="about">About VuraVision</string>
-<string name="about_text">Beta 0.2.0 · Native Android classroom tools. Tap the VuraVision name seven times for engineering tools.</string>
+<string name="about_text">Classroom whiteboard, interactive labs and two-player challenges. Offline drawing and lesson files; text models need an initial download.</string>
 <string name="engineering">Engineering tools</string>
 <string name="unlocked">Engineering tools unlocked</string>
 <string name="touch_test">Touch diagnostics</string>
@@ -111,7 +111,7 @@
 <string name="cache">Clear media cache</string>
 <string name="report">Export diagnostic report</string>
 <string name="stress">Add 300 test strokes</string>
-<string name="share_help">Use the same trusted Wi-Fi or LAN. Scan to download the PDF. Sharing stops when this panel closes or after 10 minutes.</string>
+<string name="share_help">Scan on the same local network to open the lesson download page.</string>
 <string name="no_network">Connect to Wi-Fi or Ethernet first.</string>
 <string name="stop_share">Stop sharing</string>
 <string name="expired">Sharing expired</string>
@@ -120,11 +120,11 @@
 <string name="graph_help">Use x, sin(x), cos(x), sqrt(x) and ^. Angles are radians. Separate up to 3 functions with ;.</string>
 <string name="solve">Solve ax+b=c</string>
 <string name="evaluate">Calculate</string>
-<string name="solve_help">Linear equations such as 2x+4=12. This beta does not recognize complex handwritten math.</string>
+<string name="solve_help">Linear equations such as 2x+4=12. Complex handwritten formula OCR is not included.</string>
 <string name="lab">Learning lab</string>
-<string name="lab_intro">Change a variable. Explore the result.</string>
+<string name="lab_intro">16 interactive labs • Change values, predict, then test • Ideal-model assumptions are shown in each lab</string>
 <string name="games">Play together</string>
-<string name="games_intro">Two players. One display. Learn through play.</string>
+<string name="games_intro">32 classroom games and challenges • Two players • Offline • Read the rule before starting</string>
 <string name="add_board">Add to whiteboard</string>
 <string name="start">Start</string>
 <string name="pause">Pause</string>
@@ -135,7 +135,7 @@
 <string name="auto">Auto</string>
 <string name="player1">Player 1</string>
 <string name="player2">Player 2</string>
-<string name="round">Round</string>
+<string name="round">Ink pen</string>
 <string name="winner">Winner</string>
 <string name="tie">Tie</string>
 <string name="turn">Turn</string>
@@ -161,7 +161,7 @@
 <string name="curtain">Screen curtain</string>
 <string name="reveal">Tap to reveal the board</string>
 <string name="help">Quick guide</string>
-<string name="help_text">Pen draws; Select moves objects. Drag the orange corner to resize and the top handle to rotate. Drag empty space with Select to select several objects. Navigate enables pan and pinch zoom. Smart ink works on selected strokes. Your lesson is autosaved after edits.</string>
+<string name="help_text">Start writing directly. Tap the active pen/highlighter again for settings. Shapes are on the main toolbar. The page strip adds and switches pages; long-press a page for management. Select objects to move, resize, rotate or edit. Classroom widgets float over the board; drag their header. Seven taps on the About version text unlock calibration. Export .vura lessons before uninstalling.</string>
 <string name="projectile">Projectile motion</string>
 <string name="pendulum">Pendulum</string>
 <string name="spring">Spring &amp; Hooke’s law</string>
@@ -186,12 +186,101 @@
 <string name="rule_timing">Tap exactly three seconds after the round starts. Smaller timing error wins.</string>
 <string name="rule_tictac">Take turns. Three in a row, column or diagonal wins.</string>
 <string name="rule_rps">Make your choice. Both are revealed after both players answer.</string>
-<string name="ex_projectile">Ideal flight without air resistance. Axes rescale to show the entire trajectory.</string>
+<string name="ex_projectile">Ideal flight without drag; launch and landing at the same height. Both axes use equal scale and auto-fit the trajectory.</string>
 <string name="ex_pendulum">Small-angle approximation. Length and gravity determine the period.</string>
 <string name="ex_spring">Ideal mass and spring, without friction. Restoring force opposes displacement.</string>
-<string name="ex_waves">Standing waves have fixed nodes. Increase the harmonic number to add nodes.</string>
+<string name="ex_waves">Ideal standing wave on length L. n is harmonic; changing f implies different wave speed v = 2Lf/n.</string>
 <string name="ex_quadratic">Change a, b and c to reshape the parabola. When a is zero, the function is linear.</string>
 <string name="ex_trig">On the unit circle, cosine is the horizontal coordinate and sine is the vertical coordinate.</string>
 <string name="ex_ph">Ideal dilute aqueous solution at 25°C. One pH unit represents a tenfold concentration change.</string>
 <string name="ex_coin">Independent coin trials. Reset draws a new sample. Larger samples tend towards the chosen probability.</string>
+<string name="pen_hint">Tap the selected pen again for settings. Pen and highlighter keep separate colors and widths.</string>
+<string name="marker">Marker</string>
+<string name="dashed">Dashed</string>
+<string name="square">Square</string>
+<string name="rounded_rectangle">Rounded rectangle</string>
+<string name="ellipse">Ellipse</string>
+<string name="right_triangle">Right triangle</string>
+<string name="diamond">Diamond</string>
+<string name="pentagon">Pentagon</string>
+<string name="hexagon">Hexagon</string>
+<string name="octagon">Octagon</string>
+<string name="star">Star</string>
+<string name="heart">Heart</string>
+<string name="trapezoid">Trapezoid</string>
+<string name="parallelogram">Parallelogram</string>
+<string name="double_arrow">Double arrow</string>
+<string name="cross">Cross</string>
+<string name="speech">Speech bubble</string>
+<string name="cylinder">Cylinder</string>
+<string name="cube">Cube</string>
+<string name="cone">Cone</string>
+<string name="axes">Coordinate axes</string>
+<string name="minimize">Minimize / expand</string>
+<string name="timer_done">Time is up</string>
+<string name="multi_touch_short">Multi-touch</string>
+<string name="single_touch_short">Single-touch</string>
+<string name="thin_threshold">Thin tip: maximum contact diameter (raw px)</string>
+<string name="palm_threshold">Palm: minimum contact diameter (raw px)</string>
+<string name="thick_width">Thick tip stroke width (1–24)</string>
+<string name="network_address">Choose Wi-Fi / Ethernet address</string>
+<string name="stop_sharing">Stop sharing now</string>
+<string name="share_troubleshoot">The link stays active for 30 minutes after closing this window while the app remains open. Use http, not https. If unreachable, try the other LAN address and check router guest/client isolation.</string>
+<string name="model_download_help">Each text model needs an initial download from Google. Enable Android Download Manager. If the network blocks Google model servers, use an accessible connection and retry. Installed models work offline.</string>
+<string name="download_manager_disabled">Android Download Manager is missing or disabled. Enable it in system settings.</string>
+<string name="download_slow">Download is taking longer than expected. Check connection, then check status or retry. The provider does not expose percentage progress.</string>
+<string name="check_status">Check status</string>
+<string name="retry">Retry</string>
+<string name="recognize_shape">Recognize geometry · offline</string>
+<string name="no_recognition">No text recognized. Select a clear single line and retry.</string>
+<string name="game_layout_help">Layout switches between side-by-side and face-to-face play. Players can answer independently.</string>
+<string name="yes">Yes</string>
+<string name="no">No</string>
+<string name="page_short">Page</string>
+<string name="lab_short">Lab</string>
+<string name="games_short">Games</string>
+<string name="share_short">Share</string>
+<string name="ohm">Ohm’s law</string>
+<string name="energy">Kinetic energy</string>
+<string name="buoyancy">Buoyant force</string>
+<string name="lens">Converging lens</string>
+<string name="triangle_area">Triangle area</string>
+<string name="statistics">Descriptive statistics</string>
+<string name="gas">Ideal gas</string>
+<string name="dilution">Dilution</string>
+<string name="ex_ohm">Ideal DC resistor: I = V/R; power P = VI. Schematic drawing.</string>
+<string name="ex_energy">Classical translational energy: E = ½mv². Doubling speed quadruples energy. Arrow indicates speed.</string>
+<string name="ex_buoyancy">Fully submerged displaced volume in uniform fluid. F = ρgV; g = 9.81 m/s². Floating equilibrium is not modeled.</string>
+<string name="ex_lens">Thin converging lens, paraxial approximation. Positive v: real/inverted; negative v: virtual/upright. At u=f the image is at infinity. Auto-scaled drawing clips tall images.</string>
+<string name="ex_triangle_area">A = bh/2. The vertical colored segment marks perpendicular height.</string>
+<string name="ex_statistics">Three equally weighted values. μ is mean; σ is population SD (divide by 3), not sample SD.</string>
+<string name="ex_gas">Ideal gas at equilibrium: PV = nRT. Temperature: kelvin; volume: liters; pressure: kPa. Particles are schematic.</string>
+<string name="ex_dilution">Nonreacting solute, additive volumes: C₂ = C₁V₁/(V₁ + water). Educational model, not a real chemical preparation guide.</string>
+<string name="real_image">Real image</string>
+<string name="virtual_image">Virtual image</string>
+<string name="image_infinity">Image at infinity (u=f)</string>
+<string name="subtract">Subtraction sprint</string>
+<string name="multiply">Multiplication sprint</string>
+<string name="divide">Division duel</string>
+<string name="missing_number">Missing number</string>
+<string name="squares">Perfect squares</string>
+<string name="cubes">Number cubes</string>
+<string name="powers">Powers of two</string>
+<string name="square_root">Square roots</string>
+<string name="fractions">Add fractions</string>
+<string name="percent">Percent challenge</string>
+<string name="decimal">Decimal shift</string>
+<string name="sequence">Number patterns</string>
+<string name="reverse_sequence">Countdown patterns</string>
+<string name="prime">Prime detective</string>
+<string name="divisible">Divisibility test</string>
+<string name="remainder">Find remainder</string>
+<string name="gcd">Greatest common divisor</string>
+<string name="lcm">Least common multiple</string>
+<string name="perimeter">Perimeter race</string>
+<string name="area">Area race</string>
+<string name="triangle_angle">Missing triangle angle</string>
+<string name="clock_math">Hours to minutes</string>
+<string name="unit_length">Meters to centimeters</string>
+<string name="mean">Find the mean</string>
 </resources>

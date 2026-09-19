@@ -1,15 +1,9 @@
 # Architecture
 
-MainActivity owns UI actions and document-picker flows. A serial executor handles storage and export; autosave captures a deep copy and its destination when scheduled. Saves are debounced and also requested when the Activity stops.
+Native Kotlin Android views. BoardView batches input by pointer and keeps completed content in a bitmap; active paths append samples to cached geometry. Store records page/object snapshots for undo and detaches points before generic mutations. Toolbar state and page-strip signatures avoid rebuilding view trees for ordinary strokes. Autosave defers while drawing.
 
-Document contains schema 2 domain objects and bounded undo/redo snapshots. Board tracks pointer IDs independently. Vector strokes retain original points; transforms do not repeatedly resample them. Navigation is explicit so a second writer is not interpreted as zoom.
+Documents are versioned JSON `.vura` archives with assets. Existing package ID and import format remain compatible. Pen/highlighter profiles and touch calibration use preferences. Renderer serves canvas and export paths. Floating classroom widgets live in the board host and clean up their callbacks on close.
 
-Renderer paints both the board and exported pages. Export receives a separate renderer because Paint and expression objects are mutable. Media bounds decoded image/PDF page resolution and uses a byte-counted image cache with asynchronous loading.
+ML Kit downloads handwriting models on demand and exposes availability/errors. Basic shape recognition is offline. NanoHTTPD serves a token-scoped PDF and landing page on LAN interfaces, with a 30-minute lifetime. No hosted collaboration backend is included.
 
-LessonFiles validates documents, rejects unknown or unsafe archive entries, bounds decompression and stages imported assets before committing them. Atomic saves write and sync a temporary ZIP, preserve a backup, then rename the temporary file. Backup recovery uses a new lesson ID so it does not overwrite the failed source.
-
-Recognition manages actual ML Kit language models and stroke recognition. The user reviews text before insertion. Physics contains lab formulas; each lab states its simplifying assumptions. GameEngine separates turn, scoring and timing logic from the native UI.
-
-Sharing exposes one generated PDF through a random-token LAN URL for at most ten minutes. There are no upload or arbitrary filesystem routes. Closing the dialog or destroying the Activity stops the server.
-
-There is no account, billing, cloud lesson backend or WebView shell. The beta uses full-snapshot undo bounded to thirty steps; larger-document memory profiling remains device acceptance work.
+Games comprise eight distinct modes plus 24 curriculum challenges on a common quiz engine. Labs comprise 16 idealized simulations with visible units/assumptions. See CURRENT_SCOPE.md for omitted original-spec items.

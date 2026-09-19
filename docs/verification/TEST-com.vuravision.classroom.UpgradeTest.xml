@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.UpgradeTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-19T10:41:33" hostname="localhost" time="4.904">
+  <properties/>
+  <testcase name="allQuizzesHaveUniqueValidAnswers" classname="com.vuravision.classroom.UpgradeTest" time="0.079"/>
+  <testcase name="allShapesAndLabsRenderAtControlExtremes" classname="com.vuravision.classroom.UpgradeTest" time="0.533"/>
+  <testcase name="everyGameStartsRendersAndCompletes" classname="com.vuravision.classroom.UpgradeTest" time="1.763"/>
+  <testcase name="scientificReferenceCases" classname="com.vuravision.classroom.UpgradeTest" time="0.045"/>
+  <testcase name="boardAndFloatingToolsScreenshot" classname="com.vuravision.classroom.UpgradeTest" time="0.659"/>
+  <testcase name="calibratedWidthAndSingleTouchPolicy" classname="com.vuravision.classroom.UpgradeTest" time="0.027"/>
+  <testcase name="labAndGameCatalogScreensHaveDescriptionsAndPreviews" classname="com.vuravision.classroom.UpgradeTest" time="0.564"/>
+  <testcase name="tenPointersCommitIndependentStrokesWithoutSceneReplay" classname="com.vuravision.classroom.UpgradeTest" time="0.497"/>
+  <testcase name="numericalGameLabelsNeverResolveResourceIds" classname="com.vuravision.classroom.UpgradeTest" time="0.026"/>
+  <testcase name="penProfilesPagesAndShapeGalleryAreReachable" classname="com.vuravision.classroom.UpgradeTest" time="0.377"/>
+  <testcase name="sharingServesLandingAndActualPdfAndRejectsBadToken" classname="com.vuravision.classroom.UpgradeTest" time="0.085"/>
+  <testcase name="compactPersianScreenKeepsMenuReachable" classname="com.vuravision.classroom.UpgradeTest" time="0.239"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,5 +1,5 @@
 <resources>
-<string name="app_name">ویوراویژن بتا</string>
+<string name="app_name">ویوراویژن</string>
 <string name="board">تخته سفید</string>
 <string name="lesson">درس بدون عنوان</string>
 <string name="workspace">فضای کار</string>
@@ -100,7 +100,7 @@
 <string name="english">انگلیسی</string>
 <string name="persian">فارسی</string>
 <string name="about">درباره ویوراویژن</string>
-<string name="about_text">بتا ۰.۲.۰ · ابزار بومی اندروید برای کلاس. نام ویوراویژن را هفت بار لمس کنید تا ابزار مهندسی باز شود.</string>
+<string name="about_text">تخته کلاس، آزمایش‌های تعاملی و چالش‌های دونفره. نوشتن و فایل درس آفلاین است؛ مدل متن دانلود اولیه لازم دارد.</string>
 <string name="engineering">ابزار مهندسی</string>
 <string name="unlocked">ابزار مهندسی فعال شد</string>
 <string name="touch_test">عیب‌یابی لمس</string>
@@ -111,7 +111,7 @@
 <string name="cache">پاک‌کردن حافظه موقت رسانه</string>
 <string name="report">خروجی گزارش عیب‌یابی</string>
 <string name="stress">افزودن ۳۰۰ خط آزمایشی</string>
-<string name="share_help">به یک وای‌فای یا شبکه محلی مطمئن وصل شوید. برای دانلود PDF اسکن کنید. اشتراک با بستن این پنل یا پس از ۱۰ دقیقه متوقف می‌شود.</string>
+<string name="share_help">برای بازکردن صفحه دانلود درس، در همان شبکه محلی اسکن کنید.</string>
 <string name="no_network">ابتدا به وای‌فای یا شبکه کابلی وصل شوید.</string>
 <string name="stop_share">توقف اشتراک</string>
 <string name="expired">اشتراک پایان یافت</string>
@@ -122,9 +122,9 @@
 <string name="evaluate">محاسبه</string>
 <string name="solve_help">معادلات خطی مانند 2x+4=12. این بتا ریاضی دست‌نویس پیچیده را تشخیص نمی‌دهد.</string>
 <string name="lab">آزمایشگاه</string>
-<string name="lab_intro">متغیری را تغییر دهید و نتیجه را بررسی کنید.</string>
+<string name="lab_intro">۱۶ آزمایش تعاملی • مقدارها را تغییر دهید، پیش‌بینی و آزمایش کنید • فرض‌های مدل در هر آزمایش مشخص است</string>
 <string name="games">بازی دونفره</string>
-<string name="games_intro">دو بازیکن، یک نمایشگر؛ یادگیری با بازی.</string>
+<string name="games_intro">۳۲ بازی و چالش کلاسی • دو بازیکن • آفلاین • پیش از شروع راهنما را بخوانید</string>
 <string name="add_board">افزودن به تخته</string>
 <string name="start">شروع</string>
 <string name="pause">مکث</string>
@@ -135,7 +135,7 @@
 <string name="auto">خودکار</string>
 <string name="player1">بازیکن ۱</string>
 <string name="player2">بازیکن ۲</string>
-<string name="round">دور</string>
+<string name="round">قلم معمولی</string>
 <string name="winner">برنده</string>
 <string name="tie">مساوی</string>
 <string name="turn">نوبت</string>
@@ -161,7 +161,7 @@
 <string name="curtain">پرده صفحه</string>
 <string name="reveal">برای نمایش تخته لمس کنید</string>
 <string name="help">راهنمای سریع</string>
-<string name="help_text">قلم می‌نویسد؛ انتخاب، اشیا را جابجا می‌کند. گوشه نارنجی برای تغییر اندازه و دستگیره بالا برای چرخش است. با کشیدن روی فضای خالی در حالت انتخاب، چند شیء را انتخاب کنید. جابجایی، حرکت و زوم دو انگشتی را فعال می‌کند. جوهر هوشمند روی نوشته‌های انتخاب‌شده کار می‌کند. درس پس از ویرایش خودکار ذخیره می‌شود.</string>
+<string name="help_text">مستقیم بنویسید. برای تنظیم قلم یا هایلایتر روی ابزار فعال دوباره بزنید. اشکال در نوار اصلی هستند. از نوار صفحه‌ها برای افزودن و جابه‌جایی استفاده کنید؛ نگه‌داشتن صفحه مدیریت آن را باز می‌کند. اشیا را برای حرکت، تغییر اندازه و چرخش انتخاب کنید. ابزارهای کلاس شناورند و از عنوان جابه‌جا می‌شوند. هفت لمس روی نسخه در درباره، کالیبراسیون را فعال می‌کند. پیش از حذف برنامه درس‌ها را به صورت .vura ذخیره کنید.</string>
 <string name="projectile">حرکت پرتابی</string>
 <string name="pendulum">آونگ</string>
 <string name="spring">فنر و قانون هوک</string>
@@ -186,12 +186,101 @@
 <string name="rule_timing">دقیقاً سه ثانیه پس از شروع دور لمس کنید. خطای زمانی کمتر برنده است.</string>
 <string name="rule_tictac">به نوبت بازی کنید. سه مهره در سطر، ستون یا قطر برنده است.</string>
 <string name="rule_rps">انتخاب کنید. پس از پاسخ هر دو بازیکن، انتخاب‌ها نمایش داده می‌شوند.</string>
-<string name="ex_projectile">حرکت ایده‌آل بدون مقاومت هوا. محورها برای نمایش کل مسیر تغییر مقیاس می‌دهند.</string>
+<string name="ex_projectile">پرتاب ایده‌آل بدون مقاومت هوا؛ ارتفاع پرتاب و فرود برابر است. هر دو محور مقیاس برابر دارند و مسیر در کادر جا می‌شود.</string>
 <string name="ex_pendulum">تقریب زاویه کوچک. طول و گرانش دوره را تعیین می‌کنند.</string>
 <string name="ex_spring">جرم و فنر ایده‌آل بدون اصطکاک. نیروی بازگرداننده خلاف جابجایی است.</string>
-<string name="ex_waves">موج ایستاده گره‌های ثابت دارد. افزایش شماره هارمونیک گره‌ها را بیشتر می‌کند.</string>
+<string name="ex_waves">موج ایستاده ایده‌آل روی طول L. عدد n هارمونیک است؛ تغییر f یعنی تغییر سرعت موج v = 2Lf/n.</string>
 <string name="ex_quadratic">با تغییر a، b و c سهمی تغییر می‌کند. وقتی a صفر است، تابع خطی است.</string>
 <string name="ex_trig">در دایره واحد، کسینوس مختصات افقی و سینوس مختصات عمودی است.</string>
 <string name="ex_ph">محلول آبی رقیق ایده‌آل در ۲۵ درجه. یک واحد pH یعنی تغییر ده‌برابری غلظت.</string>
 <string name="ex_coin">آزمایش‌های مستقل سکه. بازنشانی نمونه تازه می‌سازد. نمونه بزرگ‌تر به احتمال انتخاب‌شده نزدیک می‌شود.</string>
+<string name="pen_hint">برای تنظیم ابزار دوباره روی آن بزنید. رنگ و ضخامت قلم و هایلایتر مستقل است.</string>
+<string name="marker">ماژیک</string>
+<string name="dashed">خط‌چین</string>
+<string name="square">مربع</string>
+<string name="rounded_rectangle">مستطیل گرد</string>
+<string name="ellipse">بیضی</string>
+<string name="right_triangle">مثلث قائم</string>
+<string name="diamond">لوزی</string>
+<string name="pentagon">پنج‌ضلعی</string>
+<string name="hexagon">شش‌ضلعی</string>
+<string name="octagon">هشت‌ضلعی</string>
+<string name="star">ستاره</string>
+<string name="heart">قلب</string>
+<string name="trapezoid">ذوزنقه</string>
+<string name="parallelogram">متوازی‌الاضلاع</string>
+<string name="double_arrow">پیکان دوطرفه</string>
+<string name="cross">صلیب</string>
+<string name="speech">حباب گفت‌وگو</string>
+<string name="cylinder">استوانه</string>
+<string name="cube">مکعب</string>
+<string name="cone">مخروط</string>
+<string name="axes">محور مختصات</string>
+<string name="minimize">جمع کردن / باز کردن</string>
+<string name="timer_done">زمان تمام شد</string>
+<string name="multi_touch_short">چندلمسی</string>
+<string name="single_touch_short">تک‌لمسی</string>
+<string name="thin_threshold">حداکثر قطر تماس قلم نازک (پیکسل خام)</string>
+<string name="palm_threshold">حداقل قطر تماس کف دست (پیکسل خام)</string>
+<string name="thick_width">ضخامت خط قلم درشت (۱ تا ۲۴)</string>
+<string name="network_address">انتخاب آدرس وای‌فای / کابل</string>
+<string name="stop_sharing">توقف اشتراک‌گذاری</string>
+<string name="share_troubleshoot">پس از بستن این پنجره، لینک تا ۳۰ دقیقه در زمان بازبودن برنامه فعال است. آدرس را با http باز کنید. اگر وصل نشد آدرس دیگر را انتخاب و محدودیت ارتباط کاربران روتر را بررسی کنید.</string>
+<string name="model_download_help">هر مدل متن یک دانلود اولیه از گوگل لازم دارد. مدیریت دانلود اندروید را فعال کنید. اگر شبکه سرورهای مدل گوگل را مسدود می‌کند از یک اتصال دارای دسترسی دوباره تلاش کنید. مدل نصب‌شده آفلاین کار می‌کند.</string>
+<string name="download_manager_disabled">مدیریت دانلود اندروید نصب یا فعال نیست. آن را در تنظیمات دستگاه فعال کنید.</string>
+<string name="download_slow">دانلود طولانی شده است. اتصال را بررسی کنید و وضعیت را بخوانید یا دوباره تلاش کنید. سرویس مدل درصد پیشرفت ارائه نمی‌دهد.</string>
+<string name="check_status">بررسی وضعیت</string>
+<string name="retry">تلاش مجدد</string>
+<string name="recognize_shape">تشخیص شکل هندسی · آفلاین</string>
+<string name="no_recognition">متنی تشخیص داده نشد. یک خط خوانا را انتخاب و دوباره تلاش کنید.</string>
+<string name="game_layout_help">چیدمان را برای بازی کنارهم یا روبه‌روی‌هم تغییر دهید. هر بازیکن مستقل پاسخ می‌دهد.</string>
+<string name="yes">بله</string>
+<string name="no">خیر</string>
+<string name="page_short">صفحه</string>
+<string name="lab_short">آزمایشگاه</string>
+<string name="games_short">بازی‌ها</string>
+<string name="share_short">اشتراک</string>
+<string name="ohm">قانون اهم</string>
+<string name="energy">انرژی جنبشی</string>
+<string name="buoyancy">نیروی شناوری</string>
+<string name="lens">عدسی همگرا</string>
+<string name="triangle_area">مساحت مثلث</string>
+<string name="statistics">آمار توصیفی</string>
+<string name="gas">گاز ایده‌آل</string>
+<string name="dilution">رقیق‌سازی</string>
+<string name="ex_ohm">مقاومت ایده‌آل جریان مستقیم: I = V/R و توان P = VI. شکل شماتیک است.</string>
+<string name="ex_energy">انرژی جنبشی انتقالی: E = ½mv². دو برابر شدن سرعت انرژی را چهار برابر می‌کند. پیکان سرعت را نشان می‌دهد.</string>
+<string name="ex_buoyancy">حجم جابه‌جاشده کاملاً غوطه‌ور در سیال یکنواخت. F = ρgV و g = 9.81. تعادل جسم شناور شبیه‌سازی نمی‌شود.</string>
+<string name="ex_lens">عدسی نازک همگرا با تقریب نزدیک محور. v مثبت: حقیقی و وارونه؛ منفی: مجازی و مستقیم. در u=f تصویر در بی‌نهایت است. تصویر بازمقیاس می‌شود و ارتفاع‌های بلند محدودند.</string>
+<string name="ex_triangle_area">مساحت A = bh/2. خط عمودی رنگی ارتفاع عمود را نشان می‌دهد.</string>
+<string name="ex_statistics">سه مقدار با وزن برابر. μ میانگین و σ انحراف معیار جامعه با تقسیم بر ۳ است، نه انحراف معیار نمونه.</string>
+<string name="ex_gas">گاز ایده‌آل در تعادل: PV = nRT. دما کلوین، حجم لیتر و فشار کیلوپاسکال. ذرات شماتیک هستند.</string>
+<string name="ex_dilution">حل‌شونده بدون واکنش و حجم‌های جمع‌پذیر: C₂ = C₁V₁/(V₁ + آب). مدل آموزشی است، نه راهنمای آماده‌سازی مواد واقعی.</string>
+<string name="real_image">تصویر حقیقی</string>
+<string name="virtual_image">تصویر مجازی</string>
+<string name="image_infinity">تصویر در بی‌نهایت (u=f)</string>
+<string name="subtract">مسابقه تفریق</string>
+<string name="multiply">مسابقه ضرب</string>
+<string name="divide">دوئل تقسیم</string>
+<string name="missing_number">عدد گمشده</string>
+<string name="squares">مجذور اعداد</string>
+<string name="cubes">مکعب اعداد</string>
+<string name="powers">توان‌های دو</string>
+<string name="square_root">ریشه دوم</string>
+<string name="fractions">جمع کسرها</string>
+<string name="percent">چالش درصد</string>
+<string name="decimal">اعشار</string>
+<string name="sequence">الگوی اعداد</string>
+<string name="reverse_sequence">الگوی کاهشی</string>
+<string name="prime">کارآگاه عدد اول</string>
+<string name="divisible">آزمون بخش‌پذیری</string>
+<string name="remainder">باقی‌مانده تقسیم</string>
+<string name="gcd">بزرگ‌ترین مقسوم‌علیه مشترک</string>
+<string name="lcm">کوچک‌ترین مضرب مشترک</string>
+<string name="perimeter">مسابقه محیط</string>
+<string name="area">مسابقه مساحت</string>
+<string name="triangle_angle">زاویه گمشده مثلث</string>
+<string name="clock_math">تبدیل ساعت به دقیقه</string>
+<string name="unit_length">تبدیل متر به سانتی‌متر</string>
+<string name="mean">میانگین اعداد</string>
 </resources>

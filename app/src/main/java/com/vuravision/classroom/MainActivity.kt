@@ -23,6 +23,11 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var dock: LinearLayout
     private lateinit var pageLabel: TextView
+    private lateinit var pageStrip:LinearLayout
+    private lateinit var canvasHost:FrameLayout
+    private lateinit var floatingTools:ClassroomWidgets
+    private var pageSignature=""
+    private var dockSignature=""
     private val handler = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
     private val recognition = Recognition()
@@ -59,14 +64,21 @@ class MainActivity : Activity() {
                 prefs.getFloat("thin", 10f),
                 prefs.getFloat("palm", 50f),
                 prefs.getBoolean("palmErase", false),
+                prefs.getBoolean("multiTouch",true),
+                prefs.getFloat("thickWidth",10f),
             )
+        board.penColor=prefs.getInt("penColor",NAVY)
+        board.highlightColor=prefs.getInt("highlightColor",0xffffcf40.toInt())
+        board.penWidth=prefs.getFloat("penWidth",4f)
+        board.highlightWidth=prefs.getFloat("highlightWidth",6f)
+        board.penStyle=prefs.getString("penStyle","round")?:"round"
         buildUI()
-        media.ready = { handler.post { if (!destroyed) board.invalidate() } }
+        media.ready = { handler.post { if(!destroyed)board.sceneChanged() } }
         media.error = { message -> handler.post { status.text = s("error") + ": " + message } }
         board.onSelection = { refreshDock() }
         store.changed = {
             dirty = true
-            board.invalidate()
+            if(!board.isCommitting)board.sceneChanged() else board.invalidate()
             refreshDock()
             refreshTitle()
             status.text = s("saving")
@@ -96,11 +108,8 @@ class MainActivity : Activity() {
                 setPadding(dp(12), dp(5), dp(12), dp(5))
             }
         header.addView(
-            label("V", 22f, 0xffffad80.toInt(), true).apply {
-                gravity = Gravity.CENTER
-                contentDescription = "VuraVision"
-            },
-            LinearLayout.LayoutParams(dp(40), dp(44)),
+            ImageView(this).apply { setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.CENTER_CROP;contentDescription="VuraVision" },
+            LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp<600)48 else 72),dp(48)),
         )
         titleView =
             label("VuraVision", 17f, Color.WHITE, true).apply {
@@ -110,59 +119,121 @@ class MainActivity : Activity() {
             }
         header.addView(titleView, LinearLayout.LayoutParams(0, -2, 1f))
         header.addView(
-            button(s("undo")) {
+            button("↶") {
                 store.undo()
                 board.clearSelection()
             }
         )
         header.addView(
-            button(s("redo")) {
+            button("↷") {
                 store.redo()
                 board.clearSelection()
             }
         )
-        header.addView(button(s("share")) { share() })
+        if(resources.configuration.screenWidthDp>=720) {
+            header.addView(button(s("lab_short")){Labs.show(this){insertBitmap(it)}})
+            header.addView(button(s("games_short")){Games.show(this)})
+        }
+        header.addView(button(if(resources.configuration.screenWidthDp<600)"⇧" else s("share_short")){share()}.apply{contentDescription=s("share")})
         header.addView(button("☰") { menu() }.apply { contentDescription = s("tools") })
         root.addView(header)
         val strip = row().apply { setPadding(dp(12), dp(2), dp(12), dp(2)) }
-        strip.addView(label(s("workspace").uppercase(Locale.getDefault()), 10f, MUTED, true))
+        if(resources.configuration.screenWidthDp>=720)strip.addView(label(s("workspace").uppercase(Locale.getDefault()),10f,MUTED,true))
         status = label(s("ready"), 11f, MUTED)
         strip.addView(status, LinearLayout.LayoutParams(0, -2, 1f))
         pageLabel = label("", 12f, MUTED).apply { setOnClickListener { pages() } }
         strip.addView(pageLabel)
-        strip.addView(button(s("fit")) { board.fit() })
+        val touch=button(s(if(board.profile.multiTouch)"multi_touch_short" else "single_touch_short")){}
+        touch.setOnClickListener {board.profile.multiTouch=!board.profile.multiTouch;prefs.edit().putBoolean("multiTouch",board.profile.multiTouch).apply();touch.text=s(if(board.profile.multiTouch)"multi_touch_short" else "single_touch_short")}
+        strip.addView(touch)
+        strip.addView(button(s("fit")){board.fit()})
         root.addView(strip)
-        root.addView(board, LinearLayout.LayoutParams(-1, 0, 1f))
+        canvasHost=FrameLayout(this);canvasHost.addView(board,FrameLayout.LayoutParams(-1,-1))
+        floatingTools=ClassroomWidgets(this,canvasHost)
+        root.addView(canvasHost,LinearLayout.LayoutParams(-1,0,1f))
+        pageStrip=row().apply{pad(3)};root.addView(scrollRow(pageStrip))
         dock = row().apply { pad(5) }
         root.addView(scrollRow(dock))
-        refreshDock()
+        refreshDock();refreshPages()
     }
 
     private fun refreshTitle() {
         titleView.text = store.lesson.title.ifBlank { s("lesson") }
         pageLabel.text =
             "${store.lesson.current+1} / ${store.lesson.pages.size}   ·   ${s("pages")}"
+        refreshPages()
     }
 
     private fun refreshDock() {
-        if (!::dock.isInitialized) return
-        dock.removeAllViews()
-        listOf("pen", "highlight", "erase", "select", "pan").forEach { k ->
-            dock.addView(
-                button(s(k), board.tool == k) {
-                    board.tool = k
-                    board.clearSelection()
-                    refreshDock()
-                }
-            )
+        if(!::dock.isInitialized)return
+        val signature="${board.tool}:${board.selected.joinToString()}"
+        if(signature==dockSignature)return
+        dockSignature=signature;dock.removeAllViews()
+        val icons=mapOf("pen" to "✎","highlight" to "▰","erase" to "▱","select" to "↖","pan" to "✥")
+        listOf("pen","highlight","erase","select","pan").forEach { k ->
+            dock.addView(button("${icons[k]}  ${s(k)}",board.tool==k) {
+                if(board.tool==k && k in listOf("pen","highlight"))penSettings()
+                else {board.tool=k;board.clearSelection();refreshDock()}
+            })
+            if(k=="highlight")dock.addView(button("△  ${s("shape")}",board.tool=="shape"){shapes()})
         }
-        dock.addView(button(s("color")) { colors() })
-        dock.addView(button(s("width")) { width() })
-        dock.addView(button(s("insert")) { insert() })
-        dock.addView(button(s("smart")) { smart() })
-        if (board.chosen().isNotEmpty())
-            dock.addView(button("${s("edit")} · ${board.chosen().size}", true) { editSelection() })
-        dock.addView(button(s("pages")) { pages() })
+        dock.addView(button("T  ${s("text")}"){addText(false)})
+        dock.addView(button("＋  ${s("insert")}"){insert()})
+        dock.addView(button("✦  ${s("smart")}"){smart()})
+        dock.addView(button("◷  ${s("tools")}"){classroomTools()})
+        if(board.chosen().isNotEmpty())dock.addView(button("${s("edit")} · ${board.chosen().size}",true){editSelection()})
+    }
+    private fun refreshPages() {
+        if(!::pageStrip.isInitialized)return
+        val signature="${store.lesson.current}:${store.lesson.pages.joinToString{it.id}}"
+        if(signature==pageSignature)return
+        pageSignature=signature;pageStrip.removeAllViews()
+        pageStrip.addView(button("＋ ${s("add_page")}",true){addPage()})
+        pageStrip.addView(button("‹"){switchPage(store.lesson.current-1)}.apply{contentDescription=s("previous")})
+        store.lesson.pages.forEachIndexed { i,_ -> pageStrip.addView(button("${s("page_short")} ${i+1}",i==store.lesson.current){switchPage(i)}.apply{setOnLongClickListener{pages();true}}) }
+        pageStrip.addView(button("›"){switchPage(store.lesson.current+1)}.apply{contentDescription=s("next")})
+        pageStrip.addView(button("⋯ ${s("pages")}"){pages()})
+    }
+    private fun switchPage(index:Int) {
+        if(index !in store.lesson.pages.indices || board.isDrawing)return
+        store.lesson.current=index;board.clearSelection();board.reset();store.changed()
+    }
+    private fun addPage() {
+        if(store.lesson.pages.size>=200 || board.isDrawing)return
+        store.edit{store.lesson.pages.add(store.lesson.current+1,Page());store.lesson.current++}
+        board.clearSelection();board.reset()
+    }
+    private fun savePens() {prefs.edit().putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).apply()}
+    private fun penSettings() {
+        val c=column().apply{pad(18)};c.addView(label(s("pen_hint"),14f,MUTED))
+        val preview=label("━━━━   ${board.inkWidth.toInt()}",26f,board.inkColor);c.addView(preview)
+        val palette=listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
+        palette.chunked(5).forEach{chunk->c.addView(row().apply{chunk.forEach{color->addView(button("●"){board.inkColor=color;preview.setTextColor(color);savePens()}.apply{setTextColor(color);textSize=28f},LinearLayout.LayoutParams(0,dp(50),1f))}})}
+        c.addView(SeekBar(this).apply{max=23;progress=board.inkWidth.toInt()-1;setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){board.inkWidth=n+1f;preview.text="━━━━   ${n+1}";savePens()}
+            override fun onStartTrackingTouch(v:SeekBar?){}
+            override fun onStopTrackingTouch(v:SeekBar?){}
+        })})
+        if(board.tool=="pen")c.addView(row().apply{listOf("round","marker","dashed").forEach{style->addView(button(s(style),board.penStyle==style){board.penStyle=style;savePens();toast(s(style))},LinearLayout.LayoutParams(0,dp(48),1f))}})
+        dialog(s(board.tool),c)
+    }
+    private fun shapes() {
+        val c=column().apply{pad(12)};val d=dialog(s("shape"),ScrollView(this).apply{addView(c)})
+        Shapes.keys.chunked(4).forEach{chunk->val r=row();chunk.forEach{key->
+            val cell=column().apply{gravity=Gravity.CENTER;pad(5);background=rounded(PAPER,dp(10).toFloat())}
+            cell.addView(object:View(this){private val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=TEAL;style=Paint.Style.STROKE;strokeWidth=dp(2).toFloat()}
+                override fun onDraw(canvas:Canvas){
+                    val ratio=if(key in listOf("rectangle","rounded_rectangle","ellipse","trapezoid","parallelogram","line","arrow","double_arrow","speech"))1.8f else 1f
+                    val previewWidth=minOf((width-dp(24)).toFloat(),(height-dp(16))*ratio).coerceAtLeast(1f)
+                    val previewHeight=previewWidth/ratio
+                    canvas.save();canvas.translate((width-previewWidth)/2f,(height-previewHeight)/2f)
+                    Shapes.draw(canvas,key,previewWidth,previewHeight,paint);canvas.restore()
+                }
+            },LinearLayout.LayoutParams(-1,dp(56)))
+            cell.addView(label(s(key),11f).apply{gravity=Gravity.CENTER})
+            cell.setOnClickListener{board.shape=key;board.tool="shape";board.clearSelection();refreshDock();d.dismiss()}
+            r.addView(cell,LinearLayout.LayoutParams(0,dp(96),1f).apply{setMargins(dp(3),dp(3),dp(3),dp(3))})
+        };c.addView(r)}
     }
 
     private fun dialog(title: String, content: View): AlertDialog =
@@ -277,7 +348,8 @@ class MainActivity : Activity() {
     private fun lessonFile(id: String = documentId) = File(filesDir, "lessons/$id.vura")
 
     private fun persist() {
-        if (!dirty || destroyed) return
+        if(!dirty || destroyed)return
+        if(board.isDrawing){handler.postDelayed(autosave,1000);return}
         dirty = false
         val doc = store.lesson.copyDeep()
         val target = lessonFile()
@@ -328,7 +400,7 @@ class MainActivity : Activity() {
     }
 
     private fun menu() {
-        choices("VuraVision · β", listOf("files", "lab", "games", "tools", "settings", "help")) {
+        choices("VuraVision", listOf("files", "lab", "games", "tools", "settings", "help")) {
             when (it) {
                 0 -> fileMenu()
                 1 -> Labs.show(this) { bitmap -> insertBitmap(bitmap) }
@@ -471,16 +543,7 @@ class MainActivity : Activity() {
             when (it) {
                 0 -> addText(false)
                 1 -> addText(true)
-                2 ->
-                    choices(
-                        s("shape"),
-                        listOf("rectangle", "circle", "triangle", "line", "arrow"),
-                    ) { i ->
-                        board.shape = listOf("rectangle", "circle", "triangle", "line", "arrow")[i]
-                        board.tool = "shape"
-                        board.clearSelection()
-                        refreshDock()
-                    }
+                2 -> shapes()
                 3 -> graph()
                 4 -> pick("image/*", 102)
                 5 -> pick("application/pdf", 103)
@@ -658,109 +721,26 @@ class MainActivity : Activity() {
     }
 
     private fun pages() {
-        val c = column().apply { pad(16) }
-        val list = row()
-        store.lesson.pages.forEachIndexed { i, _ ->
-            list.addView(
-                button("${i+1}", i == store.lesson.current) {
-                    store.edit { store.lesson.current = i }
-                    board.clearSelection()
-                    board.reset()
-                }
-            )
+        val c=column().apply{pad(14)};val d=dialog(s("pages"),ScrollView(this).apply{addView(c)})
+        val actions=row()
+        actions.addView(button("＋ ${s("add_page")}",true){addPage();d.dismiss()})
+        actions.addView(button(s("background")){choices(s("background"),listOf("white","dark","dots","grid","ruled")){i->store.edit{store.page.background=listOf("white","dark","dots","grid","ruled")[i]};d.dismiss()}})
+        actions.addView(button(s("clear")){confirm(s("clear_confirm")){store.edit{store.page.items.removeAll{!it.locked}};board.clearSelection();d.dismiss()}})
+        c.addView(scrollRow(actions))
+        store.lesson.pages.forEachIndexed{i,page->
+            val r=row().apply{pad(6);background=rounded(if(i==store.lesson.current)0xffeeebff.toInt()else PAPER,dp(12).toFloat())}
+            r.addView(object:View(this){override fun onDraw(canvas:Canvas){board.renderer.page(canvas,page,width,height,false)}}.apply{setOnClickListener{switchPage(i);d.dismiss()}},LinearLayout.LayoutParams(dp(108),dp(64)))
+            r.addView(button("${s("page_short")} ${i+1}",i==store.lesson.current){switchPage(i);d.dismiss()},LinearLayout.LayoutParams(0,dp(50),1f))
+            r.addView(button("⋯"){choices(s("pages"),listOf("duplicate","move_left","move_right","delete")){action->
+                fun perform(){store.edit{when(action){
+                    0->if(store.lesson.pages.size<200){store.lesson.pages.add(i+1,page.copy(id=newId(),items=page.items.map{it.deepCopy().apply{id=newId()}}.toMutableList()));store.lesson.current=i+1}
+                    1,2->{val target=i+if(action==1)-1 else 1;if(target in store.lesson.pages.indices){java.util.Collections.swap(store.lesson.pages,i,target);store.lesson.current=target}}
+                    3->if(store.lesson.pages.size>1){store.lesson.pages.removeAt(i);store.lesson.current=store.lesson.current.coerceAtMost(store.lesson.pages.lastIndex)}
+                }};board.clearSelection();board.reset();d.dismiss();pages()}
+                if(action==3)confirm(s("clear_confirm")){perform()}else perform()
+            }})
+            c.addView(r,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))})
         }
-        c.addView(scrollRow(list))
-        val commands =
-            listOf(
-                "add_page",
-                "duplicate",
-                "delete",
-                "move_left",
-                "move_right",
-                "background",
-                "clear",
-                "paste",
-            )
-        commands.chunked(4).forEach { chunk ->
-            val r = row()
-            chunk.forEach { k ->
-                r.addView(
-                    button(s(k)) {
-                        when (k) {
-                            "add_page" -> {
-                                if (store.lesson.pages.size < 200)
-                                    store.edit {
-                                        store.lesson.pages.add(Page())
-                                        store.lesson.current = store.lesson.pages.lastIndex
-                                    }
-                                board.reset()
-                            }
-                            "duplicate" -> {
-                                if (store.lesson.pages.size < 200)
-                                    store.edit {
-                                        store.lesson.pages.add(
-                                            store.lesson.current + 1,
-                                            store.page.copy(
-                                                id = newId(),
-                                                items =
-                                                    store.page.items
-                                                        .map {
-                                                            it.deepCopy().apply { id = newId() }
-                                                        }
-                                                        .toMutableList(),
-                                            ),
-                                        )
-                                        store.lesson.current++
-                                    }
-                            }
-                            "delete" -> {
-                                if (store.lesson.pages.size > 1)
-                                    confirm(s("clear_confirm")) {
-                                        store.edit {
-                                            store.lesson.pages.removeAt(store.lesson.current)
-                                            store.lesson.current =
-                                                store.lesson.current.coerceAtMost(
-                                                    store.lesson.pages.lastIndex
-                                                )
-                                        }
-                                        board.clearSelection()
-                                    }
-                            }
-                            "move_left",
-                            "move_right" -> {
-                                val target = store.lesson.current + if (k == "move_left") -1 else 1
-                                if (target in store.lesson.pages.indices)
-                                    store.edit {
-                                        java.util.Collections.swap(
-                                            store.lesson.pages,
-                                            store.lesson.current,
-                                            target,
-                                        )
-                                        store.lesson.current = target
-                                    }
-                            }
-                            "background" ->
-                                choices(s(k), listOf("white", "dark", "dots", "grid", "ruled")) { i
-                                    ->
-                                    store.edit {
-                                        store.page.background =
-                                            listOf("white", "dark", "dots", "grid", "ruled")[i]
-                                    }
-                                }
-                            "clear" ->
-                                confirm(s("clear_confirm")) {
-                                    store.edit { store.page.items.removeAll { !it.locked } }
-                                    board.clearSelection()
-                                }
-                            "paste" -> paste()
-                        }
-                        refreshTitle()
-                    }
-                )
-            }
-            c.addView(scrollRow(r))
-        }
-        dialog(s("pages"), c)
     }
 
     private fun pick(mime: String, code: Int) {
@@ -903,7 +883,8 @@ class MainActivity : Activity() {
                 sharing?.stop()
                 val server = Sharing(file, "application/pdf")
                 server.start(5000, false)
-                val url = server.url()
+                val urls=server.urls(this)
+                val url=urls.firstOrNull()
                 if (url == null) {
                     server.stop()
                     toast(s("no_network"))
@@ -916,14 +897,11 @@ class MainActivity : Activity() {
                         gravity = Gravity.CENTER
                     }
                 c.addView(label(s("share_help"), 15f))
-                c.addView(
-                    ImageView(this).apply {
-                        setImageBitmap(Sharing.qr(url))
-                        contentDescription = url
-                    },
-                    LinearLayout.LayoutParams(dp(230), dp(230)),
-                )
-                c.addView(label(url, 12f).apply { setTextIsSelectable(true) })
+                val qr=ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url}
+                c.addView(qr,LinearLayout.LayoutParams(dp(230),dp(230)))
+                val address=label(url,12f).apply{setTextIsSelectable(true)};c.addView(address)
+                if(urls.size>1)c.addView(button(s("network_address")){AlertDialog.Builder(this).setItems(urls.toTypedArray()){_,index->address.text=urls[index];qr.setImageBitmap(Sharing.qr(urls[index]));qr.contentDescription=urls[index]}.show()})
+                c.addView(label(s("share_troubleshoot"),12f,MUTED))
                 val count = label("${s("downloads")}: 0", 12f, MUTED)
                 c.addView(count)
                 val d = dialog(s("share"), c)
@@ -946,13 +924,10 @@ class MainActivity : Activity() {
                             toast(s("expired"))
                         }
                     },
-                    600000,
+                    1800000,
                 )
-                d.setOnDismissListener {
-                    server.stop()
-                    handler.removeCallbacks(update)
-                    if (sharing === server) sharing = null
-                }
+                c.addView(button(s("stop_sharing")){server.stop();if(sharing===server)sharing=null;d.dismiss()})
+                d.setOnDismissListener{handler.removeCallbacks(update)}
             } catch (e: Exception) {
                 error(e)
             }
@@ -962,16 +937,17 @@ class MainActivity : Activity() {
     private fun smart() {
         val strokes = (board.chosen().ifEmpty { store.page.items }).filter { it.kind == "ink" }
         if (strokes.isEmpty()) {
-            toast(s("empty_ink"))
+            choices(s("smart"),listOf("models","help")){if(it==0)models()else toast(s("empty_ink"))}
             return
         }
-        choices(s("smart"), listOf("recognize_en", "recognize_fa")) { i ->
-            val lang = if (i == 0) "en-US" else "fa"
+        choices(s("smart"), listOf("recognize_en","recognize_fa","recognize_shape")) { i ->
+            if(i==2){val shape=ShapeRecognition.detect(strokes);val bounds=contentBounds(strokes);store.edit{store.page.items.removeAll{it in strokes&&!it.locked};store.page.items.add(Item(kind="shape",shape=shape,x=bounds.left,y=bounds.top,w=bounds.width().coerceAtLeast(1f),h=bounds.height().coerceAtLeast(1f),color=strokes.first().color,width=strokes.first().width))};board.clearSelection();return@choices}
+            val lang=if(i==0)"en-US"else"fa"
             recognition.installed(
                 lang,
                 { installed ->
                     if (!installed) {
-                        confirm(s("model_required")) { models() }
+                        toast(s("model_required"));models()
                     } else {
                         status.text = s("busy")
                         recognition.recognize(
@@ -991,6 +967,7 @@ class MainActivity : Activity() {
     }
 
     private fun review(strokes: List<Item>, candidates: List<String>) {
+        if(candidates.isEmpty()){toast(s("no_recognition"));return}
         val c = column().apply { pad(18) }
         val edit = field(candidates.firstOrNull().orEmpty())
         c.addView(edit)
@@ -1034,81 +1011,33 @@ class MainActivity : Activity() {
         )
     }
 
-    private fun models() {
-        val c = column().apply { pad(20) }
-        c.addView(label(s("model_info"), 14f))
-        listOf("en-US" to "english", "fa" to "persian").forEach { (lang, key) ->
-            val r = row()
-            val state = label(s(key), 15f)
-            r.addView(state, LinearLayout.LayoutParams(0, -2, 1f))
-            fun update() {
-                recognition.installed(
-                    lang,
-                    { state.text = "${s(key)} · ${s(if(it)"installed"else"not_installed")}" },
-                    { state.text = s("error") },
-                )
+    private fun models(){
+        val c=column().apply{pad(20)};c.addView(label(s("model_info"),14f));c.addView(label(s("model_download_help"),13f,MUTED))
+        if(!recognition.downloadManagerReady(this)){c.addView(label(s("download_manager_disabled"),14f,ORANGE));c.addView(button(s("settings")){try{startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:com.android.providers.downloads")))}catch(e:Exception){error(e)}})}
+        listOf("en-US" to "english","fa" to "persian").forEach{(lang,key)->
+            val state=label(s(key),15f);c.addView(state);val r=row();val install=button(s("install")){}
+            fun update(){recognition.installed(lang,{ready->if(!destroyed){state.text="${s(key)} · ${s(if(ready)"installed"else"not_installed")}";install.text=s(if(ready)"installed"else"install");install.isEnabled=!ready}},{e->state.text=recognition.failure(this,e);install.isEnabled=true})}
+            install.setOnClickListener{
+                state.text=s("downloading");install.isEnabled=false
+                val slow=Runnable{if(!destroyed&&!install.isEnabled){state.text=s("download_slow");install.isEnabled=true;install.text=s("retry")}}
+                handler.postDelayed(slow,60000)
+                recognition.download(lang,{handler.removeCallbacks(slow);if(!destroyed)update()},{e->handler.removeCallbacks(slow);if(!destroyed){state.text=recognition.failure(this,e);install.isEnabled=true;install.text=s("retry")}})
             }
-            r.addView(
-                button(s("install")) {
-                    state.text = s("downloading")
-                    recognition.download(
-                        lang,
-                        { update() },
-                        {
-                            error(it)
-                            update()
-                        },
-                    )
-                }
-            )
-            r.addView(
-                button(s("remove_model")) { recognition.remove(lang, { update() }, { error(it) }) }
-            )
-            c.addView(r)
-            update()
+            r.addView(install);r.addView(button(s("check_status")){update()});r.addView(button(s("remove_model")){recognition.remove(lang,{update()},{error(it)})});c.addView(r);update()
         }
-        dialog(s("models"), c)
+        dialog(s("models"),ScrollView(this).apply{addView(c)})
     }
 
     private fun settings() {
-        choices(
-            s("settings"),
-            listOf("language", "models", "cache", "about", "engineering").filter {
-                it != "engineering" || prefs.getBoolean("engineering", false)
-            },
-        ) {
-            when (it) {
-                0 ->
-                    choices(s("language"), listOf("english", "persian")) { i ->
-                        persist()
-                        prefs.edit().putString("language", if (i == 0) "en" else "fa").apply()
-                        recreate()
-                    }
-                1 -> models()
-                2 -> {
-                    media.clear()
-                    board.invalidate()
-                    toast(s("done"))
-                }
-                3 -> {
-                    val v =
-                        label("VuraVision 0.2.0 beta\n\n${s("about_text")}", 16f).apply {
-                            pad(24)
-                            setOnClickListener {
-                                taps++
-                                if (taps >= 7) {
-                                    prefs.edit().putBoolean("engineering", true).apply()
-                                    toast(s("unlocked"))
-                                }
-                            }
-                        }
-                    dialog(s("about"), v)
-                }
-                4 ->
-                    if (prefs.getBoolean("engineering", false)) engineering()
-                    else toast("7 × ${s("about")}")
-            }
-        }
+        val keys=mutableListOf("language","models","cache","about")
+        if(prefs.getBoolean("engineering",false))keys.add("engineering")
+        choices(s("settings"),keys){index->when(keys[index]){
+            "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();recreate()}
+            "models"->models()
+            "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
+            "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
+            "engineering"->engineering()
+        }}
     }
 
     private fun engineering() {
@@ -1124,6 +1053,7 @@ class MainActivity : Activity() {
                     c.addView(label(s("threshold_help"), 14f))
                     val thin = field(board.profile.thin.toString(), "Thin px")
                     val palm = field(board.profile.palm.toString(), "Palm px")
+                    val thick=field(board.profile.thickWidth.toString(),s("thick_width"))
                     val enabled =
                         CheckBox(this).apply {
                             text = s("thresholds")
@@ -1134,8 +1064,9 @@ class MainActivity : Activity() {
                             text = s("palm_erase")
                             isChecked = board.profile.palmErase
                         }
-                    c.addView(thin)
-                    c.addView(palm)
+                    c.addView(label(s("thin_threshold"),14f));c.addView(thin)
+                    c.addView(label(s("palm_threshold"),14f));c.addView(palm)
+                    c.addView(label(s("thick_width"),14f));c.addView(thick)
                     c.addView(enabled)
                     c.addView(erase)
                     val d = dialog(s("thresholds"), c)
@@ -1143,15 +1074,17 @@ class MainActivity : Activity() {
                         button(s("apply")) {
                             val a = thin.text.toString().toFloatOrNull()
                             val b = palm.text.toString().toFloatOrNull()
-                            if (a != null && b != null && a > 0 && b > a) {
+                            val thickValue=thick.text.toString().toFloatOrNull()
+                            if(a!=null && b!=null && a>0 && b>a && thickValue!=null && thickValue in 1f..24f) {
                                 board.profile =
-                                    TouchProfile(enabled.isChecked, a, b, erase.isChecked)
+                                    TouchProfile(enabled.isChecked,a,b,erase.isChecked,board.profile.multiTouch,thickValue)
                                 prefs
                                     .edit()
                                     .putBoolean("calibrated", enabled.isChecked)
                                     .putFloat("thin", a)
                                     .putFloat("palm", b)
                                     .putBoolean("palmErase", erase.isChecked)
+                                    .putFloat("thickWidth",thickValue)
                                     .apply()
                                 d.dismiss()
                             } else thin.error = s("error")
@@ -1201,138 +1134,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun classroomTools() {
-        choices(s("tools"), listOf("timer", "stopwatch", "dice", "scoreboard", "curtain")) { which
-            ->
-            val c =
-                column().apply {
-                    pad(24)
-                    gravity = Gravity.CENTER
-                }
-            val display =
-                label(if (which == 0) "05:00" else "0", 48f, NAVY, true).apply {
-                    gravity = Gravity.CENTER
-                }
-            c.addView(display)
-            val d =
-                dialog(s(listOf("timer", "stopwatch", "dice", "scoreboard", "curtain")[which]), c)
-            when (which) {
-                0,
-                1 -> {
-                    var running = false
-                    var elapsed = 0L
-                    var since = 0L
-                    var duration = 300000L
-                    val tick =
-                        object : Runnable {
-                            override fun run() {
-                                val t =
-                                    elapsed +
-                                        if (running) SystemClock.elapsedRealtime() - since else 0
-                                val sec =
-                                    (if (which == 0) (duration - t).coerceAtLeast(0) else t) / 1000
-                                display.text = "%02d:%02d".format(sec / 60, sec % 60)
-                                if (which == 0 && t >= duration) {
-                                    elapsed = duration
-                                    running = false
-                                    display.setTextColor(ORANGE)
-                                }
-                                handler.postDelayed(this, 100)
-                            }
-                        }
-                    handler.post(tick)
-                    val r = row()
-                    r.addView(
-                        button(s("start")) {
-                            if (!running) {
-                                since = SystemClock.elapsedRealtime()
-                                running = true
-                            }
-                        }
-                    )
-                    r.addView(
-                        button(s("pause")) {
-                            if (running) elapsed += SystemClock.elapsedRealtime() - since
-                            running = false
-                        }
-                    )
-                    r.addView(
-                        button(s("reset")) {
-                            running = false
-                            elapsed = 0
-                            display.setTextColor(NAVY)
-                        }
-                    )
-                    if (which == 0)
-                        r.addView(
-                            button(s("minutes")) {
-                                input(s("minutes"), "5") { v ->
-                                    val min = v.toInt()
-                                    require(min in 1..240)
-                                    duration = min * 60000L
-                                    elapsed = 0
-                                    running = false
-                                }
-                            }
-                        )
-                    c.addView(r)
-                    d.setOnDismissListener { handler.removeCallbacks(tick) }
-                }
-                2 -> {
-                    c.addView(button(s("roll"), true) { display.text = "${(1..6).random()}" })
-                }
-                3 -> {
-                    var a = 0
-                    var b = 0
-                    fun update() {
-                        display.text = "$a : $b"
-                    }
-                    update()
-                    val r = row()
-                    r.addView(
-                        button("− 1") {
-                            a--
-                            update()
-                        }
-                    )
-                    r.addView(
-                        button("+ 1") {
-                            a++
-                            update()
-                        }
-                    )
-                    r.addView(
-                        button("− 2") {
-                            b--
-                            update()
-                        }
-                    )
-                    r.addView(
-                        button("+ 2") {
-                            b++
-                            update()
-                        }
-                    )
-                    c.addView(r)
-                }
-                4 -> {
-                    d.dismiss()
-                    val curtain =
-                        Dialog(this, android.R.style.Theme_Material_NoActionBar_Fullscreen)
-                    curtain.setContentView(
-                        column().apply {
-                            setBackgroundColor(NAVY)
-                            gravity = Gravity.CENTER
-                            addView(label("VuraVision", 36f, Color.WHITE, true))
-                            addView(button(s("reveal")) { curtain.dismiss() })
-                        }
-                    )
-                    curtain.show()
-                    curtain.window?.setLayout(-1, -1)
-                }
-            }
-        }
-    }
+    private fun classroomTools() {choices(s("tools"),listOf("timer","stopwatch","dice","scoreboard","curtain")){which->floatingTools.open(listOf("timer","stopwatch","dice","scoreboard","curtain")[which])}}
 
     private fun insertBitmap(bitmap: Bitmap) {
         work({ media.save(bitmap) }) { name ->
@@ -1360,6 +1162,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        floatingTools.closeAll()
         handler.removeCallbacksAndMessages(null)
         sharing?.stop()
         shareDialog?.dismiss()

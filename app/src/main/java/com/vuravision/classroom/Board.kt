@@ -8,8 +8,28 @@ import kotlin.math.*
 class Board(context: Context, val store: Store, val renderer: Renderer) : View(context) {
     var tool = "pen"
     var shape = "rectangle"
-    var inkColor = 0xff243746.toInt()
-    var inkWidth = 4f
+    var penColor=NAVY
+    var highlightColor=0xffffcf40.toInt()
+    var penWidth=4f
+    var highlightWidth=6f
+    var penStyle="round"
+    var inkColor:Int
+        get()=if(tool=="highlight")highlightColor else penColor
+        set(v) { if(tool=="highlight")highlightColor=v else penColor=v }
+    var inkWidth:Float
+        get()=if(tool=="highlight")highlightWidth else penWidth
+        set(v) { if(tool=="highlight")highlightWidth=v else penWidth=v }
+    val isDrawing get()=live.isNotEmpty()
+    var isCommitting=false
+        private set
+    private var backing:Bitmap?=null
+    private var backingDirty=true
+    private var cachedPage:Page?=null
+    private var cachedCount=0
+    var cacheRebuilds=0
+        private set
+    fun sceneChanged() { backingDirty=true;invalidate() }
+
     var profile = TouchProfile()
     var onSelection: () -> Unit = {}
     val selected = linkedSetOf<String>()
@@ -48,6 +68,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun center() = world(width / 2f, height / 2f)
 
     fun reset() {
+        backingDirty=true
         zoom = 1f
         tx = 0f
         ty = 0f
@@ -55,6 +76,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun fit() {
+        backingDirty=true
         if (store.page.items.isEmpty()) {
             reset()
             return
@@ -97,20 +119,25 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         }
     }
 
-    override fun onDraw(c: Canvas) {
-        c.save()
-        c.scale(density, density)
-        c.translate(tx, ty)
-        c.scale(zoom, zoom)
-        val l = world(0f, 0f)
-        val r = world(width.toFloat(), height.toFloat())
-        val viewport = RectF(l.x, l.y, r.x, r.y)
-        renderer.background(c, store.page, viewport)
-        store.page.items.forEach { o ->
-            if (RectF.intersects(itemBounds(o).apply { inset(-20f, -20f) }, viewport))
-                renderer.draw(c, o)
+    override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
+        backing?.recycle();backing=if(w>0 && h>0)Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888) else null
+        backingDirty=true
+    }
+    private fun transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
+    override fun onDraw(c:Canvas) {
+        backing?.let { bitmap ->
+            val target=Canvas(bitmap);target.save();transformCanvas(target)
+            val page=store.page
+            if(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
+                val l=world(0f,0f);val r=world(width.toFloat(),height.toFloat())
+                renderer.background(target,page,RectF(l.x,l.y,r.x,r.y))
+                cachedCount=0;cachedPage=page;backingDirty=false;cacheRebuilds++
+            }
+            for(i in cachedCount until page.items.size)renderer.draw(target,page.items[i])
+            cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,0f,0f,null)
         }
-        live.values.forEach { renderer.draw(c, it) }
+        c.save();transformCanvas(c)
+        live.values.forEach { renderer.draw(c,it) }
         p.color = 0xffe46d38.toInt()
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1.5f / zoom
@@ -146,6 +173,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     mode = ""
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
+                if(!profile.multiTouch && id!=primary) { actions[id]="reject";return true }
+                if(e.actionMasked==MotionEvent.ACTION_DOWN) requestUnbufferedDispatch(e)
                 val behavior =
                     profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
                 actions[id] = behavior
@@ -205,7 +234,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             w = 1f,
                             h = 1f,
                             color = inkColor,
-                            width = if (tool == "highlight") inkWidth * 4 else inkWidth,
+                            width = if(tool=="highlight") inkWidth*4 else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth),
+                            shape = if(tool=="highlight") "marker" else penStyle,
                             alpha = if (tool == "highlight") 75 else 255,
                             points =
                                 mutableListOf(
@@ -238,11 +268,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     } else
                         live[pid]?.let { o ->
                             if (o.kind == "shape") {
+                                o.flipY=(point.x-anchor.x)*(point.y-anchor.y)>=0
                                 o.x = min(anchor.x, point.x)
                                 o.y = min(anchor.y, point.y)
                                 o.w = abs(anchor.x - point.x).coerceAtLeast(1f)
                                 o.h = abs(anchor.y - point.y).coerceAtLeast(1f)
-                                if (shape == "circle") o.h = o.w
+                                if(shape in listOf("circle","square"))o.h=o.w
                             } else {
                                 for (j in 0 until e.historySize) {
                                     val q = world(e.getHistoricalX(i, j), e.getHistoricalY(i, j))
@@ -278,6 +309,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             it.y -= top
                         }
                     }
+                    renderer.forgetInk(o.id)
                     store.page.items.add(o)
                 }
                 actions.remove(id)
@@ -290,10 +322,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         )
                     }
                     box = null
-                    onSelection()
+                    if(tool=="select")onSelection()
                 }
                 if (e.actionMasked == MotionEvent.ACTION_UP) {
-                    if (changed) store.changed()
+                    if(changed) { isCommitting=true;store.changed();isCommitting=false }
                     changed = false
                     mode = ""
                     performClick()
@@ -308,11 +340,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 mode = ""
             }
         }
-        invalidate()
+        postInvalidateOnAnimation()
         return true
     }
 
     private fun transform(point: PointF) {
+        backingDirty=true
         if (original.isEmpty()) return
         val b = contentBounds(original)
         original.forEach { base ->
@@ -346,11 +379,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     private fun erase(q: PointF) {
+        backingDirty=true
         store.page.items.removeAll { !it.locked && it.kind == "ink" && it.hit(q.x, q.y, 18 / zoom) }
         selected.retainAll(store.page.items.map { it.id }.toSet())
     }
 
     private fun navigate(e: MotionEvent) {
+        backingDirty=true
         val x = (0 until e.pointerCount).sumOf { e.getX(it).toDouble() }.toFloat() / e.pointerCount
         val y = (0 until e.pointerCount).sumOf { e.getY(it).toDouble() }.toFloat() / e.pointerCount
         val newSpan =

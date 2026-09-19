@@ -29,6 +29,16 @@ fun contentBounds(items: List<Item>): RectF {
 
 class Renderer(private val media: Media) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private class InkPath(val owner:Item) {
+        val source=owner.points;val path=Path();var count=0
+        fun update() {
+            if(count==0 && source.isNotEmpty()) { path.moveTo(source[0].x,source[0].y);count=1 }
+            while(count<source.size) { val v=source[count++];path.lineTo(v.x,v.y) }
+        }
+    }
+    private val inkPaths=object:android.util.LruCache<String,InkPath>(512) {}
+    fun forgetInk(id:String) { inkPaths.remove(id) }
+
     private val functions = object : android.util.LruCache<String, (Double) -> Double>(32) {}
 
     fun background(c: Canvas, page: Page, area: RectF) {
@@ -59,30 +69,19 @@ class Renderer(private val media: Media) {
         p.color = o.color
         p.alpha = o.alpha
         p.strokeWidth = o.width
-        p.strokeCap = Paint.Cap.ROUND
+        p.strokeCap = if(o.shape=="marker") Paint.Cap.SQUARE else Paint.Cap.ROUND
+        if(o.shape=="dashed") p.pathEffect=DashPathEffect(floatArrayOf(o.width*3,o.width*2),0f)
         p.strokeJoin = Paint.Join.ROUND
         when (o.kind) {
             "ink" -> {
                 c.save()
                 c.scale(o.w / o.inkW, o.h / o.inkH)
                 p.style = Paint.Style.STROKE
-                if (
-                    o.points.isNotEmpty() &&
-                        o.points.all { it.x == o.points[0].x && it.y == o.points[0].y }
-                ) {
-                    p.style = Paint.Style.FILL
-                    c.drawCircle(o.points[0].x, o.points[0].y, o.width / 2, p)
-                } else {
-                    val path = Path()
-                    o.points.firstOrNull()?.let { path.moveTo(it.x, it.y) }
-                    for (i in 1 until o.points.size) {
-                        val a = o.points[i - 1]
-                        val b = o.points[i]
-                        path.quadTo(a.x, a.y, (a.x + b.x) / 2, (a.y + b.y) / 2)
-                    }
-                    o.points.lastOrNull()?.let { path.lineTo(it.x, it.y) }
-                    c.drawPath(path, p)
-                }
+                val entry=inkPaths.get(o.id)?.takeIf { it.owner===o && it.source===o.points && it.count<=o.points.size }
+                    ?: InkPath(o).also { inkPaths.put(o.id,it) }
+                entry.update()
+                if(o.points.size==1) { p.style=Paint.Style.FILL;c.drawCircle(o.points[0].x,o.points[0].y,o.width/2,p) }
+                else c.drawPath(entry.path,p)
                 c.restore()
             }
             "text",
@@ -115,33 +114,10 @@ class Renderer(private val media: Media) {
             }
             "shape" -> {
                 p.style = Paint.Style.STROKE
-                when (o.shape) {
-                    "circle" -> c.drawOval(0f, 0f, o.w, o.h, p)
-                    "triangle" -> {
-                        val path = Path()
-                        path.moveTo(o.w / 2, 0f)
-                        path.lineTo(o.w, o.h)
-                        path.lineTo(0f, o.h)
-                        path.close()
-                        c.drawPath(path, p)
-                    }
-                    "line",
-                    "arrow" -> {
-                        c.drawLine(0f, o.h, o.w, 0f, p)
-                        if (o.shape == "arrow") {
-                            val a = atan2(-o.h, o.w)
-                            for (s in listOf(-1, 1)) c.drawLine(
-                                o.w,
-                                0f,
-                                o.w - 22 * cos(a + s * .5f),
-                                -22 * sin(a + s * .5f),
-                                p,
-                            )
-                        }
-                    }
-                    else -> c.drawRect(0f, 0f, o.w, o.h, p)
-                }
+                if(o.flipY && o.shape in listOf("line","arrow","double_arrow")) { c.translate(0f,o.h);c.scale(1f,-1f) }
+                Shapes.draw(c,o.shape,o.w,o.h,p)
             }
+
             "image",
             "pdf" -> {
                 p.color = Color.WHITE

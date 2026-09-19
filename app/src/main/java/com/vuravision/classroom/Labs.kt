@@ -27,7 +27,7 @@ data class LabControl(val label: String, val min: Float, val max: Float, val val
 
 object Labs {
     val keys =
-        listOf("projectile", "pendulum", "spring", "waves", "quadratic", "trig", "ph", "coin")
+        listOf("projectile", "pendulum", "spring", "waves", "quadratic", "trig", "ph", "coin") + ExtraLabs.keys
 
     fun show(context: Context, insert: (Bitmap) -> Unit) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
@@ -54,6 +54,7 @@ object Labs {
                         pad(18)
                         background = rounded(Color.WHITE, context.dp(18).toFloat())
                         addView(context.label("0${keys.indexOf(key)+1}  /  LAB", 11f, TEAL, true))
+                        addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false},LinearLayout.LayoutParams(-1,context.dp(100)))
                         addView(context.label(context.s(key), 21f, NAVY, true))
                         addView(context.label(context.s("ex_$key"), 13f, MUTED))
                         setOnClickListener {
@@ -63,7 +64,7 @@ object Labs {
                     }
                 row.addView(
                     card,
-                    LinearLayout.LayoutParams(0, context.dp(138), 1f).apply {
+                    LinearLayout.LayoutParams(0,-2,1f).apply {
                         setMargins(context.dp(5), context.dp(5), context.dp(5), context.dp(5))
                     },
                 )
@@ -78,8 +79,8 @@ object Labs {
         d.show()
     }
 
-    private fun controls(key: String) =
-        when (key) {
+    fun controls(key: String) =
+        if(key in ExtraLabs.keys)ExtraLabs.controls(key)else when (key) {
             "projectile" ->
                 listOf(
                     LabControl("v (m/s)", 5f, 50f, 22f),
@@ -139,14 +140,16 @@ object Labs {
         header.addView(context.button(context.s("close")) { d.dismiss() })
         c.addView(header)
         c.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
-        val sliders = context.row()
+        val sliders=context.row()
+        val sliderViews=mutableListOf<SeekBar>()
         controls.forEachIndexed { i, control ->
             val col = context.column()
             val label = context.label("${control.label} = ${fmt(control.value)}", 13f)
             col.addView(label)
             col.addView(
                 SeekBar(context).apply {
-                    max = 1000
+                    sliderViews.add(this)
+                    max=1000
                     progress =
                         ((control.value - control.min) / (control.max - control.min) * 1000).toInt()
                     setOnSeekBarChangeListener(
@@ -179,7 +182,8 @@ object Labs {
         )
         r.addView(
             context.button(context.s("reset")) {
-                view.time = 0.0
+                view.time=0.0
+                controls.forEachIndexed{i,v->sliderViews[i].progress=((v.value-v.min)/(v.max-v.min)*1000).toInt()}
                 view.resample()
                 view.invalidate()
             }
@@ -215,7 +219,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         if (last != 0L && running) time += (now - last).coerceAtMost(50) / 1000.0
         last = now
         render(c, width, height)
-        if (isAttachedToWindow && running) postInvalidateOnAnimation()
+        if(isAttachedToWindow&&running&&key in listOf("projectile","pendulum","spring","waves"))postInvalidateOnAnimation()
     }
 
     override fun onAttachedToWindow() {
@@ -285,8 +289,8 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
             "projectile" -> {
                 val (range, duration) = Physics.flight(a, b, d)
                 val peak = a * a * sin(b * PI / 180).pow(2) / (2 * d)
-                val sx = 820 / range
-                val sy = 320 / peak
+                val sx=min(820/range,320/peak)
+                val sy=sx
                 line(c, 80f, 460f, 940f, 460f)
                 line(c, 80f, 460f, 80f, 100f)
                 val points =
@@ -316,8 +320,9 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
             "pendulum" -> {
                 val period = Physics.period(a, b)
                 val angle = d * PI / 180 * cos(2 * PI * time / period)
-                val x = (500 + 270 * sin(angle)).toFloat()
-                val y = (115 + 270 * cos(angle)).toFloat()
+                val length=95+a*58
+                val x=(500+length*sin(angle)).toFloat()
+                val y=(110+length*cos(angle)).toFloat()
                 line(c, 340f, 110f, 660f, 110f, MUTED, 6f)
                 line(c, 500f, 110f, x, y, NAVY, 4f)
                 circle(c, x, y, 32f, ORANGE)
@@ -434,6 +439,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
                     23f,
                 )
             }
+            else -> ExtraLabs.draw(c,key,values,context)
         }
         c.restore()
     }

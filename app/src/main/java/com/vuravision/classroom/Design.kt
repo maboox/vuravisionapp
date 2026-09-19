@@ -8,14 +8,15 @@ import android.view.Gravity
 import android.view.View
 import android.widget.*
 
-val NAVY = 0xff172a36.toInt()
-val ORANGE = 0xffe46d38.toInt()
-val PAPER = 0xfff3f5f4.toInt()
+val NAVY = 0xff20194f.toInt()
+val ORANGE = 0xfff8a529.toInt()
+val PAPER = 0xfff3f2fa.toInt()
 val MUTED = 0xff60727a.toInt()
 val TEAL = 0xff167b79.toInt()
 
 fun Context.s(key: String): String {
     val name = if (key == "new") "new_lesson" else key
+    if (!name.matches(Regex("[a-z][a-z0-9_]*"))) return key
     val id = resources.getIdentifier(name, "string", packageName)
     return if (id == 0) key.replace('_', ' ') else getString(id)
 }

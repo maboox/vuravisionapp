@@ -5,6 +5,10 @@ import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.vision.digitalink.recognition.*
 
 class Recognition {
+    private val downloads=mutableMapOf<String,com.google.android.gms.tasks.Task<Void>>()
+    fun downloadManagerReady(context:android.content.Context):Boolean=try{val state=context.packageManager.getApplicationEnabledSetting("com.android.providers.downloads");state !in listOf(2,3,4)}catch(_:IllegalArgumentException){false}
+    fun failure(context:android.content.Context,e:Exception)=context.s("model_download_help")+"\n\n"+((e as? com.google.mlkit.common.MlKitException)?.errorCode?.let{"Code $it · "}?:"")+(e.message?:e.javaClass.simpleName)
+
     private val manager
         get() = RemoteModelManager.getInstance()
 
@@ -15,17 +19,18 @@ class Recognition {
             .build()
 
     fun installed(language: String, done: (Boolean) -> Unit, error: (Exception) -> Unit) {
-        manager
+        try { manager
             .isModelDownloaded(model(language))
             .addOnSuccessListener { done(it) }
             .addOnFailureListener { error(it) }
+        }catch(e:Exception){error(e)}
     }
 
     fun download(language: String, done: () -> Unit, error: (Exception) -> Unit) {
-        manager
-            .download(model(language), DownloadConditions.Builder().build())
-            .addOnSuccessListener { done() }
-            .addOnFailureListener { error(it) }
+        try {
+            val task=downloads[language]?:manager.download(model(language),DownloadConditions.Builder().build()).also{task->downloads[language]=task;task.addOnCompleteListener{downloads.remove(language)}}
+            task.addOnSuccessListener{installed(language,{ready->if(ready)done()else error(IllegalStateException("Downloaded model was not installed. Retry."))},error)}.addOnFailureListener(error)
+        }catch(e:Exception){error(e)}
     }
 
     fun remove(language: String, done: () -> Unit, error: (Exception) -> Unit) {

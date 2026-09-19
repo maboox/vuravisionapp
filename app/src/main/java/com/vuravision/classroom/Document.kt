@@ -15,6 +15,7 @@ data class Item(
     var w: Float = 200f,
     var h: Float = 100f,
     var rotation: Float = 0f,
+    var flipY: Boolean = false,
     var color: Int = 0xff243746.toInt(),
     var width: Float = 4f,
     var alpha: Int = 255,
@@ -51,11 +52,14 @@ data class Item(
         val (a, b) = local(px, py)
         if (a < -tolerance || b < -tolerance || a > w + tolerance || b > h + tolerance) return false
         if (kind != "ink") return true
-        val transformed = points.map { it.x * w / inkW to it.y * h / inkH }
-        return transformed.any { hypot(a - it.first, b - it.second) < tolerance + width / 2 } ||
-            transformed.zipWithNext().any { (v, z) ->
-                distance(a, b, v.first, v.second, z.first, z.second) < tolerance + width / 2
-            }
+        val sx=w/inkW;val sy=h/inkH;val limit=tolerance+width/2
+        var prev:Point?=null
+        for(point in points) {
+            if(hypot(a-point.x*sx,b-point.y*sy)<limit) return true
+            prev?.let { if(distance(a,b,it.x*sx,it.y*sy,point.x*sx,point.y*sy)<limit)return true }
+            prev=point
+        }
+        return false
     }
 }
 
@@ -122,21 +126,26 @@ class Store(var lesson: Lesson = Lesson()) {
     val page
         get() = lesson.pages[lesson.current]
 
+    // Point samples are shared in history and detached before arbitrary edits.
+    private fun snapshot() = lesson.copy(pages = lesson.pages.map { page ->
+        page.copy(items = page.items.map { it.copy() }.toMutableList())
+    }.toMutableList())
     fun checkpoint() {
-        past.addLast(lesson.copyDeep())
+        past.addLast(snapshot())
         while (past.size > 30) past.removeFirst()
         future.clear()
     }
 
     fun edit(action: () -> Unit) {
         checkpoint()
+        lesson.pages.forEach { page -> page.items.forEach { o -> if(o.points.isNotEmpty()) o.points=o.points.map { it.copy() }.toMutableList() } }
         action()
         changed()
     }
 
     fun undo() {
         if (past.isNotEmpty()) {
-            future.addLast(lesson.copyDeep())
+            future.addLast(snapshot())
             lesson = past.removeLast()
             changed()
         }
@@ -144,7 +153,7 @@ class Store(var lesson: Lesson = Lesson()) {
 
     fun redo() {
         if (future.isNotEmpty()) {
-            past.addLast(lesson.copyDeep())
+            past.addLast(snapshot())
             lesson = future.removeLast()
             changed()
         }
@@ -164,6 +173,8 @@ data class TouchProfile(
     var thin: Float = 10f,
     var palm: Float = 50f,
     var palmErase: Boolean = false,
+    var multiTouch: Boolean = true,
+    var thickWidth: Float = 10f,
 ) {
     fun classify(tool: Int, major: Float) =
         when {
@@ -174,6 +185,8 @@ data class TouchProfile(
             major <= thin -> "thin"
             else -> "finger / thick tip"
         }
+
+    fun width(tool:Int, major:Float, normal:Float) = if(classify(tool,major)=="finger / thick tip") thickWidth else normal
 
     fun action(tool: Int, major: Float) =
         when (classify(tool, major)) {

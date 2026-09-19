@@ -243,7 +243,7 @@ class AndroidTest {
         a.store.replace(Lesson())
         views(a.window.decorView)
             .filterIsInstance<Button>()
-            .first { it.text == a.s("insert") }
+            .first { it.text.toString().endsWith(a.s("insert")) }
             .performClick()
         val menu = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
         menu.listView.performItemClick(null, 0, 0)
