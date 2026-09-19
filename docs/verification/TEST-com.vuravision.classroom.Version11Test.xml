@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Version11Test" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-09-19T12:22:40" hostname="localhost" time="1.317">
+  <properties/>
+  <testcase name="masksActuallyRemovePixelsAndFollowResize" classname="com.vuravision.classroom.Version11Test" time="0.035"/>
+  <testcase name="areaEraserPreservesObjectAndHistory" classname="com.vuravision.classroom.Version11Test" time="0.029"/>
+  <testcase name="invalidEquationsNeverReturnGuessedAnswers" classname="com.vuravision.classroom.Version11Test" time="0.026"/>
+  <testcase name="pdfSwipeTurnsPagesWithoutMovingObject" classname="com.vuravision.classroom.Version11Test" time="0.03"/>
+  <testcase name="automaticSmartShapeNeedsNoRepeatedButton" classname="com.vuravision.classroom.Version11Test" time="0.028"/>
+  <testcase name="newStylesAndMasksSurviveSaveAndOldDocumentsHaveDefaults" classname="com.vuravision.classroom.Version11Test" time="0.04"/>
+  <testcase name="lassoUsesPolygonAndIgnoresLockedItems" classname="com.vuravision.classroom.Version11Test" time="0.028"/>
+  <testcase name="textBoundsAndStylesMatchRenderedLayout" classname="com.vuravision.classroom.Version11Test" time="0.027"/>
+  <testcase name="selectionSecondTapOpensActionsButDragDoesNot" classname="com.vuravision.classroom.Version11Test" time="0.054"/>
+  <testcase name="pdfErasuresAreScopedToCurrentPage" classname="com.vuravision.classroom.Version11Test" time="0.02"/>
+  <testcase name="hiddenSettingsOpenOnExactlyThreeGuideTaps" classname="com.vuravision.classroom.Version11Test" time="0.152"/>
+  <testcase name="uniformShapesAndCylinderCaps" classname="com.vuravision.classroom.Version11Test" time="0.023"/>
+  <testcase name="fastWholeEraserCannotJumpOverInk" classname="com.vuravision.classroom.Version11Test" time="0.032"/>
+  <testcase name="penEraserSmartAndTextDialogsRender" classname="com.vuravision.classroom.Version11Test" time="0.731"/>
+  <testcase name="mathSupportsPersianNumbersLinearQuadraticAndFunctions" classname="com.vuravision.classroom.Version11Test" time="0.02"/>
+  <testcase name="linesKeepStartAndEndInAllQuadrants" classname="com.vuravision.classroom.Version11Test" time="0.02"/>
+  <testcase name="dualTipsChooseIndependentAppearanceIncludingReportedStylus" classname="com.vuravision.classroom.Version11Test" time="0.02"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

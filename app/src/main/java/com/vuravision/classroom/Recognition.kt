@@ -7,7 +7,11 @@ import com.google.mlkit.vision.digitalink.recognition.*
 class Recognition {
     private val downloads=mutableMapOf<String,com.google.android.gms.tasks.Task<Void>>()
     fun downloadManagerReady(context:android.content.Context):Boolean=try{val state=context.packageManager.getApplicationEnabledSetting("com.android.providers.downloads");state !in listOf(2,3,4)}catch(_:IllegalArgumentException){false}
-    fun failure(context:android.content.Context,e:Exception)=context.s("model_download_help")+"\n\n"+((e as? com.google.mlkit.common.MlKitException)?.errorCode?.let{"Code $it · "}?:"")+(e.message?:e.javaClass.simpleName)
+    fun failure(context:android.content.Context,e:Exception):String {
+        val trace=android.util.Log.getStackTraceString(e)
+        return if(trace.contains("404"))context.tr("Model server returned HTTP 404 (file unavailable). Retry a fresh download or use offline Latin OCR. This is not proof that Download Manager is disabled.","سرور مدل خطای HTTP 404 داد (فایل در دسترس نیست). دانلود تازه را امتحان کنید یا از تشخیص لاتین آفلاین استفاده کنید. این خطا به‌تنهایی نشانهٔ غیرفعال بودن دانلودمنیجر نیست.")
+        else context.tr("Download failed. Retry or open diagnostics for the provider error.","دانلود انجام نشد. دوباره تلاش کنید یا جزئیات فنی خطای سرویس را ببینید.")
+    }
 
     private val manager
         get() = RemoteModelManager.getInstance()

@@ -1,9 +1,13 @@
-# Current scope
+# Current scope — 1.1
 
-24 shapes, 32 games/challenges (8 game modes and 24 educational quiz categories), 16 idealized labs, independent pen/highlighter color and width, raw-contact thin/thick/palm calibration, single/multi-touch modes, direct pages and previews, floating in-app classroom tools, revised recognition downloads and LAN sharing.
+24 shapes; 49 HTML arcade games plus 32 native games/challenges; 68 Persian HTML simulations plus 16 bilingual native labs. Counts describe separate catalogs and may include overlapping subject areas.
 
-Retained: movable/scalable/rotatable objects, undo/redo, text/sticky/graphs, PDF/image import/export, .vura lesson autosave/backup, English/Persian.
+Multi-touch cached ink, separate pen/highlighter, dual-contact tip styles, calibrated palm behavior, single/multi-touch modes, direct pages/previews, five floating in-app classroom widgets, text/sticky/graphs, selective/whole erasing, selection actions, PDF/image import/export, .vura autosave/backup, LAN QR sharing and English/Persian native UI.
 
-Not implemented: full handwritten mathematical formula OCR, symbolic CAS, image/camera OCR, system-wide annotation/PiP over other apps, cloud collaboration, persistent groups, freeform lasso or segment eraser. Geometry recognition is heuristic and may misclassify; undo restores ink. Labs show ideal-model assumptions and are not laboratory equipment.
+Smart: basic continuous shape conversion; circled-writing selection; bundled Latin image OCR; optional downloaded Google handwriting models; editable review; arithmetic and degree-2 equations in x; function plotting.
 
-Actual display latency with 5/10 pens, text-model download/accuracy on that firmware, and QR between two classroom devices require physical validation. Router isolation and blocked model servers are external dependencies. The APK uses a development signing certificate; configure your own production key.
+Not included: general handwritten mathematical OCR (fractions/integrals/complex notation), Persian recognition without a downloaded language model, general symbolic CAS, camera OCR, system-wide drawing/PiP, cloud collaboration, persistent object groups, arbitrary lasso for all objects, or vector Boolean cutting. Area eraser preserves an object's identity with subtractive masks.
+
+PDF navigation changes the page shown inside a PDF object; it does not unpack a PDF into separate whiteboard pages. Lab snapshot inserts an image, not an editable live simulation. HTML lab explanations are Persian; bilingual native labs remain available.
+
+Physical display latency, real touch-contact separation, handwriting accuracy, Google model downloads and QR between two classroom devices require device validation. Release mode and passing tests do not certify absence of defects. APK is development-signed until you configure your production key.

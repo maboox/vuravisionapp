@@ -89,3 +89,5 @@ fun Context.scrollRow(children: LinearLayout) =
 fun View.pad(n: Int) {
     setPadding(context.dp(n), context.dp(n), context.dp(n), context.dp(n))
 }
+
+fun Context.tr(en:String,fa:String)=if(resources.configuration.locales[0].language=="fa")fa else en

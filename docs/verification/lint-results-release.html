@@ -177,9 +177,9 @@ document.getElementById(id).style.display = 'none';
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row">
-      <span class="mdl-layout-title">Lint Report: 332 warnings</span>
+      <span class="mdl-layout-title">Lint Report: 342 warnings</span>
       <div class="mdl-layout-spacer"></div>
-      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Sat Sep 19 12:42:02 CEST 2026 by AGP (8.9.2)</nav>
+      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Sat Sep 19 08:23:04 EDT 2026 by AGP (8.9.2)</nav>
     </div>
   </header>
   <div class="mdl-layout__drawer">
@@ -188,13 +188,14 @@ document.getElementById(id).style.display = 'none';
       <a class="mdl-navigation__link" href="#overview"><i class="material-icons">dashboard</i>Overview</a>
       <a class="mdl-navigation__link" href="#AppBundleLocaleChanges"><i class="material-icons warning-icon">warning</i>App Bundle handling of runtime locale changes (1)</a>
       <a class="mdl-navigation__link" href="#DiscouragedApi"><i class="material-icons warning-icon">warning</i>Using discouraged APIs (1)</a>
+      <a class="mdl-navigation__link" href="#SetJavaScriptEnabled"><i class="material-icons warning-icon">warning</i>Using <code>setJavaScriptEnabled</code> (1)</a>
       <a class="mdl-navigation__link" href="#DataExtractionRules"><i class="material-icons warning-icon">warning</i>Missing data extraction rules (1)</a>
-      <a class="mdl-navigation__link" href="#DrawAllocation"><i class="material-icons warning-icon">warning</i>Memory allocations within drawing code (1)</a>
-      <a class="mdl-navigation__link" href="#UnusedResources"><i class="material-icons warning-icon">warning</i>Unused resources (283)</a>
+      <a class="mdl-navigation__link" href="#DrawAllocation"><i class="material-icons warning-icon">warning</i>Memory allocations within drawing code (5)</a>
+      <a class="mdl-navigation__link" href="#UnusedResources"><i class="material-icons warning-icon">warning</i>Unused resources (284)</a>
       <a class="mdl-navigation__link" href="#ViewConstructor"><i class="material-icons warning-icon">warning</i>Missing View constructors for XML inflation (3)</a>
-      <a class="mdl-navigation__link" href="#UseKtx"><i class="material-icons warning-icon">warning</i>Use KTX extension function (23)</a>
+      <a class="mdl-navigation__link" href="#UseKtx"><i class="material-icons warning-icon">warning</i>Use KTX extension function (28)</a>
       <a class="mdl-navigation__link" href="#ClickableViewAccessibility"><i class="material-icons warning-icon">warning</i>Accessibility in Custom Views (1)</a>
-      <a class="mdl-navigation__link" href="#SetTextI18n"><i class="material-icons warning-icon">warning</i>TextView Internationalization (17)</a>
+      <a class="mdl-navigation__link" href="#SetTextI18n"><i class="material-icons warning-icon">warning</i>TextView Internationalization (16)</a>
       <a class="mdl-navigation__link" href="#RtlHardcoded"><i class="material-icons warning-icon">warning</i>Using left/right instead of start/end attributes (1)</a>
     </nav>
   </div>
@@ -220,14 +221,17 @@ document.getElementById(id).style.display = 'none';
 </td></tr>
 <tr>
 <td class="countColumn">1</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<a href="#SetJavaScriptEnabled">SetJavaScriptEnabled</a>: Using <code>setJavaScriptEnabled</code></td></tr>
+<tr>
+<td class="countColumn">1</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#DataExtractionRules">DataExtractionRules</a>: Missing data extraction rules</td></tr>
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Performance">Performance</a>
 </td></tr>
 <tr>
-<td class="countColumn">1</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<td class="countColumn">5</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#DrawAllocation">DrawAllocation</a>: Memory allocations within drawing code</td></tr>
 <tr>
-<td class="countColumn">283</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<td class="countColumn">284</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#UnusedResources">UnusedResources</a>: Unused resources</td></tr>
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Usability">Usability</a>
 </td></tr>
@@ -237,7 +241,7 @@ document.getElementById(id).style.display = 'none';
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Productivity">Productivity</a>
 </td></tr>
 <tr>
-<td class="countColumn">23</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<td class="countColumn">28</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#UseKtx">UseKtx</a>: Use KTX extension function</td></tr>
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Accessibility">Accessibility</a>
 </td></tr>
@@ -247,7 +251,7 @@ document.getElementById(id).style.display = 'none';
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Internationalization">Internationalization</a>
 </td></tr>
 <tr>
-<td class="countColumn">17</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
+<td class="countColumn">16</td><td class="issueColumn"><i class="material-icons warning-icon">warning</i>
 <a href="#SetTextI18n">SetTextI18n</a>: TextView Internationalization</td></tr>
 <tr><td class="countColumn"></td><td class="categoryColumn"><a href="#Internationalization:Bidirectional Text">Internationalization:Bidirectional Text</a>
 </td></tr>
@@ -275,13 +279,14 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:51</span>: <span class="message">Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the <code>bundle</code> configuration</span><br /><pre class="errorlines">
-<span class="lineno">   48 </span>       <span class="keyword">val</span> lang =
-<span class="lineno">   49 </span>           base.getSharedPreferences(<span class="string">"vura"</span>, MODE_PRIVATE).getString(<span class="string">"language"</span>, <span class="string">"en"</span>) ?: <span class="string">"en"</span>
-<span class="lineno">   50 </span>       <span class="keyword">val</span> config = Configuration(base.resources.configuration)
-<span class="caretline"><span class="lineno">   51 </span>       <span class="warning">config.setLocale(Locale(lang))</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">   52 </span>       <span class="keyword">super</span>.attachBaseContext(base.createConfigurationContext(config))
-<span class="lineno">   53 </span>   }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/ExploreActivity.kt">../../src/main/java/com/vuravision/classroom/ExploreActivity.kt</a>:12</span>: <span class="message">Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the <code>bundle</code> configuration</span><br /><pre class="errorlines">
+<span class="lineno">  9 </span><span class="javadoc">/** Only packaged, trusted documents; no network, file access or JavaScript bridge. */</span>
+<span class="lineno"> 10 </span><span class="keyword">class</span> ExploreActivity:Activity(){
+<span class="lineno"> 11 </span> private lateinit <span class="keyword">var</span> web:WebView
+<span class="caretline"><span class="lineno"> 12 </span> override <span class="keyword">fun</span> attachBaseContext(base:Context){<span class="keyword">val</span> config=android.content.res.Configuration(base.resources.configuration);<span class="warning">config.setLocale(java.util.Locale(base.getSharedPreferences(<span class="string">"vura"</span>,<span class="number">0</span>).getString(<span class="string">"language"</span>,<span class="string">"en"</span>)?:<span class="string">"en"</span>))</span>;<span class="keyword">super</span>.attachBaseContext(base.createConfigurationContext(config))}</span>
+<span class="lineno"> 13 </span> override <span class="keyword">fun</span> onCreate(state:Bundle?){<span class="keyword">super</span>.onCreate(state);window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+<span class="lineno"> 14 </span>  <span class="keyword">val</span> lab=intent.getBooleanExtra(<span class="string">"lab"</span>,<span class="keyword">false</span>);<span class="keyword">val</span> root=column().apply{setBackgroundColor(NAVY);fitsSystemWindows=<span class="keyword">true</span>};setContentView(root)
+<span class="lineno"> 15 </span>  <span class="keyword">val</span> bar=row().apply{pad(<span class="number">8</span>)};bar.addView(label(<span class="keyword">if</span>(lab)tr(<span class="string">"Discovery lab · 68"</span>,<span class="string">"آزمایشگاه اکتشاف · ۶۸"</span>)<span class="keyword">else</span> tr(<span class="string">"Arcade · 49"</span>,<span class="string">"بازی‌ها · ۴۹"</span>),<span class="number">18f</span>,Color.WHITE,<span class="keyword">true</span>),LinearLayout.LayoutParams(<span class="number">0</span>,-<span class="number">2</span>,<span class="number">1f</span>))
 </pre>
 
 </div>
@@ -357,7 +362,54 @@ Dismiss</button>            </div>
             </div>
           </section>
 <a name="Security"></a>
-<a name="DataExtractionRules"></a>
+<a name="SetJavaScriptEnabled"></a>
+<section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp" id="SetJavaScriptEnabledCard" style="display: block;">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+  <div class="mdl-card__title">
+    <h2 class="mdl-card__title-text">Using setJavaScriptEnabled</h2>
+  </div>
+              <div class="mdl-card__supporting-text">
+<div class="issue">
+<div class="warningslist">
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/ExploreActivity.kt">../../src/main/java/com/vuravision/classroom/ExploreActivity.kt</a>:18</span>: <span class="message">Using <code>setJavaScriptEnabled</code> can introduce XSS vulnerabilities into your application, review carefully</span><br /><pre class="errorlines">
+<span class="lineno"> 15 </span>  <span class="keyword">val</span> bar=row().apply{pad(<span class="number">8</span>)};bar.addView(label(<span class="keyword">if</span>(lab)tr(<span class="string">"Discovery lab · 68"</span>,<span class="string">"آزمایشگاه اکتشاف · ۶۸"</span>)<span class="keyword">else</span> tr(<span class="string">"Arcade · 49"</span>,<span class="string">"بازی‌ها · ۴۹"</span>),<span class="number">18f</span>,Color.WHITE,<span class="keyword">true</span>),LinearLayout.LayoutParams(<span class="number">0</span>,-<span class="number">2</span>,<span class="number">1f</span>))
+<span class="lineno"> 16 </span>  bar.addView(button(s(<span class="string">"close"</span>)){finish()});root.addView(bar)
+<span class="lineno"> 17 </span>  web=WebView(<span class="keyword">this</span>);root.addView(web,LinearLayout.LayoutParams(-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1f</span>))
+<span class="caretline"><span class="lineno"> 18 </span>  web.settings.apply{<span class="warning">javaScriptEnabled=<span class="keyword">true</span></span>;domStorageEnabled=<span class="keyword">true</span>;allowFileAccess=<span class="keyword">false</span>;allowContentAccess=<span class="keyword">false</span>;blockNetworkLoads=<span class="keyword">true</span>;setSupportMultipleWindows(<span class="keyword">false</span>);mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW}</span>
+<span class="lineno"> 19 </span>  web.webViewClient=<span class="keyword">object</span>:WebViewClient(){override <span class="keyword">fun</span> shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest)=<span class="keyword">true</span>}
+<span class="lineno"> 20 </span>  <span class="keyword">val</span> language=getSharedPreferences(<span class="string">"vura"</span>,<span class="number">0</span>).getString(<span class="string">"language"</span>,<span class="string">"en"</span>)?:<span class="string">"en"</span>
+<span class="lineno"> 21 </span>  <span class="keyword">val</span> name=<span class="keyword">if</span>(lab)<span class="string">"lab"</span><span class="keyword">else</span><span class="string">"arcade"</span>;<span class="keyword">val</span> html=assets.open(<span class="string">"$name.html"</span>).bufferedReader().use{it.readText()}
+</pre>
+
+</div>
+<div class="metadata"><div class="explanation" id="explanationSetJavaScriptEnabled" style="display: none;">
+Your code should not invoke <code>setJavaScriptEnabled</code> if you are not sure that your app really requires JavaScript support.<br/><div class="moreinfo">More info: <ul><li><a href="https://goo.gle/SetJavaScriptEnabled">https://goo.gle/SetJavaScriptEnabled</a>
+<li><a href="https://developer.android.com/training/articles/security-tips">https://developer.android.com/training/articles/security-tips</a>
+</ul></div>To suppress this error, use the issue id "SetJavaScriptEnabled" as explained in the <a href="#SuppressInfo">Suppressing Warnings and Errors</a> section.<br/>
+<br/></div>
+</div>
+</div>
+<div class="chips">
+<span class="mdl-chip">
+    <span class="mdl-chip__text">SetJavaScriptEnabled</span>
+</span>
+<span class="mdl-chip">
+    <span class="mdl-chip__text">Security</span>
+</span>
+<span class="mdl-chip">
+    <span class="mdl-chip__text">Warning</span>
+</span>
+<span class="mdl-chip">
+    <span class="mdl-chip__text">Priority 6/10</span>
+</span>
+</div>
+              </div>
+              <div class="mdl-card__actions mdl-card--border">
+<button class="mdl-button mdl-js-button mdl-js-ripple-effect" id="explanationSetJavaScriptEnabledLink" onclick="reveal('explanationSetJavaScriptEnabled');">
+Explain</button><button class="mdl-button mdl-js-button mdl-js-ripple-effect" id="SetJavaScriptEnabledCardLink" onclick="hideid('SetJavaScriptEnabledCard');">
+Dismiss</button>            </div>
+            </div>
+          </section><a name="DataExtractionRules"></a>
 <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp" id="DataExtractionRulesCard" style="display: block;">
             <div class="mdl-card mdl-cell mdl-cell--12-col">
   <div class="mdl-card__title">
@@ -371,9 +423,9 @@ Dismiss</button>            </div>
 <span class="lineno">  4 </span>  <span class="tag">&lt;uses-feature</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"android.hardware.touchscreen"</span> <span class="prefix">android:</span><span class="attribute">required</span>=<span class="value">"false"</span> />
 <span class="lineno">  5 </span>  <span class="tag">&lt;queries>&lt;package</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"com.android.providers.downloads"</span> /><span class="tag">&lt;/queries></span>
 <span class="caretline"><span class="lineno">  6 </span>  <span class="tag">&lt;application</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">allowBackup</span>=<span class="value">"</span><span class="warning"><span class="value">false</span></span><span class="value">"</span> <span class="prefix">android:</span><span class="attribute">label</span>=<span class="value">"@string/app_name"</span> <span class="prefix">android:</span><span class="attribute">icon</span>=<span class="value">"@drawable/ic_launcher"</span> <span class="prefix">android:</span><span class="attribute">supportsRtl</span>=<span class="value">"true"</span> <span class="prefix">android:</span><span class="attribute">theme</span>=<span class="value">"@style/AppTheme"</span> <span class="prefix">android:</span><span class="attribute">usesCleartextTraffic</span>=<span class="value">"false"</span>></span>
-<span class="lineno">  7 </span>      <span class="tag">&lt;activity</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">".MainActivity"</span> <span class="prefix">android:</span><span class="attribute">exported</span>=<span class="value">"true"</span> <span class="prefix">android:</span><span class="attribute">configChanges</span>=<span class="value">"orientation|screenSize|keyboardHidden"</span> <span class="prefix">android:</span><span class="attribute">windowSoftInputMode</span>=<span class="value">"adjustResize"</span>>
-<span class="lineno">  8 </span>          <span class="tag">&lt;intent-filter>&lt;action</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"android.intent.action.MAIN"</span> /><span class="tag">&lt;category</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"android.intent.category.LAUNCHER"</span> /><span class="tag">&lt;/intent-filter></span>
-<span class="lineno">  9 </span>      <span class="tag">&lt;/activity></span></pre>
+<span class="lineno">  7 </span>      <span class="tag">&lt;activity</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">".ExploreActivity"</span> <span class="prefix">android:</span><span class="attribute">exported</span>=<span class="value">"false"</span> <span class="prefix">android:</span><span class="attribute">configChanges</span>=<span class="value">"orientation|screenSize|keyboardHidden"</span> />
+<span class="lineno">  8 </span>      <span class="tag">&lt;activity</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">".MainActivity"</span> <span class="prefix">android:</span><span class="attribute">exported</span>=<span class="value">"true"</span> <span class="prefix">android:</span><span class="attribute">configChanges</span>=<span class="value">"orientation|screenSize|keyboardHidden"</span> <span class="prefix">android:</span><span class="attribute">windowSoftInputMode</span>=<span class="value">"adjustResize"</span>>
+<span class="lineno">  9 </span>          <span class="tag">&lt;intent-filter>&lt;action</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"android.intent.action.MAIN"</span> /><span class="tag">&lt;category</span><span class="attribute"> </span><span class="prefix">android:</span><span class="attribute">name</span>=<span class="value">"android.intent.category.LAUNCHER"</span> /><span class="tag">&lt;/intent-filter></span></pre>
 
 </div>
 <div class="metadata"><div class="explanation" id="explanationDataExtractionRules" style="display: none;">
@@ -417,14 +469,54 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:129</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
-<span class="lineno"> 126 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
-<span class="lineno"> 127 </span>  override <span class="keyword">fun</span> onDraw(c:Canvas) {
-<span class="lineno"> 128 </span>      backing?.let { bitmap ->
-<span class="caretline"><span class="lineno"> 129 </span>          <span class="keyword">val</span> target=<span class="warning">Canvas(bitmap)</span>;target.save();transformCanvas(target)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 130 </span>          <span class="keyword">val</span> page=store.page
-<span class="lineno"> 131 </span>          <span class="keyword">if</span>(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
-<span class="lineno"> 132 </span>              <span class="keyword">val</span> l=world(<span class="number">0f</span>,<span class="number">0f</span>);<span class="keyword">val</span> r=world(width.toFloat(),height.toFloat())
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:138</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
+<span class="lineno"> 135 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
+<span class="lineno"> 136 </span>  override <span class="keyword">fun</span> onDraw(c:Canvas) {
+<span class="lineno"> 137 </span>      backing?.let { bitmap ->
+<span class="caretline"><span class="lineno"> 138 </span>          <span class="keyword">val</span> target=<span class="warning">Canvas(bitmap)</span>;target.save();transformCanvas(target)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 139 </span>          <span class="keyword">val</span> page=store.page
+<span class="lineno"> 140 </span>          <span class="keyword">if</span>(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
+<span class="lineno"> 141 </span>              <span class="keyword">val</span> l=world(<span class="number">0f</span>,<span class="number">0f</span>);<span class="keyword">val</span> r=world(width.toFloat(),height.toFloat())
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:240</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
+<span class="lineno">  237 </span>  private <span class="keyword">fun</span> penSettings(){
+<span class="lineno">  238 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">18</span>)};<span class="keyword">val</span> body=column();<span class="keyword">var</span> broad=<span class="keyword">false</span>
+<span class="lineno">  239 </span>      <span class="keyword">val</span> preview=<span class="keyword">object</span>:View(<span class="keyword">this</span>){override <span class="keyword">fun</span> onDraw(canvas:Canvas){<span class="keyword">val</span> color=<span class="keyword">if</span>(broad)board.profile.thickColor <span class="keyword">else</span> board.inkColor;<span class="keyword">val</span> width=<span class="keyword">if</span>(broad)board.profile.thickWidth <span class="keyword">else</span> board.inkWidth
+<span class="caretline"><span class="lineno">  240 </span>          <span class="keyword">val</span> paint=<span class="warning">Paint(Paint.ANTI_ALIAS_FLAG)</span>.apply{<span class="keyword">this</span>.color=color;strokeWidth=dp(width.toInt()).toFloat()*(<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">4f</span> <span class="keyword">else</span> <span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>)<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>);alpha=<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">75</span> <span class="keyword">else</span> <span class="number">255</span>;style=Paint.Style.STROKE;strokeCap=<span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>||board.tool==<span class="string">"highlight"</span>)Paint.Cap.SQUARE <span class="keyword">else</span> Paint.Cap.ROUND;<span class="keyword">if</span>(board.penStyle==<span class="string">"dashed"</span>)pathEffect=DashPathEffect(floatArrayOf(<span class="number">25f</span>,<span class="number">16f</span>),<span class="number">0f</span>)}</span>
+<span class="lineno">  241 </span>          <span class="keyword">val</span> path=Path();path.moveTo(<span class="number">30f</span>,height*.<span class="number">7f</span>);path.cubicTo(<span class="keyword">this</span>.width*.<span class="number">3f</span>,<span class="number">0f</span>,<span class="keyword">this</span>.width*.<span class="number">55f</span>,height.toFloat(),<span class="keyword">this</span>.width-<span class="number">30f</span>,height*.<span class="number">3f</span>);canvas.drawPath(path,paint)
+<span class="lineno">  242 </span>      }}.apply{background=rounded(PAPER,dp(<span class="number">14</span>).toFloat())}
+<span class="lineno">  243 </span>      c.addView(label(tr(<span class="string">"Live preview"</span>,<span class="string">"پیش‌نمایش زنده"</span>),<span class="number">14f</span>,MUTED));c.addView(preview,LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">72</span>)))
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:240</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
+<span class="lineno">  237 </span>  private <span class="keyword">fun</span> penSettings(){
+<span class="lineno">  238 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">18</span>)};<span class="keyword">val</span> body=column();<span class="keyword">var</span> broad=<span class="keyword">false</span>
+<span class="lineno">  239 </span>      <span class="keyword">val</span> preview=<span class="keyword">object</span>:View(<span class="keyword">this</span>){override <span class="keyword">fun</span> onDraw(canvas:Canvas){<span class="keyword">val</span> color=<span class="keyword">if</span>(broad)board.profile.thickColor <span class="keyword">else</span> board.inkColor;<span class="keyword">val</span> width=<span class="keyword">if</span>(broad)board.profile.thickWidth <span class="keyword">else</span> board.inkWidth
+<span class="caretline"><span class="lineno">  240 </span>          <span class="keyword">val</span> paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{<span class="keyword">this</span>.color=color;strokeWidth=dp(width.toInt()).toFloat()*(<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">4f</span> <span class="keyword">else</span> <span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>)<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>);alpha=<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">75</span> <span class="keyword">else</span> <span class="number">255</span>;style=Paint.Style.STROKE;strokeCap=<span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>||board.tool==<span class="string">"highlight"</span>)Paint.Cap.SQUARE <span class="keyword">else</span> Paint.Cap.ROUND;<span class="keyword">if</span>(board.penStyle==<span class="string">"dashed"</span>)pathEffect=<span class="warning">DashPathEffect(floatArrayOf(<span class="number">25f</span>,<span class="number">16f</span>),<span class="number">0f</span>)</span>}</span>
+<span class="lineno">  241 </span>          <span class="keyword">val</span> path=Path();path.moveTo(<span class="number">30f</span>,height*.<span class="number">7f</span>);path.cubicTo(<span class="keyword">this</span>.width*.<span class="number">3f</span>,<span class="number">0f</span>,<span class="keyword">this</span>.width*.<span class="number">55f</span>,height.toFloat(),<span class="keyword">this</span>.width-<span class="number">30f</span>,height*.<span class="number">3f</span>);canvas.drawPath(path,paint)
+<span class="lineno">  242 </span>      }}.apply{background=rounded(PAPER,dp(<span class="number">14</span>).toFloat())}
+<span class="lineno">  243 </span>      c.addView(label(tr(<span class="string">"Live preview"</span>,<span class="string">"پیش‌نمایش زنده"</span>),<span class="number">14f</span>,MUTED));c.addView(preview,LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">72</span>)))
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:240</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
+<span class="lineno">  237 </span>  private <span class="keyword">fun</span> penSettings(){
+<span class="lineno">  238 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">18</span>)};<span class="keyword">val</span> body=column();<span class="keyword">var</span> broad=<span class="keyword">false</span>
+<span class="lineno">  239 </span>      <span class="keyword">val</span> preview=<span class="keyword">object</span>:View(<span class="keyword">this</span>){override <span class="keyword">fun</span> onDraw(canvas:Canvas){<span class="keyword">val</span> color=<span class="keyword">if</span>(broad)board.profile.thickColor <span class="keyword">else</span> board.inkColor;<span class="keyword">val</span> width=<span class="keyword">if</span>(broad)board.profile.thickWidth <span class="keyword">else</span> board.inkWidth
+<span class="caretline"><span class="lineno">  240 </span>          <span class="keyword">val</span> paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{<span class="keyword">this</span>.color=color;strokeWidth=dp(width.toInt()).toFloat()*(<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">4f</span> <span class="keyword">else</span> <span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>)<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>);alpha=<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">75</span> <span class="keyword">else</span> <span class="number">255</span>;style=Paint.Style.STROKE;strokeCap=<span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>||board.tool==<span class="string">"highlight"</span>)Paint.Cap.SQUARE <span class="keyword">else</span> Paint.Cap.ROUND;<span class="keyword">if</span>(board.penStyle==<span class="string">"dashed"</span>)pathEffect=<span class="warning">DashPathEffect(floatArrayOf(<span class="number">25f</span>,<span class="number">16f</span>),<span class="number">0f</span>)</span>}</span>
+<span class="lineno">  241 </span>          <span class="keyword">val</span> path=Path();path.moveTo(<span class="number">30f</span>,height*.<span class="number">7f</span>);path.cubicTo(<span class="keyword">this</span>.width*.<span class="number">3f</span>,<span class="number">0f</span>,<span class="keyword">this</span>.width*.<span class="number">55f</span>,height.toFloat(),<span class="keyword">this</span>.width-<span class="number">30f</span>,height*.<span class="number">3f</span>);canvas.drawPath(path,paint)
+<span class="lineno">  242 </span>      }}.apply{background=rounded(PAPER,dp(<span class="number">14</span>).toFloat())}
+<span class="lineno">  243 </span>      c.addView(label(tr(<span class="string">"Live preview"</span>,<span class="string">"پیش‌نمایش زنده"</span>),<span class="number">14f</span>,MUTED));c.addView(preview,LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">72</span>)))
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:241</span>: <span class="message">Avoid object allocations during draw/layout operations (preallocate and reuse instead)</span><br /><pre class="errorlines">
+<span class="lineno">  238 </span>  <span class="keyword">val</span> c=column().apply{pad(<span class="number">18</span>)};<span class="keyword">val</span> body=column();<span class="keyword">var</span> broad=<span class="keyword">false</span>
+<span class="lineno">  239 </span>  <span class="keyword">val</span> preview=<span class="keyword">object</span>:View(<span class="keyword">this</span>){override <span class="keyword">fun</span> onDraw(canvas:Canvas){<span class="keyword">val</span> color=<span class="keyword">if</span>(broad)board.profile.thickColor <span class="keyword">else</span> board.inkColor;<span class="keyword">val</span> width=<span class="keyword">if</span>(broad)board.profile.thickWidth <span class="keyword">else</span> board.inkWidth
+<span class="lineno">  240 </span>      <span class="keyword">val</span> paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{<span class="keyword">this</span>.color=color;strokeWidth=dp(width.toInt()).toFloat()*(<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">4f</span> <span class="keyword">else</span> <span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>)<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>);alpha=<span class="keyword">if</span>(board.tool==<span class="string">"highlight"</span>)<span class="number">75</span> <span class="keyword">else</span> <span class="number">255</span>;style=Paint.Style.STROKE;strokeCap=<span class="keyword">if</span>(board.penStyle==<span class="string">"marker"</span>||board.tool==<span class="string">"highlight"</span>)Paint.Cap.SQUARE <span class="keyword">else</span> Paint.Cap.ROUND;<span class="keyword">if</span>(board.penStyle==<span class="string">"dashed"</span>)pathEffect=DashPathEffect(floatArrayOf(<span class="number">25f</span>,<span class="number">16f</span>),<span class="number">0f</span>)}
+<span class="caretline"><span class="lineno">  241 </span>      <span class="keyword">val</span> path=<span class="warning">Path()</span>;path.moveTo(<span class="number">30f</span>,height*.<span class="number">7f</span>);path.cubicTo(<span class="keyword">this</span>.width*.<span class="number">3f</span>,<span class="number">0f</span>,<span class="keyword">this</span>.width*.<span class="number">55f</span>,height.toFloat(),<span class="keyword">this</span>.width-<span class="number">30f</span>,height*.<span class="number">3f</span>);canvas.drawPath(path,paint)</span>
+<span class="lineno">  242 </span>  }}.apply{background=rounded(PAPER,dp(<span class="number">14</span>).toFloat())}
+<span class="lineno">  243 </span>  c.addView(label(tr(<span class="string">"Live preview"</span>,<span class="string">"پیش‌نمایش زنده"</span>),<span class="number">14f</span>,MUTED));c.addView(preview,LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">72</span>)))
+<span class="lineno">  244 </span>  <span class="keyword">fun</span> refresh(){body.removeAllViews();<span class="keyword">if</span>(board.tool!=<span class="string">"highlight"</span>)body.addView(label(<span class="keyword">if</span>(broad)tr(<span class="string">"Broad-tip appearance"</span>,<span class="string">"ظاهر سر پهن"</span>)<span class="keyword">else</span> tr(<span class="string">"Fine-tip appearance"</span>,<span class="string">"ظاهر سر باریک"</span>),<span class="number">16f</span>,TEAL,<span class="keyword">true</span>));body.addView(label(tr(<span class="string">"Color"</span>,<span class="string">"رنگ"</span>),<span class="number">16f</span>,NAVY,<span class="keyword">true</span>));palette(body,<span class="keyword">if</span>(broad)board.profile.thickColor <span class="keyword">else</span> board.inkColor){<span class="keyword">if</span>(broad)board.profile.thickColor=it <span class="keyword">else</span> board.inkColor=it;savePens();preview.invalidate()}
 </pre>
 
 </div>
@@ -510,7 +602,7 @@ Dismiss</button>            </div>
 <span class="lineno">   9 </span><span class="tag">&lt;string</span><span class="attribute"> name</span>=<span class="value">"select"</span>>Select<span class="tag">&lt;/string></span>
 <span class="lineno">  10 </span><span class="tag">&lt;string</span><span class="attribute"> name</span>=<span class="value">"pan"</span>>Navigate<span class="tag">&lt;/string></span></pre>
 
-<button class="mdl-button mdl-js-button mdl-button--primary" id="UnusedResourcesDivLink" onclick="reveal('UnusedResourcesDiv');" />+ 278 More Occurrences...</button>
+<button class="mdl-button mdl-js-button mdl-button--primary" id="UnusedResourcesDivLink" onclick="reveal('UnusedResourcesDiv');" />+ 279 More Occurrences...</button>
 <div id="UnusedResourcesDiv" style="display: none">
 <span class="location"><a href="../../src/main/res/values/strings.xml">../../src/main/res/values/strings.xml</a>:8</span>: <span class="message">The resource <code>R.string.erase</code> appears to be unused</span><br /><pre class="errorlines">
 <span class="lineno">   5 </span><span class="tag">&lt;string</span><span class="attribute"> name</span>=<span class="value">"workspace"</span>>Workspace<span class="tag">&lt;/string></span>
@@ -917,7 +1009,7 @@ Dismiss</button>            </div>
 <span class="lineno">  54 </span><span class="tag">&lt;string</span><span class="attribute"> name</span>=<span class="value">"grid"</span>>Grid<span class="tag">&lt;/string></span>
 <span class="lineno">  55 </span><span class="tag">&lt;string</span><span class="attribute"> name</span>=<span class="value">"ruled"</span>>Ruled<span class="tag">&lt;/string></span></pre>
 
-<br/><b>NOTE: 233 results omitted.</b><br/><br/></div>
+<br/><b>NOTE: 234 results omitted.</b><br/><br/></div>
 </div>
 <div class="metadata"><div class="explanation" id="explanationUnusedResources" style="display: none;">
 Unused resources make applications larger and slow down builds.<br/>
@@ -969,8 +1061,7 @@ Dismiss</button>            </div>
 <span class="caretline"><span class="lineno">   8 </span><span class="keyword">class</span> <span class="warning">Board</span>(context: Context, <span class="keyword">val</span> store: Store, <span class="keyword">val</span> renderer: Renderer) : View(context) {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
 <span class="lineno">   9 </span>    <span class="keyword">var</span> tool = <span class="string">"pen"</span>
 <span class="lineno">  10 </span>    <span class="keyword">var</span> shape = <span class="string">"rectangle"</span>
-<span class="lineno">  11 </span>    <span class="keyword">var</span> penColor=NAVY
-</pre>
+<span class="lineno">  11 </span>    <span class="keyword">var</span> eraserMode=<span class="string">"stroke"</span></pre>
 
 <span class="location"><a href="../../src/main/java/com/vuravision/classroom/Labs.kt">../../src/main/java/com/vuravision/classroom/Labs.kt</a>:200</span>: <span class="message">Custom view <code>LabView</code> is missing constructor used by tools: <code>(Context)</code> or <code>(Context,AttributeSet)</code> or <code>(Context,AttributeSet,int)</code></span><br /><pre class="errorlines">
 <span class="lineno"> 197 </span>    private <span class="keyword">fun</span> fmt(v: Float) = <span class="string">"%.2f"</span>.format(java.util.Locale.US, v)
@@ -1033,44 +1124,34 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:123</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 120 </span>  }
-<span class="lineno"> 121 </span>
-<span class="lineno"> 122 </span>  override <span class="keyword">fun</span> onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
-<span class="caretline"><span class="lineno"> 123 </span>      backing?.recycle();backing=<span class="keyword">if</span>(w><span class="number">0</span> &amp;&amp; h><span class="number">0</span>)<span class="warning">Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888)</span> <span class="keyword">else</span> <span class="keyword">null</span></span>
-<span class="lineno"> 124 </span>      backingDirty=<span class="keyword">true</span>
-<span class="lineno"> 125 </span>  }
-<span class="lineno"> 126 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:132</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 129 </span>  }
+<span class="lineno"> 130 </span>
+<span class="lineno"> 131 </span>  override <span class="keyword">fun</span> onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
+<span class="caretline"><span class="lineno"> 132 </span>      backing?.recycle();backing=<span class="keyword">if</span>(w><span class="number">0</span> &amp;&amp; h><span class="number">0</span>)<span class="warning">Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888)</span> <span class="keyword">else</span> <span class="keyword">null</span></span>
+<span class="lineno"> 133 </span>      backingDirty=<span class="keyword">true</span>
+<span class="lineno"> 134 </span>  }
+<span class="lineno"> 135 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:129</span>: <span class="message">Use the KTX extension function <code>Canvas.withSave</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 126 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
-<span class="lineno"> 127 </span>  override <span class="keyword">fun</span> onDraw(c:Canvas) {
-<span class="lineno"> 128 </span>      backing?.let { bitmap ->
-<span class="caretline"><span class="lineno"> 129 </span>          <span class="keyword">val</span> target=Canvas(bitmap);<span class="warning">target.save()</span>;transformCanvas(target)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 130 </span>          <span class="keyword">val</span> page=store.page
-<span class="lineno"> 131 </span>          <span class="keyword">if</span>(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
-<span class="lineno"> 132 </span>              <span class="keyword">val</span> l=world(<span class="number">0f</span>,<span class="number">0f</span>);<span class="keyword">val</span> r=world(width.toFloat(),height.toFloat())
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:138</span>: <span class="message">Use the KTX extension function <code>Canvas.withSave</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 135 </span>  private <span class="keyword">fun</span> transformCanvas(c:Canvas) { c.scale(density,density);c.translate(tx,ty);c.scale(zoom,zoom) }
+<span class="lineno"> 136 </span>  override <span class="keyword">fun</span> onDraw(c:Canvas) {
+<span class="lineno"> 137 </span>      backing?.let { bitmap ->
+<span class="caretline"><span class="lineno"> 138 </span>          <span class="keyword">val</span> target=Canvas(bitmap);<span class="warning">target.save()</span>;transformCanvas(target)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 139 </span>          <span class="keyword">val</span> page=store.page
+<span class="lineno"> 140 </span>          <span class="keyword">if</span>(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
+<span class="lineno"> 141 </span>              <span class="keyword">val</span> l=world(<span class="number">0f</span>,<span class="number">0f</span>);<span class="keyword">val</span> r=world(width.toFloat(),height.toFloat())
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:139</span>: <span class="message">Use the KTX extension function <code>Canvas.withSave</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 136 </span>            <span class="keyword">for</span>(i <span class="keyword">in</span> cachedCount until page.items.size)renderer.draw(target,page.items[i])
-<span class="lineno"> 137 </span>            cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,<span class="number">0f</span>,<span class="number">0f</span>,<span class="keyword">null</span>)
-<span class="lineno"> 138 </span>        }
-<span class="caretline"><span class="lineno"> 139 </span>        <span class="warning">c.save()</span>;transformCanvas(c)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 140 </span>        live.values.forEach { renderer.draw(c,it) }
-<span class="lineno"> 141 </span>        p.color = <span class="number">0xffe46d38.</span>toInt()
-<span class="lineno"> 142 </span>        p.style = Paint.Style.STROKE
-</pre>
-
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt">../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt</a>:34</span>: <span class="message">Use the KTX extension property <code>View.isVisible</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 31 </span>   }
-<span class="lineno"> 32 </span>   <span class="string">"dice"</span>->{display.text=<span class="string">"⚄"</span>;btn(context.s(<span class="string">"roll"</span>)){display.text=<span class="string">"${</span>(<span class="number">1..6</span>).random()<span class="string">}"</span>}}
-<span class="lineno"> 33 </span>   <span class="string">"scoreboard"</span>->{<span class="keyword">var</span> a=<span class="number">0</span>;<span class="keyword">var</span> b=<span class="number">0</span>;display.text=<span class="string">"0 : 0"</span>;btn(<span class="string">"A +"</span>){a++;display.text=<span class="string">"$a : $b"</span>};btn(<span class="string">"B +"</span>){b++;display.text=<span class="string">"$a : $b"</span>};btn(<span class="string">"↺"</span>){a=<span class="number">0</span>;b=<span class="number">0</span>;display.text=<span class="string">"0 : 0"</span>}}
-<span class="caretline"><span class="lineno"> 34 </span>   <span class="string">"curtain"</span>->{display.text=context.s(<span class="string">"curtain"</span>);display.setTextColor(Color.WHITE);display.setBackgroundColor(NAVY);display.layoutParams=LinearLayout.LayoutParams(-<span class="number">1</span>,context.dp(<span class="number">220</span>));btn(context.s(<span class="string">"reveal"</span>)){display.visibility=<span class="keyword">if</span>(<span class="warning">display.visibility==View.VISIBLE</span>)View.GONE <span class="keyword">else</span> View.VISIBLE}}</span>
-<span class="lineno"> 35 </span>  }
-<span class="lineno"> 36 </span>  <span class="keyword">val</span> width=minOf(context.dp(<span class="keyword">if</span>(key==<span class="string">"curtain"</span>)<span class="number">480</span> <span class="keyword">else</span> <span class="number">340</span>),(host.width-context.dp(<span class="number">16</span>)).coerceAtLeast(context.dp(<span class="number">240</span>)))
-<span class="lineno"> 37 </span>  host.addView(card,FrameLayout.LayoutParams(width,-<span class="number">2</span>,Gravity.TOP or Gravity.LEFT).apply{leftMargin=context.dp(<span class="number">16</span>);topMargin=context.dp(<span class="number">16</span>+widgets.size*<span class="number">24</span>)});widgets[key]=card
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Board.kt">../../src/main/java/com/vuravision/classroom/Board.kt</a>:148</span>: <span class="message">Use the KTX extension function <code>Canvas.withSave</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 145 </span>            <span class="keyword">for</span>(i <span class="keyword">in</span> cachedCount until page.items.size)renderer.draw(target,page.items[i])
+<span class="lineno"> 146 </span>            cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,<span class="number">0f</span>,<span class="number">0f</span>,<span class="keyword">null</span>)
+<span class="lineno"> 147 </span>        }
+<span class="caretline"><span class="lineno"> 148 </span>        <span class="warning">c.save()</span>;transformCanvas(c)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 149 </span>        live.values.forEach { renderer.draw(c,it) }
+<span class="lineno"> 150 </span>        p.color = <span class="number">0xffe46d38.</span>toInt()
+<span class="lineno"> 151 </span>        p.style = Paint.Style.STROKE
 </pre>
 
 <span class="location"><a href="../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt">../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt</a>:34</span>: <span class="message">Use the KTX extension property <code>View.isVisible</code> instead?</span><br /><pre class="errorlines">
@@ -1083,7 +1164,17 @@ Dismiss</button>            </div>
 <span class="lineno"> 37 </span>  host.addView(card,FrameLayout.LayoutParams(width,-<span class="number">2</span>,Gravity.TOP or Gravity.LEFT).apply{leftMargin=context.dp(<span class="number">16</span>);topMargin=context.dp(<span class="number">16</span>+widgets.size*<span class="number">24</span>)});widgets[key]=card
 </pre>
 
-<button class="mdl-button mdl-js-button mdl-button--primary" id="UseKtxDivLink" onclick="reveal('UseKtxDiv');" />+ 18 More Occurrences...</button>
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt">../../src/main/java/com/vuravision/classroom/ClassroomWidgets.kt</a>:34</span>: <span class="message">Use the KTX extension property <code>View.isVisible</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 31 </span>   }
+<span class="lineno"> 32 </span>   <span class="string">"dice"</span>->{display.text=<span class="string">"⚄"</span>;btn(context.s(<span class="string">"roll"</span>)){display.text=<span class="string">"${</span>(<span class="number">1..6</span>).random()<span class="string">}"</span>}}
+<span class="lineno"> 33 </span>   <span class="string">"scoreboard"</span>->{<span class="keyword">var</span> a=<span class="number">0</span>;<span class="keyword">var</span> b=<span class="number">0</span>;display.text=<span class="string">"0 : 0"</span>;btn(<span class="string">"A +"</span>){a++;display.text=<span class="string">"$a : $b"</span>};btn(<span class="string">"B +"</span>){b++;display.text=<span class="string">"$a : $b"</span>};btn(<span class="string">"↺"</span>){a=<span class="number">0</span>;b=<span class="number">0</span>;display.text=<span class="string">"0 : 0"</span>}}
+<span class="caretline"><span class="lineno"> 34 </span>   <span class="string">"curtain"</span>->{display.text=context.s(<span class="string">"curtain"</span>);display.setTextColor(Color.WHITE);display.setBackgroundColor(NAVY);display.layoutParams=LinearLayout.LayoutParams(-<span class="number">1</span>,context.dp(<span class="number">220</span>));btn(context.s(<span class="string">"reveal"</span>)){display.visibility=<span class="keyword">if</span>(<span class="warning">display.visibility==View.VISIBLE</span>)View.GONE <span class="keyword">else</span> View.VISIBLE}}</span>
+<span class="lineno"> 35 </span>  }
+<span class="lineno"> 36 </span>  <span class="keyword">val</span> width=minOf(context.dp(<span class="keyword">if</span>(key==<span class="string">"curtain"</span>)<span class="number">480</span> <span class="keyword">else</span> <span class="number">340</span>),(host.width-context.dp(<span class="number">16</span>)).coerceAtLeast(context.dp(<span class="number">240</span>)))
+<span class="lineno"> 37 </span>  host.addView(card,FrameLayout.LayoutParams(width,-<span class="number">2</span>,Gravity.TOP or Gravity.LEFT).apply{leftMargin=context.dp(<span class="number">16</span>);topMargin=context.dp(<span class="number">16</span>+widgets.size*<span class="number">24</span>)});widgets[key]=card
+</pre>
+
+<button class="mdl-button mdl-js-button mdl-button--primary" id="UseKtxDivLink" onclick="reveal('UseKtxDiv');" />+ 23 More Occurrences...</button>
 <div id="UseKtxDiv" style="display: none">
 <span class="location"><a href="../../src/main/java/com/vuravision/classroom/ExtraLabs.kt">../../src/main/java/com/vuravision/classroom/ExtraLabs.kt</a>:37</span>: <span class="message">Use the KTX extension function <code>Canvas.withSave</code> instead?</span><br /><pre class="errorlines">
 <span class="lineno"> 34 </span>  <span class="string">"energy"</span>->{block(<span class="number">150f</span>,<span class="number">350f</span>,<span class="number">700f</span>,<span class="number">10f</span>,MUTED);block(<span class="number">150f</span>,<span class="number">250f</span>,(a*<span class="number">15</span>+<span class="number">60</span>).toFloat(),<span class="number">90f</span>,TEAL);line(<span class="number">450f</span>,<span class="number">295f</span>,(<span class="number">450</span>+b*<span class="number">15</span>).toFloat(),<span class="number">295f</span>,ORANGE);text(<span class="string">"Eₖ = ½mv² = ${</span>f(Science.kinetic(a,b))<span class="string">} J"</span>,<span class="number">260f</span>,<span class="number">440f</span>);text(<span class="string">"p = mv = ${</span>f(a*b)<span class="string">} kg·m/s"</span>,<span class="number">260f</span>,<span class="number">490f</span>)}
@@ -1115,144 +1206,194 @@ Dismiss</button>            </div>
 <span class="lineno"> 215 </span>    }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:89</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">   86 </span>            handler.postDelayed(autosave, <span class="number">900</span>)
-<span class="lineno">   87 </span>        }
-<span class="lineno">   88 </span>        documentId = prefs.getString(<span class="string">"current"</span>, <span class="keyword">null</span>) ?: newId()
-<span class="caretline"><span class="lineno">   89 </span>        <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">   90 </span>        <span class="keyword">val</span> f = lessonFile()
-<span class="lineno">   91 </span>        <span class="keyword">if</span> (f.exists() || File(f.path + <span class="string">".bak"</span>).exists()) loadFile(f, <span class="keyword">false</span>)
-<span class="lineno">   92 </span>        <span class="keyword">else</span> {
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:97</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">   94 </span>            handler.postDelayed(autosave, <span class="number">900</span>)
+<span class="lineno">   95 </span>        }
+<span class="lineno">   96 </span>        documentId = prefs.getString(<span class="string">"current"</span>, <span class="keyword">null</span>) ?: newId()
+<span class="caretline"><span class="lineno">   97 </span>        <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">   98 </span>        <span class="keyword">val</span> f = lessonFile()
+<span class="lineno">   99 </span>        <span class="keyword">if</span> (f.exists() || File(f.path + <span class="string">".bak"</span>).exists()) loadFile(f, <span class="keyword">false</span>)
+<span class="lineno">  100 </span>        <span class="keyword">else</span> {
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:147</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  144 </span>  pageLabel = label(<span class="string">""</span>, <span class="number">12f</span>, MUTED).apply { setOnClickListener { pages() } }
-<span class="lineno">  145 </span>  strip.addView(pageLabel)
-<span class="lineno">  146 </span>  <span class="keyword">val</span> touch=button(s(<span class="keyword">if</span>(board.profile.multiTouch)<span class="string">"multi_touch_short"</span> <span class="keyword">else</span> <span class="string">"single_touch_short"</span>)){}
-<span class="caretline"><span class="lineno">  147 </span>  touch.setOnClickListener {board.profile.multiTouch=!board.profile.multiTouch;<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"multiTouch"</span>,board.profile.multiTouch).apply();touch.text=s(<span class="keyword">if</span>(board.profile.multiTouch)<span class="string">"multi_touch_short"</span> <span class="keyword">else</span> <span class="string">"single_touch_short"</span>)}</span>
-<span class="lineno">  148 </span>  strip.addView(touch)
-<span class="lineno">  149 </span>  strip.addView(button(s(<span class="string">"fit"</span>)){board.fit()})
-<span class="lineno">  150 </span>  root.addView(strip)
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:155</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  152 </span>  pageLabel = label(<span class="string">""</span>, <span class="number">12f</span>, MUTED).apply { setOnClickListener { pages() } }
+<span class="lineno">  153 </span>  strip.addView(pageLabel)
+<span class="lineno">  154 </span>  <span class="keyword">val</span> touch=button(s(<span class="keyword">if</span>(board.profile.multiTouch)<span class="string">"multi_touch_short"</span> <span class="keyword">else</span> <span class="string">"single_touch_short"</span>)){}
+<span class="caretline"><span class="lineno">  155 </span>  touch.setOnClickListener {board.profile.multiTouch=!board.profile.multiTouch;<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"multiTouch"</span>,board.profile.multiTouch).apply();touch.text=s(<span class="keyword">if</span>(board.profile.multiTouch)<span class="string">"multi_touch_short"</span> <span class="keyword">else</span> <span class="string">"single_touch_short"</span>)}</span>
+<span class="lineno">  156 </span>  strip.addView(touch)
+<span class="lineno">  157 </span>  strip.addView(button(s(<span class="string">"fit"</span>)){board.fit()})
+<span class="lineno">  158 </span>  root.addView(strip)
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:206</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  203 </span>      store.edit{store.lesson.pages.add(store.lesson.current+<span class="number">1</span>,Page());store.lesson.current++}
-<span class="lineno">  204 </span>      board.clearSelection();board.reset()
-<span class="lineno">  205 </span>  }
-<span class="caretline"><span class="lineno">  206 </span>  private <span class="keyword">fun</span> savePens() {<span class="warning">prefs.edit()</span>.putInt(<span class="string">"penColor"</span>,board.penColor).putInt(<span class="string">"highlightColor"</span>,board.highlightColor).putFloat(<span class="string">"penWidth"</span>,board.penWidth).putFloat(<span class="string">"highlightWidth"</span>,board.highlightWidth).putString(<span class="string">"penStyle"</span>,board.penStyle).apply()}</span>
-<span class="lineno">  207 </span>  private <span class="keyword">fun</span> penSettings() {
-<span class="lineno">  208 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">18</span>)};c.addView(label(s(<span class="string">"pen_hint"</span>),<span class="number">14f</span>,MUTED))
-<span class="lineno">  209 </span>      <span class="keyword">val</span> preview=label(<span class="string">"━━━━   ${</span>board.inkWidth.toInt()<span class="string">}"</span>,<span class="number">26f</span>,board.inkColor);c.addView(preview)
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:220</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  217 </span>      store.edit{store.lesson.pages.add(store.lesson.current+<span class="number">1</span>,Page());store.lesson.current++}
+<span class="lineno">  218 </span>      board.clearSelection();board.reset()
+<span class="lineno">  219 </span>  }
+<span class="caretline"><span class="lineno">  220 </span>  private <span class="keyword">fun</span> savePens() {<span class="warning">prefs.edit()</span>.putFloat(<span class="string">"thickWidth"</span>,board.profile.thickWidth).putInt(<span class="string">"thickColor"</span>,board.profile.thickColor).putInt(<span class="string">"penColor"</span>,board.penColor).putInt(<span class="string">"highlightColor"</span>,board.highlightColor).putFloat(<span class="string">"penWidth"</span>,board.penWidth).putFloat(<span class="string">"highlightWidth"</span>,board.highlightWidth).putString(<span class="string">"penStyle"</span>,board.penStyle).apply()}</span>
+<span class="lineno">  221 </span>  private <span class="keyword">fun</span> palette(c:LinearLayout,initial:Int,changed:(Int)->Unit){
+<span class="lineno">  222 </span>      <span class="keyword">val</span> colors=listOf(NAVY,Color.BLACK,Color.WHITE,<span class="number">0xffe45756.</span>toInt(),ORANGE,<span class="number">0xffffcf40.</span>toInt(),TEAL,<span class="number">0xff268bd2.</span>toInt(),<span class="number">0xff865ac7.</span>toInt(),<span class="number">0xffec76ab.</span>toInt())
+<span class="lineno">  223 </span>      <span class="keyword">val</span> buttons=mutableListOf&lt;Button>()
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:229</span>: <span class="message">Use the KTX extension function <code>Canvas.withTranslation</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  226 </span>          <span class="keyword">val</span> ratio=<span class="keyword">if</span>(key <span class="keyword">in</span> listOf(<span class="string">"rectangle"</span>,<span class="string">"rounded_rectangle"</span>,<span class="string">"ellipse"</span>,<span class="string">"trapezoid"</span>,<span class="string">"parallelogram"</span>,<span class="string">"line"</span>,<span class="string">"arrow"</span>,<span class="string">"double_arrow"</span>,<span class="string">"speech"</span>))<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>
-<span class="lineno">  227 </span>          <span class="keyword">val</span> previewWidth=minOf((width-dp(<span class="number">24</span>)).toFloat(),(height-dp(<span class="number">16</span>))*ratio).coerceAtLeast(<span class="number">1f</span>)
-<span class="lineno">  228 </span>          <span class="keyword">val</span> previewHeight=previewWidth/ratio
-<span class="caretline"><span class="lineno">  229 </span>          <span class="warning">canvas.save()</span>;canvas.translate((width-previewWidth)/<span class="number">2f</span>,(height-previewHeight)/<span class="number">2f</span>)</span>
-<span class="lineno">  230 </span>          Shapes.draw(canvas,key,previewWidth,previewHeight,paint);canvas.restore()
-<span class="lineno">  231 </span>      }
-<span class="lineno">  232 </span>  },LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">56</span>)))
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:270</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  267 </span>      c.addView(label(tr(<span class="string">"Between these thresholds: broad-tip color and thickness. Set each tip's appearance in Pen settings."</span>,<span class="string">"بین این دو آستانه، رنگ و ضخامت سر پهن اعمال می‌شود. ظاهر هر دو سر را از تنظیمات قلم انتخاب کنید."</span>),<span class="number">14f</span>))
+<span class="lineno">  268 </span>      c.addView(button(s(<span class="string">"touch_test"</span>)){dialog(s(<span class="string">"touch_test"</span>),TouchDiagnostics(<span class="keyword">this</span>,board.profile).apply{minimumHeight=dp(<span class="number">320</span>)})})
+<span class="lineno">  269 </span>      <span class="keyword">val</span> d=dialog(tr(<span class="string">"Dual-tip calibration"</span>,<span class="string">"کالیبراسیون دو سر قلم"</span>),ScrollView(<span class="keyword">this</span>).apply{addView(c)})
+<span class="caretline"><span class="lineno">  270 </span>      c.addView(button(s(<span class="string">"apply"</span>),<span class="keyword">true</span>){<span class="keyword">val</span> a=thin.text.toString().toFloatOrNull();<span class="keyword">val</span> b=palm.text.toString().toFloatOrNull();<span class="keyword">if</span>(a==<span class="keyword">null</span>||b==<span class="keyword">null</span>||!a.isFinite()||!b.isFinite()||a&lt;=<span class="number">0</span>||b&lt;=a){thin.error=tr(<span class="string">"Use 0 &lt; fine &lt; palm"</span>,<span class="string">"باید ۰ &lt; سر باریک &lt; کف دست باشد"</span>);<span class="keyword">return</span><span class="annotation">@button</span>};board.profile.calibrated=enabled.isChecked;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"calibrated"</span>,enabled.isChecked).putFloat(<span class="string">"thin"</span>,a).putFloat(<span class="string">"palm"</span>,b).putBoolean(<span class="string">"palmErase"</span>,palmErase.isChecked).apply();savePens();d.dismiss()})</span>
+<span class="lineno">  271 </span>  }
+<span class="lineno">  272 </span>  private <span class="keyword">fun</span> eraserSettings(){
+<span class="lineno">  273 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(label(tr(<span class="string">"Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it."</span>,<span class="string">"خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."</span>),<span class="number">14f</span>,MUTED))
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:386</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  383 </span>        }) { (doc, backup) ->
-<span class="lineno">  384 </span>            <span class="keyword">if</span> (changeId || backup) {
-<span class="lineno">  385 </span>                documentId = <span class="keyword">if</span> (backup) newId() <span class="keyword">else</span> f.nameWithoutExtension
-<span class="caretline"><span class="lineno">  386 </span>                <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  387 </span>            }
-<span class="lineno">  388 </span>            store.replace(doc)
-<span class="lineno">  389 </span>            board.clearSelection()
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:274</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  271 </span>  }
+<span class="lineno">  272 </span>  private <span class="keyword">fun</span> eraserSettings(){
+<span class="lineno">  273 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(label(tr(<span class="string">"Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it."</span>,<span class="string">"خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."</span>),<span class="number">14f</span>,MUTED))
+<span class="caretline"><span class="lineno">  274 </span>      <span class="keyword">val</span> modes=RadioGroup(<span class="keyword">this</span>);listOf(<span class="string">"stroke"</span> to tr(<span class="string">"Whole stroke / object"</span>,<span class="string">"کل خط / شیء"</span>),<span class="string">"area"</span> to tr(<span class="string">"Area eraser"</span>,<span class="string">"پاک‌کن ناحیه‌ای"</span>)).forEach{(key,title)->modes.addView(RadioButton(<span class="keyword">this</span>).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;<span class="warning">prefs.edit()</span>.putString(<span class="string">"eraserMode"</span>,key).apply()}})};c.addView(modes)</span>
+<span class="lineno">  275 </span>      slider(c,tr(<span class="string">"Radius"</span>,<span class="string">"شعاع"</span>),board.eraserRadius,<span class="number">80</span>){board.eraserRadius=it;prefs.edit().putFloat(<span class="string">"eraserRadius"</span>,it).apply()}
+<span class="lineno">  276 </span>      c.addView(CheckBox(<span class="keyword">this</span>).apply{text=tr(<span class="string">"Include objects (otherwise ink only)"</span>,<span class="string">"روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)"</span>);isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean(<span class="string">"eraseObjects"</span>,v).apply()}})
+<span class="lineno">  277 </span>      dialog(s(<span class="string">"erase"</span>),ScrollView(<span class="keyword">this</span>).apply{addView(c)})
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:431</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  428 </span>                    confirm(s(<span class="string">"new_confirm"</span>)) {
-<span class="lineno">  429 </span>                        persist()
-<span class="lineno">  430 </span>                        documentId = newId()
-<span class="caretline"><span class="lineno">  431 </span>                        <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  432 </span>                        store.replace(Lesson(title = s(<span class="string">"lesson"</span>)))
-<span class="lineno">  433 </span>                        board.clearSelection()
-<span class="lineno">  434 </span>                        board.reset()
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:275</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  272 </span>  private <span class="keyword">fun</span> eraserSettings(){
+<span class="lineno">  273 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(label(tr(<span class="string">"Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it."</span>,<span class="string">"خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."</span>),<span class="number">14f</span>,MUTED))
+<span class="lineno">  274 </span>      <span class="keyword">val</span> modes=RadioGroup(<span class="keyword">this</span>);listOf(<span class="string">"stroke"</span> to tr(<span class="string">"Whole stroke / object"</span>,<span class="string">"کل خط / شیء"</span>),<span class="string">"area"</span> to tr(<span class="string">"Area eraser"</span>,<span class="string">"پاک‌کن ناحیه‌ای"</span>)).forEach{(key,title)->modes.addView(RadioButton(<span class="keyword">this</span>).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString(<span class="string">"eraserMode"</span>,key).apply()}})};c.addView(modes)
+<span class="caretline"><span class="lineno">  275 </span>      slider(c,tr(<span class="string">"Radius"</span>,<span class="string">"شعاع"</span>),board.eraserRadius,<span class="number">80</span>){board.eraserRadius=it;<span class="warning">prefs.edit()</span>.putFloat(<span class="string">"eraserRadius"</span>,it).apply()}</span>
+<span class="lineno">  276 </span>      c.addView(CheckBox(<span class="keyword">this</span>).apply{text=tr(<span class="string">"Include objects (otherwise ink only)"</span>,<span class="string">"روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)"</span>);isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean(<span class="string">"eraseObjects"</span>,v).apply()}})
+<span class="lineno">  277 </span>      dialog(s(<span class="string">"erase"</span>),ScrollView(<span class="keyword">this</span>).apply{addView(c)})
+<span class="lineno">  278 </span>  }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:771</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  768 </span>  work({ files.read(requireNotNull(contentResolver.openInputStream(uri))) }) { doc ->
-<span class="lineno">  769 </span>      persist()
-<span class="lineno">  770 </span>      documentId = newId()
-<span class="caretline"><span class="lineno">  771 </span>      <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  772 </span>      store.replace(doc)
-<span class="lineno">  773 </span>      board.clearSelection()
-<span class="lineno">  774 </span>      board.fit()
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:276</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  273 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(label(tr(<span class="string">"Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it."</span>,<span class="string">"خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."</span>),<span class="number">14f</span>,MUTED))
+<span class="lineno">  274 </span>      <span class="keyword">val</span> modes=RadioGroup(<span class="keyword">this</span>);listOf(<span class="string">"stroke"</span> to tr(<span class="string">"Whole stroke / object"</span>,<span class="string">"کل خط / شیء"</span>),<span class="string">"area"</span> to tr(<span class="string">"Area eraser"</span>,<span class="string">"پاک‌کن ناحیه‌ای"</span>)).forEach{(key,title)->modes.addView(RadioButton(<span class="keyword">this</span>).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString(<span class="string">"eraserMode"</span>,key).apply()}})};c.addView(modes)
+<span class="lineno">  275 </span>      slider(c,tr(<span class="string">"Radius"</span>,<span class="string">"شعاع"</span>),board.eraserRadius,<span class="number">80</span>){board.eraserRadius=it;prefs.edit().putFloat(<span class="string">"eraserRadius"</span>,it).apply()}
+<span class="caretline"><span class="lineno">  276 </span>      c.addView(CheckBox(<span class="keyword">this</span>).apply{text=tr(<span class="string">"Include objects (otherwise ink only)"</span>,<span class="string">"روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)"</span>);isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"eraseObjects"</span>,v).apply()}})</span>
+<span class="lineno">  277 </span>      dialog(s(<span class="string">"erase"</span>),ScrollView(<span class="keyword">this</span>).apply{addView(c)})
+<span class="lineno">  278 </span>  }
+<span class="lineno">  279 </span>  private <span class="keyword">fun</span> addText(sticky:Boolean){textEditor(<span class="keyword">null</span>,sticky)}
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:847</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno">  844 </span>                   pdf.close()
-<span class="lineno">  845 </span>               }
-<span class="lineno">  846 </span>           } <span class="keyword">else</span> {
-<span class="caretline"><span class="lineno">  847 </span>               <span class="keyword">val</span> bitmap = <span class="warning">Bitmap.createBitmap(<span class="number">1920</span>, <span class="number">1200</span>, Bitmap.Config.ARGB_8888)</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  848 </span>               renderer.page(Canvas(bitmap), doc.pages[doc.current], <span class="number">1920</span>, <span class="number">1200</span>, <span class="keyword">true</span>)
-<span class="lineno">  849 </span>               target.outputStream().use {
-<span class="lineno">  850 </span>                   bitmap.compress(
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:311</span>: <span class="message">Use the KTX extension function <code>Canvas.withTranslation</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  308 </span>          <span class="keyword">val</span> ratio=<span class="keyword">if</span>(key <span class="keyword">in</span> listOf(<span class="string">"rectangle"</span>,<span class="string">"rounded_rectangle"</span>,<span class="string">"ellipse"</span>,<span class="string">"trapezoid"</span>,<span class="string">"parallelogram"</span>,<span class="string">"line"</span>,<span class="string">"arrow"</span>,<span class="string">"double_arrow"</span>,<span class="string">"speech"</span>))<span class="number">1.8f</span> <span class="keyword">else</span> <span class="number">1f</span>
+<span class="lineno">  309 </span>          <span class="keyword">val</span> previewWidth=minOf((width-dp(<span class="number">24</span>)).toFloat(),(height-dp(<span class="number">16</span>))*ratio).coerceAtLeast(<span class="number">1f</span>)
+<span class="lineno">  310 </span>          <span class="keyword">val</span> previewHeight=previewWidth/ratio
+<span class="caretline"><span class="lineno">  311 </span>          <span class="warning">canvas.save()</span>;canvas.translate((width-previewWidth)/<span class="number">2f</span>,(height-previewHeight)/<span class="number">2f</span>)</span>
+<span class="lineno">  312 </span>          Shapes.draw(canvas,key,previewWidth,previewHeight,paint);canvas.restore()
+<span class="lineno">  313 </span>      }
+<span class="lineno">  314 </span>  },LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">56</span>)))
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1016</span>: <span class="message">Use the KTX extension function <code>String.toUri</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 1013 </span>
-<span class="lineno"> 1014 </span>  private <span class="keyword">fun</span> models(){
-<span class="lineno"> 1015 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(label(s(<span class="string">"model_info"</span>),<span class="number">14f</span>));c.addView(label(s(<span class="string">"model_download_help"</span>),<span class="number">13f</span>,MUTED))
-<span class="caretline"><span class="lineno"> 1016 </span>      <span class="keyword">if</span>(!recognition.downloadManagerReady(<span class="keyword">this</span>)){c.addView(label(s(<span class="string">"download_manager_disabled"</span>),<span class="number">14f</span>,ORANGE));c.addView(button(s(<span class="string">"settings"</span>)){<span class="keyword">try</span>{startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,<span class="warning">android.net.Uri.parse(<span class="string">"package:com.android.providers.downloads"</span>)</span>))}catch(e:Exception){error(e)}})}</span>
-<span class="lineno"> 1017 </span>      listOf(<span class="string">"en-US"</span> to <span class="string">"english"</span>,<span class="string">"fa"</span> to <span class="string">"persian"</span>).forEach{(lang,key)->
-<span class="lineno"> 1018 </span>          <span class="keyword">val</span> state=label(s(key),<span class="number">15f</span>);c.addView(state);<span class="keyword">val</span> r=row();<span class="keyword">val</span> install=button(s(<span class="string">"install"</span>)){}
-<span class="lineno"> 1019 </span>          <span class="keyword">fun</span> update(){recognition.installed(lang,{ready-><span class="keyword">if</span>(!destroyed){state.text=<span class="string">"${</span>s(key)<span class="string">} · ${</span>s(<span class="keyword">if</span>(ready)<span class="string">"installed"</span><span class="keyword">else</span><span class="string">"not_installed"</span>)<span class="string">}"</span>;install.text=s(<span class="keyword">if</span>(ready)<span class="string">"installed"</span><span class="keyword">else</span><span class="string">"install"</span>);install.isEnabled=!ready}},{e->state.text=recognition.failure(<span class="keyword">this</span>,e);install.isEnabled=<span class="keyword">true</span>})}
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:468</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  465 </span>        }) { (doc, backup) ->
+<span class="lineno">  466 </span>            <span class="keyword">if</span> (changeId || backup) {
+<span class="lineno">  467 </span>                documentId = <span class="keyword">if</span> (backup) newId() <span class="keyword">else</span> f.nameWithoutExtension
+<span class="caretline"><span class="lineno">  468 </span>                <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  469 </span>            }
+<span class="lineno">  470 </span>            store.replace(doc)
+<span class="lineno">  471 </span>            board.clearSelection()
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1035</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 1032 </span>  <span class="keyword">val</span> keys=mutableListOf(<span class="string">"language"</span>,<span class="string">"models"</span>,<span class="string">"cache"</span>,<span class="string">"about"</span>)
-<span class="lineno"> 1033 </span>  <span class="keyword">if</span>(prefs.getBoolean(<span class="string">"engineering"</span>,<span class="keyword">false</span>))keys.add(<span class="string">"engineering"</span>)
-<span class="lineno"> 1034 </span>  choices(s(<span class="string">"settings"</span>),keys){index-><span class="keyword">when</span>(keys[index]){
-<span class="caretline"><span class="lineno"> 1035 </span>      <span class="string">"language"</span>->choices(s(<span class="string">"language"</span>),listOf(<span class="string">"english"</span>,<span class="string">"persian"</span>)){i->persist();<span class="warning">prefs.edit()</span>.putString(<span class="string">"language"</span>,<span class="keyword">if</span>(i==<span class="number">0</span>)<span class="string">"en"</span><span class="keyword">else</span><span class="string">"fa"</span>).apply();recreate()}</span>
-<span class="lineno"> 1036 </span>      <span class="string">"models"</span>->models()
-<span class="lineno"> 1037 </span>      <span class="string">"cache"</span>->{media.clear();board.sceneChanged();toast(s(<span class="string">"done"</span>))}
-<span class="lineno"> 1038 </span>      <span class="string">"about"</span>->{<span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(ImageView(<span class="keyword">this</span>).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">150</span>)));c.addView(label(<span class="string">"VuraVision ${</span>BuildConfig.VERSION_NAME<span class="string">}\n\n${</span>s(<span class="string">"about_text"</span>)<span class="string">}"</span>,<span class="number">16f</span>).apply{setOnClickListener{taps++;<span class="keyword">if</span>(taps>=<span class="number">7</span>){prefs.edit().putBoolean(<span class="string">"engineering"</span>,<span class="keyword">true</span>).apply();toast(s(<span class="string">"unlocked"</span>))}}});dialog(s(<span class="string">"about"</span>),c)}
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:501</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  498 </span>      <span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};<span class="keyword">var</span> taps=<span class="number">0</span>
+<span class="lineno">  499 </span>      <span class="keyword">val</span> title=label(s(<span class="string">"help"</span>),<span class="number">24f</span>,NAVY,<span class="keyword">true</span>);c.addView(title)
+<span class="lineno">  500 </span>      <span class="keyword">val</span> d=dialog(<span class="string">"VuraVision"</span>,ScrollView(<span class="keyword">this</span>).apply{addView(c)})
+<span class="caretline"><span class="lineno">  501 </span>      title.setOnClickListener{taps++;<span class="keyword">if</span>(taps==<span class="number">3</span>){<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"engineering"</span>,<span class="keyword">true</span>).apply();d.dismiss();engineering()}}</span>
+<span class="lineno">  502 </span>      c.addView(label(s(<span class="string">"help_text"</span>),<span class="number">16f</span>))
+<span class="lineno">  503 </span>      c.addView(label(tr(<span class="string">"Re-tap Pen or Eraser to configure it. Select an item, then tap it again for actions. Swipe vertically on a PDF to turn pages; drag horizontally to move it. Smart: choose a mode, then circle your writing. Shape mode converts each completed drawing automatically."</span>,<span class="string">"برای تنظیم قلم یا پاک‌کن، دوباره روی ابزار فعال بزنید. شیء را انتخاب و دوباره لمس کنید تا عملیات باز شود. روی PDF عمودی بکشید تا صفحه عوض شود؛ کشیدن افقی آن را جابه‌جا می‌کند. در Smart حالت را انتخاب و دور نوشته خط بکشید. حالت شکل هر ترسیم را خودکار تبدیل می‌کند."</span>),<span class="number">16f</span>))
+<span class="lineno">  504 </span>  }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1038</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 1035 </span>          <span class="string">"language"</span>->choices(s(<span class="string">"language"</span>),listOf(<span class="string">"english"</span>,<span class="string">"persian"</span>)){i->persist();prefs.edit().putString(<span class="string">"language"</span>,<span class="keyword">if</span>(i==<span class="number">0</span>)<span class="string">"en"</span><span class="keyword">else</span><span class="string">"fa"</span>).apply();recreate()}
-<span class="lineno"> 1036 </span>          <span class="string">"models"</span>->models()
-<span class="lineno"> 1037 </span>          <span class="string">"cache"</span>->{media.clear();board.sceneChanged();toast(s(<span class="string">"done"</span>))}
-<span class="caretline"><span class="lineno"> 1038 </span>          <span class="string">"about"</span>->{<span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(ImageView(<span class="keyword">this</span>).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">150</span>)));c.addView(label(<span class="string">"VuraVision ${</span>BuildConfig.VERSION_NAME<span class="string">}\n\n${</span>s(<span class="string">"about_text"</span>)<span class="string">}"</span>,<span class="number">16f</span>).apply{setOnClickListener{taps++;<span class="keyword">if</span>(taps>=<span class="number">7</span>){<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"engineering"</span>,<span class="keyword">true</span>).apply();toast(s(<span class="string">"unlocked"</span>))}}});dialog(s(<span class="string">"about"</span>),c)}</span>
-<span class="lineno"> 1039 </span>          <span class="string">"engineering"</span>->engineering()
-<span class="lineno"> 1040 </span>      }}
-<span class="lineno"> 1041 </span>  }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:516</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  513 </span>                    confirm(s(<span class="string">"new_confirm"</span>)) {
+<span class="lineno">  514 </span>                        persist()
+<span class="lineno">  515 </span>                        documentId = newId()
+<span class="caretline"><span class="lineno">  516 </span>                        <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  517 </span>                        store.replace(Lesson(title = s(<span class="string">"lesson"</span>)))
+<span class="lineno">  518 </span>                        board.clearSelection()
+<span class="lineno">  519 </span>                        board.reset()
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1081</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 1078 </span>  <span class="keyword">if</span>(a!=<span class="keyword">null</span> &amp;&amp; b!=<span class="keyword">null</span> &amp;&amp; a><span class="number">0</span> &amp;&amp; b>a &amp;&amp; thickValue!=<span class="keyword">null</span> &amp;&amp; thickValue <span class="keyword">in</span> <span class="number">1f..24f</span>) {
-<span class="lineno"> 1079 </span>      board.profile =
-<span class="lineno"> 1080 </span>          TouchProfile(enabled.isChecked,a,b,erase.isChecked,board.profile.multiTouch,thickValue)
-<span class="caretline"><span class="lineno"> 1081 </span>      <span class="warning">prefs</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 1082 </span>          .edit()
-<span class="lineno"> 1083 </span>          .putBoolean(<span class="string">"calibrated"</span>, enabled.isChecked)
-<span class="lineno"> 1084 </span>          .putFloat(<span class="string">"thin"</span>, a)
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:820</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  817 </span>  work({ files.read(requireNotNull(contentResolver.openInputStream(uri))) }) { doc ->
+<span class="lineno">  818 </span>      persist()
+<span class="lineno">  819 </span>      documentId = newId()
+<span class="caretline"><span class="lineno">  820 </span>      <span class="warning">prefs.edit()</span>.putString(<span class="string">"current"</span>, documentId).apply()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  821 </span>      store.replace(doc)
+<span class="lineno">  822 </span>      board.clearSelection()
+<span class="lineno">  823 </span>      board.fit()
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Renderer.kt">../../src/main/java/com/vuravision/classroom/Renderer.kt</a>:144</span>: <span class="message">Use the KTX extension function <code>Canvas.withClip</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 141 </span>        p.color = <span class="number">0xfff5f9fa.</span>toInt()
-<span class="lineno"> 142 </span>        p.style = Paint.Style.FILL
-<span class="lineno"> 143 </span>        c.drawRoundRect(<span class="number">0f</span>, <span class="number">0f</span>, o.w, o.h, <span class="number">12f</span>, <span class="number">12f</span>, p)
-<span class="caretline"><span class="lineno"> 144 </span>        <span class="warning">c.save()</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 145 </span>        c.clipRect(<span class="number">0f</span>, <span class="number">0f</span>, o.w, o.h)
-<span class="lineno"> 146 </span>        <span class="keyword">val</span> d = o.domain
-<span class="lineno"> 147 </span>        <span class="keyword">val</span> sx = o.w / (<span class="number">2</span> * d)
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:896</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  893 </span>                   pdf.close()
+<span class="lineno">  894 </span>               }
+<span class="lineno">  895 </span>           } <span class="keyword">else</span> {
+<span class="caretline"><span class="lineno">  896 </span>               <span class="keyword">val</span> bitmap = <span class="warning">Bitmap.createBitmap(<span class="number">1920</span>, <span class="number">1200</span>, Bitmap.Config.ARGB_8888)</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  897 </span>               renderer.page(Canvas(bitmap), doc.pages[doc.current], <span class="number">1920</span>, <span class="number">1200</span>, <span class="keyword">true</span>)
+<span class="lineno">  898 </span>               target.outputStream().use {
+<span class="lineno">  899 </span>                   bitmap.compress(
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Renderer.kt">../../src/main/java/com/vuravision/classroom/Renderer.kt</a>:197</span>: <span class="message">Use the KTX extension function <code>Canvas.withScale</code> instead?</span><br /><pre class="errorlines">
-<span class="lineno"> 194 </span>        <span class="keyword">val</span> scale = min(width / b.width(), height / b.height())
-<span class="lineno"> 195 </span>        <span class="keyword">val</span> extraX = (width / scale - b.width()) / <span class="number">2</span>
-<span class="lineno"> 196 </span>        <span class="keyword">val</span> extraY = (height / scale - b.height()) / <span class="number">2</span>
-<span class="caretline"><span class="lineno"> 197 </span>        <span class="warning">c.save()</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 198 </span>        c.scale(scale, scale)
-<span class="lineno"> 199 </span>        c.translate(-b.left + extraX, -b.top + extraY)
-<span class="lineno"> 200 </span>        background(
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:993</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  990 </span>  c.addView(label(tr(<span class="string">"Shape: draw normally; each completed stroke becomes geometry. Other modes: circle existing ink to recognize it. An open stroke remains ink. Review every recognition before applying."</span>,<span class="string">"شکل: عادی بکشید؛ هر خط کامل به شکل هندسی تبدیل می‌شود. حالت‌های دیگر: دور نوشتهٔ قبلی خط بکشید. خط باز، دست‌نویس باقی می‌ماند. نتیجه را قبل از اعمال بررسی کنید."</span>),<span class="number">14f</span>,MUTED))
+<span class="lineno">  991 </span>  <span class="keyword">val</span> source=Spinner(<span class="keyword">this</span>);source.adapter=ArrayAdapter(<span class="keyword">this</span>,android.R.layout.simple_spinner_dropdown_item,listOf(tr(<span class="string">"Offline Latin OCR · no download"</span>,<span class="string">"تشخیص لاتین آفلاین · بدون دانلود"</span>),tr(<span class="string">"Google English handwriting"</span>,<span class="string">"دست‌نویس انگلیسی گوگل"</span>),tr(<span class="string">"Google Persian handwriting"</span>,<span class="string">"دست‌نویس فارسی گوگل"</span>)));source.setSelection(listOf(<span class="string">"offline"</span>,<span class="string">"en-US"</span>,<span class="string">"fa"</span>).indexOf(smartSource).coerceAtLeast(<span class="number">0</span>));c.addView(source)
+<span class="lineno">  992 </span>  <span class="keyword">val</span> d=dialog(s(<span class="string">"smart"</span>),ScrollView(<span class="keyword">this</span>).apply{addView(c)})
+<span class="caretline"><span class="lineno">  993 </span>  listOf(<span class="string">"text"</span> to tr(<span class="string">"Text"</span>,<span class="string">"متن"</span>),<span class="string">"formula"</span> to tr(<span class="string">"Calculate / solve equation"</span>,<span class="string">"محاسبه / حل معادله"</span>),<span class="string">"graph"</span> to tr(<span class="string">"Plot function"</span>,<span class="string">"رسم تابع"</span>),<span class="string">"shape"</span> to tr(<span class="string">"Automatic shapes · offline"</span>,<span class="string">"اشکال خودکار · آفلاین"</span>)).forEach{(key,title)->c.addView(button(title,board.smartMode==key){smartSource=listOf(<span class="string">"offline"</span>,<span class="string">"en-US"</span>,<span class="string">"fa"</span>)[source.selectedItemPosition];board.smartMode=key;board.tool=<span class="string">"smart"</span>;board.clearSelection();<span class="warning">prefs.edit()</span>.putString(<span class="string">"smartSource"</span>,smartSource).putString(<span class="string">"smartMode"</span>,key).apply();refreshDock();status.text=title;d.dismiss()})}</span>
+<span class="lineno">  994 </span>  <span class="keyword">if</span>(board.chosen().isNotEmpty())c.addView(button(tr(<span class="string">"Process current selection"</span>,<span class="string">"پردازش انتخاب فعلی"</span>)){smartSource=listOf(<span class="string">"offline"</span>,<span class="string">"en-US"</span>,<span class="string">"fa"</span>)[source.selectedItemPosition];d.dismiss();processSmart(board.chosen())})
+<span class="lineno">  995 </span>  c.addView(button(s(<span class="string">"models"</span>)){d.dismiss();models()})
+<span class="lineno">  996 </span>  c.addView(label(tr(<span class="string">"Offline Latin OCR works best on clear separated characters. It does not recognize Persian or stacked fractions, integrals and general symbolic notation. Formula solving supports arithmetic and linear/quadratic equations in x."</span>,<span class="string">"تشخیص لاتین آفلاین برای حروف و اعداد واضح و جدا مناسب‌تر است. فارسی، کسر چندطبقه، انتگرال و نمادگذاری عمومی ریاضی را تشخیص نمی‌دهد. حل فرمول شامل محاسبات و معادلات خطی/درجه‌دو با x است."</span>),<span class="number">13f</span>,MUTED))
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1053</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 1050 </span>  <span class="keyword">val</span> keys=mutableListOf(<span class="string">"language"</span>,<span class="string">"models"</span>,<span class="string">"cache"</span>,<span class="string">"about"</span>)
+<span class="lineno"> 1051 </span>  <span class="keyword">if</span>(prefs.getBoolean(<span class="string">"engineering"</span>,<span class="keyword">false</span>))keys.add(<span class="string">"engineering"</span>)
+<span class="lineno"> 1052 </span>  choices(s(<span class="string">"settings"</span>),keys){index-><span class="keyword">when</span>(keys[index]){
+<span class="caretline"><span class="lineno"> 1053 </span>      <span class="string">"language"</span>->choices(s(<span class="string">"language"</span>),listOf(<span class="string">"english"</span>,<span class="string">"persian"</span>)){i->persist();<span class="warning">prefs.edit()</span>.putString(<span class="string">"language"</span>,<span class="keyword">if</span>(i==<span class="number">0</span>)<span class="string">"en"</span><span class="keyword">else</span><span class="string">"fa"</span>).apply();recreate()}</span>
+<span class="lineno"> 1054 </span>      <span class="string">"models"</span>->models()
+<span class="lineno"> 1055 </span>      <span class="string">"cache"</span>->{media.clear();board.sceneChanged();toast(s(<span class="string">"done"</span>))}
+<span class="lineno"> 1056 </span>      <span class="string">"about"</span>->{<span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(ImageView(<span class="keyword">this</span>).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">150</span>)));c.addView(label(<span class="string">"VuraVision ${</span>BuildConfig.VERSION_NAME<span class="string">}\n\n${</span>s(<span class="string">"about_text"</span>)<span class="string">}"</span>,<span class="number">16f</span>).apply{setOnClickListener{taps++;<span class="keyword">if</span>(taps>=<span class="number">7</span>){prefs.edit().putBoolean(<span class="string">"engineering"</span>,<span class="keyword">true</span>).apply();toast(s(<span class="string">"unlocked"</span>))}}});dialog(s(<span class="string">"about"</span>),c)}
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1056</span>: <span class="message">Use the KTX extension function <code>SharedPreferences.edit</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 1053 </span>          <span class="string">"language"</span>->choices(s(<span class="string">"language"</span>),listOf(<span class="string">"english"</span>,<span class="string">"persian"</span>)){i->persist();prefs.edit().putString(<span class="string">"language"</span>,<span class="keyword">if</span>(i==<span class="number">0</span>)<span class="string">"en"</span><span class="keyword">else</span><span class="string">"fa"</span>).apply();recreate()}
+<span class="lineno"> 1054 </span>          <span class="string">"models"</span>->models()
+<span class="lineno"> 1055 </span>          <span class="string">"cache"</span>->{media.clear();board.sceneChanged();toast(s(<span class="string">"done"</span>))}
+<span class="caretline"><span class="lineno"> 1056 </span>          <span class="string">"about"</span>->{<span class="keyword">val</span> c=column().apply{pad(<span class="number">20</span>)};c.addView(ImageView(<span class="keyword">this</span>).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-<span class="number">1</span>,dp(<span class="number">150</span>)));c.addView(label(<span class="string">"VuraVision ${</span>BuildConfig.VERSION_NAME<span class="string">}\n\n${</span>s(<span class="string">"about_text"</span>)<span class="string">}"</span>,<span class="number">16f</span>).apply{setOnClickListener{taps++;<span class="keyword">if</span>(taps>=<span class="number">7</span>){<span class="warning">prefs.edit()</span>.putBoolean(<span class="string">"engineering"</span>,<span class="keyword">true</span>).apply();toast(s(<span class="string">"unlocked"</span>))}}});dialog(s(<span class="string">"about"</span>),c)}</span>
+<span class="lineno"> 1057 </span>          <span class="string">"engineering"</span>->engineering()
+<span class="lineno"> 1058 </span>      }}
+<span class="lineno"> 1059 </span>  }
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/OfflineText.kt">../../src/main/java/com/vuravision/classroom/OfflineText.kt</a>:12</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno">  9 </span> <span class="keyword">fun</span> recognize(items:List&lt;Item>,renderer:Renderer,done:(List&lt;String>)->Unit,error:(Exception)->Unit){
+<span class="lineno"> 10 </span>  <span class="keyword">val</span> bounds=contentBounds(items);bounds.inset(-<span class="number">24f</span>,-<span class="number">24f</span>)
+<span class="lineno"> 11 </span>  <span class="keyword">val</span> scale=min(<span class="number">3f</span>,<span class="number">2048f</span>/max(bounds.width(),bounds.height())).coerceAtLeast(.<span class="number">001f</span>)
+<span class="caretline"><span class="lineno"> 12 </span>  <span class="keyword">val</span> bitmap=<span class="warning">Bitmap.createBitmap((bounds.width()*scale).toInt().coerceIn(<span class="number">32</span>,<span class="number">2048</span>),(bounds.height()*scale).toInt().coerceIn(<span class="number">32</span>,<span class="number">2048</span>),Bitmap.Config.ARGB_8888)</span></span>
+<span class="lineno"> 13 </span>  <span class="keyword">val</span> canvas=Canvas(bitmap);canvas.drawColor(Color.WHITE);canvas.scale(scale,scale);canvas.translate(-bounds.left,-bounds.top)
+<span class="lineno"> 14 </span>  items.forEach{renderer.draw(canvas,it.copy(color=Color.BLACK,alpha=<span class="number">255</span>,shape=<span class="keyword">if</span>(it.kind==<span class="string">"ink"</span>)<span class="string">"round"</span><span class="keyword">else</span> it.shape),<span class="keyword">true</span>)}
+<span class="lineno"> 15 </span>  <span class="keyword">val</span> client=TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Renderer.kt">../../src/main/java/com/vuravision/classroom/Renderer.kt</a>:132</span>: <span class="message">Use the KTX extension function <code>Canvas.withClip</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 129 </span>        p.color = <span class="number">0xfff5f9fa.</span>toInt()
+<span class="lineno"> 130 </span>        p.style = Paint.Style.FILL
+<span class="lineno"> 131 </span>        c.drawRoundRect(<span class="number">0f</span>, <span class="number">0f</span>, o.w, o.h, <span class="number">12f</span>, <span class="number">12f</span>, p)
+<span class="caretline"><span class="lineno"> 132 </span>        <span class="warning">c.save()</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 133 </span>        c.clipRect(<span class="number">0f</span>, <span class="number">0f</span>, o.w, o.h)
+<span class="lineno"> 134 </span>        <span class="keyword">val</span> d = o.domain
+<span class="lineno"> 135 </span>        <span class="keyword">val</span> sx = min(o.w,o.h) / (<span class="number">2</span> * d)
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/Renderer.kt">../../src/main/java/com/vuravision/classroom/Renderer.kt</a>:185</span>: <span class="message">Use the KTX extension function <code>Canvas.withScale</code> instead?</span><br /><pre class="errorlines">
+<span class="lineno"> 182 </span>        <span class="keyword">val</span> scale = min(width / b.width(), height / b.height())
+<span class="lineno"> 183 </span>        <span class="keyword">val</span> extraX = (width / scale - b.width()) / <span class="number">2</span>
+<span class="lineno"> 184 </span>        <span class="keyword">val</span> extraY = (height / scale - b.height()) / <span class="number">2</span>
+<span class="caretline"><span class="lineno"> 185 </span>        <span class="warning">c.save()</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 186 </span>        c.scale(scale, scale)
+<span class="lineno"> 187 </span>        c.translate(-b.left + extraX, -b.top + extraY)
+<span class="lineno"> 188 </span>        background(
 </pre>
 
 <span class="location"><a href="../../src/main/java/com/vuravision/classroom/Sharing.kt">../../src/main/java/com/vuravision/classroom/Sharing.kt</a>:55</span>: <span class="message">Use the KTX function <code>createBitmap</code> instead?</span><br /><pre class="errorlines">
@@ -1442,7 +1583,7 @@ Dismiss</button>            </div>
 <span class="lineno"> 441 </span>              .getChildAt(j)
 </pre>
 
-<button class="mdl-button mdl-js-button mdl-button--primary" id="SetTextI18nDivLink" onclick="reveal('SetTextI18nDiv');" />+ 12 More Occurrences...</button>
+<button class="mdl-button mdl-js-button mdl-button--primary" id="SetTextI18nDivLink" onclick="reveal('SetTextI18nDiv');" />+ 11 More Occurrences...</button>
 <div id="SetTextI18nDiv" style="display: none">
 <span class="location"><a href="../../src/main/java/com/vuravision/classroom/Games.kt">../../src/main/java/com/vuravision/classroom/Games.kt</a>:493</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
 <span class="lineno"> 490 </span>  <span class="keyword">if</span> (key == <span class="string">"tap_race"</span> &amp;&amp; !game.resolved)
@@ -1473,90 +1614,82 @@ Dismiss</button>            </div>
 <span class="lineno"> 163 </span>      }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:77</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">   74 </span>   board.penStyle=prefs.getString(<span class="string">"penStyle"</span>,<span class="string">"round"</span>)?:<span class="string">"round"</span>
-<span class="lineno">   75 </span>   buildUI()
-<span class="lineno">   76 </span>   media.ready = { handler.post { <span class="keyword">if</span>(!destroyed)board.sceneChanged() } }
-<span class="caretline"><span class="lineno">   77 </span>   media.error = { message -> handler.post { status.text = <span class="warning">s(<span class="string">"error"</span>) + <span class="string">": "</span></span> + message } }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">   78 </span>   board.onSelection = { refreshDock() }
-<span class="lineno">   79 </span>   store.changed = {
-<span class="lineno">   80 </span>       dirty = <span class="keyword">true</span></pre>
-
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:77</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">   74 </span>   board.penStyle=prefs.getString(<span class="string">"penStyle"</span>,<span class="string">"round"</span>)?:<span class="string">"round"</span>
-<span class="lineno">   75 </span>   buildUI()
-<span class="lineno">   76 </span>   media.ready = { handler.post { <span class="keyword">if</span>(!destroyed)board.sceneChanged() } }
-<span class="caretline"><span class="lineno">   77 </span>   media.error = { message -> handler.post { status.text = <span class="warning">s(<span class="string">"error"</span>) + <span class="string">": "</span> + message</span> } }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">   78 </span>   board.onSelection = { refreshDock() }
-<span class="lineno">   79 </span>   store.changed = {
-<span class="lineno">   80 </span>       dirty = <span class="keyword">true</span></pre>
-
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:163</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  160 </span>    private <span class="keyword">fun</span> refreshTitle() {
-<span class="lineno">  161 </span>        titleView.text = store.lesson.title.ifBlank { s(<span class="string">"lesson"</span>) }
-<span class="lineno">  162 </span>        pageLabel.text =
-<span class="caretline"><span class="lineno">  163 </span>            <span class="warning"><span class="string">"${</span>store.lesson.current+<span class="number">1</span><span class="string">} / ${</span>store.lesson.pages.size<span class="string">}   ·   ${</span>s(<span class="string">"pages"</span>)<span class="string">}"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  164 </span>        refreshPages()
-<span class="lineno">  165 </span>    }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:83</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">   80 </span>   board.smartMode=prefs.getString(<span class="string">"smartMode"</span>,<span class="string">"text"</span>)?:<span class="string">"text"</span>
+<span class="lineno">   81 </span>   buildUI()
+<span class="lineno">   82 </span>   media.ready = { handler.post { <span class="keyword">if</span>(!destroyed)board.sceneChanged() } }
+<span class="caretline"><span class="lineno">   83 </span>   media.error = { message -> handler.post { status.text = <span class="warning">s(<span class="string">"error"</span>) + <span class="string">": "</span></span> + message } }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">   84 </span>   board.onSelection = { refreshDock() }
+<span class="lineno">   85 </span>   board.onObjectActions={editSelection()}
+<span class="lineno">   86 </span>   board.onSmart={processSmart(it)}
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:163</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  160 </span>    private <span class="keyword">fun</span> refreshTitle() {
-<span class="lineno">  161 </span>        titleView.text = store.lesson.title.ifBlank { s(<span class="string">"lesson"</span>) }
-<span class="lineno">  162 </span>        pageLabel.text =
-<span class="caretline"><span class="lineno">  163 </span>            <span class="string">"${</span><span class="warning">store.lesson.current+<span class="number">1</span></span><span class="string">} / ${</span>store.lesson.pages.size<span class="string">}   ·   ${</span>s(<span class="string">"pages"</span>)<span class="string">}"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  164 </span>        refreshPages()
-<span class="lineno">  165 </span>    }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:83</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">   80 </span>   board.smartMode=prefs.getString(<span class="string">"smartMode"</span>,<span class="string">"text"</span>)?:<span class="string">"text"</span>
+<span class="lineno">   81 </span>   buildUI()
+<span class="lineno">   82 </span>   media.ready = { handler.post { <span class="keyword">if</span>(!destroyed)board.sceneChanged() } }
+<span class="caretline"><span class="lineno">   83 </span>   media.error = { message -> handler.post { status.text = <span class="warning">s(<span class="string">"error"</span>) + <span class="string">": "</span> + message</span> } }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">   84 </span>   board.onSelection = { refreshDock() }
+<span class="lineno">   85 </span>   board.onObjectActions={editSelection()}
+<span class="lineno">   86 </span>   board.onSmart={processSmart(it)}
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:213</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  210 </span>  <span class="keyword">val</span> palette=listOf(NAVY,Color.BLACK,Color.WHITE,<span class="number">0xffe45756.</span>toInt(),ORANGE,<span class="number">0xffffcf40.</span>toInt(),TEAL,<span class="number">0xff268bd2.</span>toInt(),<span class="number">0xff865ac7.</span>toInt(),<span class="number">0xffec76ab.</span>toInt())
-<span class="lineno">  211 </span>  palette.chunked(<span class="number">5</span>).forEach{chunk->c.addView(row().apply{chunk.forEach{color->addView(button(<span class="string">"●"</span>){board.inkColor=color;preview.setTextColor(color);savePens()}.apply{setTextColor(color);textSize=<span class="number">28f</span>},LinearLayout.LayoutParams(<span class="number">0</span>,dp(<span class="number">50</span>),<span class="number">1f</span>))}})}
-<span class="lineno">  212 </span>  c.addView(SeekBar(<span class="keyword">this</span>).apply{max=<span class="number">23</span>;progress=board.inkWidth.toInt()-<span class="number">1</span>;setOnSeekBarChangeListener(<span class="keyword">object</span>:SeekBar.OnSeekBarChangeListener{
-<span class="caretline"><span class="lineno">  213 </span>      override <span class="keyword">fun</span> onProgressChanged(v:SeekBar?,n:Int,user:Boolean){board.inkWidth=n+<span class="number">1f</span>;preview.text=<span class="warning"><span class="string">"━━━━   ${</span>n+<span class="number">1</span><span class="string">}"</span></span>;savePens()}</span>
-<span class="lineno">  214 </span>      override <span class="keyword">fun</span> onStartTrackingTouch(v:SeekBar?){}
-<span class="lineno">  215 </span>      override <span class="keyword">fun</span> onStopTrackingTouch(v:SeekBar?){}
-<span class="lineno">  216 </span>  })})
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:171</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  168 </span>    private <span class="keyword">fun</span> refreshTitle() {
+<span class="lineno">  169 </span>        titleView.text = store.lesson.title.ifBlank { s(<span class="string">"lesson"</span>) }
+<span class="lineno">  170 </span>        pageLabel.text =
+<span class="caretline"><span class="lineno">  171 </span>            <span class="warning"><span class="string">"${</span>store.lesson.current+<span class="number">1</span><span class="string">} / ${</span>store.lesson.pages.size<span class="string">}   ·   ${</span>s(<span class="string">"pages"</span>)<span class="string">}"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  172 </span>        refreshPages()
+<span class="lineno">  173 </span>    }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:213</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  210 </span>  <span class="keyword">val</span> palette=listOf(NAVY,Color.BLACK,Color.WHITE,<span class="number">0xffe45756.</span>toInt(),ORANGE,<span class="number">0xffffcf40.</span>toInt(),TEAL,<span class="number">0xff268bd2.</span>toInt(),<span class="number">0xff865ac7.</span>toInt(),<span class="number">0xffec76ab.</span>toInt())
-<span class="lineno">  211 </span>  palette.chunked(<span class="number">5</span>).forEach{chunk->c.addView(row().apply{chunk.forEach{color->addView(button(<span class="string">"●"</span>){board.inkColor=color;preview.setTextColor(color);savePens()}.apply{setTextColor(color);textSize=<span class="number">28f</span>},LinearLayout.LayoutParams(<span class="number">0</span>,dp(<span class="number">50</span>),<span class="number">1f</span>))}})}
-<span class="lineno">  212 </span>  c.addView(SeekBar(<span class="keyword">this</span>).apply{max=<span class="number">23</span>;progress=board.inkWidth.toInt()-<span class="number">1</span>;setOnSeekBarChangeListener(<span class="keyword">object</span>:SeekBar.OnSeekBarChangeListener{
-<span class="caretline"><span class="lineno">  213 </span>      override <span class="keyword">fun</span> onProgressChanged(v:SeekBar?,n:Int,user:Boolean){board.inkWidth=n+<span class="number">1f</span>;preview.text=<span class="string">"━━━━   ${</span><span class="warning">n+<span class="number">1</span></span><span class="string">}"</span>;savePens()}</span>
-<span class="lineno">  214 </span>      override <span class="keyword">fun</span> onStartTrackingTouch(v:SeekBar?){}
-<span class="lineno">  215 </span>      override <span class="keyword">fun</span> onStopTrackingTouch(v:SeekBar?){}
-<span class="lineno">  216 </span>  })})
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:171</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  168 </span>    private <span class="keyword">fun</span> refreshTitle() {
+<span class="lineno">  169 </span>        titleView.text = store.lesson.title.ifBlank { s(<span class="string">"lesson"</span>) }
+<span class="lineno">  170 </span>        pageLabel.text =
+<span class="caretline"><span class="lineno">  171 </span>            <span class="string">"${</span><span class="warning">store.lesson.current+<span class="number">1</span></span><span class="string">} / ${</span>store.lesson.pages.size<span class="string">}   ·   ${</span>s(<span class="string">"pages"</span>)<span class="string">}"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  172 </span>        refreshPages()
+<span class="lineno">  173 </span>    }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:526</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  523 </span>         <span class="keyword">object</span> : SeekBar.OnSeekBarChangeListener {
-<span class="lineno">  524 </span>             override <span class="keyword">fun</span> onProgressChanged(s: SeekBar?, p: Int, u: Boolean) {
-<span class="lineno">  525 </span>                 board.inkWidth = p + <span class="number">1f</span>
-<span class="caretline"><span class="lineno">  526 </span>                 read.text = <span class="string">"${</span><span class="warning">p+<span class="number">1</span></span><span class="string">}"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  527 </span>             }
-<span class="lineno">  528 </span>
-<span class="lineno">  529 </span>             override <span class="keyword">fun</span> onStartTrackingTouch(s: SeekBar?) {}
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:233</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  230 </span>  private <span class="keyword">fun</span> slider(c:LinearLayout,name:String,value:Float,maxValue:Int=<span class="number">40</span>,changed:(Float)->Unit){
+<span class="lineno">  231 </span>      <span class="keyword">val</span> title=label(<span class="string">"$name · ${</span>value.toInt()<span class="string">}"</span>,<span class="number">15f</span>,NAVY,<span class="keyword">true</span>);title.setPadding(dp(<span class="number">4</span>),dp(<span class="number">18</span>),dp(<span class="number">4</span>),dp(<span class="number">8</span>));c.addView(title)
+<span class="lineno">  232 </span>      c.addView(SeekBar(<span class="keyword">this</span>).apply{max=maxValue-<span class="number">1</span>;progress=value.toInt()-<span class="number">1</span>;contentDescription=name;setOnSeekBarChangeListener(<span class="keyword">object</span>:SeekBar.OnSeekBarChangeListener{
+<span class="caretline"><span class="lineno">  233 </span>          override <span class="keyword">fun</span> onProgressChanged(v:SeekBar?,n:Int,user:Boolean){title.text=<span class="warning"><span class="string">"$name · ${</span>n+<span class="number">1</span><span class="string">}"</span></span>;<span class="keyword">if</span>(user)changed(n+<span class="number">1f</span>)}</span>
+<span class="lineno">  234 </span>          override <span class="keyword">fun</span> onStartTrackingTouch(v:SeekBar?){};override <span class="keyword">fun</span> onStopTrackingTouch(v:SeekBar?){}
+<span class="lineno">  235 </span>      })})
+<span class="lineno">  236 </span>  }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:913</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno">  910 </span>             <span class="keyword">object</span> : Runnable {
-<span class="lineno">  911 </span>                 override <span class="keyword">fun</span> run() {
-<span class="lineno">  912 </span>                     <span class="keyword">if</span> (d.isShowing) {
-<span class="caretline"><span class="lineno">  913 </span>                         count.text = <span class="warning"><span class="string">"${</span>s(<span class="string">"downloads"</span>)<span class="string">}: ${</span>server.downloads<span class="string">}"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno">  914 </span>                         handler.postDelayed(<span class="keyword">this</span>, <span class="number">1000</span>)
-<span class="lineno">  915 </span>                     }
-<span class="lineno">  916 </span>                 }
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:233</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  230 </span>  private <span class="keyword">fun</span> slider(c:LinearLayout,name:String,value:Float,maxValue:Int=<span class="number">40</span>,changed:(Float)->Unit){
+<span class="lineno">  231 </span>      <span class="keyword">val</span> title=label(<span class="string">"$name · ${</span>value.toInt()<span class="string">}"</span>,<span class="number">15f</span>,NAVY,<span class="keyword">true</span>);title.setPadding(dp(<span class="number">4</span>),dp(<span class="number">18</span>),dp(<span class="number">4</span>),dp(<span class="number">8</span>));c.addView(title)
+<span class="lineno">  232 </span>      c.addView(SeekBar(<span class="keyword">this</span>).apply{max=maxValue-<span class="number">1</span>;progress=value.toInt()-<span class="number">1</span>;contentDescription=name;setOnSeekBarChangeListener(<span class="keyword">object</span>:SeekBar.OnSeekBarChangeListener{
+<span class="caretline"><span class="lineno">  233 </span>          override <span class="keyword">fun</span> onProgressChanged(v:SeekBar?,n:Int,user:Boolean){title.text=<span class="string">"$name · ${</span><span class="warning">n+<span class="number">1</span></span><span class="string">}"</span>;<span class="keyword">if</span>(user)changed(n+<span class="number">1f</span>)}</span>
+<span class="lineno">  234 </span>          override <span class="keyword">fun</span> onStartTrackingTouch(v:SeekBar?){};override <span class="keyword">fun</span> onStopTrackingTouch(v:SeekBar?){}
+<span class="lineno">  235 </span>      })})
+<span class="lineno">  236 </span>  }
 </pre>
 
-<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:1019</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
-<span class="lineno"> 1016 </span>  <span class="keyword">if</span>(!recognition.downloadManagerReady(<span class="keyword">this</span>)){c.addView(label(s(<span class="string">"download_manager_disabled"</span>),<span class="number">14f</span>,ORANGE));c.addView(button(s(<span class="string">"settings"</span>)){<span class="keyword">try</span>{startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse(<span class="string">"package:com.android.providers.downloads"</span>)))}catch(e:Exception){error(e)}})}
-<span class="lineno"> 1017 </span>  listOf(<span class="string">"en-US"</span> to <span class="string">"english"</span>,<span class="string">"fa"</span> to <span class="string">"persian"</span>).forEach{(lang,key)->
-<span class="lineno"> 1018 </span>      <span class="keyword">val</span> state=label(s(key),<span class="number">15f</span>);c.addView(state);<span class="keyword">val</span> r=row();<span class="keyword">val</span> install=button(s(<span class="string">"install"</span>)){}
-<span class="caretline"><span class="lineno"> 1019 </span>      <span class="keyword">fun</span> update(){recognition.installed(lang,{ready-><span class="keyword">if</span>(!destroyed){state.text=<span class="warning"><span class="string">"${</span>s(key)<span class="string">} · ${</span>s(<span class="keyword">if</span>(ready)<span class="string">"installed"</span><span class="keyword">else</span><span class="string">"not_installed"</span>)<span class="string">}"</span></span>;install.text=s(<span class="keyword">if</span>(ready)<span class="string">"installed"</span><span class="keyword">else</span><span class="string">"install"</span>);install.isEnabled=!ready}},{e->state.text=recognition.failure(<span class="keyword">this</span>,e);install.isEnabled=<span class="keyword">true</span>})}</span>
-<span class="lineno"> 1020 </span>      install.setOnClickListener{
-<span class="lineno"> 1021 </span>          state.text=s(<span class="string">"downloading"</span>);install.isEnabled=<span class="keyword">false</span>
-<span class="lineno"> 1022 </span>          <span class="keyword">val</span> slow=Runnable{<span class="keyword">if</span>(!destroyed&amp;&amp;!install.isEnabled){state.text=s(<span class="string">"download_slow"</span>);install.isEnabled=<span class="keyword">true</span>;install.text=s(<span class="string">"retry"</span>)}}
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:611</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  608 </span>         <span class="keyword">object</span> : SeekBar.OnSeekBarChangeListener {
+<span class="lineno">  609 </span>             override <span class="keyword">fun</span> onProgressChanged(s: SeekBar?, p: Int, u: Boolean) {
+<span class="lineno">  610 </span>                 board.inkWidth = p + <span class="number">1f</span>
+<span class="caretline"><span class="lineno">  611 </span>                 read.text = <span class="string">"${</span><span class="warning">p+<span class="number">1</span></span><span class="string">}"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  612 </span>             }
+<span class="lineno">  613 </span>
+<span class="lineno">  614 </span>             override <span class="keyword">fun</span> onStartTrackingTouch(s: SeekBar?) {}
+</pre>
+
+<span class="location"><a href="../../src/main/java/com/vuravision/classroom/MainActivity.kt">../../src/main/java/com/vuravision/classroom/MainActivity.kt</a>:962</span>: <span class="message">Do not concatenate text displayed with <code>setText</code>. Use resource string with placeholders.</span><br /><pre class="errorlines">
+<span class="lineno">  959 </span>             <span class="keyword">object</span> : Runnable {
+<span class="lineno">  960 </span>                 override <span class="keyword">fun</span> run() {
+<span class="lineno">  961 </span>                     <span class="keyword">if</span> (d.isShowing) {
+<span class="caretline"><span class="lineno">  962 </span>                         count.text = <span class="warning"><span class="string">"${</span>s(<span class="string">"downloads"</span>)<span class="string">}: ${</span>server.downloads<span class="string">}"</span></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno">  963 </span>                         handler.postDelayed(<span class="keyword">this</span>, <span class="number">1000</span>)
+<span class="lineno">  964 </span>                     }
+<span class="lineno">  965 </span>                 }
 </pre>
 
 </div>

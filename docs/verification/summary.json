@@ -1,17 +1,15 @@
 {
-  "version": "1.0.0",
-  "versionCode": 3,
-  "tests": {
-    "tests": 50,
-    "failures": 0,
-    "errors": 0,
-    "skipped": 0
+  "version": "1.1.0",
+  "versionCode": 4,
+  "tests": 67,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "lint": {
+    "Warning": 342
   },
-  "lintErrors": 0,
-  "lintWarnings": 332,
-  "apkSha256": "acf6ffdc43067750d06946f95c8e63ea7ef03166b8aa42ad48027cd3eb8de53d",
-  "apkBytes": 33724456,
-  "signing": "development certificate; release build is not debuggable",
-  "deviceTests": "compiled, not executed locally",
-  "githubHostedRun": "not executed"
+  "release_apk_sha256": "93231bd1abbcc3f67778d43737b4b83bf6563ff2791d4efb80267b54121506bc",
+  "apk_size": 76511090,
+  "device_tests": "compiled, not executed locally",
+  "physical_hardware": "not tested"
 }

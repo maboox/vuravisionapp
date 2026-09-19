@@ -16,6 +16,7 @@ data class Item(
     var h: Float = 100f,
     var rotation: Float = 0f,
     var flipY: Boolean = false,
+    var flipX: Boolean = false,
     var color: Int = 0xff243746.toInt(),
     var width: Float = 4f,
     var alpha: Int = 255,
@@ -29,8 +30,13 @@ data class Item(
     var inkH: Float = 1f,
     var points: MutableList<Point> = mutableListOf(),
     var domain: Float = 10f,
+    var bold: Boolean = false,
+    var textAlign: String = "start",
+    var noteColor: Int = 0xffffe8b2.toInt(),
+    var cuts: List<EraseCut> = emptyList(),
+
 ) {
-    fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList())
+    fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
 
     fun local(px: Float, py: Float): Pair<Float, Float> {
         val a = -rotation * PI / 180
@@ -51,6 +57,7 @@ data class Item(
     fun hit(px: Float, py: Float, tolerance: Float = 10f): Boolean {
         val (a, b) = local(px, py)
         if (a < -tolerance || b < -tolerance || a > w + tolerance || b > h + tolerance) return false
+        if(cuts.any { (it.pdfPage<0||it.pdfPage==pdfPage) && it.contains(a,b,w,h) })return false
         if (kind != "ink") return true
         val sx=w/inkW;val sy=h/inkH;val limit=tolerance+width/2
         var prev:Point?=null
@@ -111,6 +118,9 @@ data class Lesson(
                 require(o.domain in .1f..1000f)
                 require(o.text.length <= 100000)
                 require(o.asset.isEmpty() || o.asset.matches(Regex("[a-zA-Z0-9._-]+")))
+                require(o.cuts.size <= 100000)
+                require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
+                require(o.textAlign in listOf("start","center","end"))
                 points += o.points.size
                 require(points <= 1000000)
                 require(o.points.all { it.x.isFinite() && it.y.isFinite() })
@@ -175,16 +185,19 @@ data class TouchProfile(
     var palmErase: Boolean = false,
     var multiTouch: Boolean = true,
     var thickWidth: Float = 10f,
+    var thickColor: Int = 0xffe45756.toInt(),
 ) {
     fun classify(tool: Int, major: Float) =
         when {
             tool == 4 -> "eraser"
-            tool == 2 -> "stylus"
+            tool == 2 && (!calibrated || major <= 0) -> "stylus"
             !calibrated || major <= 0 -> "unknown"
             major >= palm -> "palm"
             major <= thin -> "thin"
             else -> "finger / thick tip"
         }
+
+    fun color(tool:Int, major:Float, normal:Int) = if(classify(tool,major)=="finger / thick tip") thickColor else normal
 
     fun width(tool:Int, major:Float, normal:Float) = if(classify(tool,major)=="finger / thick tip") thickWidth else normal
 

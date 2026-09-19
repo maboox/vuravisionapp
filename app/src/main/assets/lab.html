@@ -1,0 +1,3432 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>آزمایشگاه VuraVision — یادگیری تعاملی فیزیک، شیمی، ریاضی و آمار</title>
+
+
+<style>
+:root{
+  --bg:#151030; --surface:#1E1847; --raised:#2F2765; --brandOrange:#F7941D;
+  --text:#FFFFFF; --text2:rgba(255,255,255,.65);
+  --border:rgba(255,255,255,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Vazirmatn','Noto Sans Arabic',Tahoma,system-ui,sans-serif;
+  font-size:18px; line-height:1.75; overflow-x:hidden;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 28px 56px}
+header{display:flex;align-items:center;gap:18px;padding:8px 2px 20px}
+.logo{width:52px;height:52px;border-radius:12px;flex:none;background:#231C55;border:1px solid var(--border);display:grid;place-items:center}
+.logo svg{width:34px;height:30px;display:block}
+.brandrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wordmark{font-family:Georgia,serif;font-size:12px;letter-spacing:3px;color:var(--brandOrange);font-weight:700;direction:ltr}
+header h1{font-size:24px;font-weight:800;letter-spacing:-.2px}
+header p{font-size:16px;color:var(--text2);margin-top:-2px}
+nav{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;min-height:56px;min-width:130px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text2);
+  font-family:inherit;font-size:17px;font-weight:500;cursor:pointer;transition:all .18s;user-select:none}
+.tab .ico{font-size:22px}
+.tab:hover{background:var(--raised)}
+.tab.on{color:var(--text);font-weight:700;background:var(--soft);border-color:var(--bord)}
+.panel{display:none}
+.panel.on{display:block}
+.expbar{display:flex;flex-wrap:wrap;gap:8px;padding:2px 2px 14px}
+.expbar::-webkit-scrollbar{display:none}
+.exp{flex:0 0 auto;min-height:50px;padding:8px 20px;border-radius:999px;background:var(--surface);
+  border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:15.5px;font-weight:500;cursor:pointer;transition:all .15s}
+.exp:hover{background:var(--raised)}
+.exp.on{background:var(--soft);border-color:var(--bord);color:var(--accL);font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 310px;gap:20px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.stage{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;height:500px;min-height:440px}
+@media(max-width:820px){.stage{height:340px;min-height:280px}}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.hint{position:absolute;bottom:10px;inset-inline-start:12px;font-size:12.5px;color:rgba(255,255,255,.55);
+  background:rgba(21,16,48,.6);backdrop-filter:blur(4px);padding:3px 10px;border-radius:8px;pointer-events:none;max-width:75%}
+.readout{position:absolute;top:10px;inset-inline-start:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none;max-width:85%}
+.chip{font-size:12.5px;padding:3px 10px;border-radius:8px;background:rgba(21,16,48,.65);backdrop-filter:blur(4px);
+  border:1px solid var(--border);color:var(--text2)}
+.chip b{color:var(--text);font-weight:700}
+.controls{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.controls h3{font-size:16px;font-weight:700;color:var(--text2);letter-spacing:.2px}
+.notep{font-size:13.5px;color:var(--text2)}
+.ctl label{display:flex;justify-content:space-between;font-size:15px;color:var(--text2);margin-bottom:5px}
+.ctl label output{color:var(--text);font-weight:700;font-size:15px}
+input[type=range]{width:100%;height:28px;appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--raised)}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;margin-top:-11px;border:none;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--raised)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:none}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{flex:1;min-height:52px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--raised);color:var(--text);font-family:inherit;font-size:15.5px;font-weight:600;cursor:pointer;transition:filter .15s;white-space:nowrap}
+.btn:hover{filter:brightness(1.15)}
+.btn.primary,.seg .btn.on{background:var(--brandOrange);border-color:#F7941D;color:#fff}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg .btn{flex:1 0 calc(50% - 6px)}
+.learn{margin-top:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.learn .mark{font-size:20px;flex:none;margin-top:2px}
+.learn h4{font-size:17px;font-weight:700;margin-bottom:4px}
+.learn p{font-size:15.5px;color:var(--text2)}
+.formula{display:inline-block;direction:ltr;font-family:Georgia,serif;font-style:italic;background:var(--raised);border-radius:6px;padding:0 8px;color:var(--text);font-size:14px}
+footer{margin-top:28px;text-align:center;font-size:12.5px;color:rgba(255,255,255,.4)}
+
+
+/* TV displays: stage fills ~58% of viewport height for big-screen impact */
+@media(min-width:1400px){
+  .stage{height:58vh;min-height:480px;max-height:720px}
+  .grid{grid-template-columns:1fr 340px;gap:24px}
+}
+@media(min-width:1800px){
+  .wrap{padding:32px 40px 60px}
+  header h1{font-size:28px}
+  header p{font-size:18px}
+  .tab{min-height:62px;font-size:19px}
+  .exp{min-height:54px;font-size:17px}
+  .btn{min-height:58px;font-size:17px}
+  .controls{padding:24px;gap:18px}
+  .controls h3{font-size:18px}
+  .ctl label,.ctl label output{font-size:17px}
+  input[type=range]{height:36px}
+  input[type=range]::-webkit-slider-thumb{width:32px;height:32px;margin-top:-13px}
+  .learn h4{font-size:19px}
+  .learn p{font-size:17px}
+  .notep{font-size:16px}
+  .grid{grid-template-columns:1fr 380px;gap:28px}
+  .expbar{gap:10px;padding:4px 2px 18px}
+}
+/* ===== VuraVision TV scaling (65"/75"/86" touch displays) ===== */
+@media(min-width:1500px){
+  body{zoom:1.3}
+  .wrap{max-width:1240px}
+  .stage{height:520px}
+}
+@media(min-width:2200px){
+  body{zoom:1.9}
+  .wrap{max-width:1300px}
+  .stage{height:560px}
+}
+@media(min-width:3300px){
+  body{zoom:2.6}
+  .wrap{max-width:1360px}
+  .stage{height:580px}
+}
+@media(min-width:1500px){
+  .exp{min-height:52px;font-size:15px;padding:8px 20px}
+  .tab{min-height:56px}
+  .btn{min-height:52px}
+  input[type=range]{height:34px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-10px}
+}
+footer .fbrand{color:var(--brandOrange);font-weight:700;letter-spacing:2px;direction:ltr;display:inline-block}
+
+:root{--bg:#13102c;--surface:#211b49;--raised:#332963;--brandOrange:#f8a529}
+body{background:radial-gradient(ellipse at 90% 0,rgba(125,79,225,.22),transparent 45%),var(--bg)}
+.stage{background:radial-gradient(circle at 30% 20%,#292250,#15122e);border-radius:24px;box-shadow:0 16px 44px #08051c55}
+.controls,.learn{border-radius:22px;box-shadow:0 8px 28px #08051c22}.tab,.exp{transition:background .15s,border-color .15s}
+.expbar{max-height:155px;overflow-y:auto;padding:8px;border-radius:16px;background:#ffffff05;margin-bottom:16px}
+.vuraTools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}.vuraTools input{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);color:white;border-radius:14px;padding:12px;font:inherit}
+.vuraTools button{background:#30265f;border:1px solid #685594;color:white;border-radius:14px;padding:10px 20px;font:inherit;cursor:pointer}
+.vuraTools button.active{background:#f8a529;color:#20194f}.vuraCount{font-size:13px;color:#c5bddf;margin-bottom:10px}
+button:focus-visible,input:focus-visible{outline:3px solid #f8a529;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo"><svg viewBox="0 0 120 100" fill="none" aria-label="VuraVision"><path d="M30 6 L58 90" stroke="#F7941D" stroke-width="10"/><path d="M45 6 L70 82" stroke="#FFFFFF" stroke-width="13"/><path d="M70 82 L87 40" stroke="#FFFFFF" stroke-width="8"/><path d="M92 27 L100 6" stroke="#FFFFFF" stroke-width="8"/></svg></div>
+  <div>
+    <div class="brandrow"><h1>آزمایشگاه VuraVision</h1><span class="wordmark">VURAVISION</span></div>
+    <p>۶۸ آزمایش تعاملی فیزیک، شیمی، ریاضی و آمار — بچرخانید، بکشید و آزمایش کنید</p>
+  </div>
+</header>
+<nav id="nav"></nav>
+<section class="panel" id="panel-physics">
+  <div class="expbar" id="exps-physics"></div>
+  <div class="grid">
+    <div class="stage"><canvas id="cv-physics"></canvas><div class="readout" id="ro-physics"></div><div class="hint" id="hint-physics"></div></div>
+    <div class="controls" id="ct-physics"></div>
+  </div>
+  <div class="learn"><div class="mark">💡</div><div><h4 id="lt-physics"></h4><p id="lb-physics"></p></div></div>
+</section>
+<section class="panel" id="panel-chem">
+  <div class="expbar" id="exps-chem"></div>
+  <div class="grid">
+    <div class="stage"><canvas id="cv-chem"></canvas><div class="readout" id="ro-chem"></div><div class="hint" id="hint-chem"></div></div>
+    <div class="controls" id="ct-chem"></div>
+  </div>
+  <div class="learn"><div class="mark">💡</div><div><h4 id="lt-chem"></h4><p id="lb-chem"></p></div></div>
+</section>
+<section class="panel" id="panel-math">
+  <div class="expbar" id="exps-math"></div>
+  <div class="grid">
+    <div class="stage"><canvas id="cv-math"></canvas><div class="readout" id="ro-math"></div><div class="hint" id="hint-math"></div></div>
+    <div class="controls" id="ct-math"></div>
+  </div>
+  <div class="learn"><div class="mark">💡</div><div><h4 id="lt-math"></h4><p id="lb-math"></p></div></div>
+</section>
+<section class="panel" id="panel-stats">
+  <div class="expbar" id="exps-stats"></div>
+  <div class="grid">
+    <div class="stage"><canvas id="cv-stats"></canvas><div class="readout" id="ro-stats"></div><div class="hint" id="hint-stats"></div></div>
+    <div class="controls" id="ct-stats"></div>
+  </div>
+  <div class="learn"><div class="mark">💡</div><div><h4 id="lt-stats"></h4><p id="lb-stats"></p></div></div>
+</section>
+<footer><span class="fbrand">VURAVISION</span> · آزمایشگاه VuraVision · محصول شرکت ویوراویژن · ساخته‌شده برای یادگیری با لمس و بازی · روی موبایل، تبلت و رایانه</footer>
+</div>
+<script>
+"use strict";
+/* ============ core helpers ============ */
+const $=s=>document.querySelector(s);
+const faD="۰۱۲۳۴۵۶۷۸۹";
+const fa=n=>String(n).replace(/[0-9]/g,d=>faD[+d]).replace(/\./g,"٫").replace(/-/g,"−");
+const fa0=n=>fa(Math.round(n));
+const fa1=n=>fa((+n).toFixed(1));
+const fa2=n=>fa((+n).toFixed(2));
+const DPR=Math.min(window.devicePixelRatio||1,2);
+const TAU=Math.PI*2;
+let GN=null;
+function gauss(){if(GN!==null){const g=GN;GN=null;return g;}let u=0,v=0;while(!u)u=Math.random();v=Math.random();const m=Math.sqrt(-2*Math.log(u));GN=m*Math.sin(TAU*v);return m*Math.cos(TAU*v);}
+function fitCanvas(cv){const r=cv.parentElement.getBoundingClientRect();const w=Math.round(r.width*DPR),h=Math.round(r.height*DPR);if(w>0&&(cv.width!==w||cv.height!==h)){cv.width=w;cv.height=h;}return{w:cv.width,h:cv.height};}
+function project(p,v,w,h){const cy=Math.cos(v.yaw),sy=Math.sin(v.yaw),cx=Math.cos(v.pitch),sx=Math.sin(v.pitch);
+  const x=p[0]*cy+p[2]*sy, z=-p[0]*sy+p[2]*cy, y=p[1];
+  const y2=y*cx-z*sx, z2=y*sx+z*cx;
+  const s=600/(600+z2)*v.zoom*DPR;
+  return[w/2+x*s,h/2+y2*s,s,z2];}
+function grid2(ctx,w,h,nx,ny){ctx.strokeStyle="rgba(255,255,255,.07)";ctx.lineWidth=1;
+  for(let i=0;i<=nx;i++){ctx.beginPath();ctx.moveTo(i*w/nx,0);ctx.lineTo(i*w/nx,h);ctx.stroke();}
+  for(let i=0;i<=ny;i++){ctx.beginPath();ctx.moveTo(0,i*h/ny);ctx.lineTo(w,i*h/ny);ctx.stroke();}}
+function ball(ctx,x,y,R,color){const g=ctx.createRadialGradient(x-R*.35,y-R*.4,R*.12,x,y,R);
+  g.addColorStop(0,"#fff");g.addColorStop(.3,color);g.addColorStop(1,"rgba(10,10,10,.9)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,R,0,TAU);ctx.fill();}
+/* ============ registry & UI framework ============ */
+const SUBJECTS={
+  physics:{label:"فیزیک",ico:"🪐",acc:"#5E9FE8",accL:"#9cc4f2",soft:"rgba(94,159,232,.18)",bord:"rgba(94,159,232,.45)"},
+  chem:{label:"شیمی",ico:"⚗️",acc:"#72BC8F",accL:"#a4d6b9",soft:"rgba(114,188,143,.18)",bord:"rgba(114,188,143,.45)"},
+  math:{label:"ریاضی",ico:"🌊",acc:"#BF8EDA",accL:"#d9b8ea",soft:"rgba(191,142,218,.18)",bord:"rgba(191,142,218,.45)"},
+  stats:{label:"آمار",ico:"🎲",acc:"#DE9255",accL:"#ecba93",soft:"rgba(222,146,85,.18)",bord:"rgba(222,146,85,.45)"}
+};
+const REG={physics:[],chem:[],math:[],stats:[]};
+const CUR={subj:"physics",exp:{}};
+const CVS={},CTX={};
+function defExp(subj,e){REG[subj].push(e);}
+function buildControls(subj,ex){
+  const box=$("#ct-"+subj);box.innerHTML="";
+  const H=document.createElement("h3");H.textContent=ex.ctlTitle||"تنظیمات آزمایش";box.appendChild(H);
+  for(const c of ex.controls||[]){
+    if(c.type==="range"){
+      ex.p[c.id]=c.value;
+      const d=document.createElement("div");d.className="ctl";
+      d.innerHTML=`<label>${c.label} <output></output></label><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}" aria-label="${c.label}">`;
+      const inp=d.querySelector("input"),out=d.querySelector("output");
+      out.textContent=c.fmt(c.value);
+      inp.addEventListener("input",()=>{ex.p[c.id]=+inp.value;out.textContent=c.fmt(+inp.value);ex.change&&ex.change(ex,c.id);});
+      box.appendChild(d);
+    }else if(c.type==="buttons"){
+      const d=document.createElement("div");d.className="btnrow";
+      for(const b of c.items){
+        const el=document.createElement("button");el.className="btn"+(b.primary?" primary":"");el.textContent=b.label;
+        el.addEventListener("click",()=>ex.btn&&ex.btn(ex,b.id));d.appendChild(el);
+      }
+      box.appendChild(d);
+    }else if(c.type==="toggle"){
+      ex.p[c.id]=c.value;
+      const el=document.createElement("button");el.className="btn"+(c.value?" primary":"");
+      const paint=()=>{el.textContent=c.label+": "+(ex.p[c.id]?(c.onText||"روشن"):(c.offText||"خاموش"));el.classList.toggle("primary",!!ex.p[c.id]);};
+      paint();
+      el.addEventListener("click",()=>{ex.p[c.id]=!ex.p[c.id];paint();ex.change&&ex.change(ex,c.id);});
+      box.appendChild(el);
+    }else if(c.type==="choices"){
+      ex.p[c.id]=c.value;
+      const d=document.createElement("div");d.className="seg";
+      for(const it of c.items){
+        const el=document.createElement("button");el.className="btn"+(it.val===c.value?" on":"");el.textContent=it.label;
+        el.addEventListener("click",()=>{ex.p[c.id]=it.val;[...d.children].forEach(x=>x.classList.toggle("on",x===el));ex.change&&ex.change(ex,c.id);});
+        d.appendChild(el);
+      }
+      box.appendChild(d);
+    }else if(c.type==="note"){
+      const p=document.createElement("p");p.className="notep";p.textContent=c.text;box.appendChild(p);
+    }
+  }
+}
+function buildReadouts(subj,ex){
+  const r=$("#ro-"+subj);r.innerHTML="";
+  for(const c of ex.readouts||[]){
+    const s=document.createElement("span");s.className="chip";
+    s.innerHTML=`${c.label}: <b id="r-${subj}-${c.id}">–</b>`;r.appendChild(s);
+  }
+}
+function setR(subj,id,val){const el=document.getElementById(`r-${subj}-${id}`);if(el&&el.textContent!==val)el.textContent=val;}
+function selectExp(subj,id,updateHash){
+  const ex=REG[subj].find(e=>e.id===id)||REG[subj][0];
+  CUR.exp[subj]=ex;ex.p={};ex.s={};ex.view={yaw:.5,pitch:.38,zoom:1,touched:false};
+  buildControls(subj,ex);buildReadouts(subj,ex);
+  $("#lt-"+subj).textContent=ex.learnTitle||"";$("#lb-"+subj).innerHTML=ex.learnBody||"";
+  const hint=$("#hint-"+subj);hint.textContent=ex.hint||"";hint.style.display=ex.hint?"":"none";
+  const bar=$("#exps-"+subj);[...bar.children].forEach(b=>b.classList.toggle("on",b.dataset.id===ex.id));
+  ex.init&&ex.init(ex);
+  if(updateHash!==false)history.replaceState(null,"","#"+subj+"/"+ex.id);
+}
+function setTab(name,updateHash){
+  CUR.subj=name;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===name));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="panel-"+name));
+  if(updateHash!==false){const ex=CUR.exp[name];history.replaceState(null,"","#"+name+(ex?"/"+ex.id:""));}
+}
+function attachPointer(subj){
+  const cv=CVS[subj];const ptrs=new Map();let lastD=0;
+  const xy=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR];};
+  cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    const ex=CUR.exp[subj];const[x,y]=xy(e);ex.drag&&ex.drag(ex,"down",x,y,cv);});
+  cv.addEventListener("pointermove",e=>{
+    if(!ptrs.has(e.pointerId))return;
+    const prev=ptrs.get(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    const ex=CUR.exp[subj];const dx=e.clientX-prev[0],dy=e.clientY-prev[1];
+    if(ptrs.size===1){
+      if(ex.use3D){ex.view.yaw+=dx*.006;ex.view.pitch=Math.max(-1.4,Math.min(1.4,ex.view.pitch+dy*.006));ex.view.touched=true;}
+      const[x,y]=xy(e);ex.drag&&ex.drag(ex,"move",x,y,cv,dx*DPR,dy*DPR);
+    }else if(ptrs.size===2&&ex.use3D){
+      const p=[...ptrs.values()];const d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);
+      if(lastD)ex.view.zoom=Math.max(.4,Math.min(3,ex.view.zoom*d/lastD));lastD=d;
+    }});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)lastD=0;const ex=CUR.exp[subj];ex.drag&&ex.drag(ex,"up",0,0,cv);};
+  cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+  cv.addEventListener("wheel",e=>{const ex=CUR.exp[subj];if(ex&&ex.use3D){e.preventDefault();ex.view.zoom=Math.max(.4,Math.min(3,ex.view.zoom*(e.deltaY<0?1.08:.92)));}},{passive:false});
+}
+/* ============ PHYSICS ============ */
+defExp("physics",{
+ id:"orbit",icon:"\u{1FA90}",title:"گرانش و مدار",use3D:true,
+ hint:"با انگشت یا ماوس بچرخانید · با دو انگشت یا اسکرول زوم کنید",
+ readouts:[{id:"n",label:"سیاره‌ها"},{id:"v",label:"سریع‌ترین"}],
+ controls:[
+  {type:"range",id:"G",label:"شدت گرانش (G)",min:.2,max:2.5,step:.05,value:1,fmt:v=>fa1(v)+"×"},
+  {type:"range",id:"speed",label:"سرعت زمان",min:.2,max:3,step:.1,value:1,fmt:v=>fa1(v)+"×"},
+  {type:"buttons",items:[{id:"add",label:"+ سیارهٔ جدید",primary:true},{id:"reset",label:"بازنشانی"}]}
+ ],
+ learnTitle:"قانون گرانش جهانی نیوتن",
+ learnBody:'هر دو جرم یکدیگر را با نیروی <span class="formula">F = G·M·m / r²</span> جذب می‌کنند. گرانش را زیاد کنید تا مدارها تنگ‌تر شوند؛ کم کنید تا سیاره‌ها فرار کنند! سیاره‌های نزدیک‌تر سریع‌تر می‌چرخند — همان قانون سوم کپلر.',
+ init(ex){
+  const s=ex.s;
+  s.SM=2600;s.ci=0;
+  s.colors=["#5E9FE8","#DE9255","#72BC8F","#BF8EDA","#E97366","#EAC26B","#9cc4f2","#a4d6b9"];
+  s.stars=[...Array(90)].map(()=>{const r=900+Math.random()*900,a=Math.random()*TAU,b=(Math.random()-.5)*Math.PI;
+    return[r*Math.cos(a)*Math.cos(b),r*Math.sin(b),r*Math.sin(a)*Math.cos(b)];});
+  s.add=(r)=>{
+    if(s.bodies.length>=8)return;
+    const tilt=(Math.random()-.5)*.5,ph=Math.random()*TAU;
+    const v=Math.sqrt(ex.p.G*s.SM/r);
+    s.bodies.push({
+      pos:[r*Math.cos(ph),r*Math.sin(ph)*Math.sin(tilt),r*Math.sin(ph)*Math.cos(tilt)],
+      vel:[-v*Math.sin(ph),v*Math.cos(ph)*Math.sin(tilt),v*Math.cos(ph)*Math.cos(tilt)],
+      color:s.colors[s.ci++%s.colors.length],size:5+Math.random()*4,trail:[]});
+  };
+  s.step=(hh)=>{
+    for(const b of s.bodies){
+      const r=Math.hypot(b.pos[0],b.pos[1],b.pos[2]);
+      const a=-ex.p.G*s.SM/(r*r*r);
+      for(let i=0;i<3;i++)b.vel[i]+=a*b.pos[i]*hh;
+      for(let i=0;i<3;i++)b.pos[i]+=b.vel[i]*hh;
+    }
+    s.bodies=s.bodies.filter(b=>Math.hypot(b.pos[0],b.pos[1],b.pos[2])<2200);
+  };
+  s.reset=()=>{s.bodies=[];s.ci=0;[110,170,240].forEach(r=>s.add(r));
+    for(let i=0;i<400;i++)s.step(.12);s.bodies.forEach(b=>b.trail=[]);};
+  s.reset();
+ },
+ btn(ex,id){if(id==="add")ex.s.add(90+Math.random()*220);else ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,v=ex.view;
+  const steps=Math.max(1,Math.round(2*ex.p.speed));
+  for(let i=0;i<steps;i++)s.step(.12);
+  s.tick=(s.tick||0)+1;
+  if(s.tick%2===0)for(const b of s.bodies){b.trail.push([...b.pos]);if(b.trail.length>90)b.trail.shift();}
+  for(const st of s.stars){const pr=project(st,v,w,h);ctx.fillStyle=pr[3]>0?"rgba(255,255,255,.12)":"rgba(255,255,255,.3)";ctx.fillRect(pr[0],pr[1],1.6*DPR,1.6*DPR);}
+  const c0=project([0,0,0],v,w,h),sx=c0[0],sy=c0[1],R=16*c0[2];
+  const g=ctx.createRadialGradient(sx,sy,R*.2,sx,sy,R*3);
+  g.addColorStop(0,"rgba(234,194,107,.9)");g.addColorStop(.4,"rgba(234,194,107,.25)");g.addColorStop(1,"rgba(234,194,107,0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,R*3,0,TAU);ctx.fill();
+  ball(ctx,sx,sy,R,"#EAC26B");
+  for(const b of s.bodies){
+    ctx.strokeStyle=b.color+"66";ctx.lineWidth=1.4*DPR;ctx.beginPath();
+    b.trail.forEach((p,i)=>{const pr=project(p,v,w,h);i?ctx.lineTo(pr[0],pr[1]):ctx.moveTo(pr[0],pr[1]);});ctx.stroke();
+  }
+  [...s.bodies].sort((a,b)=>project(b.pos,v,w,h)[3]-project(a.pos,v,w,h)[3])
+   .forEach(b=>{const pr=project(b.pos,v,w,h);ball(ctx,pr[0],pr[1],b.size*pr[2],b.color);});
+  let vmax=0;for(const b of s.bodies)vmax=Math.max(vmax,Math.hypot(b.vel[0],b.vel[1],b.vel[2]));
+  setR("physics","n",fa0(s.bodies.length));
+  setR("physics","v",s.bodies.length?fa1(vmax):"–");
+ }
+});
+defExp("physics",{
+ id:"pendulum",icon:"⏱️",title:"آونگ",
+ hint:"وزنه را با انگشت بکشید و رها کنید",
+ readouts:[{id:"T",label:"دورهٔ نظری"},{id:"Tm",label:"دورهٔ اندازه‌گیری"}],
+ controls:[
+  {type:"range",id:"L",label:"طول آونگ (متر)",min:.4,max:2,step:.05,value:1,fmt:v=>fa2(v)},
+  {type:"range",id:"g",label:"گرانش g (m/s²)",min:1.6,max:24.8,step:.1,value:9.8,fmt:v=>fa1(v)},
+  {type:"range",id:"damp",label:"اصطکاک هوا",min:0,max:.5,step:.01,value:.03,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"kick",label:"تاب بده",primary:true}]},
+  {type:"note",text:"گرانش: ماه ≈ ۱٫۶ · زمین ≈ ۹٫۸ · مشتری ≈ ۲۴٫۸"}
+ ],
+ learnTitle:"آونگ ساده",
+ learnBody:'دورهٔ نوسان <span class="formula">T = 2π √(L/g)</span> است — به جرم وزنه بستگی ندارد! طول را ۴ برابر کنید تا دوره ۲ برابر شود. گالیله با همین کشف، ساعت آونگی را ممکن کرد.',
+ init(ex){ex.s={th:.7,w:0,hold:false,t:0,lastCross:0,Tm:0};},
+ btn(ex){ex.s.th=1.1;ex.s.w=0;},
+ drag(ex,ph,x,y,cv){
+  const s=ex.s;if(!cv.width)return;
+  const px=cv.width/2,py=cv.height*.1,len=cv.height*.68*(ex.p.L/2);
+  if(ph==="down"){const bx=px+Math.sin(s.th)*len,by=py+Math.cos(s.th)*len;
+    if(Math.hypot(x-bx,y-by)<56*DPR)s.hold=true;}
+  else if(ph==="move"&&s.hold){s.th=Math.atan2(x-px,y-py);s.w=0;}
+  else if(ph==="up")s.hold=false;
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  if(!s.hold){
+   const n=6,hh=Math.min(dt,.033)/n;
+   for(let i=0;i<n;i++){
+    const a=-(p.g/p.L)*Math.sin(s.th)-p.damp*s.w;
+    s.w+=a*hh;const prev=s.th;s.th+=s.w*hh;s.t+=hh;
+    if(prev<0&&s.th>=0&&s.w>0){if(s.lastCross)s.Tm=s.t-s.lastCross;s.lastCross=s.t;}
+   }
+  }
+  const px=w/2,py=h*.1,len=h*.68*(p.L/2);
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(px-50*DPR,py);ctx.lineTo(px+50*DPR,py);ctx.stroke();
+  ctx.strokeStyle="rgba(255,255,255,.1)";ctx.lineWidth=1;ctx.setLineDash([4,6]);
+  ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+len+30*DPR);ctx.stroke();
+  ctx.beginPath();ctx.arc(px,py,len,Math.PI*.15,Math.PI*.85);ctx.stroke();ctx.setLineDash([]);
+  const bx=px+Math.sin(s.th)*len,by=py+Math.cos(s.th)*len;
+  ctx.strokeStyle="rgba(255,255,255,.6)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(bx,by);ctx.stroke();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(px,py,4*DPR,0,TAU);ctx.fill();
+  ball(ctx,bx,by,17*DPR,"#5E9FE8");
+  setR("physics","T",fa2(TAU*Math.sqrt(p.L/p.g))+" s");
+  setR("physics","Tm",s.Tm?fa2(s.Tm)+" s":"–");
+ }
+});
+defExp("physics",{
+ id:"projectile",icon:"🎯",title:"پرتابه",
+ readouts:[{id:"R",label:"بُرد"},{id:"H",label:"اوج"}],
+ controls:[
+  {type:"range",id:"v0",label:"سرعت اولیه (m/s)",min:10,max:100,step:1,value:50,fmt:v=>fa0(v)},
+  {type:"range",id:"ang",label:"زاویه (درجه)",min:10,max:80,step:1,value:45,fmt:v=>fa0(v)+"°"},
+  {type:"range",id:"g",label:"گرانش g",min:3,max:25,step:.5,value:9.8,fmt:v=>fa1(v)},
+  {type:"buttons",items:[{id:"fire",label:"🚀 پرتاب!",primary:true},{id:"clear",label:"پاک کردن"}]}
+ ],
+ learnTitle:"حرکت پرتابه‌ای",
+ learnBody:'بُرد پرتابه <span class="formula">R = v² sin(2θ) / g</span> است. چرا زاویهٔ ۴۵ درجه دورترین پرتاب را می‌دهد؟ چون sin(۲×۴۵°)=۱ بیشینه است. زاویه‌های ۳۰ و ۶۰ درجه بُرد یکسانی دارند — امتحان کنید!',
+ init(ex){ex.s={balls:[],ci:0,colors:["#5E9FE8","#DE9255","#72BC8F","#BF8EDA","#E97366"]};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="clear"){s.balls=[];return;}
+  const a=ex.p.ang*Math.PI/180;
+  s.balls.push({x:0,y:0,vx:ex.p.v0*Math.cos(a),vy:ex.p.v0*Math.sin(a),done:false,trail:[],color:s.colors[s.ci++%5]});
+  if(s.balls.length>6)s.balls.shift();
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  const a=p.ang*Math.PI/180;
+  const R=p.v0*p.v0*Math.sin(2*a)/p.g, H=Math.pow(p.v0*Math.sin(a),2)/(2*p.g);
+  let maxR=R;for(const b of s.balls)maxR=Math.max(maxR,b.x);
+  const ox=34*DPR,oy=h-40*DPR;
+  const sc=Math.min((w-70*DPR)/Math.max(60,maxR*1.08),(h-90*DPR)/Math.max(30,H*1.25));
+  const hh=Math.min(dt,.033)*3;
+  for(const b of s.balls){
+   if(b.done)continue;
+   b.trail.push([b.x,b.y]);if(b.trail.length>400)b.trail.shift();
+   b.vy-=p.g*hh;b.x+=b.vx*hh;b.y+=b.vy*hh;
+   if(b.y<0){b.y=0;b.done=true;}
+  }
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(0,oy+1);ctx.lineTo(w,oy+1);ctx.stroke();
+  ctx.setLineDash([3,7]);ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.2*DPR;ctx.beginPath();
+  for(let i=0;i<=60;i++){const X=R*i/60,Y=X*Math.tan(a)-p.g*X*X/(2*p.v0*p.v0*Math.cos(a)*Math.cos(a));
+   const qx=ox+X*sc,qy=oy-Y*sc;i?ctx.lineTo(qx,qy):ctx.moveTo(qx,qy);}
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.save();ctx.translate(ox,oy);ctx.rotate(-a);
+  ctx.fillStyle="#4a4a48";ctx.fillRect(0,-5*DPR,30*DPR,10*DPR);ctx.restore();
+  ctx.fillStyle="#5a5a58";ctx.beginPath();ctx.arc(ox,oy,9*DPR,0,TAU);ctx.fill();
+  for(const b of s.balls){
+   ctx.fillStyle=b.color+"88";
+   for(let i=0;i<b.trail.length;i+=4){ctx.beginPath();ctx.arc(ox+b.trail[i][0]*sc,oy-b.trail[i][1]*sc,1.8*DPR,0,TAU);ctx.fill();}
+   ball(ctx,ox+b.x*sc,oy-b.y*sc,7*DPR,b.color);
+  }
+  setR("physics","R",fa0(R)+" m");setR("physics","H",fa0(H)+" m");
+ }
+});
+defExp("physics",{
+ id:"spring",icon:"🪀",title:"فنر و نوسان",
+ hint:"وزنه را بکشید و رها کنید",
+ readouts:[{id:"f",label:"بسامد"},{id:"T",label:"دوره"}],
+ controls:[
+  {type:"range",id:"m",label:"جرم (kg)",min:.5,max:5,step:.1,value:1.5,fmt:v=>fa1(v)},
+  {type:"range",id:"k",label:"سختی فنر k (N/m)",min:5,max:100,step:1,value:30,fmt:v=>fa0(v)},
+  {type:"range",id:"c",label:"میرایی",min:0,max:1.5,step:.05,value:.15,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"pull",label:"بکش و رها کن",primary:true}]}
+ ],
+ learnTitle:"نوسانگر هماهنگ ساده",
+ learnBody:'قانون هوک: <span class="formula">F = −k·x</span> و بسامد نوسان <span class="formula">f = √(k/m) / 2π</span>. فنر سفت‌تر ← نوسان تندتر؛ جرم بیشتر ← نوسان کندتر. همین اصل در کمک‌فنر خودرو و زلزله‌نگار به کار می‌رود.',
+ init(ex){ex.s={y:.6,v:0,hold:false};},
+ btn(ex){ex.s.y=.85;ex.s.v=0;},
+ drag(ex,ph,x,y,cv){
+  const s=ex.s;if(!cv.width)return;
+  const cx=cv.width/2,eq=cv.height*.5,scl=cv.height*.28;
+  if(ph==="down"){const my=eq+s.y*scl;if(Math.abs(x-cx)<70*DPR&&Math.abs(y-my)<50*DPR)s.hold=true;}
+  else if(ph==="move"&&s.hold){s.y=Math.max(-1.1,Math.min(1.3,(y-eq)/scl));s.v=0;}
+  else if(ph==="up")s.hold=false;
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  if(!s.hold){
+   const n=6,hh=Math.min(dt,.033)/n;
+   for(let i=0;i<n;i++){const a=(-p.k*s.y-p.c*s.v*3)/p.m;s.v+=a*hh;s.y+=s.v*hh;}
+  }
+  const cx=w/2,eq=h*.5,scl=h*.28,top=14*DPR;
+  const my=eq+s.y*scl;
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(cx-60*DPR,top);ctx.lineTo(cx+60*DPR,top);ctx.stroke();
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx-110*DPR,eq);ctx.lineTo(cx+110*DPR,eq);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="#9cc4f2";ctx.lineWidth=2.4*DPR;ctx.beginPath();ctx.moveTo(cx,top);
+  const N=12,L=my-top-24*DPR;
+  for(let i=1;i<=N;i++){const yy=top+8*DPR+L*i/N;ctx.lineTo(cx+(i%2?14:-14)*DPR,yy-4*DPR);}
+  ctx.lineTo(cx,my-16*DPR);ctx.stroke();
+  const bw=(46+p.m*8)*DPR,bh=44*DPR;
+  ctx.fillStyle="#383836";ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.5*DPR;
+  ctx.beginPath();ctx.roundRect(cx-bw/2,my-16*DPR,bw,bh,8*DPR);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#fff";ctx.font="700 "+(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText(fa1(p.m)+" kg",cx,my+12*DPR);
+  const f=Math.sqrt(p.k/p.m)/TAU;
+  setR("physics","f",fa2(f)+" Hz");setR("physics","T",fa2(1/f)+" s");
+ }
+});
+defExp("physics",{
+ id:"collision",icon:"💥",title:"برخورد و تکانه",
+ readouts:[{id:"p",label:"تکانهٔ کل"},{id:"k",label:"انرژی جنبشی"}],
+ controls:[
+  {type:"range",id:"m1",label:"جرم آبی (kg)",min:1,max:8,step:.5,value:2,fmt:v=>fa1(v)},
+  {type:"range",id:"m2",label:"جرم نارنجی (kg)",min:1,max:8,step:.5,value:4,fmt:v=>fa1(v)},
+  {type:"range",id:"v1",label:"سرعت اولیهٔ آبی (m/s)",min:1,max:8,step:.5,value:4,fmt:v=>fa1(v)},
+  {type:"choices",id:"mode",value:"el",items:[{val:"el",label:"کشسان"},{val:"in",label:"چسبنده"}]},
+  {type:"buttons",items:[{id:"go",label:"شروع",primary:true}]}
+ ],
+ learnTitle:"پایستگی تکانه",
+ learnBody:'در هر برخورد، تکانهٔ کل <span class="formula">p = m₁v₁ + m₂v₂</span> ثابت می‌ماند. در برخورد کشسان انرژی جنبشی هم حفظ می‌شود، اما در برخورد چسبنده بخشی از آن به گرما تبدیل می‌شود — به عدد انرژی پیش و پس از برخورد دقت کنید.',
+ init(ex){const s=ex.s;s.L=10;s.setup=()=>{s.x1=1.5;s.x2=6;s.u1=ex.p.v1;s.u2=0;s.stuck=false;};s.setup();},
+ btn(ex){ex.s.setup();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  const r1=.28+.07*Math.cbrt(p.m1),r2=.28+.07*Math.cbrt(p.m2);
+  const hh=Math.min(dt,.033);
+  s.x1+=s.u1*hh;s.x2+=s.u2*hh;
+  if(s.x1<r1&&s.u1<0)s.u1=-s.u1;
+  if(s.x2>s.L-r2&&s.u2>0)s.u2=-s.u2;
+  if(s.x1>s.L-r1&&s.u1>0)s.u1=-s.u1;
+  if(s.x2<r2&&s.u2<0)s.u2=-s.u2;
+  if(s.stuck){s.x2=s.x1+r1+r2;s.u2=s.u1;}
+  else if(s.x2-s.x1<r1+r2&&s.u1>s.u2){
+   if(p.mode==="el"){
+    const m1=p.m1,m2=p.m2,u1=s.u1,u2=s.u2;
+    s.u1=((m1-m2)*u1+2*m2*u2)/(m1+m2);
+    s.u2=((m2-m1)*u2+2*m1*u1)/(m1+m2);
+   }else{const v=(p.m1*s.u1+p.m2*s.u2)/(p.m1+p.m2);s.u1=s.u2=v;s.stuck=true;}
+   s.x2=s.x1+r1+r2;
+  }
+  const pad=24*DPR,scl=(w-2*pad)/s.L,gy=h*.62;
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(pad-10,gy+1);ctx.lineTo(w-pad+10,gy+1);ctx.stroke();
+  const drawCart=(X,R2,m,col,u)=>{
+   const bw=R2*2*scl,bh=Math.max(34*DPR,bw*.55);
+   ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(pad+(X-R2)*scl,gy-bh,bw,bh-8*DPR,6*DPR);ctx.fill();
+   ctx.fillStyle="#151030";
+   ctx.beginPath();ctx.arc(pad+(X-R2*.5)*scl,gy-6*DPR,6*DPR,0,TAU);ctx.fill();
+   ctx.beginPath();ctx.arc(pad+(X+R2*.5)*scl,gy-6*DPR,6*DPR,0,TAU);ctx.fill();
+   ctx.fillStyle="#fff";ctx.font="700 "+(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+   ctx.fillText(fa1(m),pad+X*scl,gy-bh/2);
+   if(Math.abs(u)>.05){ctx.strokeStyle="#fff";ctx.lineWidth=2*DPR;
+    const ax=pad+X*scl,ay=gy-bh-12*DPR,d=Math.sign(u)*Math.min(40,Math.abs(u)*9)*DPR;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d,ay);
+    ctx.lineTo(ax+d-Math.sign(u)*6*DPR,ay-4*DPR);ctx.moveTo(ax+d,ay);
+    ctx.lineTo(ax+d-Math.sign(u)*6*DPR,ay+4*DPR);ctx.stroke();}
+  };
+  drawCart(s.x1,r1,p.m1,"#5E9FE8",s.u1);drawCart(s.x2,r2,p.m2,"#DE9255",s.u2);
+  setR("physics","p",fa1(p.m1*s.u1+p.m2*s.u2)+" kg·m/s");
+  setR("physics","k",fa1(.5*p.m1*s.u1*s.u1+.5*p.m2*s.u2*s.u2)+" J");
+ }
+});
+defExp("physics",{
+ id:"standing",icon:"🎻",title:"موج ایستاده",
+ readouts:[{id:"f",label:"بسامد"},{id:"n",label:"گره‌های میانی"}],
+ controls:[
+  {type:"range",id:"n",label:"هارمونیک (n)",min:1,max:6,step:1,value:2,fmt:v=>fa0(v)},
+  {type:"range",id:"A",label:"دامنه",min:10,max:70,step:1,value:45,fmt:v=>fa0(v)},
+  {type:"range",id:"sp",label:"سرعت",min:.2,max:3,step:.1,value:1,fmt:v=>fa1(v)+"×"}
+ ],
+ learnTitle:"تشدید و هارمونیک‌ها",
+ learnBody:'روی سیم گیتار فقط موج‌هایی با بسامد <span class="formula">fₙ = n·f₁</span> پایدار می‌مانند. نقاط بی‌حرکت «گره» و نقاط بیشینه «شکم» نام دارند. هر نت موسیقی ترکیبی از همین هارمونیک‌هاست.',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt*p.sp*3;
+  const pad=30*DPR,L=w-2*pad,cy=h/2,A=p.A*DPR;
+  const env=x=>Math.sin(p.n*Math.PI*x/L);
+  ctx.setLineDash([3,6]);ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=1.2*DPR;
+  for(const sgn of[1,-1]){ctx.beginPath();for(let i=0;i<=120;i++){const x=L*i/120;
+   const y=cy-sgn*A*env(x);i?ctx.lineTo(pad+x,y):ctx.moveTo(pad+x,y);}ctx.stroke();}
+  ctx.setLineDash([]);
+  ctx.strokeStyle="#5E9FE8";ctx.lineWidth=3*DPR;ctx.beginPath();
+  for(let i=0;i<=160;i++){const x=L*i/160;const y=cy-A*env(x)*Math.cos(s.t*p.n);
+   i?ctx.lineTo(pad+x,y):ctx.moveTo(pad+x,y);}
+  ctx.stroke();
+  ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.arc(pad,cy,5*DPR,0,TAU);ctx.fill();
+  ctx.beginPath();ctx.arc(pad+L,cy,5*DPR,0,TAU);ctx.fill();
+  ctx.strokeStyle="#E97366";ctx.lineWidth=2*DPR;
+  for(let k=1;k<p.n;k++){const x=pad+L*k/p.n;ctx.beginPath();ctx.arc(x,cy,6*DPR,0,TAU);ctx.stroke();}
+  setR("physics","f",fa0(p.n)+"×f₁");setR("physics","n",fa0(p.n-1));
+ }
+});
+defExp("physics",{
+ id:"gas",icon:"🎈",title:"گاز ایده‌آل",
+ readouts:[{id:"P",label:"فشار"},{id:"c",label:"PV ÷ NT"}],
+ controls:[
+  {type:"range",id:"T",label:"دما (T)",min:.3,max:3,step:.05,value:1,fmt:v=>fa2(v)},
+  {type:"range",id:"V",label:"حجم (جای پیستون)",min:.45,max:1,step:.01,value:.85,fmt:v=>fa0(v*100)+"٪"},
+  {type:"range",id:"N",label:"تعداد ذره‌ها",min:20,max:120,step:5,value:60,fmt:v=>fa0(v)},
+  {type:"note",text:"دما را بالا ببرید یا حجم را کم کنید و ببینید فشار چطور تغییر می‌کند."}
+ ],
+ learnTitle:"قانون گاز ایده‌آل",
+ learnBody:'<span class="formula">PV = NkT</span> — فشار حاصل برخورد میلیاردها ذره با دیواره است. مقادیر در واحدهای نسبی با k=1 نمایش داده می‌شوند؛ PV÷NT برابر یک است. فشار از قانون محاسبه می‌شود و حرکت ذره‌ها نمایشی است، نه اندازه‌گیری فشار از برخوردها.',
+ init(ex){
+  const s=ex.s;s.parts=[];s.Psm=0;
+  s.make=n=>{while(s.parts.length<n){const a=Math.random()*TAU;
+    s.parts.push({x:Math.random(),y:Math.random(),vx:Math.cos(a),vy:Math.sin(a)});}
+   if(s.parts.length>n)s.parts.length=n;};
+  s.make(60);
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.make(p.N);
+  const pad=16*DPR,bx=pad,by=pad,bw=(w-2*pad-30*DPR)*p.V,bh=h-2*pad;
+  const sp=Math.sqrt(p.T)*.45,hh=Math.min(dt,.033);
+  let imp=0;
+  for(const q of s.parts){
+   q.x+=q.vx*sp*hh;q.y+=q.vy*sp*hh;
+   if(q.x<0){q.x=0;q.vx=Math.abs(q.vx);imp+=Math.abs(q.vx);}
+   if(q.x>1){q.x=1;q.vx=-Math.abs(q.vx);imp+=Math.abs(q.vx);}
+   if(q.y<0){q.y=0;q.vy=Math.abs(q.vy);imp+=Math.abs(q.vy);}
+   if(q.y>1){q.y=1;q.vy=-Math.abs(q.vy);imp+=Math.abs(q.vy);}
+  }
+  const P=p.N*p.T/p.V;
+  s.Psm+=(P-s.Psm)*.04;
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle="#4a4a48";ctx.fillRect(bx+bw,by,5*DPR,bh);
+  ctx.fillStyle="#5a5a58";ctx.fillRect(bx+bw+5*DPR,by+bh/2-24*DPR,14*DPR,48*DPR);
+  const hot=Math.min(1,(p.T-.3)/2.7);
+  ctx.fillStyle="rgb("+Math.round(120+hot*135)+","+Math.round(160-hot*60)+","+Math.round(232-hot*130)+")";
+  for(const q of s.parts){ctx.beginPath();ctx.arc(bx+q.x*bw,by+q.y*bh,3.2*DPR,0,TAU);ctx.fill();}
+  setR("physics","P",fa1(P));
+  setR("physics","c",fa2(P*p.V/(p.N*p.T)));
+ }
+});
+/* ============ CHEMISTRY ============ */
+const EL={H:{c:"#EAEAEA",r:.31},C:{c:"#555555",r:.7},O:{c:"#E97366",r:.66},N:{c:"#5E9FE8",r:.71},Cl:{c:"#72BC8F",r:1.02},S:{c:"#EAC26B",r:1.05}};
+const MOLS={
+ h2o:{name:"آب H₂O",formula:"H₂O",angle:"۱۰۴٫۵°",note:"مولکول آب خمیده است؛ جفت‌الکترون‌های ناپیوندی اکسیژن، هیدروژن‌ها را به هم نزدیک می‌کند.",
+  atoms:[["O",0,-.25,0],["H",-.76,.35,0],["H",.76,.35,0]],bonds:[[0,1],[0,2]]},
+ co2:{name:"کربن‌دی‌اکسید CO₂",formula:"CO₂",angle:"۱۸۰°",note:"CO₂ خطی است — دو پیوند دوگانه در دو طرف کربن.",
+  atoms:[["C",0,0,0],["O",-1.16,0,0],["O",1.16,0,0]],bonds:[[0,1],[0,2]]},
+ ch4:{name:"متان CH₄",formula:"CH₄",angle:"۱۰۹٫۵°",note:"متان چهاروجهی کامل است — چهار پیوند یکسان با بیشترین فاصله.",
+  atoms:[["C",0,0,0],["H",.63,.63,.63],["H",-.63,-.63,.63],["H",-.63,.63,-.63],["H",.63,-.63,-.63]],bonds:[[0,1],[0,2],[0,3],[0,4]]},
+ nh3:{name:"آمونیاک NH₃",formula:"NH₃",angle:"۱۰۷°",note:"آمونیاک هرمی است؛ یک جفت الکترون ناپیوندی بالای نیتروژن نشسته.",
+  atoms:[["N",0,-.2,0],["H",-.82,.35,-.47],["H",.82,.35,-.47],["H",0,.35,.94]],bonds:[[0,1],[0,2],[0,3]]},
+ o2:{name:"اکسیژن O₂",formula:"O₂",angle:"خطی",note:"دو اتم اکسیژن با پیوند دوگانه — گازی که نفس می‌کشیم.",
+  atoms:[["O",-.6,0,0],["O",.6,0,0]],bonds:[[0,1]]},
+ hcl:{name:"هیدروکلریک اسید HCl",formula:"HCl",angle:"خطی",note:"پیوند قطبی — کلر الکترون را محکم‌تر می‌کشد.",
+  atoms:[["H",-.95,0,0],["Cl",.35,0,0]],bonds:[[0,1]]}
+};
+defExp("chem",{
+ id:"molecule",icon:"\u{1F9EA}",title:"مولکول‌های سه‌بعدی",use3D:true,
+ hint:"مولکول را با انگشت بچرخانید",
+ readouts:[{id:"f",label:"فرمول"},{id:"a",label:"زاویهٔ پیوند"}],
+ controls:[
+  {type:"choices",id:"mol",value:"h2o",items:Object.keys(MOLS).map(k=>({val:k,label:MOLS[k].name}))},
+  {type:"range",id:"rot",label:"چرخش خودکار",min:0,max:2,step:.1,value:.6,fmt:v=>v?fa1(v)+"×":"خاموش"}
+ ],
+ learnTitle:"هندسهٔ مولکولی (نظریهٔ وسپر VSEPR)",
+ learnBody:'شکل سه‌بعدی مولکول را دافعهٔ جفت‌الکترون‌ها تعیین می‌کند: CO₂ خطی (۱۸۰°)، آب خمیده (۱۰۴٫۵°)، آمونیاک هرمی (۱۰۷°) و متان چهاروجهی کامل (۱۰۹٫۵°).',
+ init(ex){ex.view.pitch=.25;},
+ frame(ex,ctx,w,h,dt){
+  const p=ex.p,mol=MOLS[p.mol];
+  ex.view.yaw+=p.rot*dt;
+  const S=105;
+  const pts=mol.atoms.map(a=>project([a[1]*S,a[2]*S,a[3]*S],ex.view,w,h));
+  ctx.lineCap="round";
+  for(const[i,j]of mol.bonds){
+   ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=7*DPR*Math.min(pts[i][2],pts[j][2]);
+   ctx.beginPath();ctx.moveTo(pts[i][0],pts[i][1]);ctx.lineTo(pts[j][0],pts[j][1]);ctx.stroke();
+  }
+  mol.atoms.map((a,i)=>({a,pr:pts[i]})).sort((A,B)=>B.pr[3]-A.pr[3]).forEach(({a,pr})=>{
+   const el=EL[a[0]],R=Math.max(10,el.r*46)*pr[2];
+   ball(ctx,pr[0],pr[1],R,el.c);
+   ctx.fillStyle=a[0]==="H"?"#333":"#fff";
+   ctx.font="700 "+Math.max(11,R*.5)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";
+   ctx.fillText(a[0],pr[0],pr[1]);
+  });
+  ctx.textBaseline="alphabetic";
+  setR("chem","f",mol.formula);setR("chem","a",mol.angle);
+ }
+});
+defExp("chem",{
+ id:"states",icon:"\u{1F9CA}",title:"حالت‌های ماده",
+ readouts:[{id:"st",label:"حالت"},{id:"T",label:"دما"}],
+ controls:[
+  {type:"range",id:"T",label:"دما (°C)",min:-40,max:140,step:1,value:20,fmt:v=>fa0(v)+"°"},
+  {type:"note",text:"زیر ۰° یخ — بین ۰ تا ۱۰۰° آب — بالای ۱۰۰° بخار"}
+ ],
+ learnTitle:"جامد، مایع، گاز",
+ learnBody:'دما یعنی جنبش مولکول‌ها. در جامد، مولکول‌ها در شبکه می‌لرزند؛ در مایع می‌لغزند ولی کنار هم می‌مانند؛ در گاز آزادانه پرواز می‌کنند. ذوب و جوش درست در دماهای مشخصی رخ می‌دهند.',
+ init(ex){
+  const s=ex.s;s.N=64;s.parts=[];
+  for(let i=0;i<s.N;i++){const a=Math.random()*TAU;
+   s.parts.push({x:Math.random(),y:Math.random(),vx:Math.cos(a),vy:Math.sin(a),gx:(i%8),gy:Math.floor(i/8)});}
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,T=ex.p.T;
+  const pad=16*DPR,bw=w-2*pad,bh=h-2*pad;
+  const hh=Math.min(dt,.033);
+  const state=T<0?"solid":T<100?"liquid":"gas";
+  for(const q of s.parts){
+   if(state==="solid"){
+    const jig=(T+40)/40*.006;
+    const tx=.5+(q.gx-3.5)*.075,ty=.62+(q.gy-3.5)*.075;
+    q.x+=(tx-q.x)*.12+(Math.random()-.5)*jig;
+    q.y+=(ty-q.y)*.12+(Math.random()-.5)*jig;
+   }else if(state==="liquid"){
+    const sp=.12+T/100*.25;
+    q.vx+=(Math.random()-.5)*.6;q.vy+=(Math.random()-.5)*.6+.25;
+    const m=Math.hypot(q.vx,q.vy)||1;q.vx/=m;q.vy/=m;
+    q.x+=q.vx*sp*hh;q.y+=q.vy*sp*hh;
+    if(q.y<.45){q.y=.45;q.vy=Math.abs(q.vy);}
+    if(q.x<0){q.x=0;q.vx=Math.abs(q.vx);}
+    if(q.x>1){q.x=1;q.vx=-Math.abs(q.vx);}
+    if(q.y>1){q.y=1;q.vy=-Math.abs(q.vy);}
+   }else{
+    const sp=.3+(T-100)/40*.4;
+    q.x+=q.vx*sp*hh;q.y+=q.vy*sp*hh;
+    if(q.x<0){q.x=0;q.vx=Math.abs(q.vx);}
+    if(q.x>1){q.x=1;q.vx=-Math.abs(q.vx);}
+    if(q.y<0){q.y=0;q.vy=Math.abs(q.vy);}
+    if(q.y>1){q.y=1;q.vy=-Math.abs(q.vy);}
+   }
+  }
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=2*DPR;ctx.strokeRect(pad,pad,bw,bh);
+  if(state==="liquid"){ctx.fillStyle="rgba(94,159,232,.08)";ctx.fillRect(pad,pad+bh*.45,bw,bh*.55);}
+  const col=state==="solid"?"#9cc4f2":state==="liquid"?"#5E9FE8":"#E97366";
+  for(const q of s.parts)ball(ctx,pad+q.x*bw,pad+q.y*bh,6.5*DPR,col);
+  setR("chem","st",state==="solid"?"جامد ❄️":state==="liquid"?"مایع 💧":"گاز ☁️");
+  setR("chem","T",fa0(T)+"°C");
+ }
+});
+defExp("chem",{
+ id:"ph",icon:"\u{1F9EB}",title:"مقیاس pH",
+ readouts:[{id:"h",label:"[H⁺]"},{id:"n",label:"ماهیت"}],
+ controls:[
+  {type:"range",id:"ph",label:"pH",min:0,max:14,step:.5,value:7,fmt:v=>fa1(v)},
+  {type:"buttons",items:[{id:"lemon",label:"🍋 لیمو"},{id:"water",label:"💧 آب"},{id:"soap",label:"🧼 صابون"},{id:"bleach",label:"🧴 وایتکس"}]}
+ ],
+ learnTitle:"اسید و باز",
+ learnBody:'pH یعنی <span class="formula">−log[H⁺]</span>. هر پله pH یعنی ۱۰ برابر تغییر غلظت یون هیدروژن! آب لیمو (pH≈۲) صد هزار برابر اسیدی‌تر از آب خالص است. رنگ‌ها مطابق شناساگر جهانی است.',
+ init(ex){ex.s={};},
+ btn(ex,id){
+  const v={lemon:2,water:7,soap:9.5,bleach:13}[id];
+  ex.p.ph=v;
+  const inp=document.querySelector("#ct-chem input[type=range]");
+  if(inp){inp.value=v;inp.dispatchEvent(new Event("input"));}
+ },
+ frame(ex,ctx,w,h){
+  const ph=ex.p.ph;
+  const phColor=v=>{
+   const stops=[[0,"#E23B3B"],[3,"#E98A2B"],[5,"#EAC26B"],[7,"#72BC8F"],[9,"#4A9ED9"],[11,"#5A5ACB"],[14,"#8E44AD"]];
+   for(let i=0;i<stops.length-1;i++){
+    if(v<=stops[i+1][0]){
+     const t=(v-stops[i][0])/(stops[i+1][0]-stops[i][0]);
+     const c1=stops[i][1],c2=stops[i+1][1];
+     const p1=[1,3,5].map(j=>parseInt(c1.substr(j,2),16));
+     const p2=[1,3,5].map(j=>parseInt(c2.substr(j,2),16));
+     return"rgb("+p1.map((a,j)=>Math.round(a+(p2[j]-a)*t)).join(",")+")";
+    }}
+   return stops[stops.length-1][1];
+  };
+  const barY=h*.13,barH=26*DPR,barX=w*.1,barW=w*.8;
+  for(let i=0;i<=140;i++){ctx.fillStyle=phColor(i/10);ctx.fillRect(barX+barW*i/141,barY,barW/141+1,barH);}
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=1.5*DPR;ctx.strokeRect(barX,barY,barW,barH);
+  const mx=barX+barW*ph/14;
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(mx,barY+barH+14*DPR);ctx.lineTo(mx-7*DPR,barY+barH+26*DPR);ctx.lineTo(mx+7*DPR,barY+barH+26*DPR);ctx.closePath();ctx.fill();
+  ctx.font="700 "+(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillStyle="rgba(255,255,255,.7)";
+  ctx.fillText("اسیدی",barX+barW*.08,barY-10*DPR);
+  ctx.fillText("خنثی",barX+barW*.5,barY-10*DPR);
+  ctx.fillText("بازی",barX+barW*.92,barY-10*DPR);
+  const bx=w/2,by=h*.52,bw2=110*DPR,bh2=h*.36;
+  ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(bx-bw2/2,by);ctx.lineTo(bx-bw2/2,by+bh2);
+  ctx.arcTo(bx-bw2/2,by+bh2+12*DPR,bx,by+bh2+12*DPR,12*DPR);
+  ctx.arcTo(bx+bw2/2,by+bh2+12*DPR,bx+bw2/2,by+bh2,12*DPR);
+  ctx.lineTo(bx+bw2/2,by);ctx.stroke();
+  ctx.fillStyle=phColor(ph);
+  ctx.globalAlpha=.75;
+  ctx.fillRect(bx-bw2/2+3*DPR,by+bh2*.25,bw2-6*DPR,bh2*.75+9*DPR);
+  ctx.globalAlpha=1;
+  setR("chem","h","۱۰^−"+fa1(ph)+" M");
+  setR("chem","n",ph<6.5?"اسیدی 🍋":ph<=7.5?"خنثی 💧":"بازی 🧼");
+ }
+});
+defExp("chem",{
+ id:"reaction",icon:"🔥",title:"سینتیک واکنش",
+ readouts:[{id:"pr",label:"پیشرفت"},{id:"n",label:"محصول"}],
+ controls:[
+  {type:"range",id:"T",label:"دما",min:.4,max:3,step:.05,value:1,fmt:v=>fa2(v)},
+  {type:"range",id:"Ea",label:"انرژی فعال‌سازی",min:.4,max:2.5,step:.05,value:1.2,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"reset",label:"بازنشانی",primary:true}]},
+  {type:"note",text:"آبی + نارنجی ← بنفش (فقط در برخوردهای پرانرژی)"}
+ ],
+ learnTitle:"نظریهٔ برخورد",
+ learnBody:'واکنش فقط وقتی رخ می‌دهد که ذره‌ها با انرژی کافی (بیش از انرژی فعال‌سازی Eₐ) به هم برخورد کنند. دمای بالاتر = برخوردهای پرانرژی‌تر = واکنش سریع‌تر. برای همین غذا در یخچال دیرتر فاسد می‌شود!',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.parts=[];s.n0=26;
+   for(let i=0;i<s.n0*2;i++){const a=Math.random()*TAU;
+    s.parts.push({x:Math.random(),y:Math.random(),vx:Math.cos(a),vy:Math.sin(a),t:i<s.n0?"A":"B"});}
+   s.flash=[];};
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  const pad=16*DPR,bw=w-2*pad,bh=h-2*pad;
+  const sp=Math.sqrt(p.T)*.4,hh=Math.min(dt,.033);
+  for(const q of s.parts){
+   q.x+=q.vx*sp*hh*(q.t==="P"?.6:1);q.y+=q.vy*sp*hh*(q.t==="P"?.6:1);
+   if(q.x<0){q.x=0;q.vx=Math.abs(q.vx);}
+   if(q.x>1){q.x=1;q.vx=-Math.abs(q.vx);}
+   if(q.y<0){q.y=0;q.vy=Math.abs(q.vy);}
+   if(q.y>1){q.y=1;q.vy=-Math.abs(q.vy);}
+  }
+  const rr=.028;
+  for(let i=0;i<s.parts.length;i++)for(let j=i+1;j<s.parts.length;j++){
+   const a=s.parts[i],b=s.parts[j];
+   if((a.t==="A"&&b.t==="B")||(a.t==="B"&&b.t==="A")){
+    if(Math.hypot(a.x-b.x,a.y-b.y)<rr){
+     const rel=Math.hypot(a.vx-b.vx,a.vy-b.vy)*Math.sqrt(p.T);
+     if(rel>p.Ea*.8){
+      a.t="P";s.parts.splice(j,1);s.flash.push({x:a.x,y:a.y,r:0});break;
+     }else{const tvx=a.vx;a.vx=b.vx;b.vx=tvx;const tvy=a.vy;a.vy=b.vy;b.vy=tvy;}
+    }}}
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=2*DPR;ctx.strokeRect(pad,pad,bw,bh);
+  for(const q of s.parts){
+   const col=q.t==="A"?"#5E9FE8":q.t==="B"?"#DE9255":"#BF8EDA";
+   ball(ctx,pad+q.x*bw,pad+q.y*bh,(q.t==="P"?8:6)*DPR,col);
+  }
+  s.flash=s.flash.filter(f=>f.r<20);
+  for(const f of s.flash){f.r+=1.6;
+   ctx.strokeStyle="rgba(255,255,200,"+(1-f.r/20)+")";ctx.lineWidth=2*DPR;
+   ctx.beginPath();ctx.arc(pad+f.x*bw,pad+f.y*bh,f.r*DPR,0,TAU);ctx.stroke();}
+  const nP=s.parts.filter(q=>q.t==="P").length;
+  setR("chem","pr",fa0(nP/s.n0*100)+"٪");
+  setR("chem","n",fa0(nP)+" مولکول");
+ }
+});
+defExp("chem",{
+ id:"atom",icon:"⚛️",title:"ساختار اتم",
+ readouts:[{id:"el",label:"عنصر"},{id:"cfg",label:"آرایش"}],
+ controls:[
+  {type:"range",id:"Z",label:"عدد اتمی (Z)",min:1,max:18,step:1,value:6,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"مدل بور و لایه‌های الکترونی",
+ learnBody:'الکترون‌ها در لایه‌ها جا می‌گیرند: لایهٔ اول حداکثر ۲، دوم ۸، سوم ۸. عناصری که لایهٔ بیرونی‌شان پر است (مثل نئون و آرگون) بی‌اثر و پایدارند — و بقیه برای رسیدن به همین آرایش واکنش می‌دهند!',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;s.t+=dt;
+  const Z=ex.p.Z;
+  const names=["هیدروژن","هلیم","لیتیم","بریلیم","بور","کربن","نیتروژن","اکسیژن","فلوئور","نئون","سدیم","منیزیم","آلومینیوم","سیلیسیم","فسفر","گوگرد","کلر","آرگون"];
+  const syms=["H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar"];
+  const shells=[];let rem=Z;
+  for(const cap of[2,8,8]){if(rem<=0)break;shells.push(Math.min(cap,rem));rem-=cap;}
+  const cx=w/2,cy=h/2;
+  ball(ctx,cx,cy,20*DPR,"#E97366");
+  ctx.fillStyle="#fff";ctx.font="700 "+(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(syms[Z-1],cx,cy);
+  shells.forEach((n,si)=>{
+   const R=(58+si*44)*DPR;
+   ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=1.2*DPR;
+   ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();
+   const om=(si%2?-1:1)*(.9-si*.22);
+   for(let i=0;i<n;i++){
+    const a=s.t*om+TAU*i/n;
+    ball(ctx,cx+R*Math.cos(a),cy+R*Math.sin(a),6*DPR,"#5E9FE8");
+   }
+  });
+  ctx.textBaseline="alphabetic";
+  setR("chem","el",names[Z-1]+" ("+syms[Z-1]+")");
+  setR("chem","cfg",shells.map(fa0).join("،"));
+ }
+});
+defExp("chem",{
+ id:"solubility",icon:"\u{1F9C2}",title:"انحلال و غلظت",
+ readouts:[{id:"c",label:"غلظت"},{id:"st",label:"وضعیت"}],
+ controls:[
+  {type:"range",id:"T",label:"دما (°C)",min:10,max:90,step:1,value:25,fmt:v=>fa0(v)+"°"},
+  {type:"buttons",items:[{id:"add",label:"+ نمک بریز",primary:true},{id:"reset",label:"خالی کن"}]}
+ ],
+ learnTitle:"انحلال‌پذیری",
+ learnBody:'آب ظرفیت محدودی برای حل کردن نمک دارد. وقتی محلول «سیرشده» شد، نمک اضافی ته‌نشین می‌شود. دمای بالاتر معمولاً انحلال‌پذیری را بیشتر می‌کند — دما را بالا ببرید تا رسوب دوباره حل شود!',
+ init(ex){ex.s={added:0,dis:0,dots:[]};},
+ btn(ex,id){const s=ex.s;if(id==="add")s.added+=15;else{s.added=0;s.dis=0;s.dots=[];}},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  const cap=20+p.T*.9;
+  const target=Math.min(s.added,cap);
+  s.dis+=(target-s.dis)*Math.min(1,dt*(.5+p.T/60));
+  const nd=Math.round(s.dis);
+  while(s.dots.length<nd)s.dots.push({x:Math.random(),y:Math.random(),a:Math.random()*TAU});
+  if(s.dots.length>nd)s.dots.length=nd;
+  const bx=w/2,bw2=Math.min(w*.55,300*DPR),by=h*.12,bh2=h*.74;
+  ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(bx-bw2/2,by);ctx.lineTo(bx-bw2/2,by+bh2);
+  ctx.arcTo(bx-bw2/2,by+bh2+12*DPR,bx,by+bh2+12*DPR,12*DPR);
+  ctx.arcTo(bx+bw2/2,by+bh2+12*DPR,bx+bw2/2,by+bh2,12*DPR);
+  ctx.lineTo(bx+bw2/2,by);ctx.stroke();
+  const wy=by+bh2*.18;
+  ctx.fillStyle="rgba(94,159,232,.12)";
+  ctx.fillRect(bx-bw2/2+3*DPR,wy,bw2-6*DPR,bh2-bh2*.18+9*DPR);
+  for(const d of s.dots){
+   d.a+=dt*2;d.x+=Math.cos(d.a)*.003;d.y+=Math.sin(d.a*1.3)*.003;
+   d.x=Math.max(0,Math.min(1,d.x));d.y=Math.max(0,Math.min(1,d.y));
+   ctx.fillStyle="#fff";
+   ctx.fillRect(bx-bw2/2+6*DPR+d.x*(bw2-12*DPR),wy+8*DPR+d.y*(bh2-bh2*.18-16*DPR),2.6*DPR,2.6*DPR);
+  }
+  const undis=s.added-s.dis;
+  if(undis>.5){
+   const ph=Math.min(30*DPR,undis*1.4*DPR);
+   ctx.fillStyle="#EAEAEA";
+   ctx.beginPath();ctx.ellipse(bx,by+bh2+8*DPR,bw2*.32,ph,0,Math.PI,TAU);ctx.fill();
+  }
+  setR("chem","c",fa0(s.dis)+" g/L");
+  setR("chem","st",s.added>cap?"سیرشده — رسوب دارد":"سیرنشده");
+ }
+});
+defExp("chem",{
+ id:"halflife",icon:"☢️",title:"نیم‌عمر رادیواکتیو",
+ readouts:[{id:"rem",label:"باقی‌مانده"},{id:"t",label:"زمان"}],
+ controls:[
+  {type:"range",id:"hl",label:"نیم‌عمر (ثانیه)",min:1,max:10,step:.5,value:4,fmt:v=>fa1(v)+" s"},
+  {type:"buttons",items:[{id:"reset",label:"شروع دوباره",primary:true}]}
+ ],
+ learnTitle:"واپاشی هسته‌ای",
+ learnBody:'هر اتم به طور کاملاً تصادفی وامی‌پاشد، اما رفتار جمعی دقیق است: در هر نیم‌عمر، نیمی از اتم‌ها می‌مانند: <span class="formula">N = N₀ · (½)^(t/T½)</span>. با همین روش، عمر فسیل‌ها را با کربن-۱۴ تعیین می‌کنند.',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.atoms=Array(300).fill(true);s.t=0;s.hist=[];};
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  const hh=Math.min(dt,.05);
+  s.t+=hh;
+  const pd=1-Math.pow(2,-hh/p.hl);
+  for(let i=0;i<s.atoms.length;i++)if(s.atoms[i]&&Math.random()<pd)s.atoms[i]=false;
+  const alive=s.atoms.filter(Boolean).length;
+  s.hist.push([s.t,alive/300]);
+  if(s.hist.length>1200)s.hist.shift();
+  const gs=Math.min(w*.42,h*.8),gx=w*.06,gy=(h-gs)/2;
+  const cols=20;
+  s.atoms.forEach((al,i)=>{
+   const X=gx+(i%cols)*gs/cols,Y=gy+Math.floor(i/cols)*gs/(300/cols);
+   ctx.fillStyle=al?"#72BC8F":"rgba(255,255,255,.12)";
+   ctx.beginPath();ctx.arc(X+gs/cols/2,Y+gs/(300/cols)/2,gs/cols*.32,0,TAU);ctx.fill();
+  });
+  const px=w*.54,pw=w*.4,py=h*.15,phh=h*.7;
+  const tmax=Math.max(p.hl*4,s.t);
+  ctx.strokeStyle="rgba(255,255,255,.2)";ctx.lineWidth=1;
+  ctx.strokeRect(px,py,pw,phh);
+  ctx.setLineDash([3,5]);
+  for(let k=1;k<=3;k++){
+   const X=px+pw*(k*p.hl/tmax);if(X>px+pw)break;
+   ctx.beginPath();ctx.moveTo(X,py);ctx.lineTo(X,py+phh);ctx.stroke();
+   const Y=py+phh*(1-Math.pow(.5,k));
+   ctx.beginPath();ctx.moveTo(px,Y);ctx.lineTo(px+pw,Y);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle="#72BC8F";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  s.hist.forEach(([t,f],i)=>{const X=px+pw*t/tmax,Y=py+phh*(1-f);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});
+  ctx.stroke();
+  setR("chem","rem",fa0(alive)+" ("+fa0(alive/3)+"٪)");
+  setR("chem","t",fa1(s.t)+" s");
+ }
+});
+/* ============ MATH ============ */
+defExp("math",{
+ id:"waves",icon:"🌊",title:"برهم‌نهی امواج",
+ readouts:[{id:"a",label:"بیشینهٔ برآیند"}],
+ controls:[
+  {type:"range",id:"a1",label:"دامنهٔ موج ۱",min:0,max:1.5,step:.05,value:1,fmt:v=>fa2(v)},
+  {type:"range",id:"f1",label:"بسامد موج ۱",min:1,max:6,step:1,value:2,fmt:v=>fa0(v)},
+  {type:"range",id:"a2",label:"دامنهٔ موج ۲",min:0,max:1.5,step:.05,value:.7,fmt:v=>fa2(v)},
+  {type:"range",id:"f2",label:"بسامد موج ۲",min:1,max:6,step:1,value:3,fmt:v=>fa0(v)},
+  {type:"range",id:"p2",label:"اختلاف فاز (درجه)",min:0,max:360,step:5,value:0,fmt:v=>fa0(v)+"°"}
+ ],
+ learnTitle:"برهم‌نهی امواج",
+ learnBody:'وقتی دو موج به هم می‌رسند، دامنه‌ها جمع می‌شوند: <span class="formula">y = A₁sin(ω₁x) + A₂sin(ω₂x + φ)</span>. بسامدها را برابر و فاز را ۱۸۰° کنید تا «تداخل ویرانگر» را ببینید — موج‌ها یکدیگر را حذف می‌کنند! این پایهٔ هدفون‌های حذف نویز است.',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt*1.5;
+  grid2(ctx,w,h,12,6);
+  const cy=h/2,amp=h*.21,ph=p.p2*Math.PI/180;
+  const f=(x,k)=>{
+   const u=x/w*TAU;
+   if(k===1)return p.a1*Math.sin(p.f1*u-s.t);
+   if(k===2)return p.a2*Math.sin(p.f2*u-s.t+ph);
+   return p.a1*Math.sin(p.f1*u-s.t)+p.a2*Math.sin(p.f2*u-s.t+ph);
+  };
+  const plot=(k,col,lw)=>{ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();
+   for(let i=0;i<=240;i++){const x=w*i/240,y=cy-f(x,k)*amp;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();};
+  plot(1,"rgba(94,159,232,.75)",1.6*DPR);
+  plot(2,"rgba(222,146,85,.75)",1.6*DPR);
+  plot(3,"#BF8EDA",3.2*DPR);
+  let mx=0;for(let i=0;i<=240;i++)mx=Math.max(mx,Math.abs(f(w*i/240,3)));
+  setR("math","a",fa2(mx));
+ }
+});
+defExp("math",{
+ id:"circle",icon:"⭕",title:"دایرهٔ واحد",
+ readouts:[{id:"s",label:"sin"},{id:"c",label:"cos"},{id:"t",label:"tan"}],
+ controls:[
+  {type:"range",id:"deg",label:"زاویه (درجه)",min:0,max:360,step:1,value:40,fmt:v=>fa0(v)+"°"},
+  {type:"toggle",id:"anim",label:"چرخش خودکار",value:true}
+ ],
+ learnTitle:"مثلثات روی دایره",
+ learnBody:'روی دایره‌ای به شعاع ۱، طول سایهٔ افقی نقطه cos و سایهٔ عمودی sin است. با چرخیدن نقطه، sin موج می‌سازد — این پیوند دایره و موج، اساس تحلیل هر سیگنال دوره‌ای است.',
+ init(ex){ex.s={trace:[]};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  if(p.anim){p.deg=(p.deg+dt*40)%360;
+   const inp=document.querySelector("#ct-math input[type=range]");
+   if(inp){inp.value=p.deg;inp.previousElementSibling&&(inp.previousElementSibling.querySelector("output").textContent=fa0(p.deg)+"°");}
+  }
+  const a=p.deg*Math.PI/180;
+  const R=Math.min(w,h)*.3,cx=w*.72,cy=h/2;
+  grid2(ctx,w,h,12,6);
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-R-14*DPR,cy);ctx.lineTo(cx+R+14*DPR,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-R-14*DPR);ctx.lineTo(cx,cy+R+14*DPR);ctx.stroke();
+  const px=cx+R*Math.cos(a),py=cy-R*Math.sin(a);
+  ctx.strokeStyle="rgba(94,159,232,.9)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,cy);ctx.stroke();
+  ctx.strokeStyle="rgba(222,146,85,.9)";
+  ctx.beginPath();ctx.moveTo(px,cy);ctx.lineTo(px,py);ctx.stroke();
+  ctx.strokeStyle="#fff";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();
+  ball(ctx,px,py,6*DPR,"#BF8EDA");
+  const L=w*.44;
+  ctx.strokeStyle="rgba(255,255,255,.2)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(w*.04,cy);ctx.lineTo(w*.04+L,cy);ctx.stroke();
+  ctx.strokeStyle="#DE9255";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let i=0;i<=120;i++){
+   const th=a+i/120*TAU;
+   const X=w*.04+L-L*i/120,Y=cy-R*Math.sin(th);
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([3,5]);ctx.strokeStyle="rgba(222,146,85,.5)";ctx.lineWidth=1.2*DPR;
+  ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(w*.04+L,py);ctx.stroke();ctx.setLineDash([]);
+  const tn=Math.abs(Math.tan(a))>99?"∞":fa2(Math.tan(a));
+  setR("math","s",fa2(Math.sin(a)));setR("math","c",fa2(Math.cos(a)));setR("math","t",tn);
+ }
+});
+defExp("math",{
+ id:"fractal",icon:"🌳",title:"درخت فراکتال",
+ readouts:[{id:"n",label:"تعداد شاخه‌ها"}],
+ controls:[
+  {type:"range",id:"ang",label:"زاویهٔ شاخه",min:5,max:60,step:1,value:24,fmt:v=>fa0(v)+"°"},
+  {type:"range",id:"depth",label:"عمق",min:3,max:10,step:1,value:8,fmt:v=>fa0(v)},
+  {type:"range",id:"ratio",label:"نسبت طول",min:.5,max:.8,step:.01,value:.68,fmt:v=>fa2(v)},
+  {type:"toggle",id:"wind",label:"باد",value:true}
+ ],
+ learnTitle:"فراکتال‌ها: هندسهٔ طبیعت",
+ learnBody:'یک قاعدهٔ ساده — «هر شاخه دو شاخهٔ کوچک‌تر می‌سازد» — با تکرار، درختی کامل می‌آفریند. سرخس، گل‌کلم، رگ‌های ریه و شبکهٔ رودخانه‌ها همه فراکتال‌اند. تعداد شاخه‌ها با هر عمق دو برابر می‌شود: <span class="formula">2ⁿ − 1</span>.',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt;
+  const sway=p.wind?Math.sin(s.t*1.2)*3*Math.PI/180:0;
+  const baseA=p.ang*Math.PI/180;
+  const L0=h*.27;
+  ctx.lineCap="round";
+  const rec=(x,y,a,len,d)=>{
+   const x2=x+len*Math.sin(a),y2=y-len*Math.cos(a);
+   const g=d/p.depth;
+   ctx.strokeStyle=d>2?"rgba("+(140-g*30)+","+(100+g*60)+","+(70+g*40)+","+(0.5+g*0.5)+")":"#72BC8F";
+   ctx.lineWidth=Math.max(1,d*.9)*DPR;
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
+   if(d>1){
+    const sw=sway*(p.depth-d+1)/p.depth;
+    rec(x2,y2,a-baseA+sw,len*p.ratio,d-1);
+    rec(x2,y2,a+baseA+sw,len*p.ratio,d-1);
+   }
+  };
+  rec(w/2,h-14*DPR,0,L0,p.depth);
+  setR("math","n",fa0(Math.pow(2,p.depth)-1));
+ }
+});
+defExp("math",{
+ id:"golden",icon:"🐚",title:"مارپیچ طلایی",
+ readouts:[{id:"r",label:"نسبت"},{id:"phi",label:"φ"}],
+ controls:[
+  {type:"range",id:"n",label:"تعداد مربع‌ها",min:3,max:12,step:1,value:8,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"فیبوناچی و عدد طلایی",
+ learnBody:'در دنبالهٔ فیبوناچی هر عدد جمع دو عدد قبلی است: ۱، ۱، ۲، ۳، ۵، ۸، ۱۳،... نسبت دو جملهٔ متوالی به عدد طلایی <span class="formula">φ ≈ 1.618</span> میل می‌کند — همان نسبتی که در صدف حلزون و آرایش دانه‌های آفتابگردان دیده می‌شود.',
+ frame(ex,ctx,w,h){
+  const n=ex.p.n;
+  const fib=[1,1];for(let i=2;i<n;i++)fib.push(fib[i-1]+fib[i-2]);
+  const dirs=[[1,0],[0,-1],[-1,0],[0,1]];
+  const sq=[];let x=0,y=0,minX=0,minY=0,maxX=1,maxY=1;
+  sq.push({x:0,y:0,s:1,d:0});
+  let cx2=1,cy2=1;
+  for(let i=1;i<n;i++){
+   const s2=fib[i],d=i%4;
+   let nx,ny;
+   if(d===0){nx=maxX;ny=maxY-s2;}
+   else if(d===1){nx=maxX-s2;ny=minY-s2;}
+   else if(d===2){nx=minX-s2;ny=minY;}
+   else{nx=minX;ny=maxY;}
+   sq.push({x:nx,y:ny,s:s2,d});
+   minX=Math.min(minX,nx);minY=Math.min(minY,ny);
+   maxX=Math.max(maxX,nx+s2);maxY=Math.max(maxY,ny+s2);
+  }
+  const pad=26*DPR;
+  const sc=Math.min((w-2*pad)/(maxX-minX),(h-2*pad)/(maxY-minY));
+  const ox=(w-(maxX-minX)*sc)/2-minX*sc,oy=(h-(maxY-minY)*sc)/2-minY*sc;
+  sq.forEach((q,i)=>{
+   ctx.strokeStyle="rgba(191,142,218,.5)";ctx.lineWidth=1.4*DPR;
+   ctx.strokeRect(ox+q.x*sc,oy+q.y*sc,q.s*sc,q.s*sc);
+   ctx.fillStyle="rgba(191,142,218,"+(0.04+i*.012)+")";
+   ctx.fillRect(ox+q.x*sc,oy+q.y*sc,q.s*sc,q.s*sc);
+  });
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.6*DPR;
+  sq.forEach(q=>{
+   const r=q.s*sc;let a0,ccx,ccy;
+   if(q.d===0){ccx=q.x;ccy=q.y+q.s;a0=-Math.PI/2;}
+   else if(q.d===1){ccx=q.x;ccy=q.y+q.s;a0=-Math.PI/2;}
+   else if(q.d===2){ccx=q.x+q.s;ccy=q.y+q.s;a0=Math.PI;}
+   else{ccx=q.x+q.s;ccy=q.y;a0=Math.PI/2;}
+   if(q.d===0){ccx=q.x;ccy=q.y+q.s;a0=-Math.PI/2;}
+   else if(q.d===1){ccx=q.x+q.s;ccy=q.y+q.s;a0=Math.PI;}
+   else if(q.d===2){ccx=q.x+q.s;ccy=q.y;a0=Math.PI/2;}
+   else{ccx=q.x;ccy=q.y;a0=0;}
+   ctx.beginPath();ctx.arc(ox+ccx*sc,oy+ccy*sc,r,a0,a0+Math.PI/2);ctx.stroke();
+  });
+  const ratio=fib[n-1]/fib[n-2];
+  setR("math","r",fa0(fib[n-1])+" ÷ "+fa0(fib[n-2])+" = "+fa(ratio.toFixed(4)));
+  setR("math","phi",fa("1.6180"));
+ }
+});
+defExp("math",{
+ id:"quadratic",icon:"📈",title:"سهمی و ریشه‌ها",
+ readouts:[{id:"d",label:"دلتا"},{id:"roots",label:"ریشه‌ها"}],
+ controls:[
+  {type:"range",id:"a",label:"a",min:-2,max:2,step:.1,value:1,fmt:v=>fa1(v)},
+  {type:"range",id:"b",label:"b",min:-6,max:6,step:.2,value:-1,fmt:v=>fa1(v)},
+  {type:"range",id:"c",label:"c",min:-6,max:6,step:.2,value:-2,fmt:v=>fa1(v)}
+ ],
+ learnTitle:"معادلهٔ درجه دو",
+ learnBody:'نمودار <span class="formula">y = ax² + bx + c</span> یک سهمی است. ریشه‌ها جایی هستند که نمودار محور x را قطع می‌کند و دلتا <span class="formula">Δ = b² − 4ac</span> تعدادشان را مشخص می‌کند: مثبت ← دو ریشه، صفر ← یک ریشه، منفی ← هیچ.',
+ frame(ex,ctx,w,h){
+  const{a,b,c}=ex.p;
+  const X0=-8,X1=8,Y0=-8,Y1=8;
+  const sx=v=>(v-X0)/(X1-X0)*w, sy=v=>h-(v-Y0)/(Y1-Y0)*h;
+  grid2(ctx,w,h,16,16);
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.6*DPR;
+  ctx.beginPath();ctx.moveTo(sx(0),0);ctx.lineTo(sx(0),h);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,sy(0));ctx.lineTo(w,sy(0));ctx.stroke();
+  ctx.strokeStyle="#BF8EDA";ctx.lineWidth=3*DPR;ctx.beginPath();
+  for(let i=0;i<=280;i++){
+   const X=X0+(X1-X0)*i/280,Y=a*X*X+b*X+c;
+   const px2=sx(X),py2=sy(Y);
+   i?ctx.lineTo(px2,py2):ctx.moveTo(px2,py2);
+  }
+  ctx.stroke();
+  const D=b*b-4*a*c;
+  let rootsTxt="ندارد";
+  if(Math.abs(a)<.05){
+   if(Math.abs(b)>.05){const r=-c/b;rootsTxt="x = "+fa1(r);ball(ctx,sx(r),sy(0),6*DPR,"#EAC26B");}
+  }else if(D>=0){
+   const r1=(-b+Math.sqrt(D))/(2*a),r2=(-b-Math.sqrt(D))/(2*a);
+   rootsTxt=D===0?"x = "+fa1(r1):fa1(Math.min(r1,r2))+" و "+fa1(Math.max(r1,r2));
+   ball(ctx,sx(r1),sy(0),6*DPR,"#EAC26B");
+   if(D>0)ball(ctx,sx(r2),sy(0),6*DPR,"#EAC26B");
+   const vx=-b/(2*a),vy=a*vx*vx+b*vx+c;
+   ball(ctx,sx(vx),sy(vy),5*DPR,"#72BC8F");
+  }else if(Math.abs(a)>=.05){
+   const vx=-b/(2*a),vy=a*vx*vx+b*vx+c;
+   ball(ctx,sx(vx),sy(vy),5*DPR,"#72BC8F");
+  }
+  setR("math","d",fa1(D));setR("math","roots",rootsTxt);
+ }
+});
+defExp("math",{
+ id:"tangent",icon:"📏",title:"مشتق و خط مماس",
+ hint:"نقطه را روی منحنی بکشید",
+ readouts:[{id:"x",label:"x"},{id:"m",label:"شیب"},{id:"dir",label:"رفتار"}],
+ controls:[
+  {type:"range",id:"x0",label:"نقطهٔ x₀",min:-6,max:6,step:.05,value:1.2,fmt:v=>fa2(v)}
+ ],
+ learnTitle:"مشتق یعنی شیب لحظه‌ای",
+ learnBody:'مشتق در هر نقطه، شیب خط مماس بر منحنی است. شیب مثبت = تابع صعودی، شیب منفی = نزولی، شیب صفر = قله یا دره! نقطه را بکشید و ببینید شیب کجا صفر می‌شود.',
+ init(ex){ex.s={};},
+ drag(ex,ph,x,y,cv){
+  if(ph==="move"||ph==="down"){
+   if(!cv.width)return;
+   const X=(x/cv.width)*13-6.5;
+   ex.p.x0=Math.max(-6,Math.min(6,X));
+   const inp=document.querySelector("#ct-math input[type=range]");
+   if(inp){inp.value=ex.p.x0;const o=inp.parentElement.querySelector("output");if(o)o.textContent=fa2(ex.p.x0);}
+  }
+ },
+ frame(ex,ctx,w,h){
+  const f=X=>Math.sin(X)+X*X/14;
+  const df=X=>Math.cos(X)+X/7;
+  const X0=-6.5,X1=6.5,Y0=-2.5,Y1=4;
+  const sx=v=>(v-X0)/(X1-X0)*w, sy=v=>h-(v-Y0)/(Y1-Y0)*h;
+  grid2(ctx,w,h,13,7);
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.moveTo(sx(0),0);ctx.lineTo(sx(0),h);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,sy(0));ctx.lineTo(w,sy(0));ctx.stroke();
+  ctx.strokeStyle="#5E9FE8";ctx.lineWidth=3*DPR;ctx.beginPath();
+  for(let i=0;i<=260;i++){const X=X0+(X1-X0)*i/260;
+   i?ctx.lineTo(sx(X),sy(f(X))):ctx.moveTo(sx(X),sy(f(X)));}
+  ctx.stroke();
+  const x0=ex.p.x0,y0=f(x0),m=df(x0);
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.2*DPR;ctx.beginPath();
+  ctx.moveTo(sx(x0-2.6),sy(y0-2.6*m));ctx.lineTo(sx(x0+2.6),sy(y0+2.6*m));ctx.stroke();
+  ball(ctx,sx(x0),sy(y0),8*DPR,"#BF8EDA");
+  setR("math","x",fa2(x0));setR("math","m",fa2(m));
+  setR("math","dir",Math.abs(m)<.08?"ایستا ⛰️":m>0?"صعودی ↗️":"نزولی ↘️");
+ }
+});
+defExp("math",{
+ id:"fourier",icon:"📡",title:"سری فوریه",
+ readouts:[{id:"n",label:"جمله‌ها"},{id:"e",label:"خطا"}],
+ controls:[
+  {type:"range",id:"N",label:"تعداد جمله‌ها",min:1,max:25,step:1,value:3,fmt:v=>fa0(v)},
+  {type:"range",id:"sp",label:"سرعت",min:0,max:2,step:.1,value:.6,fmt:v=>v?fa1(v)+"×":"ایستا"}
+ ],
+ learnTitle:"هر موجی از سینوس‌ها ساخته می‌شود",
+ learnBody:'فوریه نشان داد هر سیگنال دوره‌ای — حتی موج مربعی تیز — جمع سینوس‌هاست: <span class="formula">y = Σ (4/π)(1/k)·sin(kx)</span> برای k فرد. جمله‌ها را زیاد کنید تا تقریب بهتر شود. فشرده‌سازی صدا و تصویر (MP3، JPEG) بر همین ایده استوار است.',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt*p.sp*2;
+  grid2(ctx,w,h,12,6);
+  const cy=h/2,amp=h*.3;
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.6*DPR;
+  ctx.beginPath();
+  for(let i=0;i<=240;i++){
+   const u=(i/240*TAU*2-s.t)%TAU;
+   const sqv=((u+TAU)%TAU)<Math.PI?1:-1;
+   const x=w*i/240,y=cy-sqv*amp*.785;
+   i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();ctx.setLineDash([]);
+  let err=0;
+  ctx.strokeStyle="#BF8EDA";ctx.lineWidth=3*DPR;ctx.beginPath();
+  for(let i=0;i<=300;i++){
+   const u=i/300*TAU*2-s.t;
+   let Y=0;
+   for(let k2=0;k2<p.N;k2++){const k=2*k2+1;Y+=Math.sin(k*u)/k;}
+   const sqv=(((u%TAU)+TAU)%TAU)<Math.PI?1:-1;
+   err+=Math.pow(Y-sqv*Math.PI/4,2);
+   const x=w*i/300,y=cy-Y*amp;
+   i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+  setR("math","n",fa0(p.N));
+  setR("math","e",fa0(Math.sqrt(err/300)/(Math.PI/4)*100)+"٪");
+ }
+});
+/* ============ STATS ============ */
+defExp("stats",{
+ id:"galton",icon:"\u{1F3B0}",title:"تختهٔ گالتون",
+ readouts:[{id:"n",label:"تعداد"},{id:"mean",label:"میانگین"},{id:"sd",label:"انحراف معیار"}],
+ controls:[
+  {type:"buttons",items:[{id:"d10",label:"+ ۱۰ توپ",primary:true},{id:"d200",label:"+ ۲۰۰ توپ"}]},
+  {type:"buttons",items:[{id:"reset",label:"بازنشانی"}]},
+  {type:"toggle",id:"curve",label:"منحنی نرمال",value:true}
+ ],
+ learnTitle:"قضیهٔ حد مرکزی",
+ learnBody:'جمع تعداد زیادی اتفاق تصادفی کوچک، همیشه به «توزیع نرمال» (منحنی زنگوله‌ای) می‌رسد — فرقی نمی‌کند تک‌تک اتفاق‌ها چطور باشند. برای همین قد آدم‌ها و خطای اندازه‌گیری زنگوله‌ای‌اند.',
+ init(ex){
+  const s=ex.s;s.ROWS=10;s.BINS=11;s.bins=Array(11).fill(0);s.balls=[];s.total=0;
+  s.drop=(n,anim)=>{
+   for(let i=0;i<n;i++){
+    if(anim&&s.balls.length<40){s.balls.push({r:0,f:0,off:0,poff:0,t:-(s.balls.length*.3+Math.random()*.15)});}
+    else{let x=0;for(let k=0;k<s.ROWS;k++)x+=Math.random()<.5?0:1;s.bins[x]++;s.total++;}
+   }};
+  s.drop(240,false);s.drop(6,true);
+ },
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.bins=Array(11).fill(0);s.balls=[];s.total=0;}
+  else if(id==="d10")s.drop(10,true);
+  else s.drop(200,false);
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  const top=h*.1,dy=(h*.42)/s.ROWS,cx=w/2,dx=Math.min(w*.075,34*DPR)/2;
+  ctx.fillStyle="rgba(255,255,255,.35)";
+  for(let r=0;r<s.ROWS;r++)for(let k2=0;k2<=r;k2++){
+   const X=cx+(k2-r/2)*dx*2,Y=top+r*dy;
+   ctx.beginPath();ctx.arc(X,Y,2.2*DPR,0,TAU);ctx.fill();
+  }
+  for(const b of s.balls){
+   b.t+=dt*5;
+   while(b.t>1){b.t-=1;b.poff=b.off;
+    if(b.r<s.ROWS){b.f+=Math.random()<.5?0:1;b.r++;b.off=b.f-b.r/2;}
+    else{s.bins[b.f]++;s.total++;b.dead=true;break;}
+   }
+   if(b.dead)continue;
+   const tt=Math.max(0,b.t);
+   const X=cx+(b.poff+(b.off-b.poff)*tt)*dx*2,Y=top+(b.r-1+tt)*dy;
+   ball(ctx,X,Math.max(top-dy*.7,Y),4.5*DPR,"#EAC26B");
+  }
+  s.balls=s.balls.filter(b=>!b.dead);
+  const bw=Math.min(w*.075,34*DPR),by=h-24*DPR,bhMax=h*.34;
+  const mx=Math.max(...s.bins,1);
+  for(let i=0;i<s.BINS;i++){
+   const X=cx+(i-5)*bw;
+   const bh2=s.bins[i]/mx*bhMax;
+   ctx.fillStyle="#DE9255";
+   ctx.beginPath();ctx.roundRect(X-bw/2+2*DPR,by-bh2,bw-4*DPR,bh2,3*DPR);ctx.fill();
+  }
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.moveTo(cx-5.5*bw,by+1);ctx.lineTo(cx+5.5*bw,by+1);ctx.stroke();
+  if(ex.p.curve&&s.total>0){
+   const lg=z=>{const c2=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,.001208650973866179,-.000005395239384953];
+    let x2=z,y2=z,tmp=x2+5.5;tmp-=(x2+.5)*Math.log(tmp);let ser=1.000000000190015;
+    for(let j=0;j<6;j++)ser+=c2[j]/++y2;return-tmp+Math.log(2.5066282746310005*ser/x2);};
+   const binom=k2=>Math.exp(lg(11)-lg(k2+1)-lg(11-k2)+10*Math.log(.5));
+   const pk=binom(5);
+   ctx.setLineDash([5,5]);ctx.strokeStyle="rgba(255,255,255,.75)";ctx.lineWidth=2*DPR;ctx.beginPath();
+   for(let i=0;i<=100;i++){
+    const kk=i/100*10;
+    const X=cx+(kk-5)*bw;
+    const pv=Math.exp(-Math.pow(kk-5,2)/(2*2.5))/Math.sqrt(TAU*2.5);
+    const Ys=by-(s.total*pv*(binom(5)*Math.sqrt(TAU*2.5))/mx)*bhMax;
+    i?ctx.lineTo(X,Ys):ctx.moveTo(X,Ys);
+   }
+   ctx.stroke();ctx.setLineDash([]);
+  }
+  let n=0,sum=0,sq=0;
+  s.bins.forEach((c2,i)=>{n+=c2;sum+=c2*i;sq+=c2*i*i;});
+  const mean=n?sum/n:0,sd=n?Math.sqrt(Math.max(0,sq/n-mean*mean)):0;
+  setR("stats","n",fa0(n));
+  setR("stats","mean",n?fa2(mean):"–");
+  setR("stats","sd",n?fa2(sd):"–");
+ }
+});
+defExp("stats",{
+ id:"coins",icon:"\u{1FA99}",title:"قانون اعداد بزرگ",
+ readouts:[{id:"n",label:"پرتاب‌ها"},{id:"p",label:"نسبت شیر"}],
+ controls:[
+  {type:"buttons",items:[{id:"f1",label:"+ ۱ پرتاب",primary:true},{id:"f50",label:"+ ۵۰"},{id:"f1000",label:"+ ۱۰۰۰"}]},
+  {type:"buttons",items:[{id:"reset",label:"بازنشانی"}]}
+ ],
+ learnTitle:"قانون اعداد بزرگ",
+ learnBody:'با چند پرتاب، نسبت شیر ممکن است ۸۰٪ یا ۲۰٪ باشد؛ اما هر چه تعداد بیشتر شود، نسبت به ۵۰٪ میل می‌کند. کازینوها و بیمه‌ها دقیقاً با همین قانون سود تضمین‌شده دارند!',
+ init(ex){ex.s={hist:[],heads:0,n:0,last:null};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.hist=[];s.heads=0;s.n=0;s.last=null;return;}
+  const cnt=id==="f1"?1:id==="f50"?50:1000;
+  for(let i=0;i<cnt;i++){
+   const hd=Math.random()<.5;s.n++;if(hd)s.heads++;s.last=hd;
+   if(s.hist.length<3000||s.n%10===0)s.hist.push([s.n,s.heads/s.n]);
+  }
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const px=40*DPR,pw=w-px-20*DPR,py=h*.12,ph2=h*.72;
+  grid2(ctx,w,h,10,5);
+  ctx.setLineDash([5,5]);ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=1.6*DPR;
+  ctx.beginPath();ctx.moveTo(px,py+ph2/2);ctx.lineTo(px+pw,py+ph2/2);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(255,255,255,.55)";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="left";
+  ctx.fillText("۵۰٪",6*DPR,py+ph2/2+4*DPR);
+  if(s.n>0){
+   const nmax=Math.max(...s.hist.map(a=>a[0]),10);
+   ctx.strokeStyle="#DE9255";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+   s.hist.forEach(([n2,p2],i)=>{
+    const X=px+pw*(Math.log(n2)/Math.log(Math.max(nmax,10)));
+    const Y=py+ph2*(1-p2);
+    i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   });
+   ctx.stroke();
+  }
+  if(s.last!==null){
+   const R=26*DPR,X=w-R-16*DPR,Y=py+R;
+   ball(ctx,X,Y,R,s.last?"#EAC26B":"#9cc4f2");
+   ctx.fillStyle="#151030";ctx.font="800 "+(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";
+   ctx.fillText(s.last?"شیر":"خط",X,Y);ctx.textBaseline="alphabetic";
+  }
+  setR("stats","n",fa0(s.n));
+  setR("stats","p",s.n?fa1(s.heads/s.n*100)+"٪":"–");
+ }
+});
+defExp("stats",{
+ id:"dice",icon:"🎲",title:"جمع دو تاس",
+ readouts:[{id:"n",label:"پرتاب‌ها"},{id:"m",label:"رایج‌ترین جمع"}],
+ controls:[
+  {type:"buttons",items:[{id:"r1",label:"+ ۱ پرتاب",primary:true},{id:"r100",label:"+ ۱۰۰"}]},
+  {type:"buttons",items:[{id:"reset",label:"بازنشانی"}]}
+ ],
+ learnTitle:"چرا ۷ رایج‌ترین است؟",
+ learnBody:'برای جمع ۷، شش ترکیب وجود دارد (۱+۶، ۲+۵، ...) اما برای جمع ۲ فقط یکی (۱+۱). برای همین توزیع مثلثی می‌شود. شمردن حالت‌ها پایهٔ نظریهٔ احتمال است — و راز برد در تخته‌نرد!',
+ init(ex){ex.s={bins:Array(11).fill(0),n:0,d1:3,d2:4};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.bins=Array(11).fill(0);s.n=0;return;}
+  const cnt=id==="r1"?1:100;
+  for(let i=0;i<cnt;i++){
+   s.d1=1+Math.floor(Math.random()*6);s.d2=1+Math.floor(Math.random()*6);
+   s.bins[s.d1+s.d2-2]++;s.n++;
+  }
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const die=(X,Y,S,v)=>{
+   ctx.fillStyle="#EAEAEA";ctx.beginPath();ctx.roundRect(X,Y,S,S,S*.18);ctx.fill();
+   ctx.fillStyle="#151030";
+   const c2=S/2,q=S/4;
+   const dots={1:[[c2,c2]],2:[[q,q],[3*q,3*q]],3:[[q,q],[c2,c2],[3*q,3*q]],4:[[q,q],[q,3*q],[3*q,q],[3*q,3*q]],5:[[q,q],[q,3*q],[3*q,q],[3*q,3*q],[c2,c2]],6:[[q,q],[q,c2],[q,3*q],[3*q,q],[3*q,c2],[3*q,3*q]]}[v];
+   for(const[dx2,dy2]of dots){ctx.beginPath();ctx.arc(X+dx2,Y+dy2,S*.07,0,TAU);ctx.fill();}
+  };
+  const S=44*DPR;
+  die(w-2*S-30*DPR,52*DPR,S,s.d1);die(w-S-18*DPR,52*DPR,S,s.d2);
+  const px=30*DPR,pw=w-60*DPR,by=h-30*DPR,bhMax=h*.55;
+  const mxc=Math.max(...s.bins,1);
+  const bw=pw/11;
+  ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  for(let i=0;i<11;i++){
+   const X=px+i*bw;
+   const bh2=s.bins[i]/mxc*bhMax;
+   ctx.fillStyle="#DE9255";
+   ctx.beginPath();ctx.roundRect(X+3*DPR,by-bh2,bw-6*DPR,bh2,3*DPR);ctx.fill();
+   ctx.fillStyle="rgba(255,255,255,.6)";
+   ctx.fillText(fa0(i+2),X+bw/2,by+15*DPR);
+  }
+  if(s.n>0){
+   ctx.setLineDash([5,5]);ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=2*DPR;ctx.beginPath();
+   for(let i=0;i<11;i++){
+    const exp2=(6-Math.abs(i+2-7))/36*s.n;
+    const X=px+i*bw+bw/2,Y=by-exp2/mxc*bhMax;
+    i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   }
+   ctx.stroke();ctx.setLineDash([]);
+  }
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.moveTo(px,by+1);ctx.lineTo(px+pw,by+1);ctx.stroke();
+  let best=0;for(let i=1;i<11;i++)if(s.bins[i]>s.bins[best])best=i;
+  setR("stats","n",fa0(s.n));
+  setR("stats","m",s.n?fa0(best+2):"–");
+ }
+});
+defExp("stats",{
+ id:"montecarlo",icon:"🎯",title:"تخمین عدد پی",
+ readouts:[{id:"pi",label:"تخمین π"},{id:"err",label:"خطا"},{id:"n",label:"نقطه‌ها"}],
+ controls:[
+  {type:"range",id:"rate",label:"سرعت (نقطه/فریم)",min:0,max:60,step:1,value:15,fmt:v=>v?fa0(v):"ایستا"},
+  {type:"buttons",items:[{id:"reset",label:"بازنشانی",primary:true}]}
+ ],
+ learnTitle:"روش مونت‌کارلو",
+ learnBody:'نقطه‌های تصادفی در مربع بیندازید: نسبت نقطه‌های داخل دایره به کل، به <span class="formula">π/4</span> میل می‌کند. با همین تکنیک «شبیه‌سازی تصادفی»، فیزیک‌دانان راکتور طراحی می‌کنند و بانک‌ها ریسک می‌سنجند.',
+ init(ex){ex.s={pts:[],inC:0,n:0};},
+ btn(ex){ex.s.pts=[];ex.s.inC=0;ex.s.n=0;},
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  for(let i=0;i<ex.p.rate;i++){
+   const x=Math.random(),y=Math.random();
+   const inside=Math.pow(x-.5,2)+Math.pow(y-.5,2)<=.25;
+   s.n++;if(inside)s.inC++;
+   if(s.pts.length<5000)s.pts.push([x,y,inside]);
+  }
+  const S=Math.min(w,h)-32*DPR,ox=(w-S)/2,oy=(h-S)/2;
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=1.6*DPR;
+  ctx.strokeRect(ox,oy,S,S);
+  ctx.beginPath();ctx.arc(ox+S/2,oy+S/2,S/2,0,TAU);ctx.stroke();
+  for(const[x,y,ic]of s.pts){
+   ctx.fillStyle=ic?"rgba(114,188,143,.8)":"rgba(233,115,102,.8)";
+   ctx.fillRect(ox+x*S,oy+y*S,2.2*DPR,2.2*DPR);
+  }
+  const est=s.n?4*s.inC/s.n:0;
+  setR("stats","pi",s.n?fa(est.toFixed(4)):"–");
+  setR("stats","err",s.n?fa2(Math.abs(est-Math.PI)/Math.PI*100)+"٪":"–");
+  setR("stats","n",fa0(s.n));
+ }
+});
+defExp("stats",{
+ id:"walk",icon:"🚶",title:"قدم زدن تصادفی",
+ readouts:[{id:"t",label:"گام‌ها"},{id:"sd",label:"پراکندگی"}],
+ controls:[
+  {type:"range",id:"n",label:"تعداد مسیرها",min:5,max:60,step:5,value:25,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"reset",label:"دوباره",primary:true}]}
+ ],
+ learnTitle:"پخش و حرکت براونی",
+ learnBody:'هر مسیر در هر گام شانسی بالا یا پایین می‌رود. میانگین جابه‌جایی صفر است اما پراکندگی با <span class="formula">√t</span> رشد می‌کند (خط چین‌ها). انتشار بو در هوا، حرکت مولکول‌ها و حتی نوسان قیمت سهام چنین رفتاری دارند.',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.walks=[...Array(60)].map(()=>[0]);s.t=0;};
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ change(ex,id){if(id==="n")ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,N=ex.p.n;
+  const steps=560;
+  if(s.t<steps){
+   for(let k2=0;k2<3;k2++){
+    if(s.t>=steps)break;
+    s.t++;
+    for(let i=0;i<N;i++){const wlk=s.walks[i];wlk.push(wlk[wlk.length-1]+(Math.random()<.5?-1:1));}
+   }
+  }
+  const px2=16*DPR,pw=w-2*px2,cy=h/2,vs=h/2/(2.6*Math.sqrt(steps));
+  ctx.strokeStyle="rgba(255,255,255,.2)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(px2,cy);ctx.lineTo(px2+pw,cy);ctx.stroke();
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=1.4*DPR;
+  for(const sgn of[1,-1]){
+   ctx.beginPath();
+   for(let i2=0;i2<=100;i2++){
+    const tt=steps*i2/100;
+    const X=px2+pw*tt/steps,Y=cy-sgn*Math.sqrt(tt)*vs;
+    i2?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   }
+   ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const cols=["#5E9FE8","#DE9255","#72BC8F","#BF8EDA","#E97366","#EAC26B"];
+  for(let i=0;i<N;i++){
+   const wlk=s.walks[i];
+   ctx.strokeStyle=cols[i%6]+"99";ctx.lineWidth=1.3*DPR;ctx.beginPath();
+   const step=Math.max(1,Math.floor(wlk.length/300));
+   for(let j=0;j<wlk.length;j+=step){
+    const X=px2+pw*j/steps,Y=cy-wlk[j]*vs;
+    j?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   }
+   ctx.stroke();
+  }
+  let sq=0;for(let i=0;i<N;i++){const wlk=s.walks[i];sq+=Math.pow(wlk[wlk.length-1],2);}
+  setR("stats","t",fa0(s.t));
+  setR("stats","sd",fa1(Math.sqrt(sq/N)));
+ }
+});
+defExp("stats",{
+ id:"clt",icon:"📊",title:"میانگین نمونه‌ها",
+ readouts:[{id:"n",label:"نمونه‌ها"},{id:"m",label:"میانگین"},{id:"sd",label:"انحراف"}],
+ controls:[
+  {type:"range",id:"k",label:"اندازهٔ هر نمونه (تعداد تاس)",min:1,max:30,step:1,value:5,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"s200",label:"+ ۲۰۰ نمونه",primary:true},{id:"reset",label:"بازنشانی"}]},
+  {type:"note",text:"هر نمونه = میانگین k تاس. با k بزرگ‌تر، توزیع باریک‌تر و زنگوله‌ای‌تر می‌شود."}
+ ],
+ learnTitle:"قدرت میانگین‌گیری",
+ learnBody:'یک تاس توزیع تخت دارد، اما میانگین چند تاس زنگوله‌ای می‌شود و پراکندگی‌اش با <span class="formula">σ/√k</span> کوچک می‌شود. برای همین نظرسنجی با نمونهٔ بزرگ‌تر دقیق‌تر است.',
+ init(ex){ex.s={means:[]};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.means=[];return;}
+  for(let i=0;i<200;i++){
+   let sum=0;for(let j=0;j<ex.p.k;j++)sum+=1+Math.floor(Math.random()*6);
+   s.means.push(sum/ex.p.k);
+  }
+ },
+ change(ex,id){if(id==="k")ex.s.means=[];},
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const B=40;
+  const bins=Array(B).fill(0);
+  for(const m of s.means){const bi=Math.min(B-1,Math.floor((m-1)/5*B));bins[bi]++;}
+  const mxc=Math.max(...bins,1);
+  const px2=24*DPR,pw=w-2*px2,by=h-32*DPR,bhMax=h*.68;
+  ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  for(let i=0;i<B;i++){
+   const bh2=bins[i]/mxc*bhMax;
+   ctx.fillStyle="#DE9255";
+   ctx.fillRect(px2+i*pw/B+1,by-bh2,pw/B-2,bh2);
+  }
+  ctx.fillStyle="rgba(255,255,255,.6)";
+  for(let v=1;v<=6;v++)ctx.fillText(fa0(v),px2+(v-1)/5*pw,by+16*DPR);
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.moveTo(px2,by+1);ctx.lineTo(px2+pw,by+1);ctx.stroke();
+  if(s.means.length>2){
+   const n=s.means.length;
+   const mean=s.means.reduce((a,b)=>a+b,0)/n;
+   const sd=Math.sqrt(s.means.reduce((a,b)=>a+(b-mean)*(b-mean),0)/n);
+   if(sd>0){
+    ctx.setLineDash([5,5]);ctx.strokeStyle="rgba(255,255,255,.75)";ctx.lineWidth=2*DPR;ctx.beginPath();
+    const pk=n*(5/B)/(sd*Math.sqrt(TAU));
+    for(let i=0;i<=120;i++){
+     const v=1+5*i/120;
+     const pv=n*(5/B)*Math.exp(-Math.pow(v-mean,2)/(2*sd*sd))/(sd*Math.sqrt(TAU));
+     const X=px2+(v-1)/5*pw,Y=by-pv/mxc*bhMax;
+     i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+    }
+    ctx.stroke();ctx.setLineDash([]);
+   }
+   setR("stats","m",fa2(mean));setR("stats","sd",fa2(sd));
+  }else{setR("stats","m","–");setR("stats","sd","–");}
+  setR("stats","n",fa0(s.means.length));
+ }
+});
+defExp("stats",{
+ id:"regression",icon:"📉",title:"همبستگی و رگرسیون",
+ readouts:[{id:"r",label:"r نمونه"},{id:"m",label:"شیب خط"}],
+ controls:[
+  {type:"range",id:"r",label:"همبستگی هدف (r)",min:-1,max:1,step:.05,value:.7,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"new",label:"نمونهٔ جدید",primary:true}]}
+ ],
+ learnTitle:"رابطهٔ دو متغیر",
+ learnBody:'ضریب همبستگی r بین ۱− تا ۱+ قدرت رابطهٔ خطی را نشان می‌دهد و خط رگرسیون بهترین پیش‌بینی خطی است. اما یادتان باشد: همبستگی به معنای علیت نیست!',
+ init(ex){
+  const s=ex.s;
+  s.gen=()=>{
+   const r=ex.p.r;s.pts=[];
+   for(let i=0;i<60;i++){
+    const x=gauss(),e=gauss();
+    s.pts.push([x,r*x+Math.sqrt(Math.max(0,1-r*r))*e]);
+   }};
+  s.gen();
+ },
+ btn(ex){ex.s.gen();},
+ change(ex,id){if(id==="r")ex.s.gen();},
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const R2=3.2;
+  const sx=v=>(v+R2)/(2*R2)*w, sy=v=>h-(v+R2)/(2*R2)*h;
+  grid2(ctx,w,h,8,8);
+  const n=s.pts.length;
+  let mx=0,my=0;for(const[x,y]of s.pts){mx+=x;my+=y;}mx/=n;my/=n;
+  let sxy=0,sxx=0,syy=0;
+  for(const[x,y]of s.pts){sxy+=(x-mx)*(y-my);sxx+=(x-mx)*(x-mx);syy+=(y-my)*(y-my);}
+  const rr=sxy/Math.sqrt(sxx*syy||1),slope=sxy/(sxx||1),icpt=my-slope*mx;
+  for(const[x,y]of s.pts)ball(ctx,sx(x),sy(y),4.5*DPR,"#DE9255");
+  ctx.strokeStyle="#5E9FE8";ctx.lineWidth=2.6*DPR;
+  ctx.beginPath();ctx.moveTo(sx(-R2),sy(slope*-R2+icpt));ctx.lineTo(sx(R2),sy(slope*R2+icpt));ctx.stroke();
+  setR("stats","r",fa2(rr));setR("stats","m",fa2(slope));
+ }
+});
+/* ===== PHYSICS part2 ===== */
+defExp("physics",{
+ id:"incline",icon:"⛰️",title:"سطح شیب‌دار",
+ readouts:[{id:"a",label:"شتاب"},{id:"st",label:"وضعیت"}],
+ controls:[
+  {type:"range",id:"ang",label:"زاویهٔ شیب (درجه)",min:5,max:45,step:1,value:20,fmt:v=>fa0(v)+"°"},
+  {type:"range",id:"mu",label:"ضریب اصطکاک μ",min:0,max:1,step:.02,value:.3,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"reset",label:"از نو",primary:true}]}
+ ],
+ learnTitle:"اصطکاک روی شیب",
+ learnBody:'جسم وقتی می‌لغزد که مؤلفهٔ وزن در راستای شیب از اصطکاک بیشتر شود: <span class="formula">tanθ &gt; μ</span>. شتاب لغزش: <span class="formula">a = g(sinθ − μcosθ)</span>. به همین دلیل جاده‌های برفی (μ کم) خطرناک‌اند!',
+ init(ex){ex.s={d:0,v:0};},
+ btn(ex){ex.s.d=0;ex.s.v=0;},
+ change(ex){ex.s.d=0;ex.s.v=0;},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p,g=9.8,th=p.ang*Math.PI/180;
+  const slides=Math.tan(th)>p.mu;
+  const a=slides?g*(Math.sin(th)-p.mu*Math.cos(th)):0;
+  if(slides){s.v+=a*dt;s.d+=s.v*dt*40;}
+  const bx=w*.12,by=h*.88,L=w*.76;
+  const topx=bx+L*Math.cos(0),topy=by-L*Math.sin(th);
+  ctx.fillStyle="rgba(255,255,255,.08)";
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+L,by);ctx.lineTo(bx+L,by-L*Math.tan(th));ctx.closePath();ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2*DPR;ctx.stroke();
+  const maxD=Math.sqrt(L*L+Math.pow(L*Math.tan(th),2))-60*DPR;
+  if(s.d>maxD){s.d=maxD;s.v=0;}
+  const dd=Math.min(s.d,maxD);
+  const sx=bx+L-(dd+30*DPR)*Math.cos(th),sy=by-L*Math.tan(th)+(dd+30*DPR)*Math.sin(th);
+  const B=26*DPR;
+  ctx.save();ctx.translate(sx,sy);ctx.rotate(-th);
+  ctx.fillStyle="#5E9FE8";ctx.beginPath();ctx.roundRect(-B/2,-B,B,B,4*DPR);ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle="#E97366";ctx.lineWidth=2.6*DPR;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx,sy+42*DPR);ctx.stroke();
+  ball(ctx,sx,sy+42*DPR,3*DPR,"#E97366");
+  setR("physics","a",fa2(a)+" m/s²");
+  setR("physics","st",slides?"می‌لغزد 🛝":"ساکن (اصطکاک نگه می‌دارد) ✋");
+ }
+});
+defExp("physics",{
+ id:"lens",icon:"🔍",title:"عدسی همگرا",
+ readouts:[{id:"v",label:"فاصلهٔ تصویر"},{id:"m",label:"بزرگ‌نمایی"},{id:"k",label:"نوع تصویر"}],
+ controls:[
+  {type:"range",id:"f",label:"فاصلهٔ کانونی",min:30,max:120,step:2,value:70,fmt:v=>fa0(v)},
+  {type:"range",id:"u",label:"فاصلهٔ جسم",min:35,max:300,step:5,value:180,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"قانون عدسی نازک",
+ learnBody:'<span class="formula">1/f = 1/u + 1/v</span>. اگر جسم دورتر از کانون باشد تصویر حقیقی و وارونه است (دوربین، چشم). اگر نزدیک‌تر از کانون باشد تصویر مجازی و بزرگ‌تر می‌شود — همان ذره‌بین!',
+ frame(ex,ctx,w,h){
+  const p=ex.p,den=p.u-p.f,v=Math.abs(den)<1e-9?Infinity:p.u*p.f/den,m=-v/p.u;
+  const span=Math.max(360,p.u*1.5,Number.isFinite(v)?Math.min(Math.abs(v)*2,1400):360);
+  const sc=w/span,cx=w*.52,cy=h*.5,ho=Math.min(45*DPR,h*.13),ox=cx-p.u*sc,F=p.f*sc;
+  grid2(ctx,w,h,12,6);
+  const line=(x1,y1,x2,y2,color,dashed=false)=>{ctx.strokeStyle=color;ctx.lineWidth=2*DPR;ctx.setLineDash(dashed?[5*DPR,5*DPR]:[]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([])};
+  line(0,cy,w,cy,'#ffffff55');ctx.strokeStyle='#55c9f3';ctx.lineWidth=3*DPR;ctx.beginPath();ctx.ellipse(cx,cy,8*DPR,h*.34,0,0,TAU);ctx.stroke();
+  [-1,1].forEach(k=>ball(ctx,cx+k*F,cy,3*DPR,'#f8a529'));
+  line(ox,cy,ox,cy-ho,'#72bc8f');ball(ctx,ox,cy-ho,4*DPR,'#72bc8f');
+  line(ox,cy-ho,cx,cy-ho,'#f8a529');line(cx,cy-ho,w,cy-ho+(w-cx)*ho/F,'#f8a529');
+  line(ox,cy-ho,w,cy+(w-cx)*ho/(p.u*sc),'#b69aff');
+  if(Number.isFinite(v)){
+   const ix=cx+v*sc,iy=cy-m*ho;
+   if(v<0){line(cx,cy-ho,ix,iy,'#f8a529',true);line(cx,cy,ix,iy,'#b69aff',true)}
+   line(ix,cy,ix,iy,'#fb718f',v<0);if(iy>=0&&iy<=h&&ix>=0&&ix<=w)ball(ctx,ix,iy,4*DPR,'#fb718f');
+   setR('physics','v',fa1(v));setR('physics','m',fa2(m)+'×');setR('physics','k',v>0?'حقیقی و وارونه':'مجازی و مستقیم');
+  }else{setR('physics','v','∞');setR('physics','m','—');setR('physics','k','در بی‌نهایت؛ پرتوهای خروجی موازی')}
+ }
+
+});
+defExp("physics",{
+ id:"circuit",icon:"💡",title:"قانون اهم",
+ readouts:[{id:"i",label:"جریان"},{id:"pw",label:"توان"}],
+ controls:[
+  {type:"range",id:"V",label:"ولتاژ (V)",min:1,max:24,step:.5,value:9,fmt:v=>fa1(v)},
+  {type:"range",id:"R",label:"مقاومت (Ω)",min:1,max:24,step:.5,value:6,fmt:v=>fa1(v)}
+ ],
+ learnTitle:"قانون اهم",
+ learnBody:'<span class="formula">I = V / R</span> — جریان با ولتاژ زیاد و با مقاومت کم می‌شود. توان لامپ: <span class="formula">P = V·I</span>. الکترون‌ها را ببینید: هرچه جریان بیشتر، سریع‌تر می‌چرخند و لامپ پرنورتر است.',
+ init(ex){ex.s={ph:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p,I=p.V/p.R,P=p.V*I;
+  s.ph=(s.ph+dt*I*.15)%1;
+  const x0=w*.18,x1=w*.82,y0=h*.2,y1=h*.8;
+  ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2.4*DPR;
+  ctx.strokeRect(x0,y0,x1-x0,y1-y0);
+  ctx.fillStyle="#151030";
+  ctx.fillRect(x0-16*DPR,(y0+y1)/2-26*DPR,32*DPR,52*DPR);
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;
+  ctx.beginPath();ctx.moveTo(x0-8*DPR,(y0+y1)/2-16*DPR);ctx.lineTo(x0+8*DPR,(y0+y1)/2-16*DPR);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x0-4*DPR,(y0+y1)/2+16*DPR);ctx.lineTo(x0+4*DPR,(y0+y1)/2+16*DPR);ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText("باتری",x0,(y0+y1)/2+44*DPR);
+  const glow=Math.min(1,P/40);
+  const bx2=x1,by2=(y0+y1)/2;
+  const gr=ctx.createRadialGradient(bx2,by2,2,bx2,by2,60*DPR*(0.3+glow));
+  gr.addColorStop(0,"rgba(234,194,107,"+(0.25+glow*.75)+")");
+  gr.addColorStop(1,"rgba(234,194,107,0)");
+  ctx.fillStyle=gr;ctx.beginPath();ctx.arc(bx2,by2,60*DPR*(0.3+glow),0,TAU);ctx.fill();
+  ball(ctx,bx2,by2,14*DPR,glow>.5?"#EAC26B":"#8a7440");
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.fillText("لامپ",bx2,by2+44*DPR);
+  const zx=(x0+x1)/2,zw=50*DPR;
+  ctx.strokeStyle="#E97366";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  ctx.moveTo(zx-zw,y0);
+  for(let i=0;i<6;i++)ctx.lineTo(zx-zw+zw*2*(i+.5)/6,y0+(i%2?9:-9)*DPR);
+  ctx.lineTo(zx+zw,y0);ctx.stroke();
+  ctx.fillText("مقاومت",zx,y0-14*DPR);
+  const per=2*((x1-x0)+(y1-y0));
+  const N=14;
+  for(let i=0;i<N;i++){
+   let d=((i/N+s.ph)%1)*per;
+   let X,Y;
+   if(d<x1-x0){X=x0+d;Y=y0;}
+   else if(d<(x1-x0)+(y1-y0)){X=x1;Y=y0+(d-(x1-x0));}
+   else if(d<2*(x1-x0)+(y1-y0)){X=x1-(d-(x1-x0)-(y1-y0));Y=y1;}
+   else{X=x0;Y=y1-(d-2*(x1-x0)-(y1-y0));}
+   ball(ctx,X,Y,3.2*DPR,"#5E9FE8");
+  }
+  setR("physics","i",fa2(I)+" A");setR("physics","pw",fa1(P)+" W");
+ }
+});
+defExp("physics",{
+ id:"doppler",icon:"🚑",title:"اثر دوپلر",
+ readouts:[{id:"fa",label:"بسامد جلو"},{id:"fb",label:"بسامد پشت"}],
+ controls:[
+  {type:"range",id:"v",label:"سرعت منبع (نسبت به صوت)",min:0,max:.9,step:.05,value:.5,fmt:v=>fa0(v*100)+"٪"}
+ ],
+ learnTitle:"چرا صدای آمبولانس عوض می‌شود؟",
+ learnBody:'وقتی منبع صدا حرکت می‌کند، موج‌ها جلوی آن فشرده (بسامد بالاتر، صدای زیرتر) و پشت آن باز می‌شوند (بم‌تر): <span class="formula">f′ = f / (1 ∓ v/c)</span>. ستاره‌شناسان با همین اثر روی نور، دور شدن کهکشان‌ها را کشف کردند!',
+ init(ex){ex.s={waves:[],x:0,t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p,c=w*.13;
+  s.t+=dt;
+  s.x+=p.v*c*dt;
+  if(s.x>w*.75)s.x=-w*.2;
+  if(!s.last||s.t-s.last>.4){s.last=s.t;s.waves.push({x:s.x,y:h/2,r:0});}
+  s.waves=s.waves.filter(wv=>wv.r<w);
+  for(const wv of s.waves){
+   wv.r+=c*dt;
+   ctx.strokeStyle="rgba(94,159,232,"+Math.max(0,.8-wv.r/w)+")";
+   ctx.lineWidth=2*DPR;
+   ctx.beginPath();ctx.arc(wv.x,wv.y,wv.r,0,TAU);ctx.stroke();
+  }
+  const sx=Math.max(0,s.x);
+  ctx.font=(30*DPR)+"px serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText("🚑",sx,h/2);ctx.textBaseline="alphabetic";
+  setR("physics","fa",fa2(1/(1-p.v))+"×");
+  setR("physics","fb",fa2(1/(1+p.v))+"×");
+ }
+});
+defExp("physics",{
+ id:"buoyancy",icon:"🛟",title:"شناوری",
+ readouts:[{id:"st",label:"وضعیت"},{id:"fr",label:"بخش زیر آب"}],
+ controls:[
+  {type:"range",id:"rho",label:"چگالی جسم (g/cm³)",min:.2,max:3,step:.05,value:.6,fmt:v=>fa2(v)},
+  {type:"choices",id:"fluid",value:"1",items:[{val:".9",label:"روغن ۰٫۹"},{val:"1",label:"آب ۱٫۰"},{val:"1.25",label:"آب‌نمک ۱٫۲۵"}]}
+ ],
+ learnTitle:"اصل ارشمیدس",
+ learnBody:'نیروی شناوری برابر وزن سیالِ جابه‌جاشده است. اگر چگالی جسم کمتر از سیال باشد شناور می‌ماند و کسری از آن زیر آب می‌رود که برابر <span class="formula">ρ جسم / ρ سیال</span> است. کشتی فولادی چون توخالی است چگالی میانگینش از آب کمتر است!',
+ init(ex){ex.s={y:0,vy:0,t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p,rf=parseFloat(p.fluid);
+  s.t+=dt;
+  const wl=h*.45;
+  ctx.fillStyle=rf>1.1?"rgba(114,188,143,.25)":rf<1?"rgba(234,194,107,.18)":"rgba(94,159,232,.22)";
+  ctx.fillRect(0,wl,w,h-wl);
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.6*DPR;
+  ctx.beginPath();
+  for(let i=0;i<=40;i++){const X=w*i/40;const Y=wl+Math.sin(i/3+s.t*2)*2.5*DPR;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+  ctx.stroke();
+  const B=64*DPR;
+  const frac=Math.min(1,p.rho/rf);
+  const targetTop=p.rho<rf? wl-B*(1-frac) : h-B-14*DPR;
+  s.y+=(targetTop-s.y)*Math.min(1,dt*2.5);
+  const bob=p.rho<rf?Math.sin(s.t*2.2)*2*DPR:0;
+  const X=w/2-B/2,Y=s.y+bob;
+  ctx.fillStyle=p.rho<rf?"#DE9255":"#8a8a8a";
+  ctx.beginPath();ctx.roundRect(X,Y,B,B,6*DPR);ctx.fill();
+  ctx.fillStyle="rgba(0,0,0,.3)";
+  const sub=Math.max(0,Math.min(B,(wl-Y)*-1+ (Y+B>wl? Math.min(B,Y+B-wl):0)));
+  if(Y+B>wl){const d=Math.min(B,Y+B-wl);ctx.fillRect(X,Y+B-d,B,d);}
+  setR("physics","st",p.rho<rf?"شناور 🛟":"غرق می‌شود ⬇️");
+  setR("physics","fr",p.rho<rf?fa0(frac*100)+"٪":"۱۰۰٪");
+ }
+});
+defExp("physics",{
+ id:"heat",icon:"🌡️",title:"رسانش گرما",
+ readouts:[{id:"tl",label:"دمای چپ"},{id:"tr",label:"دمای راست"}],
+ controls:[
+  {type:"range",id:"k",label:"رسانایی گرمایی",min:.05,max:1,step:.05,value:.35,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"reset",label:"از نو",primary:true}]}
+ ],
+ learnTitle:"گرما از داغ به سرد",
+ learnBody:'گرما همیشه خودبه‌خود از جسم داغ به سرد جریان می‌یابد تا دماها برابر شوند (قانون دوم ترمودینامیک). فلزها رسانای خوب و چوب و هوا عایق‌اند — برای همین دستهٔ قابلمه چوبی است!',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.T=[...Array(40)].map((_,i)=>i<20?100:0);};
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,k=ex.p.k;
+  for(let it=0;it<3;it++){
+   const T2=s.T.slice();
+   for(let i=0;i<40;i++){
+    const L2=i>0?s.T[i-1]:s.T[i],R2=i<39?s.T[i+1]:s.T[i];
+    T2[i]=s.T[i]+k*dt*30*(L2+R2-2*s.T[i])/2;
+   }
+   s.T=T2;
+  }
+  const bw=w*.8/40,x0=w*.1,y0=h*.32,bh2=h*.36;
+  for(let i=0;i<40;i++){
+   const t=s.T[i]/100;
+   ctx.fillStyle="rgb("+Math.round(60+t*195)+","+Math.round(80+ (1-Math.abs(t-.5)*2)*60)+","+Math.round(60+(1-t)*195)+")";
+   ctx.fillRect(x0+i*bw,y0,bw+1,bh2);
+  }
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(x0,y0,w*.8,bh2);
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let i=0;i<40;i++){
+   const X=x0+i*bw+bw/2,Y=y0-10*DPR-s.T[i]/100*(h*.16);
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  setR("physics","tl",fa0(avg(s.T.slice(0,20)))+"°");
+  setR("physics","tr",fa0(avg(s.T.slice(20)))+"°");
+ }
+});
+
+/* ===== CHEM part2 ===== */
+defExp("chem",{
+ id:"periodic",icon:"🧱",title:"جدول تناوبی",
+ hint:"روی هر عنصر بزنید",
+ readouts:[{id:"el",label:"عنصر"},{id:"z",label:"عدد اتمی"},{id:"cat",label:"دسته"}],
+ controls:[{type:"note",text:"۱۸ عنصر نخست — رنگ‌ها دستهٔ شیمیایی را نشان می‌دهند."}],
+ learnTitle:"نظم پنهان عناصر",
+ learnBody:'مندلیف عناصر را بر اساس خواص تکرارشونده چید. ستون‌ها (گروه‌ها) آرایش الکترون بیرونی مشابه و رفتار مشابه دارند: فلزات قلیایی واکنش‌پذیر، گازهای نجیب بی‌اثر.',
+ init(ex){
+  const s=ex.s;
+  s.els=[
+   {z:1,s:"H",n:"هیدروژن",m:1.008,g:1,pr:1,c:"nm"},{z:2,s:"He",n:"هلیم",m:4.003,g:18,pr:1,c:"ng"},
+   {z:3,s:"Li",n:"لیتیم",m:6.94,g:1,pr:2,c:"am"},{z:4,s:"Be",n:"بریلیم",m:9.012,g:2,pr:2,c:"ae"},
+   {z:5,s:"B",n:"بور",m:10.81,g:13,pr:2,c:"md"},{z:6,s:"C",n:"کربن",m:12.011,g:14,pr:2,c:"nm"},
+   {z:7,s:"N",n:"نیتروژن",m:14.007,g:15,pr:2,c:"nm"},{z:8,s:"O",n:"اکسیژن",m:15.999,g:16,pr:2,c:"nm"},
+   {z:9,s:"F",n:"فلوئور",m:18.998,g:17,pr:2,c:"hl"},{z:10,s:"Ne",n:"نئون",m:20.18,g:18,pr:2,c:"ng"},
+   {z:11,s:"Na",n:"سدیم",m:22.99,g:1,pr:3,c:"am"},{z:12,s:"Mg",n:"منیزیم",m:24.305,g:2,pr:3,c:"ae"},
+   {z:13,s:"Al",n:"آلومینیوم",m:26.982,g:13,pr:3,c:"pm"},{z:14,s:"Si",n:"سیلیسیم",m:28.085,g:14,pr:3,c:"md"},
+   {z:15,s:"P",n:"فسفر",m:30.974,g:15,pr:3,c:"nm"},{z:16,s:"S",n:"گوگرد",m:32.06,g:16,pr:3,c:"nm"},
+   {z:17,s:"Cl",n:"کلر",m:35.45,g:17,pr:3,c:"hl"},{z:18,s:"Ar",n:"آرگون",m:39.948,g:18,pr:3,c:"ng"}
+  ];
+  s.cols={am:"#E97366",ae:"#DE9255",nm:"#72BC8F",hl:"#5E9FE8",ng:"#BF8EDA",md:"#EAC26B",pm:"#9aa5b1"};
+  s.cats={am:"فلز قلیایی",ae:"قلیایی خاکی",nm:"نافلز",hl:"هالوژن",ng:"گاز نجیب",md:"شبه‌فلز",pm:"فلز ضعیف"};
+  s.sel=s.els[5];
+ },
+ drag(ex,ph,x,y,cv){
+  if(ph!=="down")return;
+  const s=ex.s,w=cv.width,h=cv.height;
+  const cw=w/18.6,ch=Math.min(h/3.6,cw*1.25),x0=(w-18*cw)/2,y0=h*.16;
+  for(const e of s.els){
+   const X=x0+(e.g-1)*cw,Y=y0+(e.pr-1)*ch;
+   if(x>=X&&x<X+cw&&y>=Y&&y<Y+ch){s.sel=e;break;}
+  }
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const cw=w/18.6,ch=Math.min(h/3.6,cw*1.25),x0=(w-18*cw)/2,y0=h*.16;
+  for(const e of s.els){
+   const X=x0+(e.g-1)*cw,Y=y0+(e.pr-1)*ch;
+   const on=s.sel&&s.sel.z===e.z;
+   ctx.fillStyle=s.cols[e.c]+(on?"":"55");
+   ctx.beginPath();ctx.roundRect(X+1.5,Y+1.5,cw-3,ch-3,4*DPR);ctx.fill();
+   if(on){ctx.strokeStyle="#fff";ctx.lineWidth=2*DPR;ctx.stroke();}
+   ctx.fillStyle=on?"#111":"rgba(255,255,255,.9)";
+   ctx.font="700 "+Math.round(cw*.42)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+   ctx.fillText(e.s,X+cw/2,Y+ch*.62);
+  }
+  const e=s.sel;
+  if(e){
+   const bx=w/2,by2=y0+3*ch+ (h-(y0+3*ch))*.5;
+   ctx.fillStyle=s.cols[e.c];
+   ctx.font="800 "+(34*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+   ctx.fillText(e.s,bx,by2);
+   ctx.fillStyle="rgba(255,255,255,.75)";ctx.font=(13*DPR)+"px Vazirmatn,Tahoma";
+   ctx.fillText(e.n+" · جرم اتمی "+fa(String(e.m)),bx,by2+24*DPR);
+   setR("chem","el",e.n+" ("+e.s+")");
+   setR("chem","z",fa0(e.z));
+   setR("chem","cat",s.cats[e.c]);
+  }
+ }
+});
+defExp("chem",{
+ id:"titration",icon:"💧",title:"تیتراسیون",
+ readouts:[{id:"v",label:"باز افزوده"},{id:"ph",label:"pH"}],
+ controls:[
+  {type:"buttons",items:[{id:"d1",label:"+ ۱ میلی‌لیتر",primary:true},{id:"d5",label:"+ ۵"}]},
+  {type:"buttons",items:[{id:"reset",label:"از نو"}]},
+  {type:"note",text:"۲۵ میلی‌لیتر اسید HCl ۰٫۱ مولار + شناساگر فنول‌فتالئین. با سود ۰٫۱ مولار تیتر کنید."}
+ ],
+ learnTitle:"نقطهٔ هم‌ارزی",
+ learnBody:'در تیتراسیون، باز را قطره‌قطره به اسید می‌افزاییم. نزدیک نقطهٔ هم‌ارزی (اینجا ۲۵ میلی‌لیتر) pH ناگهان می‌پرد و شناساگر صورتی می‌شود — روش اصلی آزمایشگاه‌ها برای اندازه‌گیری غلظت.',
+ init(ex){ex.s={v:0,hist:[[0,1]]};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.v=0;s.hist=[[0,1]];return;}
+  const add=id==="d1"?1:5;
+  for(let i=0;i<add;i++){
+   if(s.v>=50)break;
+   s.v+=1;
+   s.hist.push([s.v,s.ph(s.v)]);
+  }
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  if(!s.ph){s.ph=v=>{
+   const na=.0025,nb=v/1000*.1,vt=(25+v)/1000;
+   if(nb<na){const c2=(na-nb)/vt;return -Math.log10(c2);}
+   if(nb>na){const c2=(nb-na)/vt;return 14+Math.log10(c2);}
+   return 7;
+  };s.hist=s.hist.map(([v])=>[v,s.ph(v)]);}
+  const pH=s.ph(s.v);
+  const fx=w*.16,fy=h*.5,fw=w*.2,fh=h*.4;
+  ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(fx,fy,fw,fh);
+  const pink=Math.max(0,Math.min(1,(pH-8.2)/1.5));
+  ctx.fillStyle=pink>0?"rgba(233,115,180,"+(0.15+pink*.5)+")":"rgba(200,210,220,.15)";
+  ctx.fillRect(fx+2,fy+fh*.25,fw-4,fh*.75-2);
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText("ارلن",fx+fw/2,fy+fh+16*DPR);
+  ctx.strokeStyle="rgba(255,255,255,.5)";
+  ctx.strokeRect(fx+fw/2-5*DPR,fy-h*.3,10*DPR,h*.26);
+  ctx.fillStyle="rgba(94,159,232,.4)";
+  ctx.fillRect(fx+fw/2-4*DPR,fy-h*.3+2,8*DPR,Math.max(0,h*.26*(1-s.v/50))-4);
+  const gx=w*.48,gw=w*.46,gy=h*.12,gh=h*.72;
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.4*DPR;
+  ctx.strokeRect(gx,gy,gw,gh);
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.3)";
+  ctx.beginPath();ctx.moveTo(gx,gy+gh*(1-7/14));ctx.lineTo(gx+gw,gy+gh*(1-7/14));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx+gw*.5,gy);ctx.lineTo(gx+gw*.5,gy+gh);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="#72BC8F";ctx.lineWidth=2.6*DPR;ctx.beginPath();
+  s.hist.forEach(([v,p2],i)=>{
+   const X=gx+gw*v/50,Y=gy+gh*(1-p2/14);
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  });
+  ctx.stroke();
+  const lx=gx+gw*s.v/50,ly=gy+gh*(1-pH/14);
+  ball(ctx,lx,ly,5*DPR,"#EAC26B");
+  setR("chem","v",fa0(s.v)+" mL");
+  setR("chem","ph",fa1(pH));
+ }
+});
+defExp("chem",{
+ id:"electrolysis",icon:"⚡",title:"برق‌کافت آب",
+ readouts:[{id:"h",label:"حجم H₂"},{id:"o",label:"حجم O₂"}],
+ controls:[
+  {type:"range",id:"V",label:"ولتاژ",min:0,max:12,step:.5,value:6,fmt:v=>fa1(v)+" V"},
+  {type:"buttons",items:[{id:"reset",label:"خالی کردن",primary:true}]}
+ ],
+ learnTitle:"تجزیهٔ آب با برق",
+ learnBody:'<span class="formula">2H₂O → 2H₂ + O₂</span> — در کاتد گاز هیدروژن و در آند اکسیژن تولید می‌شود؛ دقیقاً دو برابر! همین نسبت ۲:۱ فرمول H₂O را ثابت می‌کند. هیدروژن سبز آیندهٔ انرژی با همین فرایند ساخته می‌شود.',
+ init(ex){ex.s={vh:0,vo:0,bub:[]};},
+ btn(ex){ex.s.vh=0;ex.s.vo=0;ex.s.bub=[];},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,rate=ex.p.V/12;
+  const wl=h*.25;
+  ctx.fillStyle="rgba(94,159,232,.18)";ctx.fillRect(w*.1,wl,w*.8,h*.6);
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2*DPR;ctx.strokeRect(w*.1,wl,w*.8,h*.6);
+  const ex1=w*.32,ex2=w*.68,ey=wl+h*.6;
+  for(const[X,lbl,col]of[[ex1,"کاتد − (H₂)","#5E9FE8"],[ex2,"آند + (O₂)","#E97366"]]){
+   ctx.fillStyle=col;ctx.fillRect(X-5*DPR,wl+h*.14,10*DPR,h*.46);
+   ctx.fillStyle="rgba(255,255,255,.65)";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+   ctx.fillText(lbl,X,ey+18*DPR);
+  }
+  if(rate>0){
+   s.vh+=rate*dt*8;s.vo+=rate*dt*4;
+   if(Math.random()<rate*.9)s.bub.push({x:ex1+(Math.random()-.5)*14*DPR,y:ey-10*DPR,r:(1.5+Math.random()*2)*DPR,v:30+Math.random()*30});
+   if(Math.random()<rate*.45)s.bub.push({x:ex2+(Math.random()-.5)*14*DPR,y:ey-10*DPR,r:(1.5+Math.random()*2)*DPR,v:30+Math.random()*30});
+  }
+  for(const b of s.bub){b.y-=b.v*dt*DPR;}
+  s.bub=s.bub.filter(b=>b.y>wl+6*DPR);
+  ctx.fillStyle="rgba(255,255,255,.55)";
+  for(const b of s.bub){ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();}
+  const tw=w*.09;
+  for(const[X,v,col]of[[ex1,s.vh,"rgba(94,159,232,.5)"],[ex2,s.vo,"rgba(233,115,102,.5)"]]){
+   const th=Math.min(h*.5,v*DPR);
+   ctx.fillStyle=col;
+   ctx.fillRect(X-tw/2,wl-8*DPR-th+h*.14,tw,th);
+   ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.4*DPR;
+   ctx.strokeRect(X-tw/2,wl-8*DPR-h*.5+h*.14,tw,h*.5);
+  }
+  setR("chem","h",fa1(s.vh)+" واحد");setR("chem","o",fa1(s.vo)+" واحد");
+ }
+});
+defExp("chem",{
+ id:"diffusion",icon:"🌫️",title:"پخش گازها",
+ readouts:[{id:"mix",label:"آمیختگی"}],
+ controls:[
+  {type:"range",id:"T",label:"دما",min:.3,max:3,step:.1,value:1,fmt:v=>fa1(v)+"×"},
+  {type:"toggle",id:"gate",label:"دریچه",value:false,onText:"باز",offText:"بسته"},
+  {type:"buttons",items:[{id:"reset",label:"از نو",primary:true}]}
+ ],
+ learnTitle:"پخش و آنتروپی",
+ learnBody:'گازها خودبه‌خود مخلوط می‌شوند و هرگز خودبه‌خود جدا نمی‌شوند — چون حالت مخلوط بسیار محتمل‌تر است (آنتروپی بیشتر). دمای بالاتر پخش را سریع‌تر می‌کند — بوی عطر در اتاق گرم زودتر می‌پیچد!',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{
+   s.ps=[];
+   for(let i=0;i<120;i++)s.ps.push({x:Math.random()*.46+.02,y:Math.random()*.9+.05,vx:gauss()*.1,vy:gauss()*.1,c:0});
+   for(let i=0;i<120;i++)s.ps.push({x:Math.random()*.46+.52,y:Math.random()*.9+.05,vx:gauss()*.14,vy:gauss()*.14,c:1});
+  };
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,T=ex.p.T,open=ex.p.gate;
+  const gt=.35,gb=.65;
+  for(const q of s.ps){
+   q.x+=q.vx*dt*T;q.y+=q.vy*dt*T;
+   if(q.x<.01){q.x=.01;q.vx=Math.abs(q.vx);}
+   if(q.x>.99){q.x=.99;q.vx=-Math.abs(q.vx);}
+   if(q.y<.01){q.y=.01;q.vy=Math.abs(q.vy);}
+   if(q.y>.99){q.y=.99;q.vy=-Math.abs(q.vy);}
+   const nearWall=Math.abs(q.x-.5)<.012;
+   if(nearWall&&!(open&&q.y>gt&&q.y<gb)){
+    if(q.x<.5)q.vx=-Math.abs(q.vx);else q.vx=Math.abs(q.vx);
+   }
+   if(Math.random()<.02){q.vx+=gauss()*.03;q.vy+=gauss()*.03;
+    const sp=Math.hypot(q.vx,q.vy);if(sp>.4){q.vx*=.4/sp;q.vy*=.4/sp;}}
+  }
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(w*.02,h*.02,w*.96,h*.96);
+  ctx.beginPath();ctx.moveTo(w*.5,h*.02);ctx.lineTo(w*.5,h*(open?gt:.98));ctx.stroke();
+  if(open){ctx.beginPath();ctx.moveTo(w*.5,h*gb);ctx.lineTo(w*.5,h*.98);ctx.stroke();}
+  for(const q of s.ps)ball(ctx,q.x*w,q.y*h,3*DPR,q.c?"#5E9FE8":"#E97366");
+  let wrong=0;
+  for(const q of s.ps)if((q.c===0&&q.x>.5)||(q.c===1&&q.x<.5))wrong++;
+  setR("chem","mix",fa0(Math.min(100,wrong/1.2))+"٪");
+ }
+});
+defExp("chem",{
+ id:"flame",icon:"🔥",title:"آزمون شعله",
+ readouts:[{id:"el",label:"فلز"},{id:"col",label:"رنگ شعله"}],
+ controls:[
+  {type:"choices",id:"metal",value:"na",items:[{val:"li",label:"لیتیم"},{val:"na",label:"سدیم"},{val:"k",label:"پتاسیم"},{val:"cu",label:"مس"},{val:"sr",label:"استرانسیم"},{val:"ba",label:"باریم"}]}
+ ],
+ learnTitle:"رنگ شعله از کجا می‌آید؟",
+ learnBody:'گرما الکترون‌ها را به لایهٔ بالاتر می‌برد؛ هنگام بازگشت، نوری با رنگ مخصوص همان عنصر تابیده می‌شود — اثر انگشت نوری هر عنصر! آتش‌بازی‌ها و تحلیل نور ستارگان بر همین پایه‌اند.',
+ init(ex){ex.s={ps:[]};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  const cols={li:["#ff4444","قرمز لاکی"],na:["#ffb830","زرد پرتقالی"],k:["#c9a0ff","بنفش کم‌رنگ"],cu:["#3ddc97","سبزآبی"],sr:["#ff2255","قرمز تند"],ba:["#a8e05f","سبز روشن"]};
+  const names={li:"لیتیم (Li)",na:"سدیم (Na)",k:"پتاسیم (K)",cu:"مس (Cu)",sr:"استرانسیم (Sr)",ba:"باریم (Ba)"};
+  const[col,cname]=cols[ex.p.metal];
+  const bx=w/2,by2=h*.82;
+  ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(bx-30*DPR,by2+20*DPR);ctx.lineTo(bx+30*DPR,by2+20*DPR);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bx,by2+20*DPR);ctx.lineTo(bx,by2);ctx.stroke();
+  for(let i=0;i<6;i++)s.ps.push({x:bx+gauss()*7*DPR,y:by2,vy:-(70+Math.random()*90)*DPR,vx:gauss()*9*DPR,life:1});
+  for(const q of s.ps){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt*1.4;q.vx*=.98;}
+  s.ps=s.ps.filter(q=>q.life>0);
+  ctx.globalCompositeOperation="lighter";
+  for(const q of s.ps){
+   const r=(3+8*q.life)*DPR;
+   const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,r);
+   g.addColorStop(0,col+"cc");g.addColorStop(1,col+"00");
+   ctx.fillStyle=g;ctx.beginPath();ctx.arc(q.x,q.y,r,0,TAU);ctx.fill();
+  }
+  ctx.globalCompositeOperation="source-over";
+  setR("chem","el",names[ex.p.metal]);
+  setR("chem","col",cname);
+ }
+});
+defExp("chem",{
+ id:"equilibrium",icon:"⚖️",title:"تعادل شیمیایی",
+ readouts:[{id:"a",label:"[A]"},{id:"b",label:"[B]"},{id:"k",label:"نسبت B/A"}],
+ controls:[
+  {type:"range",id:"kf",label:"سرعت رفت (A→B)",min:.05,max:1,step:.05,value:.5,fmt:v=>fa2(v)},
+  {type:"range",id:"kr",label:"سرعت برگشت (B→A)",min:.05,max:1,step:.05,value:.25,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"reset",label:"همه A کن",primary:true}]}
+ ],
+ learnTitle:"تعادل پویا",
+ learnBody:'در تعادل، واکنش متوقف نمی‌شود — رفت و برگشت با سرعت برابر ادامه دارند. نسبت غلظت‌ها به <span class="formula">K = kرفت / kبرگشت</span> میل می‌کند، هر جا شروع کنید!',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.ps=[...Array(160)].map(()=>({x:Math.random(),y:Math.random(),st:0}));s.hist=[];s.t=0;};
+  s.reset();
+ },
+ btn(ex){ex.s.reset();},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;
+  s.t+=dt;
+  for(const q of s.ps){
+   if(q.st===0&&Math.random()<p.kf*dt)q.st=1;
+   else if(q.st===1&&Math.random()<p.kr*dt)q.st=0;
+   q.x+=gauss()*.004;q.y+=gauss()*.004;
+   q.x=Math.max(.02,Math.min(.98,q.x));q.y=Math.max(.05,Math.min(.6,q.y));
+  }
+  const nb=s.ps.filter(q=>q.st===1).length,na=160-nb;
+  if(!s.lastRec||s.t-s.lastRec>.15){s.lastRec=s.t;s.hist.push(nb/160);if(s.hist.length>160)s.hist.shift();}
+  for(const q of s.ps)ball(ctx,q.x*w,q.y*h,3.4*DPR,q.st?"#DE9255":"#5E9FE8");
+  const gy=h*.68,gh=h*.26;
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.2*DPR;
+  ctx.strokeRect(w*.05,gy,w*.9,gh);
+  const eq=p.kf/(p.kf+p.kr);
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.4)";
+  ctx.beginPath();ctx.moveTo(w*.05,gy+gh*(1-eq));ctx.lineTo(w*.95,gy+gh*(1-eq));ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="#DE9255";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  s.hist.forEach((v,i)=>{
+   const X=w*.05+w*.9*i/159,Y=gy+gh*(1-v);
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  });
+  ctx.stroke();
+  setR("chem","a",fa0(na));setR("chem","b",fa0(nb));
+  setR("chem","k",na?fa2(nb/na):"∞");
+ }
+});
+
+/* ===== MATH part2 ===== */
+defExp("math",{
+ id:"primes",icon:"🔢",title:"غربال اعداد اول",
+ readouts:[{id:"p",label:"مضرب‌های"},{id:"c",label:"اول‌ها تاکنون"}],
+ controls:[
+  {type:"buttons",items:[{id:"step",label:"گام بعدی",primary:true},{id:"auto",label:"خودکار"},{id:"reset",label:"از نو"}]}
+ ],
+ learnTitle:"غربال اراتوستن",
+ learnBody:'از ۲ شروع کنید، مضرب‌هایش را خط بزنید؛ عدد بعدی که مانده اول است. اعداد اول آجرهای سازندهٔ همهٔ اعدادند و امنیت اینترنت (رمزنگاری RSA) بر دشواری تجزیهٔ اعداد بزرگ به اول‌ها استوار است.',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.state=Array(101).fill(0);s.cur=1;s.auto=false;s.timer=0;};
+  s.reset();
+  s.advance=()=>{
+   let n=s.cur+1;
+   while(n<=10&&s.state[n]===2)n++;
+   if(n>10){s.done=true;s.auto=false;for(let i=2;i<=100;i++)if(s.state[i]!==2)s.state[i]=1;return;}
+   s.cur=n;s.state[n]=1;
+   for(let m=n*n;m<=100;m+=n)if(s.state[m]===0)s.state[m]=2;
+  };
+ },
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.reset();s.done=false;}
+  else if(id==="auto")s.auto=!s.auto;
+  else s.advance();
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  if(s.auto){s.timer+=dt;if(s.timer>.8){s.timer=0;s.advance();}}
+  const cw=Math.min(w/10.6,h/10.6),x0=(w-10*cw)/2,y0=(h-10*cw)/2;
+  ctx.font="600 "+Math.round(cw*.36)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";
+  for(let n=1;n<=100;n++){
+   const i=n-1,X=x0+(i%10)*cw,Y=y0+Math.floor(i/10)*cw;
+   const st=s.state[n];
+   ctx.fillStyle=n===1?"rgba(255,255,255,.06)":st===1?"#BF8EDA":st===2?"rgba(255,255,255,.04)":"rgba(255,255,255,.12)";
+   ctx.beginPath();ctx.roundRect(X+1.5,Y+1.5,cw-3,cw-3,4*DPR);ctx.fill();
+   if(s.cur>1&&n===s.cur){ctx.strokeStyle="#EAC26B";ctx.lineWidth=2*DPR;ctx.stroke();}
+   ctx.fillStyle=st===2||n===1?"rgba(255,255,255,.25)":"#fff";
+   ctx.fillText(fa0(n),X+cw/2,Y+cw/2);
+   if(st===2){
+    ctx.strokeStyle="rgba(233,115,102,.5)";ctx.lineWidth=1.4*DPR;
+    ctx.beginPath();ctx.moveTo(X+cw*.25,Y+cw*.75);ctx.lineTo(X+cw*.75,Y+cw*.25);ctx.stroke();
+   }
+  }
+  ctx.textBaseline="alphabetic";
+  const primes=s.state.filter((v,i)=>i>1&&v===1).length;
+  setR("math","p",s.cur>1?fa0(s.cur):"–");
+  setR("math","c",fa0(primes));
+ }
+});
+defExp("math",{
+ id:"pythagoras",icon:"📐",title:"قضیهٔ فیثاغورس",
+ readouts:[{id:"a2",label:"a²"},{id:"b2",label:"b²"},{id:"c2",label:"c²"}],
+ controls:[
+  {type:"range",id:"a",label:"ضلع a",min:2,max:8,step:.1,value:3,fmt:v=>fa1(v)},
+  {type:"range",id:"b",label:"ضلع b",min:2,max:8,step:.1,value:4,fmt:v=>fa1(v)}
+ ],
+ learnTitle:"a² + b² = c²",
+ learnBody:'در مثلث قائم‌الزاویه، مساحت مربع روی وتر برابر مجموع مساحت دو مربع دیگر است. مثلث ۳-۴-۵ را امتحان کنید: ۹+۱۶=۲۵! معماران مصر باستان با طناب ۱۲گره‌ای زاویهٔ قائمه می‌ساختند.',
+ frame(ex,ctx,w,h){
+  const{a,b}=ex.p,c=Math.hypot(a,b);
+  const sc=Math.min(w,h)/(a+b+Math.max(a,b)+3.5);
+  const ox=w*.5-(b*sc)/2,oy=h*.55;
+  const A={x:ox,y:oy},B={x:ox+b*sc,y:oy},C={x:ox,y:oy-a*sc};
+  ctx.fillStyle="rgba(94,159,232,.3)";ctx.strokeStyle="#5E9FE8";ctx.lineWidth=1.6*DPR;
+  ctx.fillRect(A.x-a*sc,C.y,a*sc,a*sc);ctx.strokeRect(A.x-a*sc,C.y,a*sc,a*sc);
+  ctx.fillStyle="rgba(222,146,85,.3)";ctx.strokeStyle="#DE9255";
+  ctx.fillRect(A.x,oy,b*sc,b*sc);ctx.strokeRect(A.x,oy,b*sc,b*sc);
+  const ux=(B.x-C.x)/(c*sc),uy=(B.y-C.y)/(c*sc);
+  const nx=-uy,ny=ux;
+  ctx.fillStyle="rgba(191,142,218,.3)";ctx.strokeStyle="#BF8EDA";
+  ctx.beginPath();
+  ctx.moveTo(C.x,C.y);ctx.lineTo(B.x,B.y);
+  ctx.lineTo(B.x+nx*c*sc,B.y+ny*c*sc);ctx.lineTo(C.x+nx*c*sc,C.y+ny*c*sc);
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.12)";ctx.strokeStyle="#fff";ctx.lineWidth=2.2*DPR;
+  ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=1.6*DPR;
+  ctx.strokeRect(A.x,A.y-12*DPR,12*DPR,12*DPR);
+  ctx.fillStyle="#fff";ctx.font="700 "+(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText("a",A.x-16*DPR,(A.y+C.y)/2);
+  ctx.fillText("b",(A.x+B.x)/2,A.y+18*DPR);
+  ctx.fillText("c",(C.x+B.x)/2+nx*14*DPR,(C.y+B.y)/2+ny*14*DPR);
+  setR("math","a2",fa1(a*a));setR("math","b2",fa1(b*b));
+  setR("math","c2",fa1(a*a)+" + "+fa1(b*b)+" = "+fa1(c*c));
+ }
+});
+defExp("math",{
+ id:"polypi",icon:"⬣",title:"پی با چندضلعی",
+ readouts:[{id:"lo",label:"کران پایین"},{id:"hi",label:"کران بالا"}],
+ controls:[
+  {type:"range",id:"n",label:"تعداد ضلع‌ها",min:3,max:96,step:1,value:6,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"روش ارشمیدس",
+ learnBody:'ارشمیدس دو هزار سال پیش با چندضلعی محاطی و محیطی ۹۶ ضلعی نشان داد <span class="formula">3.1408 &lt; π &lt; 3.1429</span>. هرچه ضلع‌ها بیشتر، چندضلعی به دایره نزدیک‌تر — ایدهٔ حد که بعدها حسابان شد!',
+ frame(ex,ctx,w,h){
+  const n=ex.p.n,R=Math.min(w,h)*.36,cx=w/2,cy=h/2;
+  ctx.strokeStyle="rgba(255,255,255,.55)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();
+  const Rc=R/Math.cos(Math.PI/n);
+  for(const[rr,col]of[[R,"#BF8EDA"],[Rc,"#DE9255"]]){
+   ctx.strokeStyle=col;ctx.lineWidth=2.2*DPR;ctx.beginPath();
+   for(let i=0;i<=n;i++){
+    const a=-Math.PI/2+i/n*TAU+(rr===Rc?Math.PI/n:0);
+    const X=cx+rr*Math.cos(a),Y=cy+rr*Math.sin(a);
+    i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   }
+   ctx.stroke();
+  }
+  const lo=n*Math.sin(Math.PI/n),hi=n*Math.tan(Math.PI/n);
+  setR("math","lo",fa(lo.toFixed(4)));
+  setR("math","hi",fa(hi.toFixed(4)));
+ }
+});
+defExp("math",{
+ id:"lissajous",icon:"〰️",title:"منحنی لیساژو",
+ readouts:[{id:"r",label:"نسبت بسامد"}],
+ controls:[
+  {type:"range",id:"fx",label:"بسامد افقی",min:1,max:9,step:1,value:3,fmt:v=>fa0(v)},
+  {type:"range",id:"fy",label:"بسامد عمودی",min:1,max:9,step:1,value:2,fmt:v=>fa0(v)},
+  {type:"range",id:"ph",label:"فاز",min:0,max:180,step:5,value:90,fmt:v=>fa0(v)+"°"}
+ ],
+ learnTitle:"رقص دو نوسان",
+ learnBody:'وقتی نقطه‌ای همزمان در دو جهت عمود بر هم نوسان کند، منحنی لیساژو رسم می‌شود. شکل به نسبت بسامدها وابسته است — مهندسان با همین الگوها روی اسیلوسکوپ، نسبت و اختلاف فاز سیگنال‌ها را می‌سنجند.',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt;
+  const ax=w*.4,ay=h*.4,cx=w/2,cy=h/2,phr=p.ph*Math.PI/180;
+  grid2(ctx,w,h,8,8);
+  ctx.strokeStyle="#BF8EDA";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let i=0;i<=600;i++){
+   const u=i/600*TAU;
+   const X=cx+ax*Math.sin(p.fx*u+phr),Y=cy+ay*Math.sin(p.fy*u);
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  const u=s.t*.7;
+  ball(ctx,cx+ax*Math.sin(p.fx*u+phr),cy+ay*Math.sin(p.fy*u),7*DPR,"#EAC26B");
+  const g=(a,b)=>b?g(b,a%b):a;
+  const d=g(p.fx,p.fy);
+  setR("math","r",fa0(p.fx/d)+" : "+fa0(p.fy/d));
+ }
+});
+defExp("math",{
+ id:"series",icon:"🪜",title:"سری هندسی",
+ readouts:[{id:"sum",label:"مجموع تاکنون"},{id:"lim",label:"حد نهایی"}],
+ controls:[
+  {type:"range",id:"r",label:"نسبت مشترک r",min:.1,max:.9,step:.05,value:.5,fmt:v=>fa2(v)},
+  {type:"range",id:"n",label:"تعداد جمله‌ها",min:1,max:24,step:1,value:6,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"جمع بی‌نهایت جمله می‌تواند متناهی باشد!",
+ learnBody:'اگر |r|&lt;1 باشد: <span class="formula">1 + r + r² + … = 1/(1−r)</span>. مثلاً ۱ + ½ + ¼ + ⅛ + … = ۲. پارادوکس زنون (آشیل و لاک‌پشت) با همین ایده حل می‌شود.',
+ frame(ex,ctx,w,h){
+  const{r,n}=ex.p;
+  const lim=1/(1-r);
+  const sc=(w*.84)/lim,x0=w*.08,y0=h*.42,bh2=h*.2;
+  let acc=0;
+  for(let i=0;i<n;i++){
+   const term=Math.pow(r,i);
+   const X=x0+acc*sc,W2=term*sc;
+   ctx.fillStyle=i%2?"rgba(191,142,218,.65)":"rgba(222,146,85,.65)";
+   ctx.fillRect(X,y0,Math.max(1,W2-1.5),bh2);
+   acc+=term;
+  }
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;
+  ctx.beginPath();ctx.moveTo(x0+lim*sc,y0-24*DPR);ctx.lineTo(x0+lim*sc,y0+bh2+24*DPR);ctx.stroke();
+  ctx.fillStyle="#EAC26B";ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText("حد = "+fa2(lim),x0+lim*sc,y0-32*DPR);
+  const sum=(1-Math.pow(r,n))/(1-r);
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.4*DPR;
+  ctx.strokeRect(x0,y0,lim*sc,bh2);
+  setR("math","sum",fa(sum.toFixed(4)));
+  setR("math","lim",fa2(lim));
+ }
+});
+defExp("math",{
+ id:"pascal",icon:"🔺",title:"مثلث خیام–پاسکال",
+ readouts:[{id:"s",label:"جمع سطر آخر"}],
+ controls:[
+  {type:"range",id:"rows",label:"تعداد سطرها",min:4,max:32,step:1,value:16,fmt:v=>fa0(v)},
+  {type:"range",id:"mod",label:"رنگ‌آمیزی بر مبنای",min:2,max:7,step:1,value:2,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"گنجینهٔ پنهان در یک مثلث",
+ learnBody:'هر خانه جمع دو خانهٔ بالایش است. این مثلث ضرایب بسط دوجمله‌ای و ترکیب‌ها را می‌دهد؛ جمع هر سطر ۲ⁿ است و اگر اعداد فرد را رنگ کنید (مبنای ۲)، فراکتال سیرپینسکی ظاهر می‌شود! خیام قرن‌ها قبل از پاسکال آن را می‌شناخت.',
+ frame(ex,ctx,w,h){
+  const R=ex.p.rows,M=ex.p.mod;
+  const cw=Math.min(w/(R+1.5),h/(R+1.5));
+  const cols=["rgba(255,255,255,.05)","#BF8EDA","#DE9255","#5E9FE8","#72BC8F","#E97366","#EAC26B"];
+  let row=[1n];
+  for(let r2=0;r2<R;r2++){
+   for(let k2=0;k2<=r2;k2++){
+    const X=w/2+(k2-r2/2)*cw,Y=h*.06+r2*cw*.92;
+    const v=Number(row[k2]%BigInt(M));
+    ctx.fillStyle=v===0?cols[0]:cols[1+(v-1)%6];
+    ctx.beginPath();ctx.arc(X,Y+cw/2,cw*.42,0,TAU);ctx.fill();
+    if(R<=12){
+     ctx.fillStyle=v===0?"rgba(255,255,255,.4)":"#111";
+     ctx.font="700 "+Math.round(cw*.3)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.textBaseline="middle";
+     const val=row[k2];
+     ctx.fillText(val<10000n?fa0(Number(val)):"…",X,Y+cw/2);ctx.textBaseline="alphabetic";
+    }
+   }
+   const nr=[1n];
+   for(let k2=1;k2<=r2;k2++)nr.push(row[k2-1]+row[k2]);
+   nr.push(1n);row=nr;
+  }
+  const p2=Math.pow(2,R-1);
+  setR("math","s",p2<1e9?fa0(p2):"۲^"+fa0(R-1));
+ }
+});
+
+/* ===== STATS part2 ===== */
+defExp("stats",{
+ id:"monty",icon:"🚪",title:"بازی مونتی هال",
+ readouts:[{id:"sw",label:"برد با تعویض"},{id:"st2",label:"برد بدون تعویض"}],
+ controls:[
+  {type:"buttons",items:[{id:"d1",label:"در ۱",primary:true},{id:"d2",label:"در ۲",primary:true},{id:"d3",label:"در ۳",primary:true}]},
+  {type:"buttons",items:[{id:"switch",label:"عوض می‌کنم!"},{id:"stay",label:"می‌مونم"}]},
+  {type:"buttons",items:[{id:"sim",label:"شبیه‌سازی ۲۰۰ بازی"},{id:"reset",label:"از نو"}]}
+ ],
+ learnTitle:"چرا تعویض بهتر است؟",
+ learnBody:'احتمال اینکه انتخاب اولتان درست باشد فقط ⅓ است؛ پس با احتمال ⅔ جایزه جای دیگر است. وقتی مجری یک درِ خالی را باز می‌کند، آن ⅔ روی درِ باقی‌مانده جمع می‌شود. تعویض کنید تا شانس‌تان دو برابر شود!',
+ init(ex){
+  const s=ex.s;
+  s.reset=()=>{s.phase=0;s.prize=Math.floor(Math.random()*3);s.pick=-1;s.open=-1;s.msg="یک در را انتخاب کنید 👇";};
+  s.reset();s.wSw=0;s.nSw=0;s.wSt=0;s.nSt=0;
+ },
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){s.reset();s.wSw=0;s.nSw=0;s.wSt=0;s.nSt=0;return;}
+  if(id==="sim"){
+   for(let i=0;i<200;i++){
+    const prize=Math.floor(Math.random()*3),pick=Math.floor(Math.random()*3);
+    s.nSw++;if(pick!==prize)s.wSw++;
+    s.nSt++;if(pick===prize)s.wSt++;
+   }
+   return;
+  }
+  if(id[0]==="d"&&s.phase===0){
+   s.pick=+id[1]-1;
+   const opts=[0,1,2].filter(i=>i!==s.pick&&i!==s.prize);
+   s.open=opts[Math.floor(Math.random()*opts.length)];
+   s.phase=1;s.msg="در "+fa0(s.open+1)+" خالی بود! عوض می‌کنید یا می‌مونید؟";
+   return;
+  }
+  if((id==="switch"||id==="stay")&&s.phase===1){
+   if(id==="switch"){
+    s.pick=[0,1,2].find(i=>i!==s.pick&&i!==s.open);
+    s.nSw++;if(s.pick===s.prize)s.wSw++;
+   }else{s.nSt++;if(s.pick===s.prize)s.wSt++;}
+   s.phase=2;
+   const win=s.pick===s.prize;
+   s.msg=win?"🎉 بردید! جایزه پشت در "+fa0(s.prize+1)+" بود":"🐐 باختید! جایزه پشت در "+fa0(s.prize+1)+" بود";
+   s.timer=0;
+  }
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  if(s.phase===2){s.timer=(s.timer||0)+dt;if(s.timer>2.6){const a=s.wSw,b=s.nSw,c2=s.wSt,d=s.nSt;s.reset();s.wSw=a;s.nSw=b;s.wSt=c2;s.nSt=d;}}
+  const dw=Math.min(w*.24,120*DPR),dh=dw*1.5,gap=(w-3*dw)/4,y0=h*.2;
+  ctx.textAlign="center";
+  for(let i=0;i<3;i++){
+   const X=gap+(dw+gap)*i;
+   const isOpen=s.open===i||(s.phase===2);
+   ctx.fillStyle=isOpen?"#151030":"#7a5230";
+   ctx.beginPath();ctx.roundRect(X,y0,dw,dh,6*DPR);ctx.fill();
+   ctx.strokeStyle=s.pick===i?"#EAC26B":"rgba(255,255,255,.3)";
+   ctx.lineWidth=s.pick===i?4*DPR:1.6*DPR;
+   ctx.beginPath();ctx.roundRect(X,y0,dw,dh,6*DPR);ctx.stroke();
+   if(isOpen){
+    ctx.font=(dw*.5)+"px serif";
+    ctx.fillText(i===s.prize?"🏆":"🐐",X+dw/2,y0+dh*.6);
+   }else{
+    ball(ctx,X+dw*.82,y0+dh*.52,3.5*DPR,"#EAC26B");
+    ctx.fillStyle="rgba(255,255,255,.85)";ctx.font="700 "+(20*DPR)+"px Vazirmatn,Tahoma";
+    ctx.fillText(fa0(i+1),X+dw/2,y0+dh*.32);
+   }
+  }
+  ctx.fillStyle="#fff";ctx.font=(14*DPR)+"px Vazirmatn,Tahoma";
+  ctx.fillText(s.msg,w/2,y0+dh+34*DPR);
+  const pSw=s.nSw?s.wSw/s.nSw:0,pSt=s.nSt?s.wSt/s.nSt:0;
+  const bw=w*.3,bh2=10*DPR,by2=y0+dh+58*DPR;
+  for(const[i,p2,col,lbl]of[[0,pSw,"#72BC8F","تعویض"],[1,pSt,"#E97366","ماندن"]]){
+   const X=w*.12+i*(bw+w*.16);
+   ctx.fillStyle="rgba(255,255,255,.1)";ctx.fillRect(X,by2,bw,bh2);
+   ctx.fillStyle=col;ctx.fillRect(X,by2,bw*p2,bh2);
+   ctx.fillStyle="rgba(255,255,255,.6)";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";
+   ctx.fillText(lbl,X+bw/2,by2+26*DPR);
+  }
+  setR("stats","sw",s.nSw?fa0(pSw*100)+"٪ ("+fa0(s.wSw)+"/"+fa0(s.nSw)+")":"–");
+  setR("stats","st2",s.nSt?fa0(pSt*100)+"٪ ("+fa0(s.wSt)+"/"+fa0(s.nSt)+")":"–");
+ }
+});
+defExp("stats",{
+ id:"birthday",icon:"🎂",title:"پارادوکس تولد",
+ readouts:[{id:"th",label:"احتمال نظری"},{id:"sim",label:"نتیجهٔ شبیه‌سازی"}],
+ controls:[
+  {type:"range",id:"k",label:"تعداد آدم‌های گروه",min:2,max:60,step:1,value:23,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"run",label:"شبیه‌سازی ۵۰۰ گروه",primary:true}]}
+ ],
+ learnTitle:"فقط ۲۳ نفر کافی است!",
+ learnBody:'در گروه ۲۳ نفره، احتمال اینکه دو نفر تولد یکسان داشته باشند از ۵۰٪ بیشتر است! چون تعداد جفت‌ها سریع زیاد می‌شود: ۲۳ نفر یعنی ۲۵۳ جفت. شهود ما در برابر رشد ترکیبی ضعیف است!',
+ init(ex){ex.s={hits:0,runs:0,last:null};},
+ change(ex){ex.s.hits=0;ex.s.runs=0;ex.s.last=null;},
+ btn(ex,id){
+  const s=ex.s,k=ex.p.k;
+  if(id!=="run")return;
+  for(let r2=0;r2<500;r2++){
+   const bd=[...Array(k)].map(()=>Math.floor(Math.random()*365));
+   const set=new Set(bd);
+   s.runs++;if(set.size<k)s.hits++;
+   if(r2===499){
+    const cnt={};bd.forEach(b=>cnt[b]=(cnt[b]||0)+1);
+    s.last=bd.map(b=>({d:b,dup:cnt[b]>1}));
+   }
+  }
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s,k=ex.p.k;
+  let pth=1;
+  for(let i=0;i<k;i++)pth*=(365-i)/365;
+  pth=1-pth;
+  const gx=w*.08,gw=w*.84,gy=h*.1,gh=h*.42;
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.4*DPR;ctx.strokeRect(gx,gy,gw,gh);
+  ctx.strokeStyle="#DE9255";ctx.lineWidth=2.6*DPR;ctx.beginPath();
+  for(let kk=2;kk<=60;kk++){
+   let q=1;for(let i=0;i<kk;i++)q*=(365-i)/365;
+   const X=gx+gw*(kk-2)/58,Y=gy+gh*(1-(1-q));
+   kk>2?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(255,255,255,.35)";
+  ctx.beginPath();ctx.moveTo(gx,gy+gh/2);ctx.lineTo(gx+gw,gy+gh/2);ctx.stroke();ctx.setLineDash([]);
+  const kx=gx+gw*(k-2)/58;
+  ball(ctx,kx,gy+gh*(1-pth),6*DPR,"#EAC26B");
+  if(s.runs){
+   const pe=s.hits/s.runs;
+   ctx.strokeStyle="#72BC8F";ctx.lineWidth=2*DPR;
+   ctx.beginPath();ctx.arc(kx,gy+gh*(1-pe),9*DPR,0,TAU);ctx.stroke();
+  }
+  if(s.last){
+   const n2=s.last.length,cols=Math.ceil(Math.sqrt(n2*1.8)),cw=Math.min(w*.84/cols,26*DPR);
+   const x0=w/2-cols*cw/2,y02=h*.62;
+   ctx.font=(cw*.7)+"px serif";ctx.textAlign="center";
+   s.last.forEach((p2,i)=>{
+    const X=x0+(i%cols)*cw+cw/2,Y=y02+Math.floor(i/cols)*cw+cw*.7;
+    if(p2.dup){ctx.fillStyle="rgba(233,115,102,.35)";ctx.beginPath();ctx.arc(X,Y-cw*.25,cw*.48,0,TAU);ctx.fill();}
+    ctx.fillText(p2.dup?"🥳":"🙂",X,Y);
+   });
+  }
+  setR("stats","th",fa1(pth*100)+"٪");
+  setR("stats","sim",s.runs?fa1(s.hits/s.runs*100)+"٪ ("+fa0(s.runs)+" گروه)":"هنوز اجرا نشده");
+ }
+});
+defExp("stats",{
+ id:"bayes",icon:"🩺",title:"آزمایش پزشکی و بیز",
+ readouts:[{id:"ppv",label:"احتمال بیماری اگر تست مثبت"}],
+ controls:[
+  {type:"range",id:"prev",label:"شیوع بیماری",min:.5,max:20,step:.5,value:2,fmt:v=>fa1(v)+"٪"},
+  {type:"range",id:"sens",label:"حساسیت تست",min:50,max:99.5,step:.5,value:90,fmt:v=>fa1(v)+"٪"},
+  {type:"range",id:"spec",label:"ویژگی تست",min:50,max:99.5,step:.5,value:90,fmt:v=>fa1(v)+"٪"}
+ ],
+ learnTitle:"تست مثبت ≠ حتماً بیمار",
+ learnBody:'وقتی بیماری نادر است، بیشتر جواب‌های مثبت، مثبت کاذب‌اند! قضیهٔ بیز: <span class="formula">P(بیمار|مثبت) = TP / (TP+FP)</span>. هر نقطه یک نفر از ۱۰۰۰ نفر است — نسبت قرمزهای پررنگ به نارنجی‌ها را ببینید.',
+ frame(ex,ctx,w,h){
+  const p=ex.p;
+  const prev=p.prev/100,sens=p.sens/100,spec=p.spec/100;
+  const cols=40,rows=25,cw=Math.min(w*.92/cols,h*.7/rows);
+  const x0=(w-cols*cw)/2,y0=h*.08;
+  const nSick=Math.round(1000*prev),tp=Math.round(nSick*sens),fp=Math.round((1000-nSick)*(1-spec));
+  for(let i=0;i<1000;i++){
+   const X=x0+(i%cols)*cw,Y=y0+Math.floor(i/cols)*cw;
+   let col;
+   if(i<nSick)col=i<tp?"#E97366":"#7d4a44";
+   else col=(i-nSick)<fp?"#DE9255":"rgba(255,255,255,.14)";
+   ctx.fillStyle=col;
+   ctx.beginPath();ctx.arc(X+cw/2,Y+cw/2,cw*.36,0,TAU);ctx.fill();
+  }
+  const ppv=tp+fp>0?tp/(tp+fp):0;
+  const ly=y0+rows*cw+16*DPR;
+  ctx.font=(11.5*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="right";
+  const items=[["#E97366","بیمار، تست مثبت ("+fa0(tp)+")"],["#DE9255","سالم، مثبت کاذب ("+fa0(fp)+")"],["rgba(255,255,255,.35)","سایر"]];
+  let lx=w-x0;
+  for(const[col,txt]of items){
+   ctx.fillStyle=col;ctx.beginPath();ctx.arc(lx-6*DPR,ly-4*DPR,4*DPR,0,TAU);ctx.fill();
+   ctx.fillStyle="rgba(255,255,255,.7)";
+   ctx.fillText(txt,lx-14*DPR,ly);
+   lx-=ctx.measureText(txt).width+44*DPR;
+  }
+  setR("stats","ppv",fa0(ppv*100)+"٪");
+ }
+});
+defExp("stats",{
+ id:"benford",icon:"1️⃣",title:"قانون بنفورد",
+ readouts:[{id:"n",label:"تعداد داده"},{id:"d1",label:"سهم رقم ۱"}],
+ controls:[
+  {type:"choices",id:"src",value:"pow",items:[{val:"pow",label:"توان‌های ۲"},{val:"fib",label:"فیبوناچی"},{val:"fact",label:"فاکتوریل"},{val:"rand",label:"تصادفی یکنواخت"}]}
+ ],
+ learnTitle:"رقم اول تصادفی نیست!",
+ learnBody:'در بسیاری داده‌های واقعی (جمعیت شهرها، قبض‌ها، طول رودها)، رقم اول با احتمال <span class="formula">log₁₀(1+1/d)</span> می‌آید: رقم ۱ حدود ۳۰٪! حسابرسان با همین قانون تقلب مالی را لو می‌دهند — اعداد ساختگی از آن پیروی نمی‌کنند. دادهٔ تصادفی یکنواخت هم پیروی نمی‌کند — امتحان کنید!',
+ frame(ex,ctx,w,h){
+  const src=ex.p.src;
+  const digs=Array(10).fill(0);let N=0;
+  const lead=x=>{while(x>=10)x/=10;return Math.floor(x);};
+  if(src==="rand"){
+   if(!ex.s.rnd)ex.s.rnd=[...Array(400)].map(()=>1+Math.random()*8999);
+   for(const v of ex.s.rnd){digs[lead(v)]++;N++;}
+  }else if(src==="pow"){
+   let lg=0;
+   for(let i=1;i<=300;i++){lg+=Math.log10(2);const fr=lg-Math.floor(lg);digs[Math.floor(Math.pow(10,fr))]++;N++;}
+  }else if(src==="fib"){
+   let a=1,b=1;
+   for(let i=0;i<300;i++){digs[lead(a)]++;N++;const t=a+b;a=b;b=t;if(a>1e15){a/=1e10;b/=1e10;}}
+  }else{
+   let lg=0;
+   for(let i=1;i<=170;i++){lg+=Math.log10(i);const fr=lg-Math.floor(lg);digs[Math.floor(Math.pow(10,fr))]++;N++;}
+  }
+  const gx=w*.08,gw=w*.84,gy=h*.12,gh=h*.62;
+  const bw=gw/9;
+  ctx.textAlign="center";
+  for(let d=1;d<=9;d++){
+   const p2=digs[d]/N;
+   const X=gx+(d-1)*bw,bh2=p2/.35*gh;
+   ctx.fillStyle="#DE9255";
+   ctx.beginPath();ctx.roundRect(X+bw*.12,gy+gh-bh2,bw*.76,bh2,3*DPR);ctx.fill();
+   ctx.fillStyle="rgba(255,255,255,.7)";ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";
+   ctx.fillText(fa0(d),X+bw/2,gy+gh+18*DPR);
+  }
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let d=1;d<=9;d++){
+   const pb=Math.log10(1+1/d);
+   const X=gx+(d-1)*bw+bw/2,Y=gy+gh-pb/.35*gh;
+   d>1?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   ctx.moveTo(X+3*DPR,Y);ctx.arc(X,Y,3*DPR,0,TAU);ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  ctx.fillStyle="#EAC26B";ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";
+  ctx.fillText("نقاط طلایی: پیش‌بینی بنفورد",w/2,gy-8*DPR);
+  setR("stats","n",fa0(N));
+  setR("stats","d1",fa1(digs[1]/N*100)+"٪");
+ }
+});
+defExp("stats",{
+ id:"median",icon:"📏",title:"میانگین یا میانه؟",
+ hint:"نقطه‌ها را بکشید",
+ readouts:[{id:"mean",label:"میانگین"},{id:"med",label:"میانه"}],
+ controls:[
+  {type:"buttons",items:[{id:"newd",label:"نمونهٔ تازه",primary:true},{id:"out",label:"یک ثروتمند اضافه کن!"}]}
+ ],
+ learnTitle:"مقاومت در برابر دادهٔ پرت",
+ learnBody:'یک میلیاردر که وارد کافه شود «میانگین» درآمد را نجومی می‌کند اما «میانه» تقریباً ثابت می‌ماند. برای همین درآمد و قیمت مسکن را با میانه گزارش می‌دهند. نقطه‌ها را بکشید و تفاوت را ببینید!',
+ init(ex){
+  const s=ex.s;
+  s.gen=()=>{s.pts=[...Array(9)].map(()=>20+Math.random()*30);s.drag=-1;};
+  s.gen();
+ },
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="newd")s.gen();
+  else s.pts.push(90+Math.random()*8);
+ },
+ drag(ex,ph,x,y,cv){
+  const s=ex.s,w=cv.width;
+  const toX=v=>w*.08+(v/100)*w*.84;
+  if(ph==="down"){
+   let best=-1,bd=30*DPR;
+   s.pts.forEach((v,i)=>{const d=Math.abs(toX(v)-x);if(d<bd){bd=d;best=i;}});
+   s.drag=best;
+  }else if(ph==="move"&&s.drag>=0){
+   s.pts[s.drag]=Math.max(0,Math.min(100,(x-w*.08)/(w*.84)*100));
+  }else if(ph==="up")s.drag=-1;
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const toX=v=>w*.08+(v/100)*w*.84,cy=h*.5;
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(w*.08,cy);ctx.lineTo(w*.92,cy);ctx.stroke();
+  for(let v=0;v<=100;v+=10){
+   ctx.beginPath();ctx.moveTo(toX(v),cy-5*DPR);ctx.lineTo(toX(v),cy+5*DPR);ctx.stroke();
+  }
+  const mean=s.pts.reduce((a,b)=>a+b,0)/s.pts.length;
+  const sorted=[...s.pts].sort((a,b)=>a-b);
+  const med=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+  for(const[v,col,lbl,dy2]of[[mean,"#E97366","میانگین",-1],[med,"#72BC8F","میانه",1]]){
+   const X=toX(v);
+   ctx.strokeStyle=col;ctx.lineWidth=2.6*DPR;
+   ctx.beginPath();ctx.moveTo(X,cy-46*DPR*(dy2<0?1:0)-8*DPR);ctx.lineTo(X,cy+46*DPR*(dy2>0?1:0)+8*DPR);ctx.stroke();
+   ctx.fillStyle=col;ctx.font="700 "+(12.5*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+   ctx.fillText(lbl+" "+fa1(v),X,cy+(dy2<0?-58*DPR:72*DPR));
+  }
+  s.pts.forEach((v,i)=>{
+   ball(ctx,toX(v),cy,7*DPR,v>85?"#EAC26B":"#5E9FE8");
+  });
+  setR("stats","mean",fa1(mean));setR("stats","med",fa1(med));
+ }
+});
+defExp("stats",{
+ id:"streaks",icon:"🏀",title:"رشته‌های شانس",
+ readouts:[{id:"run",label:"طولانی‌ترین رشته"},{id:"exp2",label:"انتظار نظری"}],
+ controls:[
+  {type:"buttons",items:[{id:"flip",label:"۱۰۰ پرتاب تازه",primary:true}]}
+ ],
+ learnTitle:"خطای دست داغ",
+ learnBody:'در ۱۰۰ پرتاب سکه، رشتهٔ ۶-۷تایی از شیر یا خط کاملاً طبیعی است (حدود log₂100 ≈ ۷)، اما مغز ما آن را «الگو» و «دست داغ» می‌پندارد. تصادف واقعی خوشه‌ای است، نه یکنواخت!',
+ init(ex){
+  const s=ex.s;
+  s.roll=()=>{s.seq=[...Array(100)].map(()=>Math.random()<.5?1:0);};
+  s.roll();
+ },
+ btn(ex){ex.s.roll();},
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const cols=20,cw=Math.min(w*.9/cols,h*.14);
+  const x0=(w-cols*cw)/2,y0=h*.14;
+  let best=0,cur=0,last=-1;
+  let bs=0,be=0,cs=0;
+  s.seq.forEach((v,i)=>{
+   if(v===last){cur++;}else{cur=1;cs=i;last=v;}
+   if(cur>best){best=cur;bs=cs;be=i;}
+  });
+  s.seq.forEach((v,i)=>{
+   const X=x0+(i%cols)*cw,Y=y0+Math.floor(i/cols)*cw;
+   const inBest=i>=bs&&i<=be;
+   ctx.fillStyle=v?"#DE9255":"#5E9FE8";
+   ctx.beginPath();ctx.roundRect(X+1.5,Y+1.5,cw-3,cw-3,3*DPR);ctx.fill();
+   if(inBest){ctx.strokeStyle="#EAC26B";ctx.lineWidth=2*DPR;
+    ctx.strokeRect(X+2.5,Y+2.5,cw-5,cw-5);}
+   ctx.fillStyle="rgba(0,0,0,.55)";ctx.font="700 "+(cw*.44)+"px Vazirmatn,Tahoma";
+   ctx.textAlign="center";ctx.textBaseline="middle";
+   ctx.fillText(v?"خ":"ش",X+cw/2,Y+cw/2+1);ctx.textBaseline="alphabetic";
+  });
+  setR("stats","run",fa0(best)+" تایی");
+  setR("stats","exp2","≈ ۶-۷ تایی");
+ }
+});
+
+/* ===== PHYSICS part3 ===== */
+defExp("physics",{
+ id:"freefall",icon:"🪂",title:"سقوط آزاد و مقاومت هوا",
+ readouts:[{id:"v1",label:"سرعت با هوا"},{id:"v2",label:"سرعت در خلأ"},{id:"vt",label:"سرعت حدی"}],
+ controls:[
+  {type:"range",id:"k",label:"ضریب مقاومت هوا",min:.01,max:.3,step:.01,value:.08,fmt:v=>fa2(v)},
+  {type:"buttons",items:[{id:"drop",label:"رها کن!",primary:true}]}
+ ],
+ learnTitle:"چرا چترباز با سرعت ثابت فرود می‌آید؟",
+ learnBody:'مقاومت هوا با مجذور سرعت زیاد می‌شود تا با وزن برابر شود؛ از آن به بعد سرعت ثابت می‌ماند: <span class="formula">vحدی = √(g/k)</span>. در خلأ همه‌چیز با هم می‌افتد — چکش و پر گالیله را فضانوردان روی ماه امتحان کردند!',
+ init(ex){ex.s={y1:0,y2:0,v1:0,v2:0,run:false};},
+ btn(ex){const s=ex.s;s.y1=0;s.y2=0;s.v1=0;s.v2=0;s.run=true;},
+ change(ex){const s=ex.s;s.y1=0;s.y2=0;s.v1=0;s.v2=0;s.run=false;},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,g=9.8,k=ex.p.k,H=60;
+  if(s.run){
+   s.v1+=(g-k*s.v1*s.v1)*dt*2;s.y1+=s.v1*dt*2;
+   s.v2+=g*dt*2;s.y2+=s.v2*dt*2;
+   if(s.y1>=H&&s.y2>=H)s.run=false;
+  }
+  const y0=h*.08,gy=h*.88,sc=(gy-y0)/H;
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(w*.08,gy);ctx.lineTo(w*.92,gy);ctx.stroke();
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  for(const[x,y,v,col,lbl]of[[w*.35,s.y1,s.v1,"#5E9FE8","با مقاومت هوا"],[w*.65,s.y2,s.v2,"#DE9255","در خلأ"]]){
+   const Y=y0+Math.min(y,H)*sc;
+   ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=1.4*DPR;
+   ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,gy);ctx.stroke();
+   ball(ctx,x,Y,9*DPR,col);
+   ctx.fillStyle="rgba(255,255,255,.6)";
+   ctx.fillText(lbl,x,gy+20*DPR);
+  }
+  setR("physics","v1",fa1(s.v1)+" m/s");
+  setR("physics","v2",fa1(s.v2)+" m/s");
+  setR("physics","vt",fa1(Math.sqrt(g/k))+" m/s");
+ }
+});
+defExp("physics",{
+ id:"interference",icon:"💦",title:"تداخل دو موج",
+ readouts:[{id:"d",label:"فاصلهٔ منبع‌ها"}],
+ controls:[
+  {type:"range",id:"d",label:"فاصلهٔ دو منبع",min:.1,max:.6,step:.02,value:.3,fmt:v=>fa0(v*100)},
+  {type:"range",id:"lam",label:"طول موج",min:15,max:60,step:1,value:30,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"تقویت و حذف موج‌ها",
+ learnBody:'جایی که قلهٔ دو موج به هم برسد موج قوی‌تر می‌شود (تداخل سازنده) و جایی که قله به دره برسد خاموش می‌شود (ویرانگر). همین آزمایش دو شکاف یانگ، موجی بودن نور را ثابت کرد و هدفون‌های حذف نویز هم با تداخل ویرانگر کار می‌کنند!',
+ init(ex){ex.s={t:0};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p;s.t+=dt;
+  const cell=9*DPR,cols=Math.ceil(w/cell),rows=Math.ceil(h/cell);
+  const sy=h/2,sx1=w/2-p.d*w/2,sx2=w/2+p.d*w/2;
+  const kw=TAU/(p.lam*DPR),ph=s.t*5;
+  for(let r2=0;r2<rows;r2++)for(let c2=0;c2<cols;c2++){
+   const X=c2*cell+cell/2,Y=r2*cell+cell/2;
+   const r1=Math.hypot(X-sx1,Y-sy),rB=Math.hypot(X-sx2,Y-sy);
+   const a=Math.sin(kw*r1-ph)+Math.sin(kw*rB-ph);
+   const I=a*a/4;
+   ctx.fillStyle="rgba(94,159,232,"+(I*.85).toFixed(3)+")";
+   ctx.fillRect(c2*cell,r2*cell,cell-1,cell-1);
+  }
+  ball(ctx,sx1,sy,5*DPR,"#EAC26B");ball(ctx,sx2,sy,5*DPR,"#EAC26B");
+  setR("physics","d",fa0(p.d*100)+" واحد");
+ }
+});
+defExp("physics",{
+ id:"pressure",icon:"🚰",title:"فشار در عمق مایع",
+ readouts:[{id:"p",label:"فشار ته مخزن"}],
+ controls:[
+  {type:"range",id:"H",label:"سطح آب مخزن",min:.35,max:1,step:.05,value:.85,fmt:v=>fa0(v*100)+"٪"}
+ ],
+ learnTitle:"هرچه عمیق‌تر، پرفشارتر",
+ learnBody:'فشار مایع فقط به عمق بستگی دارد: <span class="formula">P = ρgh</span>. برای همین سوراخ پایینی مخزن، آب را دورتر پرتاب می‌کند و دیوارهٔ سدها پایین ضخیم‌تر ساخته می‌شود. سطح آب را کم و زیاد کنید!',
+ frame(ex,ctx,w,h){
+  const Hf=ex.p.H;
+  const tx=w*.14,tw=w*.24,ty=h*.08,th=h*.78;
+  const wl=ty+th*(1-Hf);
+  ctx.fillStyle="rgba(94,159,232,.28)";
+  ctx.fillRect(tx,wl,tw,ty+th-wl);
+  ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(tx,ty,tw,th);
+  const g=9.8;
+  for(const hf of[.35,.6,.85]){
+   const hy=ty+th*hf;
+   const depth=(hy-wl)/th;
+   ctx.fillStyle="#151030";ctx.beginPath();ctx.arc(tx+tw,hy,3.5*DPR,0,TAU);ctx.fill();
+   if(depth>0){
+    const v=Math.sqrt(2*g*depth);
+    ctx.strokeStyle="rgba(94,159,232,.85)";ctx.lineWidth=2.6*DPR;ctx.beginPath();
+    for(let i=0;i<=40;i++){
+     const t=i/40*1.2;
+     const X=tx+tw+v*t*w*.09,Y=hy+.5*g*t*t*h*.09;
+     if(Y>ty+th+2)break;
+     i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+    }
+    ctx.stroke();
+   }
+  }
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1.6*DPR;
+  ctx.beginPath();ctx.moveTo(tx-14*DPR,wl);ctx.lineTo(tx+tw,wl);ctx.stroke();
+  setR("physics","p",fa1(9.8*Hf*10)+" kPa");
+ }
+});
+defExp("physics",{
+ id:"lightclock",icon:"⏱️",title:"اتساع زمان (نسبیت)",
+ readouts:[{id:"g",label:"ضریب گاما"},{id:"t1",label:"تیک ساعت ساکن"},{id:"t2",label:"تیک ساعت متحرک"}],
+ controls:[
+  {type:"range",id:"b",label:"سرعت (نسبت به نور)",min:0,max:.95,step:.05,value:.8,fmt:v=>fa0(v*100)+"٪ c"},
+  {type:"buttons",items:[{id:"reset",label:"صفر کردن تیک‌ها",primary:true}]}
+ ],
+ learnTitle:"ساعت نوری اینشتین",
+ learnBody:'در ساعت متحرک، فوتون باید مسیر زیگزاگ بلندتری برود، اما سرعت نور برای همه یکسان است — پس زمانِ ساعت متحرک کند می‌گذرد: <span class="formula">Δt = γΔt₀</span>. ماهواره‌های GPS هر روز باید همین اثر را تصحیح کنند وگرنه موقعیت‌یابی کیلومترها خطا می‌دهد!',
+ init(ex){ex.s={ph1:0,ph2:0,t1:0,t2:0,mx:0};},
+ btn(ex){ex.s.t1=0;ex.s.t2=0;ex.s.ph1=0;ex.s.ph2=0;},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,b=ex.p.b,gam=1/Math.sqrt(1-b*b);
+  const rate=1.2;
+  s.ph1+=dt*rate;if(s.ph1>=1){s.ph1-=1;s.t1++;}
+  s.ph2+=dt*rate/gam;if(s.ph2>=1){s.ph2-=1;s.t2++;}
+  s.mx=(s.mx+b*dt*.25)%1;
+  const L=h*.44,topy=h*.2;
+  const tri=p2=>p2<.5?p2*2:2-p2*2;
+  const x1=w*.2;
+  for(const X of[x1]){
+   ctx.strokeStyle="rgba(255,255,255,.6)";ctx.lineWidth=3*DPR;
+   ctx.beginPath();ctx.moveTo(X-24*DPR,topy);ctx.lineTo(X+24*DPR,topy);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(X-24*DPR,topy+L);ctx.lineTo(X+24*DPR,topy+L);ctx.stroke();
+   ball(ctx,X,topy+L*(1-tri(s.ph1)),6*DPR,"#EAC26B");
+  }
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  ctx.fillText("ساکن",x1,topy+L+26*DPR);
+  const x2=w*.42+s.mx*w*.36;
+  ctx.strokeStyle="rgba(255,255,255,.6)";ctx.lineWidth=3*DPR;
+  ctx.beginPath();ctx.moveTo(x2-24*DPR,topy);ctx.lineTo(x2+24*DPR,topy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2-24*DPR,topy+L);ctx.lineTo(x2+24*DPR,topy+L);ctx.stroke();
+  ball(ctx,x2,topy+L*(1-tri(s.ph2)),6*DPR,"#5E9FE8");
+  ctx.strokeStyle="rgba(94,159,232,.35)";ctx.lineWidth=1.6*DPR;ctx.setLineDash([4,5]);
+  ctx.beginPath();ctx.moveTo(x2,topy+L);ctx.lineTo(x2-w*.05,topy);ctx.lineTo(x2-w*.1,topy+L);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(255,255,255,.6)";
+  ctx.fillText("متحرک ←",x2,topy+L+26*DPR);
+  setR("physics","g",fa2(gam));
+  setR("physics","t1",fa0(s.t1));
+  setR("physics","t2",fa0(s.t2));
+ }
+});
+
+/* ===== CHEM part3 ===== */
+defExp("chem",{
+ id:"bonding",icon:"🔗",title:"انواع پیوند شیمیایی",
+ readouts:[{id:"type",label:"نوع پیوند"}],
+ controls:[
+  {type:"choices",id:"bond",value:"ionic",items:[{val:"ionic",label:"NaCl — یونی"},{val:"cov",label:"Cl₂ — کووالانسی"},{val:"polar",label:"HCl — قطبی"}]}
+ ],
+ learnTitle:"بخشش، اشتراک یا طمع؟",
+ learnBody:'در پیوند یونی الکترون کاملاً منتقل می‌شود و یون‌های + و − همدیگر را می‌ربایند. در کووالانسی دو اتم الکترون را منصفانه شریک می‌شوند؛ در قطبی، اتم طمع‌کارتر (الکترونگاتیدتر) الکترون را بیشتر پیش خود نگه می‌دارد و بار جزئی δ+ و δ− می‌سازد — راز حلال بودن آب همین است!',
+ init(ex){ex.s={t:0,tr:0};},
+ change(ex){ex.s.tr=0;},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,m=ex.p.bond;s.t+=dt;
+  const cy=h*.48,x1=w*.36,x2=w*.64,R=26*DPR;
+  ctx.font=(13*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";
+  if(m==="ionic"){
+   s.tr=Math.min(1,s.tr+dt*.5);
+   const pull=10*DPR*Math.sin(s.t*3)*(s.tr===1?1:0);
+   const X1=x1+pull,X2=x2-pull;
+   ball(ctx,X1,cy,R*.9,"#DE9255");ball(ctx,X2,cy,R,"#72BC8F");
+   ctx.fillStyle="#fff";ctx.fillText("Na",X1,cy+4*DPR);ctx.fillText("Cl",X2,cy+4*DPR);
+   const ex2=X1+(X2-X1)*s.tr;
+   ball(ctx,ex2,cy-R*1.25,4*DPR,"#EAC26B");
+   if(s.tr===1){
+    ctx.fillStyle="#EAC26B";
+    ctx.fillText("+",X1,cy-R-10*DPR);ctx.fillText("−",X2,cy-R-10*DPR);
+    ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillText("جذب الکتروستاتیک",w/2,cy+R+26*DPR);
+   }
+   setR("chem","type","یونی — انتقال الکترون");
+  }else{
+   const shift=m==="polar"?.18:0;
+   ball(ctx,x1,cy,m==="polar"?R*.6:R,"#5E9FE8");ball(ctx,x2,cy,R,"#72BC8F");
+   ctx.fillStyle="#fff";ctx.fillText(m==="polar"?"H":"Cl",x1,cy+4*DPR);ctx.fillText("Cl",x2,cy+4*DPR);
+   const cx2=(x1+x2)/2+(x2-x1)*shift;
+   for(const off of[0,Math.PI]){
+    const a=s.t*2.4+off;
+    ball(ctx,cx2+Math.cos(a)*(x2-x1)*.32,cy+Math.sin(a)*16*DPR,4*DPR,"#EAC26B");
+   }
+   if(m==="polar"){
+    ctx.fillStyle="#EAC26B";
+    ctx.fillText("δ+",x1,cy-R-10*DPR);ctx.fillText("δ−",x2,cy-R-10*DPR);
+   }
+   ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillText(m==="polar"?"اشتراک نابرابر":"اشتراک برابر دو الکترون",w/2,cy+R+26*DPR);
+   setR("chem","type",m==="polar"?"کووالانسی قطبی":"کووالانسی ناقطبی");
+  }
+ }
+});
+defExp("chem",{
+ id:"catalyst",icon:"⚡",title:"کاتالیزور و انرژی فعال‌سازی",
+ readouts:[{id:"crossed",label:"واکنش‌داده"},{id:"ea",label:"سد انرژی"}],
+ controls:[
+  {type:"range",id:"T",label:"دما",min:1,max:10,step:.5,value:4,fmt:v=>fa1(v)},
+  {type:"toggle",id:"cat",label:"کاتالیزور",value:false,onText:"دارد",offText:"ندارد"},
+  {type:"buttons",items:[{id:"reset",label:"از نو",primary:true}]}
+ ],
+ learnTitle:"میانبُر شیمیایی",
+ learnBody:'کاتالیزور مصرف نمی‌شود؛ فقط مسیری با سد انرژی کوتاه‌تر می‌سازد تا ذره‌های بیشتری بتوانند از آن بگذرند. کاتالیزور اگزوز خودرو و آنزیم‌های بدن شما هر ثانیه همین کار را می‌کنند!',
+ init(ex){ex.s={dots:[],crossed:0,acc:0};for(let i=0;i<26;i++)ex.s.dots.push({j:Math.random()*TAU,m:null});},
+ btn(ex){ex.init(ex);},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,Ea=ex.p.cat?.45:.8,T=ex.p.T;
+  const bx=w*.1,bw=w*.8,by=h*.72,peak=h*.22;
+  const curve=t=>by-Math.exp(-Math.pow((t-.5)/.16,2))*(by-peak)*Ea/.8;
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let i=0;i<=80;i++){const t=i/80,X=bx+t*bw,Y=curve(t);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+  ctx.stroke();
+  if(ex.p.cat){ctx.strokeStyle="rgba(234,194,107,.3)";ctx.setLineDash([4,5]);ctx.beginPath();
+   for(let i=0;i<=80;i++){const t=i/80,X=bx+t*bw,Y=by-Math.exp(-Math.pow((t-.5)/.16,2))*(by-peak);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+   ctx.stroke();ctx.setLineDash([]);}
+  s.acc+=dt;
+  const pCross=Math.exp(-Ea*6/T);
+  for(const d of s.dots){
+   if(d.m===null){
+    d.j+=dt*3;
+    const X=bx+w*.06+Math.sin(d.j)*w*.04,Y=by-8*DPR+Math.cos(d.j*1.7)*5*DPR;
+    ball(ctx,X,Y,4.5*DPR,"#72BC8F");
+    if(s.acc>.12&&Math.random()<pCross){d.m=0;s.acc=0;}
+   }else if(d.m<1){
+    d.m+=dt*(.25+T*.02);
+    ball(ctx,bx+w*.06+d.m*(bw-w*.12),curve(.06/.88+d.m*.88)-8*DPR,4.5*DPR,"#EAC26B");
+    if(d.m>=1){d.m=2;s.crossed++;}
+   }else{
+    ball(ctx,bx+bw-w*.05+Math.sin(d.j)*w*.02,by-8*DPR,4.5*DPR,"#DE9255");
+   }
+  }
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.55)";
+  ctx.fillText("واکنش‌دهنده‌ها",bx+w*.07,by+22*DPR);
+  ctx.fillText("فرآورده‌ها",bx+bw-w*.06,by+22*DPR);
+  setR("chem","crossed",fa0(s.crossed)+" ذره");
+  setR("chem","ea",ex.p.cat?"کوتاه (با کاتالیزور)":"بلند");
+ }
+});
+defExp("chem",{
+ id:"osmosis",icon:"🧪",title:"اسمز",
+ readouts:[{id:"lv",label:"اختلاف سطح"}],
+ controls:[
+  {type:"range",id:"c",label:"غلظت نمک سمت راست",min:0,max:10,step:.5,value:6,fmt:v=>fa1(v)}
+ ],
+ learnTitle:"آب به سمت شوری می‌رود",
+ learnBody:'از غشای نیمه‌تراوا فقط آب رد می‌شود، نه نمک. آب به سمت محلول غلیظ‌تر می‌رود تا غلظت‌ها متعادل شوند. برای همین خیارشور چروکیده می‌شود، گل‌ها با آب شاداب می‌مانند و ریشهٔ گیاهان آب را از خاک می‌مکد!',
+ init(ex){ex.s={dh:0,salt:[]};for(let i=0;i<40;i++)ex.s.salt.push({x:Math.random(),y:Math.random(),j:Math.random()*TAU});},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,c=ex.p.c;
+  const target=c*.028;
+  s.dh+=(target-s.dh)*Math.min(1,dt*1.2);
+  const bx=w*.2,bw=w*.6,by=h*.14,bh=h*.68,mid=bx+bw/2;
+  const base=by+bh*.45;
+  const lvL=base+s.dh*bh,lvR=base-s.dh*bh;
+  ctx.fillStyle="rgba(94,159,232,.3)";
+  ctx.fillRect(bx,lvL,bw/2,by+bh-lvL);
+  ctx.fillStyle="rgba(114,188,143,.3)";
+  ctx.fillRect(mid,lvR,bw/2,by+bh-lvR);
+  const nSalt=Math.round(c*4);
+  for(let i=0;i<nSalt;i++){
+   const d2=s.salt[i];d2.j+=dt;
+   const X=mid+4*DPR+d2.x*(bw/2-8*DPR),Y=lvR+6*DPR+d2.y*(by+bh-lvR-12*DPR)+Math.sin(d2.j)*2*DPR;
+   ctx.fillStyle="#fff";ctx.fillRect(X,Y,2.6*DPR,2.6*DPR);
+  }
+  ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=2*DPR;
+  ctx.strokeRect(bx,by,bw,bh);
+  ctx.strokeStyle="#EAC26B";ctx.setLineDash([5,5]);ctx.lineWidth=2.4*DPR;
+  ctx.beginPath();ctx.moveTo(mid,by+bh*.3);ctx.lineTo(mid,by+bh);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.55)";
+  ctx.fillText("آب خالص",bx+bw/4,by+bh+22*DPR);
+  ctx.fillText("آب نمک",mid+bw/4,by+bh+22*DPR);
+  ctx.fillStyle="#EAC26B";ctx.fillText("غشای نیمه‌تراوا",mid,by+bh*.24);
+  setR("chem","lv",fa0(s.dh*2*100)+" واحد");
+ }
+});
+defExp("chem",{
+ id:"density",icon:"🍼",title:"ستون چگالی مایعات",
+ readouts:[{id:"n",label:"لایه‌ها"}],
+ controls:[
+  {type:"buttons",items:[{id:"honey",label:"عسل 🍯"},{id:"water",label:"آب 💧"},{id:"oil",label:"روغن 🌻"},{id:"objs",label:"اجسام را بینداز!",primary:true},{id:"reset",label:"از نو"}]}
+ ],
+ learnTitle:"هر چیز در طبقهٔ خودش",
+ learnBody:'مایع چگالتر زیر می‌رود و سبک‌تر رو می‌ماند — عسل (۱/۴)، آب (۱)، روغن (۰/۹). هر جسم هم درست روی مایعی می‌ایستد که از خودش چگالتر باشد. این آزمایش را در خانه هم می‌توانید انجام دهید!',
+ init(ex){ex.s={layers:[],objs:[]};},
+ btn(ex,id){
+  const s=ex.s;
+  const L={honey:{rho:1.4,col:"rgba(222,146,85,.55)",name:"عسل"},water:{rho:1,col:"rgba(94,159,232,.4)",name:"آب"},oil:{rho:.9,col:"rgba(234,194,107,.4)",name:"روغن"}};
+  if(id==="reset"){s.layers=[];s.objs=[];return;}
+  if(id==="objs"){
+   s.objs=[{rho:.24,r:9,col:"#C4A882",name:"چوب‌پنبه",y:0},{rho:.95,r:7,col:"#8F72BC",name:"انگور",y:0},{rho:8,r:6,col:"#AAB2BD",name:"سکه",y:0}];
+   return;
+  }
+  if(L[id]&&!s.layers.find(l=>l.name===L[id].name)){s.layers.push(L[id]);s.layers.sort((a,b)=>b.rho-a.rho);}
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  const gx=w*.32,gw=w*.36,gy=h*.1,gh=h*.72;
+  const n=s.layers.length,lh=n?gh*.8/Math.max(n,3):0;
+  const boundaries=[];
+  let Y=gy+gh;
+  for(const l of s.layers){
+   Y-=lh;
+   ctx.fillStyle=l.col;ctx.fillRect(gx,Y,gw,lh);
+   boundaries.push({top:Y,rho:l.rho,name:l.name});
+   ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="left";ctx.fillStyle="rgba(255,255,255,.65)";
+   ctx.fillText(l.name+" ("+fa2(l.rho)+")",gx+gw+8*DPR,Y+lh/2+4*DPR);
+  }
+  ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=2*DPR;
+  ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(gx,gy+gh);ctx.lineTo(gx+gw,gy+gh);ctx.lineTo(gx+gw,gy);ctx.stroke();
+  for(let i=0;i<s.objs.length;i++){
+   const o=s.objs[i];
+   let ty=gy+14*DPR;
+   for(let b2=boundaries.length-1;b2>=0;b2--){
+    if(o.rho>boundaries[b2].rho)break;
+    ty=boundaries[b2].top;
+   }
+   if(o.rho>(boundaries[0]?boundaries[0].rho:0)&&boundaries.length)ty=gy+gh-o.r*DPR-2*DPR;
+   else if(boundaries.length)ty=Math.max(gy+14*DPR,ty-o.r*DPR*.4);
+   else ty=gy+gh-o.r*DPR;
+   o.y+= (ty-o.y)*Math.min(1,dt*2.5);
+   const X=gx+gw*(.3+i*.2);
+   ball(ctx,X,o.y||gy,o.r*DPR,o.col);
+  }
+  setR("chem","n",fa0(s.layers.length));
+ }
+});
+
+/* ===== MATH part3 ===== */
+defExp("math",{
+ id:"collatz",icon:"🎟️",title:"دنبالهٔ کولاتز",
+ readouts:[{id:"steps",label:"تعداد گام"},{id:"mx",label:"بیشینه"}],
+ controls:[
+  {type:"range",id:"n",label:"عدد شروع",min:2,max:200,step:1,value:27,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"rnd",label:"عدد تصادفی",primary:true}]}
+ ],
+ learnTitle:"ساده‌ترین مسئلهٔ حل‌نشدهٔ ریاضی",
+ learnBody:'قانون: زوج بود نصف کن، فرد بود ۳ برابر کن و یک اضافه کن. حدس کولاتز می‌گوید هر عددی سرانجام به ۱ می‌رسد — ولی هیچ‌کس هنوز نتوانسته اثباتش کند! عدد ۲۷ را امتحان کنید: تا ۹۲۳۲ بالا می‌رود و بعد سقوط می‌کند.',
+ init(ex){ex.s={t:0};},
+ btn(ex){ex.p.n=2+Math.floor(Math.random()*199);},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;s.t+=dt;
+  let n=ex.p.n,seq=[n];
+  while(n!==1&&seq.length<300){n=n%2?3*n+1:n/2;seq.push(n);}
+  const mx=Math.max(...seq);
+  const bx=w*.08,bw=w*.84,by=h*.86,bh=h*.7;
+  grid2(ctx,w,h,10,6);
+  ctx.strokeStyle="#BF8EDA";ctx.lineWidth=2.4*DPR;ctx.beginPath();
+  for(let i=0;i<seq.length;i++){
+   const X=bx+i/(seq.length-1||1)*bw,Y=by-Math.log(seq[i])/Math.log(mx)*bh;
+   i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+  }
+  ctx.stroke();
+  const k=Math.floor(s.t*6)%seq.length;
+  const X=bx+k/(seq.length-1||1)*bw,Y=by-Math.log(seq[k])/Math.log(mx)*bh;
+  ball(ctx,X,Y,6*DPR,"#EAC26B");
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.fillStyle="#EAC26B";
+  ctx.fillText(fa0(seq[k]),X,Y-12*DPR);
+  setR("math","steps",fa0(seq.length-1));
+  setR("math","mx",fa0(mx));
+ }
+});
+defExp("math",{
+ id:"modcircle",icon:"🎀",title:"جدول ضرب روی دایره",
+ readouts:[{id:"m",label:"ضریب"}],
+ controls:[
+  {type:"range",id:"m",label:"ضریب ضرب",min:2,max:12,step:.05,value:2,fmt:v=>fa2(v)},
+  {type:"toggle",id:"anim",label:"پویانمایی",value:true,onText:"روشن",offText:"خاموش"}
+ ],
+ learnTitle:"قلبی که در جدول ضرب پنهان است",
+ learnBody:'۱۲۰ نقطه روی دایره بگذارید و هر نقطهٔ i را به i×m وصل کنید (به پیمانهٔ ۱۲۰). برای m=۲ قلب (کاردیوئید) ظاهر می‌شود، برای m=۳ سه‌پر و ... — همان الگوهایی که در ته فنجان چای با بازتاب نور می‌بینید!',
+ init(ex){ex.s={mAuto:2};},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s;
+  let m=ex.p.m;
+  if(ex.p.anim){s.mAuto+=dt*.15;if(s.mAuto>12)s.mAuto=2;m=s.mAuto;}
+  const N=120,cx=w/2,cy=h/2,R=Math.min(w,h)*.4;
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();
+  ctx.strokeStyle="rgba(191,142,218,.4)";ctx.lineWidth=1.1*DPR;
+  for(let i=1;i<N;i++){
+   const a1=i/N*TAU-Math.PI/2,a2=(i*m%N)/N*TAU-Math.PI/2;
+   ctx.beginPath();ctx.moveTo(cx+Math.cos(a1)*R,cy+Math.sin(a1)*R);
+   ctx.lineTo(cx+Math.cos(a2)*R,cy+Math.sin(a2)*R);ctx.stroke();
+  }
+  setR("math","m",fa2(m));
+ }
+});
+defExp("math",{
+ id:"koch",icon:"❄️",title:"برف‌دانهٔ کخ",
+ readouts:[{id:"per",label:"محیط"},{id:"segs",label:"تعداد ضلع"}],
+ controls:[
+  {type:"range",id:"it",label:"مرحله",min:0,max:5,step:1,value:2,fmt:v=>fa0(v)}
+ ],
+ learnTitle:"محیط بی‌نهایت، مساحت محدود",
+ learnBody:'در هر مرحله وسط هر ضلع یک دندانهٔ مثلثی سبز می‌شود و محیط ۴/۳ برابر می‌شود — تا بی‌نهایت! اما مساحت هرگز از یک حد معین بیشتر نمی‌شود. سواحل واقعی هم همین‌طورند: هرچه خط‌کش کوچک‌تر، ساحل طولانی‌تر!',
+ frame(ex,ctx,w,h){
+  const it=ex.p.it;
+  const cx=w/2,cy=h*.56,R=Math.min(w,h)*.36;
+  let pts=[];
+  for(let i=0;i<3;i++){const a=-Math.PI/2+i*TAU/3;pts.push([cx+Math.cos(a)*R,cy+Math.sin(a)*R]);}
+  for(let k=0;k<it;k++){
+   const np=[];
+   for(let i=0;i<pts.length;i++){
+    const A=pts[i],B=pts[(i+1)%pts.length];
+    const dx=B[0]-A[0],dy=B[1]-A[1];
+    const P1=[A[0]+dx/3,A[1]+dy/3],P2=[A[0]+dx*2/3,A[1]+dy*2/3];
+    const mx2=A[0]+dx/2-dy*Math.sqrt(3)/6,my=A[1]+dy/2+dx*Math.sqrt(3)/6;
+    np.push(A,P1,[mx2,my],P2);
+   }
+   pts=np;
+  }
+  ctx.strokeStyle="#BF8EDA";ctx.lineWidth=Math.max(1,2.2-it*.35)*DPR;
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++)i?ctx.lineTo(pts[i][0],pts[i][1]):ctx.moveTo(pts[i][0],pts[i][1]);
+  ctx.closePath();ctx.stroke();
+  setR("math","per",fa2(Math.pow(4/3,it)*3)+" واحد");
+  setR("math","segs",fa0(3*Math.pow(4,it)));
+ }
+});
+defExp("math",{
+ id:"sorting",icon:"📊",title:"مرتب‌سازی دیدنی",
+ readouts:[{id:"cmp",label:"مقایسه‌ها"},{id:"swp",label:"جابه‌جایی‌ها"}],
+ controls:[
+  {type:"choices",id:"algo",value:"bubble",items:[{val:"bubble",label:"حبابی"},{val:"select",label:"انتخابی"}]},
+  {type:"range",id:"speed",label:"سرعت",min:1,max:30,step:1,value:8,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"shuffle",label:"بُر بزن"},{id:"start",label:"مرتب کن!",primary:true}]}
+ ],
+ learnTitle:"الگوریتم یعنی دستور آشپزی",
+ learnBody:'مرتب‌سازی حبابی همسایه‌های نامرتب را جابه‌جا می‌کند تا بزرگ‌ترها مثل حباب بالا بیایند؛ انتخابی هر بار کوچک‌ترین را پیدا می‌کند و سر جایش می‌گذارد. تعداد مقایسه‌ها را مقایسه کنید — به همین دلیل مهندسان برای میلیون‌ها داده الگوریتم‌های باهوش‌تری مثل مرتب‌سازی ادغامی ساختند.',
+ init(ex){
+  const s=ex.s={arr:[],i:0,j:0,mi:0,run:false,cmp:0,swp:0,acc:0,hi:[-1,-1]};
+  for(let k=0;k<30;k++)s.arr.push(k+1);
+  for(let k=s.arr.length-1;k>0;k--){const r=Math.floor(Math.random()*(k+1));[s.arr[k],s.arr[r]]=[s.arr[r],s.arr[k]];}
+ },
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="shuffle"){ex.init(ex);return;}
+  if(id==="start"){s.run=true;s.i=0;s.j=0;s.mi=0;s.cmp=0;s.swp=0;}
+ },
+ change(ex,id){if(id==="algo")ex.init(ex);},
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,n=s.arr.length;
+  if(s.run){
+   s.acc+=dt*ex.p.speed;
+   while(s.acc>=1&&s.run){
+    s.acc-=1;
+    if(ex.p.algo==="bubble"){
+     if(s.j>=n-1-s.i){s.j=0;s.i++;}
+     if(s.i>=n-1){s.run=false;s.hi=[-1,-1];break;}
+     s.cmp++;s.hi=[s.j,s.j+1];
+     if(s.arr[s.j]>s.arr[s.j+1]){[s.arr[s.j],s.arr[s.j+1]]=[s.arr[s.j+1],s.arr[s.j]];s.swp++;}
+     s.j++;
+    }else{
+     if(s.j>=n){
+      if(s.mi!==s.i){[s.arr[s.i],s.arr[s.mi]]=[s.arr[s.mi],s.arr[s.i]];s.swp++;}
+      s.i++;s.mi=s.i;s.j=s.i+1;
+      if(s.i>=n-1){s.run=false;s.hi=[-1,-1];break;}
+     }else{
+      s.cmp++;s.hi=[s.j,s.mi];
+      if(s.arr[s.j]<s.arr[s.mi])s.mi=s.j;
+      s.j++;
+     }
+    }
+   }
+  }
+  const bx=w*.06,bw=w*.88,by=h*.86,bh=h*.68;
+  const cw=bw/n;
+  for(let k=0;k<n;k++){
+   const v=s.arr[k];
+   ctx.fillStyle=(k===s.hi[0]||k===s.hi[1])?"#EAC26B":"#BF8EDA";
+   ctx.fillRect(bx+k*cw+1.5*DPR,by-v/n*bh,cw-3*DPR,v/n*bh);
+  }
+  setR("math","cmp",fa0(s.cmp));
+  setR("math","swp",fa0(s.swp));
+ }
+});
+
+/* ===== STATS part3 ===== */
+defExp("stats",{
+ id:"sampling",icon:"🗳️",title:"نظرسنجی و خطای نمونه‌گیری",
+ readouts:[{id:"est",label:"برآورد آخرین نظرسنجی"},{id:"err",label:"خطای آماری ±"}],
+ controls:[
+  {type:"range",id:"p",label:"محبوبیت واقعی نامزد",min:.1,max:.9,step:.05,value:.55,fmt:v=>fa0(v*100)+"٪"},
+  {type:"range",id:"n",label:"اندازهٔ نمونه",min:20,max:800,step:20,value:100,fmt:v=>fa0(v)},
+  {type:"buttons",items:[{id:"poll",label:"یک نظرسنجی",primary:true},{id:"many",label:"۵۰ نظرسنجی"},{id:"reset",label:"پاک کن"}]}
+ ],
+ learnTitle:"چرا نظرسنجی‌ها گاهی اشتباه می‌کنند؟",
+ learnBody:'با نمونهٔ کوچک، برآوردها پخش‌وپلا می‌شوند. خطای آماری با <span class="formula">±۱/۹۶ √(p(1−p)/n)</span> کوچک می‌شود — اما برای نصف شدن خطا باید نمونه را ۴ برابر کنید! برای همین نظرسنجی‌های معتبر حدود ۱۰۰۰ نفر می‌پرسند، نه ۱۰۰ هزار نفر.',
+ init(ex){ex.s={ests:[],last:null,flash:0};},
+ change(ex){ex.s.ests=[];ex.s.last=null;},
+ btn(ex,id){
+  const s=ex.s,p=ex.p.p,n=ex.p.n;
+  if(id==="reset"){s.ests=[];s.last=null;return;}
+  const runs=id==="many"?50:1;
+  for(let r=0;r<runs;r++){
+   let yes=0;for(let i=0;i<n;i++)if(Math.random()<p)yes++;
+   s.last=yes/n;s.ests.push(s.last);
+  }
+  if(s.ests.length>400)s.ests=s.ests.slice(-400);
+  s.flash=1;
+ },
+ frame(ex,ctx,w,h,dt){
+  const s=ex.s,p=ex.p.p,n=ex.p.n;
+  s.flash=Math.max(0,s.flash-dt*2);
+  const bx=w*.08,bw=w*.84,by=h*.78,bh=h*.58;
+  const bins=40,hist=new Array(bins).fill(0);
+  for(const e of s.ests){const b2=Math.min(bins-1,Math.max(0,Math.floor(e*bins)));hist[b2]++;}
+  const mx=Math.max(1,...hist);
+  for(let b2=0;b2<bins;b2++){
+   if(!hist[b2])continue;
+   const X=bx+b2/bins*bw,bhh=hist[b2]/mx*bh;
+   ctx.fillStyle="#DE9255";
+   ctx.fillRect(X,by-bhh,bw/bins-2*DPR,bhh);
+  }
+  const px=bx+p*bw;
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(px,by-bh);ctx.lineTo(px,by+8*DPR);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.fillStyle="#EAC26B";
+  ctx.fillText("واقعی: "+fa0(p*100)+"٪",px,by-bh-8*DPR);
+  if(s.last!==null){
+   const lx=bx+s.last*bw;
+   ball(ctx,lx,by+16*DPR,5*DPR,"rgba(233,115,102,"+(0.4+s.flash*.6)+")");
+  }
+  ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=1.4*DPR;
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+bw,by);ctx.stroke();
+  const err=1.96*Math.sqrt(p*(1-p)/n);
+  setR("stats","est",s.last===null?"—":fa1(s.last*100)+"٪");
+  setR("stats","err",fa1(err*100)+"٪");
+ }
+});
+defExp("stats",{
+ id:"ruin",icon:"🎰",title:"ورشکستگی قمارباز",
+ readouts:[{id:"ruin",label:"ورشکسته"},{id:"win",label:"به هدف رسیده"}],
+ controls:[
+  {type:"range",id:"edge",label:"سهم کازینو از هر بازی",min:0,max:.1,step:.01,value:.02,fmt:v=>fa0(v*100)+"٪"},
+  {type:"buttons",items:[{id:"run",label:"۵۰ قمارباز جدید",primary:true},{id:"reset",label:"پاک کن"}]}
+ ],
+ learnTitle:"چرا کازینو همیشه برنده است؟",
+ learnBody:'هر قمارباز با ۱۰ سکه شروع می‌کند و می‌خواهد به ۲۰ برسد. حتی در بازی کاملاً منصفانه نیمی ورشکست می‌شوند؛ ولی با کوچک‌ترین برتری کازینو، ورشکستگی به‌سرعت به سرنوشت تقریباً همه تبدیل می‌شود. ریاضی بی‌رحم است!',
+ init(ex){ex.s={paths:[],ruin:0,win:0};},
+ btn(ex,id){
+  const s=ex.s;
+  if(id==="reset"){ex.init(ex);return;}
+  const pWin=.5-ex.p.edge;
+  for(let g=0;g<50;g++){
+   let c=10;const path=[c];
+   while(c>0&&c<20&&path.length<600)path.push(c+=Math.random()<pWin?1:-1);
+   if(c<=0)s.ruin++;else if(c>=20)s.win++;
+   s.paths.push(path);
+  }
+  if(s.paths.length>14)s.paths=s.paths.slice(-14);
+ },
+ frame(ex,ctx,w,h){
+  const s=ex.s;
+  const bx=w*.08,bw=w*.84,by=h*.88,bh=h*.72;
+  grid2(ctx,w,h,10,4);
+  for(const[lvl,col,lbl]of[[0,"#E97366","ورشکستگی"],[10,"rgba(255,255,255,.35)","شروع"],[20,"#72BC8F","هدف"]]){
+   const Y=by-lvl/20*bh;
+   ctx.strokeStyle=col;ctx.lineWidth=1.6*DPR;ctx.setLineDash([4,5]);
+   ctx.beginPath();ctx.moveTo(bx,Y);ctx.lineTo(bx+bw,Y);ctx.stroke();ctx.setLineDash([]);
+   ctx.font=(11*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="right";ctx.fillStyle=col;
+   ctx.fillText(lbl,bx-6*DPR,Y+4*DPR);
+  }
+  for(let i2=0;i2<s.paths.length;i2++){
+   const path=s.paths[i2],last=path[path.length-1];
+   ctx.strokeStyle=last<=0?"rgba(233,115,102,.55)":last>=20?"rgba(114,188,143,.55)":"rgba(222,146,85,.5)";
+   ctx.lineWidth=1.4*DPR;ctx.beginPath();
+   const L=Math.min(path.length,300);
+   for(let k=0;k<L;k++){
+    const X=bx+k/300*bw,Y=by-path[k]/20*bh;
+    k?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+   }
+   ctx.stroke();
+  }
+  const tot=s.ruin+s.win;
+  setR("stats","ruin",tot?fa0(s.ruin)+" ("+fa0(s.ruin/tot*100)+"٪)":"—");
+  setR("stats","win",tot?fa0(s.win)+" ("+fa0(s.win/tot*100)+"٪)":"—");
+ }
+});
+defExp("stats",{
+ id:"simpson",icon:"🔀",title:"پارادوکس سیمپسون",
+ readouts:[{id:"all",label:"روند کلی"},{id:"grp",label:"روند درون گروه‌ها"}],
+ controls:[
+  {type:"toggle",id:"split",label:"تفکیک گروه‌ها",value:false,onText:"روشن",offText:"خاموش"},
+  {type:"buttons",items:[{id:"newdata",label:"دادهٔ تازه",primary:true}]}
+ ],
+ learnTitle:"وقتی آمار دروغ می‌گوید (بی آنکه دروغ بگوید)",
+ learnBody:'روند کلی صعودی است، اما درون هر گروه نزولی! چون گروه‌ها جابه‌جا متفاوتند، ترکیب کردنشان جهت رابطه را برعکس نشان می‌دهد. دانشگاه برکلی یک‌بار به تبعیض جنسیتی متهم شد — اما با تفکیک دانشکده‌ها معلوم شد قضیه برعکس است. همیشه بپرسید: داده را چطور گروه‌بندی کرده‌اید؟',
+ init(ex){
+  const s=ex.s={a:[],b:[]};
+  for(let i=0;i<26;i++){const x=1+Math.random()*3.5;s.a.push([x,5.2-0.7*x+(Math.random()-.5)*1.2]);}
+  for(let i=0;i<26;i++){const x=5.5+Math.random()*3.5;s.b.push([x,11.5-0.7*x+(Math.random()-.5)*1.2]);}
+ },
+ btn(ex){ex.init(ex);},
+ frame(ex,ctx,w,h){
+  const s=ex.s,split=ex.p.split;
+  const bx=w*.08,bw=w*.84,by=h*.86,bh=h*.68;
+  grid2(ctx,w,h,10,6);
+  const X2=x=>bx+x/10*bw,Y2=y=>by-y/10*bh;
+  const ols=pts=>{
+   const n=pts.length;let sx=0,sy=0,sxy=0,sxx=0;
+   for(const[x,y]of pts){sx+=x;sy+=y;sxy+=x*y;sxx+=x*x;}
+   const sl=(n*sxy-sx*sy)/(n*sxx-sx*sx);return[sl,(sy-sl*sx)/n];
+  };
+  const drawLine=(sl,ic,col,x1,x2)=>{
+   ctx.strokeStyle=col;ctx.lineWidth=2.4*DPR;ctx.beginPath();
+   ctx.moveTo(X2(x1),Y2(sl*x1+ic));ctx.lineTo(X2(x2),Y2(sl*x2+ic));ctx.stroke();
+  };
+  for(const[pts,col]of[[s.a,split?"#5E9FE8":"rgba(255,255,255,.55)"],[s.b,split?"#E97366":"rgba(255,255,255,.55)"]])
+   for(const[x,y]of pts)ball(ctx,X2(x),Y2(y),4*DPR,col);
+  const[slAll,icAll]=ols(s.a.concat(s.b));
+  if(split){
+   const[sa,ia]=ols(s.a),[sb,ib]=ols(s.b);
+   drawLine(sa,ia,"#5E9FE8",1,4.5);drawLine(sb,ib,"#E97366",5.5,9);
+   drawLine(slAll,icAll,"rgba(255,255,255,.25)",1,9);
+   setR("stats","grp","نزولی ↓ ("+fa2(ols(s.a)[0])+")");
+  }else{
+   drawLine(slAll,icAll,"#EAC26B",1,9);
+   setR("stats","grp","تفکیک را روشن کنید!");
+  }
+  setR("stats","all","صعودی ↑ (+"+fa2(slAll)+")");
+ }
+});
+defExp("stats",{
+ id:"markov",icon:"⛅",title:"زنجیرهٔ مارکوف آب‌وهوا",
+ readouts:[{id:"sim",label:"روزهای آفتابی (شبیه‌سازی)"},{id:"th",label:"پیش‌بینی نظری"}],
+ controls:[
+  {type:"range",id:"pss",label:"احتمال آفتابی←آفتابی",min:.5,max:.98,step:.02,value:.9,fmt:v=>fa0(v*100)+"٪"},
+  {type:"range",id:"prr",label:"احتمال بارانی←بارانی",min:.5,max:.98,step:.02,value:.7,fmt:v=>fa0(v*100)+"٪"},
+  {type:"buttons",items:[{id:"run",label:"۲۰۰ روز تازه",primary:true}]}
+ ],
+ learnTitle:"فردا فقط به امروز بستگی دارد",
+ learnBody:'در زنجیرهٔ مارکوف، آینده فقط به وضع فعلی بستگی دارد، نه گذشته. با این مدل ساده می‌توان سهم بلندمدت روزهای آفتابی را دقیق پیش‌بینی کرد: <span class="formula">π = (1−pبب)/((1−pآآ)+(1−pبب))</span>. همین ریاضی پشت رتبه‌بندی گوگل (PageRank) و پیش‌بینی متن موبایل شماست!',
+ init(ex){ex.s={days:[]};ex.btn(ex,"run");},
+ btn(ex){
+  const s=ex.s,pss=ex.p.pss,prr=ex.p.prr;
+  s.days=[];let sun=true;
+  for(let i=0;i<200;i++){
+   s.days.push(sun);
+   sun=sun?Math.random()<pss:Math.random()>=prr;
+  }
+ },
+ change(ex){ex.btn(ex,"run");},
+ frame(ex,ctx,w,h){
+  const s=ex.s,pss=ex.p.pss,prr=ex.p.prr;
+  const cols=25,rows=8,cw=w*.84/cols,ch=Math.min(h*.6/rows,cw);
+  const ox=w*.08,oy=h*.12;
+  let nSun=0;
+  for(let i=0;i<s.days.length;i++){
+   const c2=i%cols,r2=Math.floor(i/cols);
+   ctx.fillStyle=s.days[i]?"#DE9255":"#5E9FE8";
+   if(s.days[i])nSun++;
+   ctx.fillRect(ox+c2*cw,oy+r2*ch,cw-2*DPR,ch-2*DPR);
+  }
+  const frac=nSun/s.days.length,th=(1-prr)/((1-pss)+(1-prr));
+  const by=oy+rows*ch+h*.06,bw=w*.84,bh2=14*DPR;
+  ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(ox,by,bw,bh2);
+  ctx.fillStyle="#DE9255";ctx.fillRect(ox,by,bw*frac,bh2);
+  ctx.strokeStyle="#EAC26B";ctx.lineWidth=2.4*DPR;
+  ctx.beginPath();ctx.moveTo(ox+bw*th,by-5*DPR);ctx.lineTo(ox+bw*th,by+bh2+5*DPR);ctx.stroke();
+  ctx.font=(12*DPR)+"px Vazirmatn,Tahoma";ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";
+  ctx.fillText("█ آفتابی █ بارانی — خط طلایی: پیش‌بینی نظری",w/2,by+bh2+22*DPR);
+  setR("stats","sim",fa0(frac*100)+"٪");
+  setR("stats","th",fa0(th*100)+"٪");
+ }
+});
+
+/* ============ BOOT ============ */
+const nav=document.getElementById("nav");
+Object.keys(SUBJECTS).forEach(k=>{
+ const S=SUBJECTS[k];
+ const b=document.createElement("button");
+ b.className="tab";b.dataset.tab=k;
+ b.innerHTML='<span class="ico">'+S.ico+'</span>'+S.label;
+ b.style.setProperty("--acc",S.acc);
+ b.style.setProperty("--soft",S.soft);
+ b.addEventListener("click",()=>setTab(k,true));
+ nav.appendChild(b);
+ const panel=document.getElementById("panel-"+k);
+ panel.style.setProperty("--acc",S.acc);
+ panel.style.setProperty("--accL",S.accL);
+ panel.style.setProperty("--soft",S.soft);
+ panel.style.setProperty("--bord",S.bord);
+ const bar=document.getElementById("exps-"+k);
+ REG[k].forEach(e=>{
+  const eb=document.createElement("button");
+  eb.className="exp";eb.dataset.id=e.id;
+  eb.innerHTML='<span class="eico">'+e.icon+'</span><span>'+e.title+'</span>';
+  eb.addEventListener("click",()=>selectExp(k,e.id,true));
+  bar.appendChild(eb);
+ });
+ const cv=document.getElementById("cv-"+k);
+ CVS[k]=cv;CTX[k]=cv.getContext("2d");
+ attachPointer(k);
+});
+/* select defaults for every subject (no canvas work yet) */
+Object.keys(SUBJECTS).forEach(k=>selectExp(k,REG[k][0].id,false));
+/* hash routing: #subj/expId */
+(function(){
+ const h=(location.hash||"").replace("#","");
+ let subj="physics",eid=null;
+ if(h){
+  const parts=h.split("/");
+  if(SUBJECTS[parts[0]])subj=parts[0];
+  if(parts[1])eid=parts[1];
+ }
+ if(eid&&REG[subj].some(e=>e.id===eid))selectExp(subj,eid,false);
+ setTab(subj,false);
+})();
+window.addEventListener("hashchange",()=>{
+ const h=(location.hash||"").replace("#","");
+ if(!h)return;
+ const parts=h.split("/");
+ if(!SUBJECTS[parts[0]])return;
+ if(parts[1]&&REG[parts[0]].some(e=>e.id===parts[1])&&(CUR.subj!==parts[0]||CUR.exp[parts[0]].id!==parts[1]))selectExp(parts[0],parts[1],false);
+ if(CUR.subj!==parts[0])setTab(parts[0],false);
+});
+/* main loop */
+let last=performance.now();
+function loop(now){
+ const dt=Math.min((now-last)/1000,.05);last=now;
+ const k=CUR.subj,ex=CUR.exp[k];
+ if(ex){
+  const cv=CVS[k],{w,h}=fitCanvas(cv),ctx=CTX[k];
+  if(!window.vuraPaused)ctx.clearRect(0,0,w,h);
+  try{if(!window.vuraPaused)ex.frame(ex,ctx,w,h,dt,now/1000);}catch(err){console.error(ex.id,err);window.vuraErrors=window.vuraErrors||[];if(!window.vuraErrors.some(x=>x.id===ex.id))window.vuraErrors.push({id:ex.id,message:String(err)});const hint=$("#hint-"+k);hint.textContent="خطای اجرا — آزمایش را بازنشانی کنید / Simulation error — reset";hint.style.display="";}
+ }
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+window.vuraPaused=false;window.vuraErrors=[];
+const tools=document.createElement('div');tools.className='vuraTools';
+tools.innerHTML='<input id="labSearch" type="search" aria-label="جست‌وجوی آزمایش" placeholder="جست‌وجو در ۶۸ آزمایش…"><button id="labPause">⏸ توقف</button><button id="labReset">↺ بازنشانی</button>';
+document.getElementById('nav').before(tools);
+const counter=document.createElement('div');counter.className='vuraCount';tools.after(counter);
+const search=document.getElementById('labSearch');
+search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();let found=0;document.querySelectorAll('.exp').forEach(b=>{const e=Object.values(REG).flat().find(x=>x.id===b.dataset.id);const ok=(b.textContent+' '+e.id+' '+e.learnTitle).toLowerCase().includes(q);b.hidden=!ok;b.style.display=ok?'':'none';if(ok)found++});counter.textContent=q?found+' آزمایش در چهار دسته پیدا شد':'';if(q){const match=Object.keys(REG).find(k=>REG[k].some(e=>(e.title+' '+e.id+' '+e.learnTitle).toLowerCase().includes(q)));if(match)setTab(match,true)}});
+document.getElementById('labPause').onclick=e=>{window.vuraPaused=!window.vuraPaused;e.target.textContent=window.vuraPaused?'▶ ادامه':'⏸ توقف';e.target.classList.toggle('active',window.vuraPaused)};
+document.getElementById('labReset').onclick=()=>{const ex=CUR.exp[CUR.subj];selectExp(CUR.subj,ex.id,true);window.vuraPaused=false;document.getElementById('labPause').textContent='⏸ توقف';document.getElementById('labPause').classList.remove('active')};
+window.vuraSnapshot=()=>{const cv=CVS[CUR.subj];const out=document.createElement('canvas');out.width=cv.width;out.height=cv.height;const ctx=out.getContext('2d');ctx.fillStyle='#15122e';ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(cv,0,0);return out.toDataURL('image/png')};
+
+</script>
+</body>
+</html>

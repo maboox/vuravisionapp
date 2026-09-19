@@ -283,4 +283,5 @@
 <string name="clock_math">تبدیل ساعت به دقیقه</string>
 <string name="unit_length">تبدیل متر به سانتی‌متر</string>
 <string name="mean">میانگین اعداد</string>
+<string name="restore_erased">بازگرداندن ناحیه‌های پاک‌شده</string>
 </resources>

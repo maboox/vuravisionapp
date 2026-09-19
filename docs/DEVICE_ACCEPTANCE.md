@@ -15,3 +15,8 @@ Use this checklist on the actual VuraVision display before a classroom rollout. 
 The workflow's manual Run workflow includes API 35 instrumented PDF export/model-identifier checks. To run those on a locally connected test device: `./gradlew connectedDebugAndroidTest`.
 
 10. Keep the timer/stopwatch floating while drawing and switching pages. Drag, minimize and close tools. Confirm independent pen/highlighter colors after reopening the app.
+
+11. Calibrate both physical tips; set visibly different colors/widths. Test reported stylus and finger tool types, 0/unknown contact, palm rejection and pen-only behavior.
+12. Area-erase ink, rotated/resized shapes, styled text and individual PDF pages. Export/reopen, undo/redo and restore erased areas. Verify unmasked content is unchanged.
+13. In Smart, circle clear Latin writing offline, review/edit text, calculate 2*(3+4), solve 2x+3=11 and x^2=9, then plot y=2x-5. Test unsupported/misread input and cancel with no ink loss. Test Persian only after its optional model is installed.
+14. Open Discovery and Arcade on the actual Android System WebView. Try every category, pause/resume, portrait/landscape, back/re-entry and simultaneous player touches. Export a lab snapshot to the board. Desktop DOM/Canvas smoke checks do not certify WebView rendering or hardware multi-touch.

@@ -283,4 +283,5 @@
 <string name="clock_math">Hours to minutes</string>
 <string name="unit_length">Meters to centimeters</string>
 <string name="mean">Find the mean</string>
+<string name="restore_erased">Restore erased areas</string>
 </resources>

@@ -8,6 +8,14 @@ import kotlin.math.*
 class Board(context: Context, val store: Store, val renderer: Renderer) : View(context) {
     var tool = "pen"
     var shape = "rectangle"
+    var eraserMode="stroke"
+    var eraserRadius=18f
+    var eraseObjects=true
+    var smartMode="text"
+    var onSmart:(List<Item>)->Unit={}
+    var onObjectActions:()->Unit={}
+    private var tappedSelected=false
+    private val eraseLast=mutableMapOf<Int,PointF>()
     var penColor=NAVY
     var highlightColor=0xffffcf40.toInt()
     var penWidth=4f
@@ -91,6 +99,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun insert(o: Item) {
+        if(o.kind in listOf("text","sticky"))TextLayout.fit(o)
         val c = center()
         o.x = c.x - o.w / 2
         o.y = c.y - o.h / 2
@@ -171,6 +180,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     primary = id
                     anchor = at
                     mode = ""
+                    eraseLast.clear();tappedSelected=false
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
                 if(!profile.multiTouch && id!=primary) { actions[id]="reject";return true }
@@ -181,7 +191,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 if (behavior == "reject") return true
                 if (tool == "erase" || behavior == "erase") {
                     checkpoint()
-                    erase(at)
+                    erase(at,eraseLast[id]?:at);eraseLast[id]=at
                 } else if (tool == "select" && id == primary) {
                     val chosen = chosen()
                     val bounds = contentBounds(chosen)
@@ -205,6 +215,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             selected.clear()
                             mode = "box"
                         } else {
+                            tappedSelected=hit.id in selected
                             if (hit.id !in selected) {
                                 selected.clear()
                                 selected.add(hit.id)
@@ -227,13 +238,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             color = inkColor,
                             width = inkWidth,
                         )
-                } else if (tool in listOf("pen", "highlight")) {
-                    checkpoint()
+                } else if (tool in listOf("pen", "highlight", "smart")) {
+                    if(tool!="smart" || smartMode=="shape")checkpoint()
                     live[id] =
                         Item(
                             w = 1f,
                             h = 1f,
-                            color = inkColor,
+                            color = if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
                             width = if(tool=="highlight") inkWidth*4 else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth),
                             shape = if(tool=="highlight") "marker" else penStyle,
                             alpha = if (tool == "highlight") 75 else 255,
@@ -251,7 +262,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     if (actions[pid] == "reject") continue
                     if (tool == "erase" || actions[pid] == "erase") {
                         checkpoint()
-                        erase(point)
+                        erase(point,eraseLast[pid]?:point);eraseLast[pid]=point
                     } else if (tool == "select" && pid == primary) {
                         if (mode == "box")
                             box =
@@ -261,19 +272,20 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     max(anchor.x, point.x),
                                     max(anchor.y, point.y),
                                 )
-                        else {
-                            checkpoint()
-                            transform(point)
+                        else if(hypot(point.x-anchor.x,point.y-anchor.y)>6/zoom) {
+                            val pdf=chosen().singleOrNull()?.takeIf{it.kind=="pdf"}
+                            if(mode=="pdf" || (mode=="move" && pdf!=null && abs(point.y-anchor.y)>abs(point.x-anchor.x)*1.5f))mode="pdf"
+                            else{checkpoint();transform(point)}
                         }
                     } else
                         live[pid]?.let { o ->
                             if (o.kind == "shape") {
-                                o.flipY=(point.x-anchor.x)*(point.y-anchor.y)>=0
-                                o.x = min(anchor.x, point.x)
-                                o.y = min(anchor.y, point.y)
-                                o.w = abs(anchor.x - point.x).coerceAtLeast(1f)
-                                o.h = abs(anchor.y - point.y).coerceAtLeast(1f)
-                                if(shape in listOf("circle","square"))o.h=o.w
+                                o.flipX=point.x<anchor.x;o.flipY=point.y>=anchor.y
+                                val dx=point.x-anchor.x;val dy=point.y-anchor.y
+                                o.w=abs(dx).coerceAtLeast(1f);o.h=abs(dy).coerceAtLeast(1f)
+                                if(Shapes.uniform(shape)){val size=max(o.w,o.h);o.w=size;o.h=size}
+                                o.x=if(dx<0)anchor.x-o.w else anchor.x
+                                o.y=if(dy<0)anchor.y-o.h else anchor.y
                             } else {
                                 for (j in 0 until e.historySize) {
                                     val q = world(e.getHistoricalX(i, j), e.getHistoricalY(i, j))
@@ -310,9 +322,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         }
                     }
                     renderer.forgetInk(o.id)
-                    store.page.items.add(o)
+                    if(tool=="smart" && smartMode!="shape" && SmartSelection.isLoop(o)){
+                        val enclosed=SmartSelection.enclosed(o,store.page.items)
+                        if(enclosed.isNotEmpty()){post{onSmart(enclosed)}}else {checkpoint();store.page.items.add(o)}
+                    }else if(tool=="smart" && smartMode=="shape"){
+                        val converted=ShapeRecognition.convert(o)
+                        store.page.items.add(converted?:o)
+                    }else {checkpoint();store.page.items.add(o)}
                 }
-                actions.remove(id)
+                actions.remove(id);eraseLast.remove(id)
                 if (id == primary) {
                     box?.let { rect ->
                         selected.addAll(
@@ -322,7 +340,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         )
                     }
                     box = null
-                    if(tool=="select")onSelection()
+                    if(tool=="select"){
+                        if(mode=="pdf" && abs(at.y-anchor.y)>35/zoom){val pdf=chosen().singleOrNull();if(pdf!=null)store.edit{pdf.pdfPage=(pdf.pdfPage+if(at.y<anchor.y)1 else -1).coerceIn(0,pdf.pageCount-1)}}
+                        if(mode=="move" && tappedSelected && hypot(at.x-anchor.x,at.y-anchor.y)<6/zoom)post{onObjectActions()}
+                        onSelection()
+                    }
                 }
                 if (e.actionMasked == MotionEvent.ACTION_UP) {
                     if(changed) { isCommitting=true;store.changed();isCommitting=false }
@@ -364,8 +386,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             .coerceIn(.05f, 20f)
                     o.x = b.left + (base.x - b.left) * factor
                     o.y = b.top + (base.y - b.top) * factor
-                    o.w = (base.w * factor).coerceIn(.01f, 100000f)
-                    o.h = (base.h * factor).coerceIn(.01f, 100000f)
+                    if(original.size==1 && base.kind=="shape" && !Shapes.uniform(base.shape)){
+                        o.w=(base.w+point.x-anchor.x).coerceIn(4f,100000f)
+                        o.h=(base.h+point.y-anchor.y).coerceIn(4f,100000f)
+                    }else{o.w=(base.w*factor).coerceIn(.01f,100000f);o.h=(base.h*factor).coerceIn(.01f,100000f);if(base.kind=="text"){o.width=(base.width*factor).coerceIn(.1f,200f);TextLayout.fit(o)}}
                 }
                 "rotate" -> {
                     val delta =
@@ -378,10 +402,26 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         }
     }
 
-    private fun erase(q: PointF) {
+    private fun erase(q: PointF,from:PointF=q) {
         backingDirty=true
-        store.page.items.removeAll { !it.locked && it.kind == "ink" && it.hit(q.x, q.y, 18 / zoom) }
+        val radius=eraserRadius/zoom
+        if(eraserMode=="area")store.page.items.filter{eraseObjects||it.kind=="ink"}.forEach{Erasing.cut(it,from,q,radius)}
+        else {
+            val steps=ceil(hypot(q.x-from.x,q.y-from.y)/max(radius*.5f,1f)).toInt().coerceIn(1,20000)
+            store.page.items.removeAll { o -> !o.locked && (eraseObjects||o.kind=="ink") && (0..steps).any { i ->
+                val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)
+            } }
+        }
         selected.retainAll(store.page.items.map { it.id }.toSet())
+    }
+
+    override fun onGenericMotionEvent(event:MotionEvent):Boolean {
+        if(tool=="select" && event.action==MotionEvent.ACTION_SCROLL){
+            val o=chosen().singleOrNull()?.takeIf{it.kind=="pdf"}?:return super.onGenericMotionEvent(event)
+            val delta=event.getAxisValue(MotionEvent.AXIS_VSCROLL)
+            if(delta!=0f){store.edit{o.pdfPage=(o.pdfPage+if(delta<0)1 else -1).coerceIn(0,o.pageCount-1)};return true}
+        }
+        return super.onGenericMotionEvent(event)
     }
 
     private fun navigate(e: MotionEvent) {

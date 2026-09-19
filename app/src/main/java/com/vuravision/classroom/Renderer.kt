@@ -64,12 +64,14 @@ class Renderer(private val media: Media) {
         c.save()
         c.translate(o.x, o.y)
         c.rotate(o.rotation, o.w / 2, o.h / 2)
+        Erasing.clip(c,o)
         p.reset()
         p.isAntiAlias = true
         p.color = o.color
         p.alpha = o.alpha
         p.strokeWidth = o.width
         p.strokeCap = if(o.shape=="marker") Paint.Cap.SQUARE else Paint.Cap.ROUND
+        if(o.kind=="ink" && o.shape=="marker" && o.alpha==255)p.strokeWidth=o.width*1.8f
         if(o.shape=="dashed") p.pathEffect=DashPathEffect(floatArrayOf(o.width*3,o.width*2),0f)
         p.strokeJoin = Paint.Join.ROUND
         when (o.kind) {
@@ -87,33 +89,19 @@ class Renderer(private val media: Media) {
             "text",
             "sticky" -> {
                 if (o.kind == "sticky") {
-                    p.color = 0xffffe8b2.toInt()
+                    p.color = o.noteColor
                     p.style = Paint.Style.FILL
                     c.drawRoundRect(0f, 0f, o.w, o.h, 12f, 12f, p)
                 }
                 c.save()
                 c.clipRect(0f, 0f, o.w, o.h)
                 c.translate(10f, 8f)
-                val tp =
-                    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                        color = o.color
-                        textSize = o.width
-                        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-                    }
-                StaticLayout.Builder.obtain(
-                        o.text,
-                        0,
-                        o.text.length,
-                        tp,
-                        (o.w - 20).toInt().coerceAtLeast(1),
-                    )
-                    .setIncludePad(false)
-                    .build()
-                    .draw(c)
+                TextLayout.layout(o).draw(c)
                 c.restore()
             }
             "shape" -> {
                 p.style = Paint.Style.STROKE
+                if(o.flipX && o.shape in listOf("line","arrow","double_arrow")) { c.translate(o.w,0f);c.scale(-1f,1f) }
                 if(o.flipY && o.shape in listOf("line","arrow","double_arrow")) { c.translate(0f,o.h);c.scale(1f,-1f) }
                 Shapes.draw(c,o.shape,o.w,o.h,p)
             }
@@ -144,8 +132,8 @@ class Renderer(private val media: Media) {
         c.save()
         c.clipRect(0f, 0f, o.w, o.h)
         val d = o.domain
-        val sx = o.w / (2 * d)
-        val sy = o.h / (2 * d)
+        val sx = min(o.w,o.h) / (2 * d)
+        val sy = sx
         p.color = 0xffdce5eb.toInt()
         p.strokeWidth = 1f
         val step = 10.0.pow(floor(log10(d.toDouble()))).toFloat()

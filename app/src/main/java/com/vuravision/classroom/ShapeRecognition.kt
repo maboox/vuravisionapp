@@ -1,6 +1,17 @@
 package com.vuravision.classroom
 import kotlin.math.*
 object ShapeRecognition {
+ fun convert(o:Item):Item? {
+  if(o.points.size<3)return null
+  val kind=detect(listOf(o));val pts=SmartSelection.points(o)
+  if(kind=="line"){
+   val a=pts.first();val b=pts.last();val span=hypot(b.first-a.first,b.second-a.second)
+   if(span<8 || pts.any{distance(it.first,it.second,a.first,a.second,b.first,b.second)>max(5f,span*.09f)})return null
+   return Item(kind="shape",shape="line",x=min(a.first,b.first),y=min(a.second,b.second),w=abs(b.first-a.first).coerceAtLeast(1f),h=abs(b.second-a.second).coerceAtLeast(1f),flipX=b.first<a.first,flipY=b.second>=a.second,color=o.color,width=o.width)
+  }
+  if(!SmartSelection.isLoop(o))return null
+  return Item(kind="shape",shape=kind,x=o.x,y=o.y,w=o.w,h=if(kind in listOf("circle","square"))o.w else o.h,color=o.color,width=o.width)
+ }
  fun detect(items:List<Item>):String {
   val pts=items.flatMap{o->o.points.map{o.global(it.x*o.w/o.inkW,it.y*o.h/o.inkH)}}
   if(pts.size<3)return "line"

@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#141417">
+<title>دوئل دو نفره | Two-Player Duel</title>
+<style>
+:root{--bg:#141417;--surface:#1D1D22;--raised:#2A2A31;--border:rgba(255,255,255,.12);--text:#fff;--sub:rgba(255,255,255,.65);--p1:#F2708A;--p2:#5E9FE8;--good:#72BC8F;--bad:#E97366;--warn:#EAC26B}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{height:100%}
+body{position:fixed;inset:0;width:100%;background:var(--bg);color:var(--text);font-family:'Vazirmatn','Noto Sans Arabic',-apple-system,'Segoe UI',Tahoma,sans-serif;overflow:hidden}
+button{color:inherit;background:none;border:none;cursor:pointer;font:inherit}
+.screen{position:absolute;inset:0;display:none}
+.screen.active{display:flex}
+/* menu */
+#menu{flex-direction:column;overflow-y:auto;touch-action:pan-y;padding:36px 20px 40px;align-items:center}
+.menuHead{text-align:center;max-width:560px;margin-bottom:20px}
+.logo{font-size:44px;margin-bottom:10px}
+.menuHead h1{font-size:28px;font-weight:800;margin-bottom:10px}
+.menuHead p{font-size:14.5px;line-height:1.8;color:var(--sub)}
+.optBox{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.optTitle{font-size:14px;font-weight:700;margin-bottom:10px}
+.seg{display:flex;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:5px}
+.seg button{flex:1;min-height:44px;padding:8px 10px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--sub);border:1px solid transparent}
+.seg .segOn{background:var(--raised);color:#fff;border-color:var(--border)}
+.optDesc{margin-top:10px;font-size:12.5px;color:var(--sub);line-height:1.7}
+#gameList{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;width:100%;max-width:560px;margin-top:8px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 14px 14px;text-align:start;display:flex;flex-direction:column;gap:7px;transition:transform .1s}
+.card:active{transform:scale(.97);background:var(--raised)}
+.cardIcon{font-size:30px}
+.cardName{font-size:16.5px;font-weight:700}
+.cardDesc{font-size:12.5px;color:var(--sub);line-height:1.65;flex:1}
+.cardTag{align-self:flex-start;font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(94,159,232,.15);color:#9CC4F0}
+.hint{margin-top:26px;font-size:12.5px;color:var(--sub);text-align:center;line-height:1.9;max-width:480px}
+/* game shell */
+#game{flex-direction:column;touch-action:none;direction:ltr}
+.half{flex:1;position:relative;overflow:hidden;direction:rtl}
+body.en .half{direction:ltr}
+.half.top{transform:rotate(180deg);background:linear-gradient(to bottom,rgba(94,159,232,.02),rgba(94,159,232,.10))}
+.half.bottom{background:linear-gradient(to bottom,rgba(242,112,138,.02),rgba(242,112,138,.10))}
+.divider{height:2px;background:rgba(255,255,255,.14);z-index:5}
+.fab{position:absolute;z-index:40;width:46px;height:46px;border-radius:50%;background:rgba(42,42,49,.94);border:1px solid var(--border);font-size:17px;display:flex;align-items:center;justify-content:center}
+.fab.exit{left:10px;top:50%;transform:translateY(-50%)}
+.scorePill{position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;background:rgba(42,42,49,.94);border:1px solid var(--border);border-radius:99px;padding:9px 12px;gap:3px;font-weight:800;font-size:16px;line-height:1}
+.scorePill i{width:16px;height:1px;background:var(--border)}
+#sTop{color:var(--p2);transform:rotate(180deg)}
+#sBot{color:var(--p1)}
+/* landscape */
+body.landscape #game{flex-direction:row}
+body.landscape .half.top{transform:none;background:linear-gradient(to left,rgba(94,159,232,.02),rgba(94,159,232,.10))}
+body.landscape .half.bottom{background:linear-gradient(to right,rgba(242,112,138,.02),rgba(242,112,138,.10))}
+body.landscape .divider{height:auto;width:2px}
+body.landscape .fab.exit{left:50%;top:10px;transform:translateX(-50%)}
+body.landscape .scorePill{right:auto;left:50%;top:auto;bottom:10px;transform:translateX(-50%);flex-direction:row;padding:10px 14px;gap:8px}
+body.landscape .scorePill i{width:1px;height:16px}
+body.landscape #sTop{transform:none}
+body.landscape .matchOverlay{flex-direction:row}
+body.landscape .moHalf.moTop{transform:none;border-bottom:none;border-left:1px solid var(--border)}
+body.landscape .tugTrack{left:4%;right:4%;top:50%;bottom:auto;width:auto;height:12px;transform:translateY(-50%)}
+body.landscape .tz{left:auto;right:auto;top:-4px;bottom:-4px}
+body.landscape .tz.t{left:0;width:10%;height:auto}
+body.landscape .tz.b{right:0;width:10%;height:auto}
+body.landscape .c4Board{width:min(42vw,64vh)}
+body.landscape .tttBoard{width:min(34vw,56vh)}
+/* shared game bits */
+.pad{position:absolute;inset:12px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px;border:1.5px dashed rgba(255,255,255,.13)}
+.padIcon{font-size:38px}
+.padBig{font-size:29px;font-weight:800}
+.padHuge{font-size:70px;font-weight:800;line-height:1.15}
+.padSub{font-size:13px;color:var(--sub);line-height:1.7;max-width:88%}
+.pad.wait{background:rgba(233,115,102,.10)}
+.pad.go{background:rgba(114,188,143,.22);border-color:var(--good)}
+.pad.tapzone{background:rgba(255,255,255,.03)}
+.pad.tapzone:active{background:rgba(255,255,255,.07)}
+.flash{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,12,.74);font-size:22px;font-weight:800;text-align:center;padding:20px;line-height:1.8}
+.padWrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.qWrap{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%;padding:12px}
+.question{font-size:36px;font-weight:800}
+.qBig{font-size:54px;font-weight:800;line-height:1.2}
+.optGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(320px,86%)}
+.optRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(340px,90%)}
+.optRow .opt{flex:1;min-width:64px}
+.btn{min-height:48px;padding:10px 18px;border-radius:12px;background:var(--raised);border:1px solid var(--border);font-size:16.5px;font-weight:700}
+.btn.primary{background:#2783DE;border-color:transparent}
+.btn.opt{font-size:19px}
+.btn.badBtn{background:rgba(233,115,102,.25);border-color:var(--bad);opacity:.65}
+.btn.goodBtn{background:rgba(114,188,143,.3);border-color:var(--good)}
+.numRow{display:flex;gap:12px;width:min(340px,88%)}
+.numRow .btn{flex:1}
+.btn.num{flex:1;font-size:36px;font-weight:800;padding:16px 8px}
+.stroopWord{font-size:50px;font-weight:800}
+.qNote{font-size:11.5px}
+/* tug */
+.tugTrack{position:absolute;left:50%;top:4%;bottom:4%;width:12px;transform:translateX(-50%);z-index:8;pointer-events:none;background:rgba(255,255,255,.08);border-radius:99px}
+.tz{position:absolute;left:-4px;right:-4px;border-radius:99px}
+.tz.t{top:0;height:10%;background:rgba(94,159,232,.45)}
+.tz.b{bottom:0;height:10%;background:rgba(242,112,138,.45)}
+.tugKnot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.15);transition:top .08s linear,left .08s linear}
+/* dots-style spawners */
+.trapHud{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:13.5px;color:var(--sub);z-index:6}
+.trapDot{position:absolute;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;z-index:4}
+.trapDot.gem{background:rgba(114,188,143,.25);border:2px solid var(--good)}
+.trapDot.bomb{background:rgba(233,115,102,.2);border:2px solid var(--bad)}
+.trapDot.mole{background:rgba(234,194,107,.2);border:2px solid var(--warn)}
+.numDot{position:absolute;width:64px;height:64px;border-radius:50%;background:var(--raised);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;z-index:4}
+/* pong */
+.pongCv{position:absolute;inset:0;z-index:15;touch-action:none}
+/* boards */
+.tttBoard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:12;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(62vw,40vh);transition:opacity .3s}
+.tttCell{background:var(--raised);border:1px solid var(--border);border-radius:12px;font-size:clamp(24px,6vh,44px);font-weight:800;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.tttCell.m0{color:var(--p1)}
+.tttCell.m1{color:var(--p2)}
+.tttCell.winCell{background:rgba(114,188,143,.3);border-color:var(--good)}
+.tttTurn{position:absolute;bottom:9%;left:0;right:0;text-align:center;font-size:17px;color:var(--sub);z-index:6}
+.c4Board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:12;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:5px;width:min(88vw,48vh);aspect-ratio:7/6;background:rgba(255,255,255,.06);padding:8px;border-radius:14px;transition:opacity .3s}
+.c4Cell{background:var(--bg);border-radius:50%;border:1px solid var(--border)}
+.c4Cell.c4p0{background:var(--p1);border-color:var(--p1)}
+.c4Cell.c4p1{background:var(--p2);border-color:var(--p2)}
+.c4Cell.winCell{box-shadow:0 0 0 3px var(--good)}
+/* misc games */
+.dotBox{position:relative;width:min(78%,300px);height:120px;background:var(--raised);border-radius:12px;border:1px solid var(--border)}
+.dotBox i{position:absolute;width:10px;height:10px;border-radius:50%;background:#fff}
+.dotBox b{position:absolute;font-size:22px;transform:translate(-50%,-50%)}
+.arrowShow{font-size:64px;line-height:1}
+.arrowBtn span{font-size:26px}
+.oddGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:min(320px,88%)}
+.oddCell{font-size:27px;background:var(--raised);border:1px solid var(--border);border-radius:10px;padding:6px;min-height:48px}
+.nrGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:min(300px,86%)}
+.nrGrid.cols3{grid-template-columns:repeat(3,1fr)}
+.nrCell{font-size:20px;font-weight:700;background:var(--raised);border:1px solid var(--border);border-radius:10px;min-height:46px}
+.nrCell.doneCell{opacity:.22}
+.nrCell.errCell{background:rgba(233,115,102,.4)}
+.swatchBig{width:120px;height:120px;border-radius:16px}
+.swatchRow{display:flex;gap:10px;justify-content:center}
+.swatch{width:60px;height:60px;border-radius:12px;border:2px solid rgba(255,255,255,.25)}
+.tbar{position:relative;width:min(80%,340px);height:18px;background:var(--raised);border-radius:99px;border:1px solid var(--border)}
+.tzoneC{position:absolute;left:43%;width:14%;top:0;bottom:0;background:rgba(114,188,143,.5);border-radius:99px}
+.tmark{position:absolute;top:-5px;width:6px;height:28px;background:#fff;border-radius:3px;left:0}
+.swBarWrap{width:min(70%,300px);height:12px;background:var(--raised);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.swBar{height:100%;width:0;background:var(--good);border-radius:99px}
+.patGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(210px,66%)}
+.patCell{aspect-ratio:1;background:var(--raised);border:1px solid var(--border);border-radius:8px}
+.patCell.onCell{background:var(--p2);border-color:var(--p2)}
+.circRow{display:flex;gap:16px;align-items:center;justify-content:center;min-height:112px}
+.circBtn{display:flex;align-items:center;justify-content:center;width:110px;height:110px}
+.circBtn span{display:block;border-radius:50%;background:var(--warn)}
+.simonShow{width:110px;height:110px;border-radius:16px;background:var(--raised);opacity:.25;transition:opacity .12s,background .1s}
+.simonGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(240px,74%)}
+.simonBtn{border-radius:12px;border:2px solid rgba(255,255,255,.2);min-height:52px}
+.rpsRow{display:flex;gap:10px}
+.rpsBtn{font-size:34px;padding:12px 16px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(220px,68%)}
+.keypad button{min-height:44px;font-size:19px;font-weight:700;background:var(--raised);border:1px solid var(--border);border-radius:10px}
+.pinShow{font-size:32px;font-weight:800;letter-spacing:6px}
+.pinProg{font-size:24px;letter-spacing:5px;min-height:30px;font-weight:700}
+.shadeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(220px,68%)}
+.shadeCell{aspect-ratio:1;border-radius:10px}
+.tileGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:min(250px,78%)}
+.tileCell{aspect-ratio:1;border-radius:10px;background:var(--raised);border:1px solid var(--border)}
+.tileCell.lit{background:var(--warn);border-color:var(--warn)}
+.glGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(210px,66%)}
+.glCell{aspect-ratio:1;border-radius:12px;background:var(--raised);border:1px solid var(--border)}
+.glCell.lit{background:var(--good);border-color:var(--good)}
+.balloonWrap{height:150px;display:flex;align-items:center;justify-content:center}
+.balloonC{border-radius:50%;background:var(--warn)}
+.cardsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:min(290px,84%)}
+.mcard{aspect-ratio:.85;border-radius:10px;background:var(--raised);border:1px solid var(--border);font-size:24px;display:flex;align-items:center;justify-content:center}
+.mcard.open{background:#3A3A44;border-color:rgba(255,255,255,.3)}
+.mcard.done{opacity:.25}
+.penRow{display:flex;gap:10px}
+.penBtn{font-size:24px;padding:13px 15px}
+.diceShow{font-size:64px;line-height:1.2;font-weight:800}
+/* match overlay */
+.matchOverlay{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;background:rgba(12,12,15,.95)}
+.moHalf{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;direction:rtl}
+body.en .moHalf{direction:ltr}
+.moHalf.moTop{transform:rotate(180deg);border-bottom:1px solid var(--border)}
+.moEmoji{font-size:46px}
+.moTitle{font-size:24px;font-weight:800}
+.moScore{font-size:15px;color:var(--sub)}
+.moBtns{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+
+:root{--bg:#15102f;--surface:#241d4a;--raised:#342960;--warn:#f8a529;--p1:#fb718f;--p2:#55c9f3}
+#menu{background:radial-gradient(ellipse at 10% 10%,#385e8840,transparent 40%),radial-gradient(ellipse at 85% 15%,#773ab940,transparent 45%),var(--bg)}
+.menuHead,.optBox,#gameList{max-width:1180px}.menuHead{padding:24px 8px}.menuHead h1{font-size:clamp(28px,4vw,46px)}
+#gameList{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.card{position:relative;border-radius:24px;padding:22px;border-top:3px solid var(--accent,#f8a529);background:linear-gradient(140deg,#302856,#1c173b);box-shadow:0 12px 26px #07041644}
+.cardIcon{font-size:42px;width:76px;height:76px;display:grid;place-items:center;border-radius:22px;background:radial-gradient(circle at 25% 25%,#ffffff22,#ffffff05);box-shadow:inset 0 0 20px #ffffff08}
+.cardName{font-size:19px}.cardDesc{font-size:14px}.cardTag{color:#ede5ff;background:#76629b33}
+.pad{background:radial-gradient(ellipse at center,#ffffff09,transparent 65%)}.padHuge{text-shadow:0 6px 30px #0005}.opt,.nrCell,.tileCell,.mcard{box-shadow:0 5px 0 #0003}
+.half.bottom{background:radial-gradient(ellipse at 50% 80%,#fb718f22,transparent 70%)}.half.top{background:radial-gradient(ellipse at 50% 80%,#55c9f322,transparent 70%)}
+#arcSearch{width:100%;padding:12px 16px;font:inherit;background:#15102f;color:white;border:1px solid #756791;border-radius:12px;user-select:text}
+.arcFilters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.arcFilters button{padding:9px 14px;border-radius:12px;background:#342960;min-height:44px}.arcFilters .active{background:#f8a529;color:#20194f}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:99}.confetti i{position:absolute;top:-20px;width:9px;height:18px;animation:fall 1.8s ease-in forwards}@keyframes fall{to{transform:translateY(110vh) rotate(700deg);opacity:.2}}
+button:focus-visible,input:focus-visible{outline:3px solid #f8a529;outline-offset:3px}
+@media(max-width:500px){#gameList{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:14px}.cardName{font-size:16px}.cardDesc{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body oncontextmenu="return false">
+
+<div id="menu" class="screen active">
+  <header class="menuHead" id="menuHead"></header>
+  <div class="optBox" id="langBox"></div>
+  <div class="optBox" id="layoutBox"></div>
+  <div id="gameList"></div>
+  <div class="hint" id="hint"></div>
+</div>
+
+<div id="game" class="screen"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const faD='۰۱۲۳۴۵۶۷۸۹';
+const urlParams=new URLSearchParams(location.search);
+function store(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function read(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+let LANG=urlParams.get('lang')||read('duelLang')||'fa';
+if(LANG!=='en')LANG='fa';
+const L=(fa,en)=>LANG==='fa'?fa:en;
+const toFa=n=>LANG==='fa'?String(n).replace(/\d/g,d=>faD[d]):String(n);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+function el(tag,cls,html){const d=document.createElement(tag);if(cls)d.className=cls;if(html!=null)d.innerHTML=html;return d;}
+function applyLang(){
+  document.documentElement.setAttribute('lang',LANG);
+  document.documentElement.setAttribute('dir',LANG==='fa'?'rtl':'ltr');
+  document.body.classList.toggle('en',LANG==='en');
+  document.title=L('دوئل دو نفره | ۴۹ بازی لمسی روی یک صفحه','Two-Player Duel | 49 touch games on one screen');
+}
+
+const gameEl=$('#game');
+let halfTop=null,halfBottom=null;
+let timers=[],cleanups=[],wins=[0,0],target=5,matchOver=false,curId=null,LS=false;
+function later(fn,ms){const t=setTimeout(fn,ms);timers.push(t);return t;}
+function every(fn,ms){const t=setInterval(fn,ms);timers.push(t);return t;}
+function clearTimers(){timers.forEach(t=>{clearTimeout(t);clearInterval(t);});timers=[];}
+function runCleanups(){cleanups.forEach(f=>{try{f();}catch(e){}});cleanups=[];}
+function vibrate(ms){if(navigator.vibrate){try{navigator.vibrate(ms);}catch(e){}}}
+function computeLS(){
+  const pref=urlParams.get('layout')||read('duelLayout')||'auto';
+  if(pref==='portrait')return false;
+  if(pref==='landscape')return true;
+  return window.innerWidth>window.innerHeight;
+}
+function buildShell(){
+  clearTimers();runCleanups();matchOver=false;
+  gameEl.innerHTML='';
+  halfTop=el('div','half top');
+  halfBottom=el('div','half bottom');
+  const divider=el('div','divider');
+  gameEl.appendChild(halfTop);gameEl.appendChild(divider);gameEl.appendChild(halfBottom);
+  const exit=el('button','fab exit','✕');
+  exit.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();exitGame();});
+  const pill=el('div','scorePill','<span id="sTop">0</span><i></i><span id="sBot">0</span>');
+  gameEl.appendChild(exit);gameEl.appendChild(pill);
+}
+function renderScore(){$('#sTop').textContent=toFa(wins[1]);$('#sBot').textContent=toFa(wins[0]);}
+function halfOf(p){return p===0?halfBottom:halfTop;}
+function clearHalves(){halfTop.innerHTML='';halfBottom.innerHTML='';}
+function pads(cls,html,onTap){
+  const out=[];
+  [halfBottom,halfTop].forEach((half,p)=>{
+    const d=el('div','pad'+(cls?' '+cls:''),html);
+    if(onTap)d.addEventListener('pointerdown',e=>{e.preventDefault();onTap(p,e,d);});
+    half.appendChild(d);out.push(d);
+  });
+  return out;
+}
+function mkFlash(half,txt,ms){
+  const f=el('div','flash',txt);half.appendChild(f);
+  if(ms)later(()=>f.remove(),ms);
+  return f;
+}
+function flashBoth(botTxt,topTxt,ms=1200){mkFlash(halfBottom,botTxt,ms);mkFlash(halfTop,topTxt,ms);}
+function dualFlash(w,winTxt,loseTxt,ms=1200){flashBoth(w===0?winTxt:loseTxt,w===1?winTxt:loseTxt,ms);}
+function addWin(p){
+  wins[p]++;renderScore();vibrate(30);
+  if(wins[p]>=target){matchOver=true;later(()=>endMatch(p),1200);return true;}
+  return false;
+}
+function scoreRound(w,winTxt,loseTxt,next,delay=1400){clearTimers();dualFlash(w,winTxt,loseTxt);if(!addWin(w))later(next,delay);}
+const PH={
+  correct:()=>L('درست! ✅ +۱','Correct! ✅ +1'),
+  oppFaster:()=>L('حریف زودتر زد!','Opponent got it first!'),
+  lock:()=>L('اشتباه! قفل شدی 🔒','Wrong! You\'re locked 🔒'),
+  bothWrong:()=>L('هر دو اشتباه! 😅','Both wrong! 😅'),
+  wrongOpp:()=>L('اشتباه! ❌ +۱ حریف','Wrong! ❌ +1 opponent'),
+  oppWrong:()=>L('حریف اشتباه زد! +۱ ✅','Opponent slipped! +1 ✅'),
+  tie:()=>L('مساوی! 🤝','Tie! 🤝'),
+  vs:()=>L('در برابر','vs'),
+};
+function tieRound(next,delay=1350){clearTimers();flashBoth(PH.tie(),PH.tie());later(next,delay);}
+function endMatch(w){
+  clearTimers();runCleanups();
+  gameEl.querySelectorAll('.matchOverlay').forEach(x=>x.remove());
+  const ov=el('div','matchOverlay');
+  const mk=p=>{
+    const won=p===w;
+    const h=el('div','moHalf'+(p===1?' moTop':''));
+    h.innerHTML=`<div class="moEmoji">${won?'🏆':'🤝'}</div><div class="moTitle" style="color:var(--p${p+1})">${won?L('بردی! 🎉','You win! 🎉'):L('باختی!','You lose!')}</div><div class="moScore">${L('نتیجه','Score')}: ${toFa(wins[p])} - ${toFa(wins[1-p])}</div><div class="moBtns"><button class="btn primary" data-a="again">${L('بازی دوباره 🔁','Play again 🔁')}</button><button class="btn" data-a="menu">${L('همهٔ بازی‌ها 🎮','All games 🎮')}</button></div>`;
+    h.addEventListener('pointerdown',e=>{
+      const b=e.target.closest('button');if(!b)return;e.preventDefault();
+      if(b.dataset.a==='again')openGame(curId);else exitGame();
+    });
+    return h;
+  };
+  ov.appendChild(mk(1));ov.appendChild(mk(0));
+  gameEl.appendChild(ov);
+}
+function openGame(id){
+  const g=GAMES.find(x=>x.id===id);if(!g)return;
+  curId=id;wins=[0,0];target=g.target;
+  LS=computeLS();
+  document.body.classList.toggle('landscape',LS);
+  $('#menu').classList.remove('active');gameEl.classList.add('active');
+  buildShell();renderScore();
+  g.start();
+}
+function exitGame(){
+  clearTimers();runCleanups();matchOver=false;
+  gameEl.innerHTML='';gameEl.classList.remove('active');
+  document.body.classList.remove('landscape');
+  $('#menu').classList.add('active');
+}
+function optionRace({html,correct,wrongMode='lock',next,revealMs=1300}){
+  let answered=false;const locked=[false,false];
+  clearHalves();
+  [halfBottom,halfTop].forEach((half,p)=>{
+    const w=el('div','padWrap',html);
+    w.addEventListener('pointerdown',e=>{
+      const btn=e.target.closest('.opt');if(!btn)return;
+      e.preventDefault();
+      if(matchOver||answered||locked[p])return;
+      const v=btn.dataset.v;
+      if(v===String(correct)){
+        answered=true;btn.classList.add('goodBtn');vibrate(20);
+        scoreRound(p,PH.correct(),PH.oppFaster(),next,revealMs);
+      }else if(wrongMode==='lock'){
+        locked[p]=true;btn.classList.add('badBtn');
+        mkFlash(halfOf(p),PH.lock(),850);
+        if(locked[0]&&locked[1]){answered=true;later(()=>{if(matchOver)return;flashBoth(PH.bothWrong(),PH.bothWrong(),1000);later(next,1100);},900);}
+      }else{
+        answered=true;btn.classList.add('badBtn');
+        scoreRound(1-p,PH.oppWrong(),PH.wrongOpp(),next,revealMs);
+      }
+    });
+    half.appendChild(w);
+  });
+}
+/* games appended below */
+
+/* ============ reflex games ============ */
+function startReaction(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    let state='wait';
+    const ps=pads('wait',`<div class="padIcon">🚦</div><div class="padBig">${L('صبر کن...','Wait...')}</div><div class="padSub">${L('وقتی سبز شد، سریع بزن! اگه زودتر بزنی امتیاز به حریف می‌رسه.','When it turns green, tap fast! Tap early and your opponent gets the point.')}</div>`,(p)=>{
+      if(matchOver)return;
+      if(state==='wait'){
+        state='hold';clearTimers();
+        scoreRound(1-p,L('حریف زود زد! +۱ ✅','Opponent jumped early! +1 ✅'),L('زود زدی! ❌ +۱ حریف','Too early! ❌ +1 opponent'),round);
+      }else if(state==='go'){
+        state='hold';
+        scoreRound(p,L('چه واکنشی! ⚡ +۱','What a reflex! ⚡ +1'),L('حریف سریع‌تر بود!','Opponent was faster!'),round);
+      }
+    });
+    later(()=>{
+      if(matchOver||state!=='wait')return;
+      state='go';
+      ps.forEach(d=>{d.classList.remove('wait');d.classList.add('go');d.innerHTML=`<div class="padIcon">🟢</div><div class="padHuge">${L('بزن!','TAP!')}</div>`;});
+    },rnd(1500,5000));
+  }
+  round();
+}
+function startDraw(){
+  const FAKES_FA=['حولا!','هالا!','حلوا!','آماده...','صبر...','حالا؟'];
+  const FAKES_EN=['NOW?','WOW!','NOOW','Ready...','Wait...','HOW!'];
+  const GO=()=>L('حالا!','NOW!');
+  function round(){
+    if(matchOver)return;clearHalves();
+    let live=false,done=false;
+    const ps=pads('tapzone',`<div class="padIcon">🤠</div><div class="padBig">${L('آماده باش...','Get ready...')}</div><div class="padSub">${L('فقط وقتی نوشت «حالا!» شلیک کن. کلمه‌های قلابی گولت نزنن!','Fire only when it says “NOW!”. Don\'t fall for the fake words!')}</div>`,(p)=>{
+      if(matchOver||done)return;
+      if(live){done=true;scoreRound(p,L('شلیک دقیق! 🔫 +۱','Sharp shot! 🔫 +1'),L('حریف زودتر شلیک کرد!','Opponent shot first!'),round);}
+      else{done=true;clearTimers();scoreRound(1-p,L('حریف گول خورد! +۱ ✅','Opponent got fooled! +1 ✅'),L('گول خوردی! ❌ +۱ حریف','Fooled! ❌ +1 opponent'),round);}
+    });
+    const fakes=shuffle((LANG==='fa'?FAKES_FA:FAKES_EN).slice()).slice(0,rnd(1,3));
+    let t=rnd(1200,2200);
+    fakes.forEach(f=>{
+      later(()=>{if(matchOver||done)return;ps.forEach(d=>d.innerHTML=`<div class="padIcon">🤠</div><div class="padHuge" style="color:var(--warn)">${f}</div>`);},t);
+      t+=rnd(900,1700);
+    });
+    later(()=>{if(matchOver||done)return;live=true;ps.forEach(d=>{d.classList.add('go');d.innerHTML=`<div class="padHuge">${GO()}</div>`;});},t);
+  }
+  round();
+}
+function startPotato(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    let holder=rnd(0,1),alive=true;
+    const fuse=rnd(4000,9000),t0=Date.now();
+    const ps=pads('tapzone','',(p)=>{
+      if(matchOver||!alive||p!==holder)return;
+      holder=1-p;vibrate(15);paint();
+    });
+    function paint(){
+      ps.forEach((d,p)=>{
+        d.innerHTML=p===holder
+          ?`<div class="padIcon" style="font-size:56px">💣</div><div class="padBig">${L('بمب دست توئه!','You have the bomb!')}</div><div class="padSub">${L('بزن تا پاسش بدی!','Tap to pass it!')}</div>`
+          :`<div class="padIcon">😅</div><div class="padBig">${L('بمب اون طرفه...','Bomb is over there...')}</div>`;
+      });
+    }
+    paint();
+    later(()=>{
+      if(matchOver||!alive)return;alive=false;
+      scoreRound(1-holder,L('بمب دست حریف ترکید! 💥 +۱','It blew up on your opponent! 💥 +1'),L('بوم! 💥 بمب دست تو ترکید','BOOM! 💥 It blew up on you'),round,1500);
+    },fuse);
+  }
+  round();
+}
+function startTiming(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const hit=[null,null];let pos=0,dir=1;
+    const ps=pads('tapzone',`<div class="padIcon">🎯</div><div class="tbar"><div class="tzoneC"></div><div class="tmark"></div></div><div class="padSub">${L('وقتی نشانگر رسید وسط ناحیهٔ سبز، ضربه بزن!','Tap when the marker is in the middle of the green zone!')}</div>`,(p)=>{
+      if(matchOver||hit[p]!==null)return;
+      hit[p]=Math.abs(pos-50);vibrate(15);
+      mkFlash(halfOf(p),L('ثبت شد: ','Recorded: ')+toFa(Math.round(hit[p]))+L(' فاصله',' off'),800);
+      if(hit[0]!==null&&hit[1]!==null)finish();
+    });
+    const iv=every(()=>{
+      pos+=dir*2.1;
+      if(pos>=100){pos=100;dir=-1;}if(pos<=0){pos=0;dir=1;}
+      ps.forEach(d=>{const m=d.querySelector('.tmark');if(m)m.style.left=`calc(${pos}% - 3px)`;});
+    },16);
+    function finish(){
+      clearInterval(iv);
+      const w=hit[0]<=hit[1]?0:1;
+      if(Math.abs(hit[0]-hit[1])<0.5){tieRound(round);return;}
+      scoreRound(w,L('دقیق‌تر زدی! 🎯 +۱','More precise! 🎯 +1'),L('حریف دقیق‌تر بود!','Opponent was more precise!'),round);
+    }
+    later(()=>{if(matchOver)return;if(hit[0]===null||hit[1]===null){[0,1].forEach(p=>{if(hit[p]===null)hit[p]=100;});finish();}},12000);
+  }
+  round();
+}
+function startTap(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const n=[0,0];let live=false,secs=10;
+    const ps=pads('tapzone','',(p)=>{
+      if(matchOver||!live)return;
+      n[p]++;paint();
+    });
+    function paint(){
+      ps.forEach((d,p)=>{d.innerHTML=`<div class="padSub">${L('زمان','Time')}: ${toFa(secs)}</div><div class="padHuge">${toFa(n[p])}</div><div class="padSub">${L('تندتند بزن!','Tap like crazy!')}</div>`;});
+    }
+    let cd=3;
+    ps.forEach(d=>d.innerHTML=`<div class="padHuge">${toFa(cd)}</div>`);
+    const civ=every(()=>{
+      cd--;
+      if(cd>0){ps.forEach(d=>d.innerHTML=`<div class="padHuge">${toFa(cd)}</div>`);}
+      else{
+        clearInterval(civ);live=true;paint();
+        const siv=every(()=>{
+          secs--;
+          if(secs<=0){
+            clearInterval(siv);live=false;
+            if(n[0]===n[1]){tieRound(round);return;}
+            const w=n[0]>n[1]?0:1;
+            scoreRound(w,L('بردی! ','You win! ')+toFa(n[w])+' 👆 +۱',L('حریف بیشتر زد: ','Opponent tapped more: ')+toFa(n[1-w]),round);
+          }else paint();
+        },1000);
+      }
+    },800);
+  }
+  round();
+}
+function startTug(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    let k=50,done=false;
+    const track=el('div','tugTrack','<div class="tz t"></div><div class="tz b"></div>');
+    const knot=el('div','tugKnot','🪢');
+    knot.style.display='flex';knot.style.alignItems='center';knot.style.justifyContent='center';knot.style.fontSize='18px';
+    track.appendChild(knot);gameEl.appendChild(track);
+    cleanups.push(()=>track.remove());
+    function setKnot(){
+      if(LS){knot.style.top='50%';knot.style.left=(100-k)+'%';}
+      else{knot.style.left='50%';knot.style.top=k+'%';}
+    }
+    setKnot();
+    pads('tapzone',`<div class="padIcon">💪</div><div class="padBig">${L('بکش!','PULL!')}</div><div class="padSub">${L('تندتند ضربه بزن تا گرهٔ سفید به ناحیهٔ رنگی طرف تو برسه','Tap fast to pull the white knot into your colored zone')}</div>`,(p)=>{
+      if(matchOver||done)return;
+      k+=(p===0?2.3:-2.3);vibrate(10);setKnot();
+      if(k>=92){done=true;win(0);}
+      if(k<=8){done=true;win(1);}
+    });
+    function win(w){
+      scoreRound(w,L('کشیدیش! 🪢 +۱','You pulled it! 🪢 +1'),L('حریف قوی‌تر کشید!','Opponent pulled harder!'),()=>{track.remove();round();});
+    }
+  }
+  round();
+}
+function startSwipe(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const amt=[0,0];let done=false;
+    const last=[null,null];
+    const ps=pads('tapzone',`<div class="padIcon">🧽</div><div class="swBarWrap"><div class="swBar"></div></div><div class="padSub">${L('انگشتت رو تندتند روی صفحه بکش تا نوار پر بشه!','Scrub your finger fast to fill the bar!')}</div>`);
+    ps.forEach((d,p)=>{
+      d.addEventListener('pointermove',e=>{
+        if(matchOver||done)return;
+        if(e.pointerType!=='touch'&&e.buttons===0)return;
+        if(last[p]){
+          const dx=e.clientX-last[p].x,dy=e.clientY-last[p].y;
+          amt[p]+=Math.min(Math.hypot(dx,dy),40);
+          const bar=d.querySelector('.swBar');if(bar)bar.style.width=Math.min(100,amt[p]/50)+'%';
+          if(amt[p]>=5000){done=true;scoreRound(p,L('برق افتاد! ✨ +۱','Squeaky clean! ✨ +1'),L('حریف سریع‌تر سابید!','Opponent scrubbed faster!'),round);}
+        }
+        last[p]={x:e.clientX,y:e.clientY};
+      });
+      d.addEventListener('pointerup',()=>{last[p]=null;});
+      d.addEventListener('pointerleave',()=>{last[p]=null;});
+    });
+  }
+  round();
+}
+function startNumRace(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const seq=shuffle([1,2,3,4,5,6,7,8,9,10,11,12]);
+    const prog=[0,0];let done=false;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub" id="nrs${p}">${L('به ترتیب بزن! بعدی: ','Tap in order! Next: ')+toFa(1)}</div>`);
+      const grid=el('div','nrGrid');
+      seq.forEach(v=>{
+        const b=el('button','nrCell',toFa(v));
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done)return;
+          if(v===prog[p]+1){
+            prog[p]++;b.classList.add('doneCell');vibrate(10);
+            const s=inner.querySelector('#nrs'+p);
+            if(s)s.textContent=L('به ترتیب بزن! بعدی: ','Tap in order! Next: ')+toFa(Math.min(prog[p]+1,12));
+            if(prog[p]>=12){done=true;scoreRound(p,L('تموم! 🏁 +۱','Done! 🏁 +1'),L('حریف زودتر تموم کرد!','Opponent finished first!'),round);}
+          }else{b.classList.add('errCell');later(()=>b.classList.remove('errCell'),350);}
+        });
+        grid.appendChild(b);
+      });
+      inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+    });
+  }
+  round();
+}
+
+/* ============ brain games ============ */
+function startMath(){
+  function round(){
+    if(matchOver)return;
+    const a=rnd(2,12),b=rnd(2,12),op=['+','×','-'][rnd(0,2)];
+    const ans=op==='+'?a+b:op==='×'?a*b:a-b;
+    const opts=new Set([ans]);
+    while(opts.size<4)opts.add(ans+rnd(-9,9)||ans+11);
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div class="question">${toFa(a)} ${op} ${toFa(b)} = ؟</div><div class="optGrid">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div><div class="padSub qNote">${L('اولین جواب درست امتیاز می‌گیره — جواب غلط = قفل!','First correct answer scores — wrong = locked!')}</div></div>`,
+      correct:ans,next:round
+    });
+  }
+  round();
+}
+function startSum(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const nums=[rnd(3,20),rnd(3,20),rnd(3,20)];
+    const ans=nums[0]+nums[1]+nums[2];
+    let i=0;
+    const ps=pads('',`<div class="padSub">${L('جمع کن...','Add them up...')}</div><div class="padHuge sumN"></div>`);
+    const iv=every(()=>{
+      if(matchOver){clearInterval(iv);return;}
+      if(i<nums.length){ps.forEach(d=>{const s=d.querySelector('.sumN');if(s)s.textContent=toFa(nums[i]);});i++;}
+      else{
+        clearInterval(iv);
+        const opts=new Set([ans]);
+        while(opts.size<4)opts.add(ans+rnd(-6,6)||ans+7);
+        const arr=shuffle([...opts]);
+        optionRace({
+          html:`<div class="qWrap"><div class="padSub">${L('جمع سه عدد چند بود؟','What was the sum of the three numbers?')}</div><div class="optGrid">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+          correct:ans,next:round
+        });
+      }
+    },900);
+  }
+  round();
+}
+function startEvenOdd(){
+  function round(){
+    if(matchOver)return;
+    const n=rnd(10,99);
+    const correct=n%2===0?'e':'o';
+    optionRace({
+      html:`<div class="qWrap"><div class="qBig">${toFa(n)}</div><div class="numRow"><button class="btn opt" data-v="e">${L('زوج','Even')}</button><button class="btn opt" data-v="o">${L('فرد','Odd')}</button></div><div class="padSub qNote">${L('اشتباه بزنی امتیاز به حریف می‌رسه!','A wrong tap gives your opponent the point!')}</div></div>`,
+      correct,wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+function startDigits(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    let code='';for(let i=0;i<5;i++)code+=rnd(i===0?1:0,9);
+    pads('',`<div class="padSub">${L('حفظ کن!','Memorize!')}</div><div class="qBig">${toFa(code)}</div>`);
+    later(()=>{
+      if(matchOver)return;
+      const opts=new Set([code]);
+      while(opts.size<4){
+        const c=code.split('');const i=rnd(0,4);const j=rnd(0,4);
+        if(rnd(0,1)){c[i]=String((+c[i]+rnd(1,8))%10);}else{[c[i],c[j]]=[c[j],c[i]];}
+        const s=c.join('');if(s!==code)opts.add(s);
+      }
+      const arr=shuffle([...opts]);
+      optionRace({
+        html:`<div class="qWrap"><div class="padSub">${L('عدد کدوم بود؟','Which number was it?')}</div><div class="optGrid">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+        correct:code,next:round
+      });
+    },2200);
+  }
+  round();
+}
+function startDots(){
+  function round(){
+    if(matchOver)return;
+    const n=rnd(6,14);
+    let dots='';
+    for(let i=0;i<n;i++)dots+=`<i style="left:${rnd(6,92)}%;top:${rnd(8,84)}%"></i>`;
+    const opts=new Set([n]);
+    while(opts.size<4)opts.add(Math.max(2,n+rnd(-3,3)));
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div class="dotBox">${dots}</div><div class="padSub">${L('چند تا نقطه؟','How many dots?')}</div><div class="optRow">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+      correct:n,next:round
+    });
+  }
+  round();
+}
+const SIMON_COLORS=[['#E97366','🔴'],['#5E9FE8','🔵'],['#72BC8F','🟢'],['#EAC26B','🟡']];
+function startSimon(){
+  let len=3;
+  function round(){
+    if(matchOver)return;clearHalves();
+    const seq=[];for(let i=0;i<len;i++)seq.push(rnd(0,3));
+    const ps=pads('',`<div class="padSub">${L('ترتیب رنگ‌ها رو حفظ کن...','Memorize the color order...')}</div><div class="simonShow"></div><div class="simonProg padSub"></div>`);
+    let si=0;
+    const iv=every(()=>{
+      if(matchOver){clearInterval(iv);return;}
+      if(si<seq.length){
+        ps.forEach(d=>{const s=d.querySelector('.simonShow');if(s){s.style.background=SIMON_COLORS[seq[si]][0];s.style.opacity='1';later(()=>{s.style.opacity='.25';},440);}});
+        si++;
+      }else{clearInterval(iv);input();}
+    },700);
+    function input(){
+      clearHalves();
+      const prog=[0,0];let done=false;const locked=[false,false];
+      [halfBottom,halfTop].forEach((half,p)=>{
+        const w=el('div','padWrap');
+        const inner=el('div','qWrap',`<div class="padSub">${L('تکرارش کن!','Repeat it!')} (${toFa(len)})</div>`);
+        const grid=el('div','simonGrid');
+        SIMON_COLORS.forEach((c,ci)=>{
+          const b=el('button','simonBtn');b.style.background=c[0];
+          b.addEventListener('pointerdown',e=>{
+            e.preventDefault();
+            if(matchOver||done||locked[p])return;
+            if(ci===seq[prog[p]]){
+              prog[p]++;vibrate(10);
+              if(prog[p]>=seq.length){done=true;len=Math.min(len+1,7);scoreRound(p,L('حافظهٔ قوی! 🌈 +۱','Great memory! 🌈 +1'),L('حریف زودتر کاملش کرد!','Opponent completed it first!'),round);}
+            }else{
+              locked[p]=true;mkFlash(halfOf(p),PH.lock(),900);
+              if(locked[0]&&locked[1]){done=true;later(()=>{if(matchOver)return;flashBoth(PH.bothWrong(),PH.bothWrong(),1000);later(round,1100);},950);}
+            }
+          });
+          grid.appendChild(b);
+        });
+        inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+      });
+    }
+  }
+  round();
+}
+function startPattern(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const on=shuffle([0,1,2,3,4,5,6,7,8]).slice(0,4).sort();
+    const cells=i=>`<div class="patGrid">${[...Array(9)].map((_,c)=>`<div class="patCell${on.includes(c)&&i?' onCell':''}"></div>`).join('')}</div>`;
+    pads('',`<div class="padSub">${L('الگو رو حفظ کن!','Memorize the pattern!')}</div>`+cells(true));
+    later(()=>{
+      if(matchOver)return;clearHalves();
+      const sel=[new Set(),new Set()];let done=false;
+      [halfBottom,halfTop].forEach((half,p)=>{
+        const w=el('div','padWrap');
+        const inner=el('div','qWrap',`<div class="padSub">${L('خونه‌های روشن رو بزن!','Tap the cells that were lit!')}</div>`);
+        const grid=el('div','patGrid');
+        [...Array(9)].forEach((_,c)=>{
+          const b=el('button','patCell patBtn');
+          b.addEventListener('pointerdown',e=>{
+            e.preventDefault();
+            if(matchOver||done)return;
+            if(sel[p].has(c))return;
+            if(on.includes(c)){
+              sel[p].add(c);b.classList.add('onCell');vibrate(10);
+              if(sel[p].size>=4){done=true;scoreRound(p,L('کپی دقیق! 🧩 +۱','Perfect copy! 🧩 +1'),L('حریف زودتر کامل کرد!','Opponent finished first!'),round);}
+            }else{b.style.background='rgba(233,115,102,.5)';later(()=>b.style.background='',350);}
+          });
+          grid.appendChild(b);
+        });
+        inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+      });
+    },2300);
+  }
+  round();
+}
+function startColorMem(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const h=rnd(0,359),s=rnd(55,85),l=rnd(45,65);
+    const base=`hsl(${h},${s}%,${l}%)`;
+    pads('',`<div class="padSub">${L('این رنگ رو حفظ کن!','Memorize this color!')}</div><div class="swatchBig" style="background:${base}"></div>`);
+    later(()=>{
+      if(matchOver)return;
+      const idx=rnd(0,3);
+      const opts=[...Array(4)].map((_,i)=>{
+        if(i===idx)return base;
+        return `hsl(${(h+rnd(18,45)*(rnd(0,1)?1:-1)+360)%360},${s}%,${Math.min(80,Math.max(30,l+rnd(-12,12)))}%)`;
+      });
+      optionRace({
+        html:`<div class="qWrap"><div class="padSub">${L('کدوم رنگ بود؟','Which color was it?')}</div><div class="swatchRow">${opts.map((c,i)=>`<button class="opt swatch" data-v="${i}" style="background:${c}"></button>`).join('')}</div></div>`,
+        correct:idx,next:round
+      });
+    },2000);
+  }
+  round();
+}
+const ODD_SETS=[['🙂','🙃'],['🐱','🐈'],['⭐','🌟'],['🍎','🍑'],['🔵','🟣'],['🌙','🌛'],['🐶','🐺'],['❤️','🧡'],['🌻','🌼'],['😀','😃']];
+function startOdd(){
+  function round(){
+    if(matchOver)return;
+    const set=ODD_SETS[rnd(0,ODD_SETS.length-1)];
+    const oddAt=rnd(0,11);
+    const cells=[...Array(12)].map((_,i)=>`<button class="opt oddCell" data-v="${i===oddAt?'x':'n'+i}">${i===oddAt?set[1]:set[0]}</button>`).join('');
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('وصلهٔ ناجور رو پیدا کن و بزن!','Find and tap the odd one out!')}</div><div class="oddGrid">${cells}</div></div>`,
+      correct:'x',next:round
+    });
+  }
+  round();
+}
+const ARROWS=[['⬆️',0],['⬇️',1],['⬅️',2],['➡️',3]];
+function startArrow(){
+  function round(){
+    if(matchOver)return;
+    const a=ARROWS[rnd(0,3)];
+    optionRace({
+      html:`<div class="qWrap"><div class="arrowShow">${a[0]}</div><div class="padSub">${L('دکمهٔ هم‌جهت رو بزن!','Tap the matching direction!')}</div><div class="optRow">${ARROWS.map(x=>`<button class="btn opt arrowBtn" data-v="${x[1]}"><span>${x[0]}</span></button>`).join('')}</div></div>`,
+      correct:a[1],wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+const STROOP=[[['قرمز','RED'],'#E97366'],[['آبی','BLUE'],'#5E9FE8'],[['سبز','GREEN'],'#72BC8F'],[['زرد','YELLOW'],'#EAC26B']];
+const sname=i=>L(STROOP[i][0][0],STROOP[i][0][1]);
+function startStroop(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const wi=rnd(0,3);
+    const match=rnd(0,1)===1;
+    const ci=match?wi:(wi+rnd(1,3))%4;
+    let done=false;
+    const ps=pads('tapzone',`<div class="padSub">${L('فقط اگر معنی کلمه با رنگش یکی بود بزن!','Tap ONLY if the word matches its color!')}</div><div class="stroopWord" style="color:${STROOP[ci][1]}">${sname(wi)}</div>`,(p)=>{
+      if(matchOver||done)return;done=true;
+      if(match)scoreRound(p,L('درست دیدی! 👁️ +۱','Sharp eye! 👁️ +1'),PH.oppFaster(),round);
+      else scoreRound(1-p,PH.oppWrong(),L('معنی با رنگ یکی نبود! ❌ +۱ حریف','They didn\'t match! ❌ +1 opponent'),round);
+    });
+    later(()=>{
+      if(matchOver||done)return;done=true;
+      if(match){flashBoth(L('دیر شد! یکی بودن و هیچ‌کس نزد 🙅','Too slow! They matched and nobody tapped 🙅'),L('دیر شد! یکی بودن و هیچ‌کس نزد 🙅','Too slow! They matched and nobody tapped 🙅'),1100);later(round,1200);}
+      else{flashBoth(L('آفرین، درست بود که نزدید 👌','Right call — no tap! 👌'),L('آفرین، درست بود که نزدید 👌','Right call — no tap! 👌'),1000);later(round,1100);}
+    },rnd(1700,2600));
+  }
+  round();
+}
+function startRStroop(){
+  function round(){
+    if(matchOver)return;
+    const wi=rnd(0,3);
+    const ci=(wi+rnd(1,3))%4;
+    const order=shuffle([0,1,2,3]);
+    optionRace({
+      html:`<div class="qWrap"><div class="stroopWord" style="color:${STROOP[ci][1]}">${sname(wi)}</div><div class="padSub">${L('دکمهٔ هم‌رنگ «معنی» کلمه رو بزن، نه رنگ نوشته!','Tap the button matching the word\'s MEANING, not its ink color!')}</div><div class="optRow">${order.map(i=>`<button class="opt swatch" data-v="${i}" style="background:${STROOP[i][1]}"></button>`).join('')}</div></div>`,
+      correct:wi,wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+function startBigger(){
+  function round(){
+    if(matchOver)return;
+    let a=rnd(11,99),b=rnd(11,99);
+    if(a===b)b=a+rnd(1,5);
+    const correct=a>b?'a':'b';
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('عدد بزرگ‌تر رو بزن!','Tap the bigger number!')}</div><div class="numRow"><button class="btn num opt" data-v="a">${toFa(a)}</button><button class="btn num opt" data-v="b">${toFa(b)}</button></div><div class="padSub qNote">${L('اشتباه بزنی، امتیاز به حریف می‌رسه!','Wrong tap gives your opponent the point!')}</div></div>`,
+      correct,wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+function startBigCircle(){
+  function round(){
+    if(matchOver)return;
+    const s1=rnd(62,86),diff=rnd(5,12),bigger=rnd(0,1);
+    const s2=s1+(bigger?diff:-diff);
+    const correct=s2>s1?'b':'a';
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('دایرهٔ بزرگ‌تر رو بزن!','Tap the bigger circle!')}</div><div class="circRow"><button class="opt circBtn" data-v="a"><span style="width:${s1}px;height:${s1}px"></span></button><button class="opt circBtn" data-v="b"><span style="width:${s2}px;height:${s2}px"></span></button></div></div>`,
+      correct,wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+
+/* ============ precision / timed games ============ */
+function spawnRace({secs,spawnMs,life,makeDot,doneMsg}){
+  // generic per-half spawn game; makeDot(chip,p,score) sets up chip; returns after time up: compare score
+  clearHalves();
+  const score=[0,0];let left=secs;
+  const hud=[];
+  [halfBottom,halfTop].forEach((half,p)=>{
+    const h=el('div','trapHud');half.appendChild(h);hud.push(h);
+  });
+  function updateHud(){
+    hud.forEach((h,p)=>{h.textContent=`${L('امتیاز','Score')}: ${toFa(score[p])} | ${L('زمان','Time')}: ${toFa(left)}`;});
+  }
+  updateHud();
+  const spawner=every(()=>{
+    if(matchOver)return;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const chip=el('button','trapDot');
+      chip.style.left=rnd(5,75)+'%';chip.style.top=rnd(12,72)+'%';
+      makeDot(chip,p,score,updateHud);
+      half.appendChild(chip);
+      later(()=>chip.remove(),life);
+    });
+  },spawnMs);
+  const timer=every(()=>{
+    left--;updateHud();
+    if(left<=0){
+      clearInterval(spawner);clearInterval(timer);
+      gameEl.querySelectorAll('.trapDot').forEach(x=>x.remove());
+      if(score[0]===score[1]){tieRound(()=>spawnRace({secs,spawnMs,life,makeDot,doneMsg}));return;}
+      const w=score[0]>score[1]?0:1;
+      scoreRound(w,doneMsg()+' '+toFa(score[w])+' +۱',L('حریف بیشتر جمع کرد: ','Opponent collected more: ')+toFa(score[1-w]),()=>spawnRace({secs,spawnMs,life,makeDot,doneMsg}));
+    }
+  },1000);
+}
+function startTrap(){
+  spawnRace({secs:20,spawnMs:800,life:1500,doneMsg:()=>L('بردی! ⭐','You win! ⭐'),makeDot:(chip,p,score,upd)=>{
+    const gem=Math.random()<.62;
+    chip.classList.add(gem?'gem':'bomb');chip.textContent=gem?'⭐':'💣';
+    chip.addEventListener('pointerdown',e=>{
+      e.preventDefault();if(matchOver)return;
+      score[p]+=gem?1:-2;vibrate(gem?10:60);upd();chip.remove();
+    });
+  }});
+}
+function startEvens(){
+  spawnRace({secs:18,spawnMs:750,life:1600,doneMsg:()=>L('شکارچی زوج‌ها! 🎲','Even hunter! 🎲'),makeDot:(chip,p,score,upd)=>{
+    const v=rnd(1,99);
+    chip.className='numDot';chip.textContent=toFa(v);
+    chip.addEventListener('pointerdown',e=>{
+      e.preventDefault();if(matchOver)return;
+      score[p]+=v%2===0?1:-1;vibrate(v%2===0?10:60);upd();chip.remove();
+    });
+  }});
+}
+function startMole(){
+  spawnRace({secs:15,spawnMs:650,life:950,doneMsg:()=>L('شکارچی ماهر! 🐹','Master whacker! 🐹'),makeDot:(chip,p,score,upd)=>{
+    chip.classList.add('mole');chip.textContent='🐹';
+    chip.addEventListener('pointerdown',e=>{
+      e.preventDefault();if(matchOver)return;
+      score[p]++;vibrate(10);upd();chip.remove();
+    });
+  }});
+}
+function startHold(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const res=[null,null];const t0=[null,null];let finished=false;
+    const ps=pads('tapzone',`<div class="padIcon">⏱️</div><div class="padBig holdT">${toFa('0.00')}</div><div class="padSub">${L('نگه دار و دقیقاً سرِ ۵ ثانیه ول کن! بعد از ۲ ثانیه تایمر قایم می‌شه!','Hold and release at exactly 5 seconds! Timer hides after 2s!')}</div>`);
+    ps.forEach((d,p)=>{
+      const lab=d.querySelector('.holdT');
+      let iv=null;
+      d.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        if(matchOver||finished||t0[p]!==null||res[p]!==null)return;
+        t0[p]=Date.now();
+        iv=every(()=>{
+          const s=(Date.now()-t0[p])/1000;
+          if(lab)lab.textContent=s<2?toFa(s.toFixed(2)):L('؟؟؟','???');
+        },50);
+      });
+      const up=e=>{
+        if(matchOver||finished||t0[p]===null||res[p]!==null)return;
+        const d5=Math.abs((Date.now()-t0[p])/1000-5);
+        res[p]=d5;if(iv)clearInterval(iv);
+        if(lab)lab.textContent='✓';
+        mkFlash(halfOf(p),L('فاصلهٔ تو: ','Your gap: ')+toFa(d5.toFixed(2))+L(' ثانیه',' s'),900);
+        if(res[0]!==null&&res[1]!==null)finish();
+      };
+      d.addEventListener('pointerup',up);d.addEventListener('pointercancel',up);d.addEventListener('pointerleave',up);
+    });
+    function finish(){
+      finished=true;
+      if(Math.abs(res[0]-res[1])<0.005){tieRound(round);return;}
+      const w=res[0]<res[1]?0:1;
+      scoreRound(w,L('دقیق‌تر بودی! ⏱️ +۱','You were more precise! ⏱️ +1'),L('حریف دقیق‌تر بود!','Opponent was more precise!'),round);
+    }
+    later(()=>{
+      if(matchOver||finished)return;
+      [0,1].forEach(p=>{if(res[p]===null)res[p]=99;});finish();
+    },14000);
+  }
+  round();
+}
+function startShade(){
+  function round(){
+    if(matchOver)return;
+    const h=rnd(0,359),s=rnd(50,80),l=rnd(40,60);
+    const idx=rnd(0,8);
+    const dl=rnd(9,14)*(l>50?-1:1);
+    const cells=[...Array(9)].map((_,i)=>`<button class="opt shadeCell" data-v="${i===idx?'x':'n'+i}" style="background:hsl(${h},${s}%,${i===idx?l+dl:l}%)"></button>`).join('');
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('رنگ متفاوت رو پیدا کن!','Find the different shade!')}</div><div class="shadeGrid">${cells}</div></div>`,
+      correct:'x',next:round
+    });
+  }
+  round();
+}
+const LETTERS_FA=[['ب','پ'],['ج','چ'],['د','ذ'],['ر','ز'],['س','ش'],['ط','ظ'],['ع','غ'],['ک','گ']];
+const LETTERS_EN=[['b','d'],['p','q'],['O','Q'],['I','l'],['m','n'],['u','v'],['C','G'],['E','F']];
+function startLetter(){
+  function round(){
+    if(matchOver)return;
+    const set=(LANG==='fa'?LETTERS_FA:LETTERS_EN)[rnd(0,7)];
+    const flip=rnd(0,1);
+    const main=set[flip],odd=set[1-flip];
+    const oddAt=rnd(0,11);
+    const cells=[...Array(12)].map((_,i)=>`<button class="opt oddCell" data-v="${i===oddAt?'x':'n'+i}" style="font-family:monospace;font-size:24px;font-weight:700">${i===oddAt?odd:main}</button>`).join('');
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('حرف متفاوت رو پیدا کن!','Find the different letter!')}</div><div class="oddGrid">${cells}</div></div>`,
+      correct:'x',next:round
+    });
+  }
+  round();
+}
+function startPin(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    let code='';for(let i=0;i<4;i++)code+=rnd(0,9);
+    const prog=['',''];let done=false;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub">${L('این کد رو زودتر وارد کن:','Type this code first:')}</div><div class="pinShow">${toFa(code)}</div><div class="pinProg" id="pp${p}">– – – –</div>`);
+      const kp=el('div','keypad');
+      shuffle([1,2,3,4,5,6,7,8,9,0]).forEach(dg=>{
+        const b=el('button',null,toFa(dg));
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done)return;
+          if(String(dg)===code[prog[p].length]){
+            prog[p]+=dg;vibrate(10);
+            const pp=inner.querySelector('#pp'+p);
+            if(pp)pp.textContent=toFa(prog[p])+' –'.repeat(4-prog[p].length);
+            if(prog[p].length>=4){done=true;scoreRound(p,L('کد باز شد! 🔓 +۱','Code cracked! 🔓 +1'),L('حریف زودتر وارد کرد!','Opponent typed it first!'),round);}
+          }else{
+            prog[p]='';vibrate(50);
+            const pp=inner.querySelector('#pp'+p);
+            if(pp){pp.textContent='❌';later(()=>{if(pp)pp.textContent='– – – –';},400);}
+          }
+        });
+        kp.appendChild(b);
+      });
+      inner.appendChild(kp);w.appendChild(inner);half.appendChild(w);
+    });
+  }
+  round();
+}
+function startTiles(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const lit=shuffle([...Array(16).keys()]).slice(0,6);
+    const remain=[new Set(lit),new Set(lit)];let done=false;const lockT=[0,0];
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub">${L('همهٔ خونه‌های روشن رو زودتر بزن! خونهٔ اشتباه = مکث','Tap all lit tiles first! Wrong tile = freeze')}</div>`);
+      const grid=el('div','tileGrid');
+      [...Array(16)].forEach((_,c)=>{
+        const b=el('button','tileCell'+(lit.includes(c)?' lit':''));
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done||Date.now()<lockT[p])return;
+          if(remain[p].has(c)){
+            remain[p].delete(c);b.classList.remove('lit');b.style.opacity='.3';vibrate(10);
+            if(remain[p].size===0){done=true;scoreRound(p,L('تمیز کردی! 🧹 +۱','Cleared! 🧹 +1'),L('حریف زودتر تموم کرد!','Opponent cleared first!'),round);}
+          }else{lockT[p]=Date.now()+700;b.style.background='rgba(233,115,102,.5)';later(()=>b.style.background='',400);}
+        });
+        grid.appendChild(b);
+      });
+      inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+    });
+  }
+  round();
+}
+function startGridLight(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const seq=[];for(let i=0;i<8;i++){let c=rnd(0,8);while(seq.length&&c===seq[seq.length-1])c=rnd(0,8);seq.push(c);}
+    const prog=[0,0];let done=false;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub">${L('خونهٔ سبز رو بزن! ۸ بار زودتر از حریف','Tap the green cell! 8 times, faster than your opponent')} <b id="glp${p}">${toFa(0)}/${toFa(8)}</b></div>`);
+      const grid=el('div','glGrid');
+      const cells=[];
+      [...Array(9)].forEach((_,c)=>{
+        const b=el('button','glCell');
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done)return;
+          if(c===seq[prog[p]]){
+            prog[p]++;vibrate(10);paint(p,cells);
+            const lbl=inner.querySelector('#glp'+p);if(lbl)lbl.textContent=toFa(prog[p])+'/'+toFa(8);
+            if(prog[p]>=8){done=true;scoreRound(p,L('مثل برق! ⚡ +۱','Lightning fast! ⚡ +1'),L('حریف زودتر تموم کرد!','Opponent finished first!'),round);}
+          }
+        });
+        grid.appendChild(b);cells.push(b);
+      });
+      inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+      paint(p,cells);
+      function paint(pp,cs){cs.forEach((b,c)=>b.classList.toggle('lit',c===seq[prog[pp]]));}
+    });
+  }
+  round();
+}
+function startSort(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const vals=[];while(vals.length<6){const v=rnd(10,99);if(!vals.includes(v))vals.push(v);}
+    const sorted=[...vals].sort((a,b)=>a-b);
+    const prog=[0,0];let done=false;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub">${L('از کوچیک به بزرگ بزن!','Tap from smallest to largest!')}</div>`);
+      const grid=el('div','nrGrid cols3');
+      vals.forEach(v=>{
+        const b=el('button','nrCell',toFa(v));
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done)return;
+          if(v===sorted[prog[p]]){
+            prog[p]++;b.classList.add('doneCell');vibrate(10);
+            if(prog[p]>=6){done=true;scoreRound(p,L('مرتب شد! 📊 +۱','Sorted! 📊 +1'),L('حریف زودتر مرتب کرد!','Opponent sorted faster!'),round);}
+          }else{b.classList.add('errCell');later(()=>b.classList.remove('errCell'),350);}
+        });
+        grid.appendChild(b);
+      });
+      inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+    });
+  }
+  round();
+}
+
+/* ============ more brain games ============ */
+function startChain(){
+  function round(){
+    if(matchOver)return;
+    const start=rnd(2,9);
+    const ops=[];let val=start;
+    for(let i=0;i<2;i++){
+      const k=rnd(0,2);
+      if(k===0){const a=rnd(2,9);ops.push('+'+toFa(a));val+=a;}
+      else if(k===1){const a=rnd(1,Math.min(9,val-1));ops.push('−'+toFa(a));val-=a;}
+      else{const a=rnd(2,3);ops.push('×'+toFa(a));val*=a;}
+    }
+    const opts=new Set([val]);
+    while(opts.size<4)opts.add(Math.max(0,val+rnd(-5,5))||val+6);
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('از عدد شروع کن و مرحله به مرحله حساب کن:','Start with the number and apply each step:')}</div><div class="question">${toFa(start)} ← ${ops[0]} ← ${ops[1]} = ؟</div><div class="optGrid">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+      correct:val,next:round
+    });
+  }
+  round();
+}
+function startTfMath(){
+  function round(){
+    if(matchOver)return;
+    const a=rnd(3,12),b=rnd(3,12),op=rnd(0,1)?'×':'+';
+    const real=op==='×'?a*b:a+b;
+    const truth=rnd(0,1)===1;
+    let shown=real;
+    if(!truth){shown=real+rnd(1,6)*(rnd(0,1)?1:-1);if(shown===real)shown=real+2;}
+    optionRace({
+      html:`<div class="qWrap"><div class="question">${toFa(a)} ${op} ${toFa(b)} = ${toFa(shown)}</div><div class="numRow"><button class="btn opt" data-v="t">${L('درست ✅','True ✅')}</button><button class="btn opt" data-v="f">${L('غلط ❌','False ❌')}</button></div><div class="padSub qNote">${L('اشتباه بزنی امتیاز به حریف می‌رسه!','Wrong tap gives your opponent the point!')}</div></div>`,
+      correct:truth?'t':'f',wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+function startCompare(){
+  function round(){
+    if(matchOver)return;
+    let a=rnd(2,9),b=rnd(2,9),c=rnd(2,9),d=rnd(2,9);
+    if(a*b===c*d){round();return;}
+    const correct=a*b>c*d?'a':'b';
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('کدوم بزرگ‌تره؟ بزنش!','Which is bigger? Tap it!')}</div><div class="numRow"><button class="btn num opt" style="font-size:26px" data-v="a">${toFa(a)}×${toFa(b)}</button><button class="btn num opt" style="font-size:26px" data-v="b">${toFa(c)}×${toFa(d)}</button></div><div class="padSub qNote">${L('اشتباه = امتیاز برای حریف!','Wrong = point for opponent!')}</div></div>`,
+      correct,wrongMode:'opp',next:round
+    });
+  }
+  round();
+}
+function startOperator(){
+  function round(){
+    if(matchOver)return;
+    const a=rnd(2,9),b=rnd(2,9);
+    const k=rnd(0,2);
+    const res=k===0?a+b:k===1?Math.abs(a-b):a*b;
+    const big=k===0?Math.max(a,b):a;
+    const small=k===0?Math.min(a,b):b;
+    const x=k===1?Math.max(a,b):big,y=k===1?Math.min(a,b):small;
+    const correct=['+','−','×'][k];
+    optionRace({
+      html:`<div class="qWrap"><div class="question">${toFa(x)} □ ${toFa(y)} = ${toFa(res)}</div><div class="padSub">${L('علامت درست رو انتخاب کن!','Pick the missing operator!')}</div><div class="optRow">${['+','−','×'].map(o=>`<button class="btn opt" data-v="${o}" style="font-size:26px">${o}</button>`).join('')}</div></div>`,
+      correct,next:round
+    });
+  }
+  round();
+}
+const CLOCKS=['🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛'];
+function startClock(){
+  function round(){
+    if(matchOver)return;
+    const h=rnd(1,12);
+    const opts=new Set([h]);
+    while(opts.size<4){let v=((h-1+rnd(-3,3)+12)%12)+1;opts.add(v);}
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div style="font-size:80px;line-height:1.1">${CLOCKS[h-1]}</div><div class="padSub">${L('ساعت چنده؟','What time is it?')}</div><div class="optRow">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+      correct:h,next:round
+    });
+  }
+  round();
+}
+const FARM=['🐑','🐄','🐖','🐔'];
+function startSheep(){
+  function round(){
+    if(matchOver)return;
+    const targetN=rnd(4,8);
+    const others=rnd(5,8);
+    const items=[];
+    for(let i=0;i<targetN;i++)items.push(FARM[0]);
+    for(let i=0;i<others;i++)items.push(FARM[rnd(1,3)]);
+    shuffle(items);
+    let em='';
+    items.forEach(it=>{em+=`<b style="left:${rnd(8,92)}%;top:${rnd(12,86)}%">${it}</b>`;});
+    const opts=new Set([targetN]);
+    while(opts.size<4)opts.add(Math.max(1,targetN+rnd(-2,2)));
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div class="dotBox">${em}</div><div class="padSub">${L('چند تا 🐑 می‌بینی؟','How many 🐑 do you see?')}</div><div class="optRow">${arr.map(v=>`<button class="btn opt" data-v="${v}">${toFa(v)}</button>`).join('')}</div></div>`,
+      correct:targetN,next:round
+    });
+  }
+  round();
+}
+const EMOJI_POOL=['🐶','🍕','🌙','⚽','🎈','🐱','🍎','🚗','🌸','⭐'];
+function startEmojiSeq(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const seq=shuffle(EMOJI_POOL.slice()).slice(0,4);
+    pads('',`<div class="padSub">${L('ترتیب رو حفظ کن!','Memorize the order!')}</div><div style="font-size:44px;letter-spacing:6px">${seq.join('')}</div>`);
+    later(()=>{
+      if(matchOver)return;
+      const correct=seq.join('');
+      const opts=new Set([correct]);
+      while(opts.size<4){
+        const c=seq.slice();
+        if(rnd(0,1)){const i=rnd(0,3);let j=rnd(0,3);while(j===i)j=rnd(0,3);[c[i],c[j]]=[c[j],c[i]];}
+        else{c[rnd(0,3)]=EMOJI_POOL[rnd(0,9)];}
+        const s=c.join('');if(s!==correct)opts.add(s);
+      }
+      const arr=shuffle([...opts]);
+      optionRace({
+        html:`<div class="qWrap"><div class="padSub">${L('ترتیب درست کدوم بود؟','Which order was correct?')}</div><div class="optGrid" style="grid-template-columns:1fr">${arr.map(v=>`<button class="btn opt" data-v="${v}" style="font-size:26px;letter-spacing:4px">${v}</button>`).join('')}</div></div>`,
+        correct,next:round
+      });
+    },2200);
+  }
+  round();
+}
+const WORDS_FA=['کتاب','مداد','درخت','باران','دریا','ستاره','خورشید','پنجره','گلدان','مهتاب'];
+const WORDS_EN=['APPLE','HOUSE','WATER','MUSIC','LIGHT','DREAM','BEACH','TIGER','CLOUD','SMILE'];
+function startScramble(){
+  function round(){
+    if(matchOver)return;
+    const list=LANG==='fa'?WORDS_FA:WORDS_EN;
+    const word=list[rnd(0,list.length-1)];
+    let mixed=word.split('');
+    let guard=0;
+    do{shuffle(mixed);guard++;}while(mixed.join('')===word&&guard<10);
+    const opts=new Set([word]);
+    while(opts.size<4)opts.add(list[rnd(0,list.length-1)]);
+    const arr=shuffle([...opts]);
+    optionRace({
+      html:`<div class="qWrap"><div class="padSub">${L('حروف به‌هم‌ریخته کدوم کلمه‌ست؟','Which word is scrambled here?')}</div><div class="question" style="letter-spacing:5px">${mixed.join(' ')}</div><div class="optGrid">${arr.map(v=>`<button class="btn opt" data-v="${v}">${v}</button>`).join('')}</div></div>`,
+      correct:word,next:round
+    });
+  }
+  round();
+}
+
+/* ============ classic & luck games ============ */
+function startPong(){
+  clearHalves();
+  const cv=el('canvas','pongCv');
+  gameEl.appendChild(cv);cleanups.push(()=>cv.remove());
+  const ctx=cv.getContext('2d');
+  let W=0,H=0;
+  function resize(){W=cv.width=gameEl.clientWidth;H=cv.height=gameEl.clientHeight;}
+  resize();window.addEventListener('resize',resize);cleanups.push(()=>window.removeEventListener('resize',resize));
+  const mainSize=()=>LS?W:H,crossSize=()=>LS?H:W;
+  const PW=110,PH=14,M=26,R=10;
+  const pad=[{c:crossSize()/2},{c:crossSize()/2}];
+  let bm=0,bc=0,vm=0,vc=0,running=false,msg=L('آماده؟','Ready?');
+  function reset(dir){
+    bm=mainSize()/2;bc=crossSize()/2;
+    const sp=Math.max(4.2,mainSize()/160);
+    vm=sp*dir;vc=(Math.random()*2-1)*sp*.7;
+    running=false;msg=L('آماده؟','Ready?');
+    later(()=>{running=true;msg='';},1100);
+  }
+  reset(rnd(0,1)?1:-1);
+  cv.addEventListener('pointermove',e=>{
+    if(e.pointerType!=='touch'&&e.buttons===0)return;
+    const rect=cv.getBoundingClientRect();
+    const x=e.clientX-rect.left,y=e.clientY-rect.top;
+    const m=LS?x:y,c=LS?y:x;
+    const p=m>mainSize()/2?0:1;
+    pad[p].c=Math.max(PW/2,Math.min(crossSize()-PW/2,c));
+  });
+  cv.addEventListener('pointerdown',e=>{
+    const rect=cv.getBoundingClientRect();
+    const x=e.clientX-rect.left,y=e.clientY-rect.top;
+    const m=LS?x:y,c=LS?y:x;
+    const p=m>mainSize()/2?0:1;
+    pad[p].c=Math.max(PW/2,Math.min(crossSize()-PW/2,c));
+  });
+  function point(w){
+    running=false;
+    if(addWin(w)){return;}
+    msg=w===0?L('امتیاز صورتی! 🏓','Point pink! 🏓'):L('امتیاز آبی! 🏓','Point blue! 🏓');
+    later(()=>reset(w===0?-1:1),1000);
+  }
+  const loop=every(()=>{
+    if(matchOver){clearInterval(loop);return;}
+    if(running){
+      bm+=vm;bc+=vc;
+      if(bc<R){bc=R;vc=-vc;}
+      if(bc>crossSize()-R){bc=crossSize()-R;vc=-vc;}
+      // paddle 0 at high-main side, paddle 1 at low-main side
+      if(bm>mainSize()-M-PH-R&&bm<mainSize()-M&&vm>0&&Math.abs(bc-pad[0].c)<PW/2+R){vm=-vm*1.04;vc+=(bc-pad[0].c)*.06;bm=mainSize()-M-PH-R;}
+      if(bm<M+PH+R&&bm>M&&vm<0&&Math.abs(bc-pad[1].c)<PW/2+R){vm=-vm*1.04;vc+=(bc-pad[1].c)*.06;bm=M+PH+R;}
+      if(bm<-30)point(0);
+      if(bm>mainSize()+30)point(1);
+    }
+    // draw
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,.14)';
+    if(LS){for(let y=0;y<H;y+=26)ctx.fillRect(W/2-1,y,2,14);}
+    else{for(let x=0;x<W;x+=26)ctx.fillRect(x,H/2-1,14,2);}
+    const drawPad=(p,color)=>{
+      ctx.fillStyle=color;
+      const m=p===0?mainSize()-M-PH:M;
+      if(LS)ctx.fillRect(m,pad[p].c-PW/2,PH,PW);
+      else ctx.fillRect(pad[p].c-PW/2,m,PW,PH);
+    };
+    drawPad(0,'#F2708A');drawPad(1,'#5E9FE8');
+    ctx.fillStyle='#fff';ctx.beginPath();
+    if(LS)ctx.arc(bm,bc,R,0,7);else ctx.arc(bc,bm,R,0,7);
+    ctx.fill();
+    if(msg){
+      ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='700 20px sans-serif';ctx.textAlign='center';
+      if(LS){ctx.fillText(msg,W/2,H/2-20);}
+      else{
+        ctx.save();ctx.translate(W/2,H/2+46);ctx.fillText(msg,0,0);ctx.restore();
+        ctx.save();ctx.translate(W/2,H/2-46);ctx.rotate(Math.PI);ctx.fillText(msg,0,0);ctx.restore();
+      }
+    }
+  },16);
+}
+const TTT_LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function startTtt(){
+  let starter=0;
+  function round(){
+    if(matchOver)return;clearHalves();
+    const board=Array(9).fill(null);let turn=starter;starter=1-starter;let over=false;
+    const bd=el('div','tttBoard');
+    const turnT=el('div','tttTurn');gameEl.appendChild(turnT);cleanups.push(()=>turnT.remove());
+    const turnB=el('div','tttTurn');turnB.style.top='9%';turnB.style.bottom='auto';turnB.style.transform=LS?'':'rotate(180deg)';gameEl.appendChild(turnB);cleanups.push(()=>turnB.remove());
+    function paintTurn(){
+      const name=turn===0?L('نوبت صورتی ✕','Pink\'s turn ✕'):L('نوبت آبی ○','Blue\'s turn ○');
+      turnT.innerHTML=`<span style="color:var(--p${turn+1})">●</span> ${name}`;
+      turnB.innerHTML=turnT.innerHTML;
+    }
+    paintTurn();
+    const cells=[];
+    board.forEach((_,i)=>{
+      const c=el('button','tttCell');
+      c.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        if(matchOver||over||board[i]!==null)return;
+        board[i]=turn;c.textContent=turn===0?'✕':'○';c.classList.add('m'+turn);vibrate(10);
+        const win=TTT_LINES.find(ln=>ln.every(x=>board[x]===turn));
+        if(win){
+          over=true;win.forEach(x=>cells[x].classList.add('winCell'));
+          later(()=>scoreRound(turn,L('سه تا ردیف! ❌⭕ +۱','Three in a row! ❌⭕ +1'),L('حریف ردیف کرد!','Opponent lined up!'),round),700);
+        }else if(board.every(x=>x!==null)){
+          over=true;later(()=>tieRound(round),500);
+        }else{turn=1-turn;paintTurn();}
+      });
+      bd.appendChild(c);cells.push(c);
+    });
+    gameEl.appendChild(bd);cleanups.push(()=>bd.remove());
+  }
+  round();
+}
+function startC4(){
+  let starter=0;
+  function round(){
+    if(matchOver)return;clearHalves();
+    const rows=6,cols=7;
+    const grid=Array(rows*cols).fill(null);let turn=starter;starter=1-starter;let over=false;
+    const bd=el('div','c4Board');
+    const turnT=el('div','tttTurn');gameEl.appendChild(turnT);cleanups.push(()=>turnT.remove());
+    const turnB=el('div','tttTurn');turnB.style.top='6%';turnB.style.bottom='auto';turnB.style.transform=LS?'':'rotate(180deg)';gameEl.appendChild(turnB);cleanups.push(()=>turnB.remove());
+    function paintTurn(){
+      const name=turn===0?L('نوبت صورتی','Pink\'s turn'):L('نوبت آبی','Blue\'s turn');
+      turnT.innerHTML=`<span style="color:var(--p${turn+1})">●</span> ${name}`;turnB.innerHTML=turnT.innerHTML;
+    }
+    paintTurn();
+    const cells=[];
+    for(let i=0;i<rows*cols;i++){
+      const c=el('button','c4Cell');
+      const col=i%cols;
+      c.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        if(matchOver||over)return;
+        let row=-1;
+        for(let r=rows-1;r>=0;r--){if(grid[r*cols+col]===null){row=r;break;}}
+        if(row<0)return;
+        const idx=row*cols+col;
+        grid[idx]=turn;cells[idx].classList.add('c4p'+turn);vibrate(10);
+        const win=findC4(grid,rows,cols,idx,turn);
+        if(win){
+          over=true;win.forEach(x=>cells[x].classList.add('winCell'));
+          later(()=>scoreRound(turn,L('چهارتایی! 🔵 +۱','Four in a row! 🔵 +1'),L('حریف ردیف کرد!','Opponent connected four!'),round),800);
+        }else if(grid.every(x=>x!==null)){over=true;later(()=>tieRound(round),500);}
+        else{turn=1-turn;paintTurn();}
+      });
+      bd.appendChild(c);cells.push(c);
+    }
+    gameEl.appendChild(bd);cleanups.push(()=>bd.remove());
+  }
+  function findC4(grid,rows,cols,idx,pl){
+    const r0=Math.floor(idx/cols),c0=idx%cols;
+    const dirs=[[0,1],[1,0],[1,1],[1,-1]];
+    for(const[dr,dc]of dirs){
+      const line=[idx];
+      for(const s of[1,-1]){
+        let r=r0+dr*s,c=c0+dc*s;
+        while(r>=0&&r<rows&&c>=0&&c<cols&&grid[r*cols+c]===pl){line.push(r*cols+c);r+=dr*s;c+=dc*s;}
+      }
+      if(line.length>=4)return line;
+    }
+    return null;
+  }
+  round();
+}
+function secretPick({html,label,onBoth}){
+  clearHalves();
+  const pick=[null,null];
+  [halfBottom,halfTop].forEach((half,p)=>{
+    const w=el('div','padWrap',`<div class="qWrap">${label?`<div class="padSub">${label(p)}</div>`:''}${html(p)}</div>`);
+    w.addEventListener('pointerdown',e=>{
+      const b=e.target.closest('.opt');if(!b)return;e.preventDefault();
+      if(matchOver||pick[p]!==null)return;
+      pick[p]=b.dataset.v;vibrate(10);
+      mkFlash(halfOf(p),L('انتخاب شد! منتظر حریف...','Locked in! Waiting for opponent...'),9999);
+      if(pick[0]!==null&&pick[1]!==null)later(()=>onBoth(pick[0],pick[1]),450);
+    });
+    half.appendChild(w);
+  });
+}
+function startRps(){
+  const EMO={r:'✊',p:'✋',s:'✌️'};
+  const NAME=k=>({r:L('سنگ','Rock'),p:L('کاغذ','Paper'),s:L('قیچی','Scissors')})[k];
+  function round(){
+    if(matchOver)return;
+    secretPick({
+      label:()=>L('مخفیانه انتخاب کن!','Pick in secret!'),
+      html:()=>`<div class="rpsRow">${['r','p','s'].map(k=>`<button class="btn opt rpsBtn" data-v="${k}">${EMO[k]}</button>`).join('')}</div>`,
+      onBoth:(a,b)=>{
+        gameEl.querySelectorAll('.flash').forEach(x=>x.remove());
+        const show=(me,op)=>`${EMO[me]} ${PH.vs()} ${EMO[op]}`;
+        if(a===b){flashBoth(show(a,b)+'<br>'+PH.tie(),show(b,a)+'<br>'+PH.tie(),1300);later(round,1400);return;}
+        const beats={r:'s',p:'r',s:'p'};
+        const w=beats[a]===b?0:1;
+        scoreRound(w,show(w===0?a:b,w===0?b:a)+'<br>'+L('بردی! 🎉 +۱','You win! 🎉 +1'),show(w===0?b:a,w===0?a:b)+'<br>'+L('باختی این دست رو!','You lost this one!'),round,1500);
+      }
+    });
+  }
+  round();
+}
+function startPenalty(){
+  let shooter=rnd(0,1);
+  const ZONES=['⬅️','🎯','➡️'];
+  function round(){
+    if(matchOver)return;
+    const sh=shooter;shooter=1-shooter;
+    secretPick({
+      label:p=>p===sh?L('تو شوتری ⚽ — کجا شوت می‌کنی؟','You\'re the striker ⚽ — where do you shoot?'):L('تو دروازه‌بانی 🧤 — کجا شیرجه می‌زنی؟','You\'re the keeper 🧤 — where do you dive?'),
+      html:()=>`<div class="penRow">${ZONES.map((z,i)=>`<button class="btn opt penBtn" data-v="${i}">${z}</button>`).join('')}</div>`,
+      onBoth:(a,b)=>{
+        gameEl.querySelectorAll('.flash').forEach(x=>x.remove());
+        const shot=sh===0?a:b,dive=sh===0?b:a;
+        const goal=shot!==dive;
+        const w=goal?sh:1-sh;
+        scoreRound(w,goal?(w===sh?L('گول! ⚽🎉 +۱','GOAL! ⚽🎉 +1'):''):L('مهار کردی! 🧤🔥 +۱','Saved it! 🧤🔥 +1'),goal?L('گول خوردی! 🤦','Conceded! 🤦'):L('شوتت مهار شد! 🧤','Your shot was saved! 🧤'),round,1500);
+      }
+    });
+  }
+  round();
+}
+function startHilo(){
+  function round(){
+    if(matchOver)return;
+    const cur=rnd(2,12);
+    secretPick({
+      label:()=>L('کارت بعدی بزرگ‌تره یا کوچیک‌تر؟ (۱ تا ۱۳)','Is the next card higher or lower? (1–13)'),
+      html:()=>`<div class="qBig">🃏 ${toFa(cur)}</div><div class="numRow"><button class="btn opt" data-v="h">${L('بزرگ‌تر ⬆️','Higher ⬆️')}</button><button class="btn opt" data-v="l">${L('کوچیک‌تر ⬇️','Lower ⬇️')}</button></div>`,
+      onBoth:(a,b)=>{
+        gameEl.querySelectorAll('.flash').forEach(x=>x.remove());
+        let next=rnd(1,13);while(next===cur)next=rnd(1,13);
+        const truth=next>cur?'h':'l';
+        const ok0=a===truth,ok1=b===truth;
+        const res=L('کارت بعدی: ','Next card: ')+toFa(next);
+        if(ok0===ok1){flashBoth(res+'<br>'+PH.tie(),res+'<br>'+PH.tie(),1300);later(round,1400);return;}
+        const w=ok0?0:1;
+        scoreRound(w,res+'<br>'+L('درست حدس زدی! 🃏 +۱','Right guess! 🃏 +1'),res+'<br>'+L('اشتباه حدس زدی!','Wrong guess!'),round,1500);
+      }
+    });
+  }
+  round();
+}
+function startDice(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const rolled=[null,null];let done=false;
+    const DICE=['⚀','⚁','⚂','⚃','⚄','⚅'];
+    const ps=pads('tapzone',`<div class="padIcon">🎲</div><div class="diceShow">❓</div><div class="padSub">${L('بزن تا تاس بریزی — عدد بزرگ‌تر می‌بره!','Tap to roll — higher number wins!')}</div>`,(p,e,d)=>{
+      if(matchOver||done||rolled[p]!==null)return;
+      rolled[p]=-1;
+      const show=d.querySelector('.diceShow');
+      let n=0;
+      const anim=every(()=>{
+        n++;const v=rnd(1,6);
+        if(show)show.textContent=DICE[v-1]+' '+toFa(v);
+        if(n>=8){
+          clearInterval(anim);
+          rolled[p]=rnd(1,6);
+          if(show)show.textContent=DICE[rolled[p]-1]+' '+toFa(rolled[p]);
+          vibrate(20);
+          if(rolled[0]>0&&rolled[1]>0){
+            done=true;
+            later(()=>{
+              if(rolled[0]===rolled[1]){tieRound(round);return;}
+              const w=rolled[0]>rolled[1]?0:1;
+              scoreRound(w,L('تاس بلندتر! 🎲 +۱','Higher roll! 🎲 +1'),L('تاس حریف بلندتر بود!','Opponent rolled higher!'),round);
+            },700);
+          }
+        }
+      },90);
+    });
+  }
+  round();
+}
+function startBalloon(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const popAt=rnd(95,175);
+    const size=[24,24];const state=[0,0]; // 0=idle 1=holding 2=done 3=popped
+    let finished=false;
+    const ps=pads('tapzone',`<div class="padSub">${L('نگه دار تا بادکنک بزرگ بشه — ولی قبل ترکیدن ول کن! بزرگ‌تر می‌بره.','Hold to inflate — release before it pops! Bigger balloon wins.')}</div><div class="balloonWrap"><div class="balloonC" style="width:24px;height:24px"></div></div><div class="padSub bstat"></div>`);
+    ps.forEach((d,p)=>{
+      const ball=d.querySelector('.balloonC');
+      const stat=d.querySelector('.bstat');
+      let iv=null;
+      d.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        if(matchOver||finished||state[p]!==0)return;
+        state[p]=1;
+        iv=every(()=>{
+          if(state[p]!==1)return;
+          size[p]+=2.2;
+          if(ball){ball.style.width=size[p]+'px';ball.style.height=size[p]+'px';}
+          if(size[p]>=popAt){
+            state[p]=3;clearInterval(iv);
+            if(ball){ball.style.background='transparent';ball.textContent='💥';ball.style.fontSize='40px';}
+            vibrate(80);
+            if(stat)stat.textContent=L('ترکید!','Popped!');
+            check();
+          }
+        },60);
+      });
+      const up=e=>{
+        if(matchOver||finished||state[p]!==1)return;
+        state[p]=2;if(iv)clearInterval(iv);
+        if(stat)stat.textContent=L('ثبت شد ✓','Locked ✓');
+        check();
+      };
+      d.addEventListener('pointerup',up);d.addEventListener('pointercancel',up);d.addEventListener('pointerleave',up);
+    });
+    function check(){
+      if(state[0]<2||state[1]<2)return;
+      finished=true;
+      later(()=>{
+        const pop0=state[0]===3,pop1=state[1]===3;
+        if(pop0&&pop1){tieRound(round);return;}
+        let w;
+        if(pop0)w=1;else if(pop1)w=0;
+        else{
+          if(Math.abs(size[0]-size[1])<1){tieRound(round);return;}
+          w=size[0]>size[1]?0:1;
+        }
+        scoreRound(w,L('بادکنک بزرگ‌تر! 🎈 +۱','Bigger balloon! 🎈 +1'),L('باختی این دست رو! 💥','You lost this one! 💥'),round);
+      },600);
+    }
+    later(()=>{
+      if(matchOver||finished)return;
+      [0,1].forEach(p=>{if(state[p]<2)state[p]=state[p]===1?2:2;});
+      check();
+    },15000);
+  }
+  round();
+}
+function startPairs(){
+  function round(){
+    if(matchOver)return;clearHalves();
+    const icons=shuffle(EMOJI_POOL.slice()).slice(0,4);
+    const deck=shuffle([...icons,...icons]);
+    let done=false;
+    [halfBottom,halfTop].forEach((half,p)=>{
+      const w=el('div','padWrap');
+      const inner=el('div','qWrap',`<div class="padSub">${L('جفت‌ها رو پیدا کن! اولین نفری باش که هر ۴ جفت رو جمع می‌کنه','Find the pairs! First to match all 4 wins')}</div>`);
+      const grid=el('div','cardsGrid');
+      let open=[];let matched=0;let busy=false;
+      deck.forEach((ic,i)=>{
+        const b=el('button','mcard','❓');
+        b.dataset.i=i;
+        b.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          if(matchOver||done||busy)return;
+          if(b.classList.contains('open')||b.classList.contains('done'))return;
+          b.classList.add('open');b.textContent=ic;vibrate(8);
+          open.push({b,ic});
+          if(open.length===2){
+            busy=true;
+            const[x,y]=open;
+            later(()=>{
+              if(x.ic===y.ic){
+                x.b.classList.add('done');y.b.classList.add('done');matched++;
+                if(matched>=4&&!done){done=true;scoreRound(p,L('همه رو جفت کردی! 🎴 +۱','All matched! 🎴 +1'),L('حریف زودتر جفت کرد!','Opponent matched them first!'),round);}
+              }else{[x,y].forEach(o=>{o.b.classList.remove('open');o.b.textContent='❓';});}
+              open=[];busy=false;
+            },550);
+          }
+        });
+        grid.appendChild(b);
+      });
+      inner.appendChild(grid);w.appendChild(inner);half.appendChild(w);
+    });
+  }
+  round();
+}
+
+/* ============ registry & menu ============ */
+const TAGS={reflex:['واکنش','Reflex'],speed:['سرعت','Speed'],brain:['فکری','Brain'],prec:['دقت','Precision'],classic:['کلاسیک','Classic'],luck:['شانس','Luck']};
+const GAMES=[
+ {id:'reaction',icon:'⚡',nf:'دوئل واکنش',ne:'Reflex Duel',df:'صبر کن سبز بشه؛ اولین ضربه می‌بره. زود بزنی امتیاز حریفه!',de:'Wait for green; first tap wins. Tap early and the point goes to your rival!',tag:'reflex',target:5,start:startReaction},
+ {id:'draw',icon:'🤠',nf:'هفت‌تیرکش',ne:'Quick Draw',df:'فقط با کلمهٔ «حالا!» شلیک کن — کلمه‌های قلابی گولت نزنن!',de:'Fire only on “NOW!” — don\'t fall for the fake words!',tag:'reflex',target:5,start:startDraw},
+ {id:'potato',icon:'💣',nf:'بمب داغ',ne:'Hot Bomb',df:'بمب رو با ضربه پاس بده؛ تو دست هر کی بترکه باخته!',de:'Tap to pass the bomb; whoever holds it when it blows loses!',tag:'reflex',target:3,start:startPotato},
+ {id:'timing',icon:'🎯',nf:'ضربهٔ دقیق',ne:'Perfect Timing',df:'نشانگر متحرک رو دقیقاً وسط ناحیهٔ سبز متوقف کن.',de:'Stop the moving marker dead-center in the green zone.',tag:'reflex',target:5,start:startTiming},
+ {id:'stroop',icon:'🌗',nf:'رنگ و کلمه',ne:'Color vs Word',df:'فقط وقتی معنی کلمه با رنگ نوشته یکیه ضربه بزن.',de:'Tap only when the word matches its ink color.',tag:'reflex',target:5,start:startStroop},
+ {id:'tap',icon:'👆',nf:'جنگ کلیک',ne:'Tap War',df:'۱۰ ثانیه فرصت داری؛ هر کی بیشتر ضربه بزنه می‌بره!',de:'10 seconds; most taps wins!',tag:'speed',target:3,start:startTap},
+ {id:'tug',icon:'🪢',nf:'طناب‌کشی',ne:'Tug of War',df:'با ضربه‌های پشت‌سرهم گره رو به سمت خودت بکش.',de:'Tap rapidly to drag the knot to your side.',tag:'speed',target:5,start:startTug},
+ {id:'swipe',icon:'🧽',nf:'مسابقهٔ سابیدن',ne:'Scrub Race',df:'انگشتت رو تندتند بکش تا نوارت زودتر پر بشه.',de:'Scrub your finger fast to fill your bar first.',tag:'speed',target:3,start:startSwipe},
+ {id:'numrace',icon:'🔢',nf:'دنبال اعداد',ne:'Number Hunt',df:'اعداد ۱ تا ۱۲ رو به ترتیب پیدا کن و بزن.',de:'Find and tap 1–12 in order, fast.',tag:'speed',target:3,start:startNumRace},
+ {id:'sort',icon:'📊',nf:'صعودی بزن',ne:'Sort Sprint',df:'۶ عدد رو از کوچیک به بزرگ زودتر از حریف بزن.',de:'Tap 6 numbers from smallest to largest before your rival.',tag:'speed',target:3,start:startSort},
+ {id:'pin',icon:'🔐',nf:'کد رو بزن',ne:'PIN Race',df:'کد ۴ رقمی رو زودتر روی صفحه‌کلید وارد کن.',de:'Type the 4-digit code on your keypad first.',tag:'speed',target:3,start:startPin},
+ {id:'tiles',icon:'🟨',nf:'خونه‌های روشن',ne:'Tile Rush',df:'همهٔ خونه‌های روشن رو زودتر از حریف خاموش کن.',de:'Clear all lit tiles before your opponent.',tag:'speed',target:3,start:startTiles},
+ {id:'gridlight',icon:'💡',nf:'دنبال نور',ne:'Follow the Light',df:'هر بار خونهٔ سبز رو بزن؛ ۸ بار زودتر از حریف.',de:'Tap the lit cell 8 times, faster than your rival.',tag:'speed',target:3,start:startGridLight},
+ {id:'math',icon:'🧮',nf:'ریاضی سریع',ne:'Fast Math',df:'اولین جواب درست امتیاز می‌گیره؛ جواب غلط یعنی قفل!',de:'First correct answer scores; a wrong one locks you out!',tag:'brain',target:5,start:startMath},
+ {id:'sum',icon:'➕',nf:'جمع ذهنی',ne:'Mental Sum',df:'سه عدد پشت هم رد می‌شن؛ جمعشون رو سریع بزن.',de:'Three numbers flash by; tap their sum fast.',tag:'brain',target:5,start:startSum},
+ {id:'chain',icon:'⛓️',nf:'زنجیرهٔ ریاضی',ne:'Math Chain',df:'از یک عدد شروع کن و دو مرحله حساب کن.',de:'Start from a number and apply two quick operations.',tag:'brain',target:5,start:startChain},
+ {id:'tfmath',icon:'✅',nf:'درست یا غلط',ne:'True or False',df:'تساوی رو سریع قضاوت کن — اشتباه به نفع حریفه!',de:'Judge the equation fast — mistakes help your rival!',tag:'brain',target:5,start:startTfMath},
+ {id:'evenodd',icon:'⚖️',nf:'زوج یا فرد',ne:'Even or Odd',df:'سریع بگو عدد زوجه یا فرد.',de:'Quick! Is the number even or odd?',tag:'brain',target:5,start:startEvenOdd},
+ {id:'operator',icon:'❓',nf:'عملگر گمشده',ne:'Missing Operator',df:'علامت درست (+، −، ×) رو پیدا کن.',de:'Find the right operator (+, −, ×).',tag:'brain',target:5,start:startOperator},
+ {id:'compare',icon:'🧨',nf:'مقایسهٔ ضرب‌ها',ne:'Which Is Bigger',df:'کدوم ضرب بزرگ‌تره؟ سریع بزن!',de:'Which product is bigger? Tap fast!',tag:'brain',target:5,start:startCompare},
+ {id:'digits',icon:'🧠',nf:'حافظهٔ عددی',ne:'Digit Memory',df:'عدد ۵ رقمی رو حفظ کن و بین گزینه‌های شبیه پیداش کن.',de:'Memorize a 5-digit number, then spot it among lookalikes.',tag:'brain',target:5,start:startDigits},
+ {id:'dots',icon:'🔴',nf:'شمارش نقطه‌ها',ne:'Dot Count',df:'سریع بشمر چند تا نقطه هست.',de:'Count the dots at a glance.',tag:'brain',target:5,start:startDots},
+ {id:'sheep',icon:'🐑',nf:'شمارش گوسفندها',ne:'Count the Sheep',df:'بین حیوون‌ها فقط گوسفندها رو بشمر!',de:'Count only the sheep in the herd!',tag:'brain',target:5,start:startSheep},
+ {id:'clock',icon:'🕒',nf:'ساعت چنده؟',ne:'Clock Reader',df:'ساعت اموجی رو سریع بخون.',de:'Read the emoji clock fast.',tag:'brain',target:5,start:startClock},
+ {id:'simon',icon:'🌈',nf:'حافظهٔ رنگ‌ها',ne:'Color Simon',df:'ترتیب رنگ‌ها رو حفظ کن و زودتر تکرارش کن.',de:'Memorize the color order and repeat it first.',tag:'brain',target:3,start:startSimon},
+ {id:'pattern',icon:'🧩',nf:'کپی الگو',ne:'Pattern Copy',df:'الگوی ۴ خونه‌ای رو حفظ و بازسازی کن.',de:'Memorize the 4-cell pattern and rebuild it.',tag:'brain',target:3,start:startPattern},
+ {id:'colormem',icon:'🎨',nf:'حافظهٔ رنگ',ne:'Color Memory',df:'یک رنگ می‌بینی؛ بین رنگ‌های شبیه پیداش کن.',de:'See a color, then find it among similar shades.',tag:'brain',target:5,start:startColorMem},
+ {id:'emojiseq',icon:'🎭',nf:'ترتیب اموجی‌ها',ne:'Emoji Order',df:'ترتیب ۴ اموجی رو حفظ کن و درستش رو انتخاب کن.',de:'Memorize 4 emojis in order, then pick the right one.',tag:'brain',target:5,start:startEmojiSeq},
+ {id:'scramble',icon:'🔤',nf:'حروف به‌هم‌ریخته',ne:'Word Scramble',df:'کلمهٔ به‌هم‌ریخته رو زودتر تشخیص بده.',de:'Unscramble the word before your rival.',tag:'brain',target:5,start:startScramble},
+ {id:'odd',icon:'🕵️',nf:'وصلهٔ ناجور',ne:'Odd One Out',df:'بین ۱۲ شکل، متفاوت رو زودتر پیدا کن.',de:'Spot the different one among 12.',tag:'prec',target:5,start:startOdd},
+ {id:'letter',icon:'🔤',nf:'شکار حرف',ne:'Letter Hunt',df:'حرف متفاوت رو بین حروف شبیه پیدا کن.',de:'Find the odd letter among lookalikes.',tag:'prec',target:5,start:startLetter},
+ {id:'shade',icon:'🎨',nf:'رنگ متفاوت',ne:'Odd Shade',df:'در شبکهٔ رنگی، خونهٔ متفاوت رو بزن.',de:'Tap the tile with a slightly different shade.',tag:'prec',target:5,start:startShade},
+ {id:'arrow',icon:'🧭',nf:'جهت فلش',ne:'Arrow Match',df:'دکمهٔ هم‌جهت با فلش رو سریع بزن.',de:'Tap the button matching the arrow, fast.',tag:'prec',target:5,start:startArrow},
+ {id:'rstroop',icon:'🖍️',nf:'دکمهٔ رنگی',ne:'Reverse Stroop',df:'دکمهٔ هم‌رنگِ «معنی» کلمه رو بزن، نه رنگ خودش!',de:'Tap the color of the word\'s MEANING, not its ink!',tag:'prec',target:5,start:startRStroop},
+ {id:'bigger',icon:'🔟',nf:'عدد بزرگ‌تر',ne:'Bigger Number',df:'سریع عدد بزرگ‌تر رو بزن.',de:'Tap the bigger number, fast.',tag:'prec',target:5,start:startBigger},
+ {id:'bigcircle',icon:'⭕',nf:'دایرهٔ بزرگ‌تر',ne:'Bigger Circle',df:'دو دایرهٔ تقریباً هم‌اندازه؛ بزرگ‌تره رو تشخیص بده.',de:'Two nearly equal circles; spot the bigger one.',tag:'prec',target:5,start:startBigCircle},
+ {id:'trap',icon:'💥',nf:'ستاره و بمب',ne:'Stars & Bombs',df:'ستاره‌ها رو جمع کن، به بمب‌ها دست نزن!',de:'Collect stars, avoid the bombs!',tag:'prec',target:3,start:startTrap},
+ {id:'evens',icon:'🎲',nf:'شکار زوج‌ها',ne:'Even Hunter',df:'فقط عددهای زوج رو شکار کن!',de:'Hunt only the even numbers!',tag:'prec',target:3,start:startEvens},
+ {id:'mole',icon:'🐹',nf:'شکار همستر',ne:'Whack-a-Mole',df:'۱۵ ثانیه همسترها رو بزن؛ هر کی بیشتر زد می‌بره!',de:'15 seconds of whacking; most hits wins!',tag:'prec',target:3,start:startMole},
+ {id:'hold',icon:'⏱️',nf:'پنج ثانیهٔ طلایی',ne:'Golden 5 Seconds',df:'دکمه رو نگه دار و دقیقاً سرِ ۵ ثانیه ول کن؛ تایمر قایم می‌شه!',de:'Hold and release at exactly 5 seconds; the timer hides!',tag:'prec',target:3,start:startHold},
+ {id:'pong',icon:'🏓',nf:'پینگ‌پنگ لمسی',ne:'Touch Pong',df:'راکتت رو با انگشت بکش و نذار توپ رد بشه.',de:'Drag your paddle; don\'t let the ball pass.',tag:'classic',target:5,start:startPong},
+ {id:'ttt',icon:'❌',nf:'دوز',ne:'Tic-Tac-Toe',df:'سه تا ردیف کن و راند رو ببر.',de:'Line up three to take the round.',tag:'classic',target:3,start:startTtt},
+ {id:'c4',icon:'🔵',nf:'چهار در یک ردیف',ne:'Connect Four',df:'مهره بنداز و زودتر چهارتایی ردیف کن.',de:'Drop discs and connect four first.',tag:'classic',target:2,start:startC4},
+ {id:'rps',icon:'✊',nf:'سنگ کاغذ قیچی',ne:'Rock Paper Scissors',df:'مخفیانه انتخاب کن؛ نتیجه همزمان رو می‌شه.',de:'Pick in secret; reveal together.',tag:'classic',target:5,start:startRps},
+ {id:'penalty',icon:'⚽',nf:'پنالتی',ne:'Penalty Shootout',df:'شوتر و دروازه‌بان مخفیانه انتخاب می‌کنن؛ نقش‌ها عوض می‌شن!',de:'Striker and keeper pick in secret; roles swap each round!',tag:'classic',target:5,start:startPenalty},
+ {id:'pairs',icon:'🎴',nf:'جفت‌های حافظه',ne:'Memory Pairs',df:'کارت‌ها رو برگردون و زودتر همهٔ جفت‌ها رو پیدا کن.',de:'Flip cards and match all pairs first.',tag:'classic',target:3,start:startPairs},
+ {id:'hilo',icon:'🃏',nf:'بالا یا پایین',ne:'Higher or Lower',df:'حدس بزن کارت بعدی بزرگ‌تره یا کوچیک‌تر.',de:'Guess if the next card is higher or lower.',tag:'luck',target:5,start:startHilo},
+ {id:'dice',icon:'🎲',nf:'تاس شانس',ne:'Dice Duel',df:'تاس بریز؛ عدد بلندتر می‌بره!',de:'Roll the dice; higher number wins!',tag:'luck',target:5,start:startDice},
+ {id:'balloon',icon:'🎈',nf:'بادکنک',ne:'Balloon Pump',df:'بادکنک رو بزرگ کن ولی قبل ترکیدن ول کن!',de:'Inflate big — but release before it pops!',tag:'luck',target:3,start:startBalloon},
+];
+
+const DESC={
+  auto:()=>L('بر اساس جهت فعلی صفحه: عمودی ← بالا/پایین، افقی ← چپ/راست.','Based on screen orientation: portrait → top/bottom, wide → left/right.'),
+  portrait:()=>L('بازیکن‌ها بالا و پایین صفحه، روبه‌روی هم (مناسب موبایل روی میز). تصویر نیمهٔ بالا برعکس می‌شه.','Players sit at the top and bottom edges, facing each other (great for a phone on a table). The top half is flipped.'),
+  landscape:()=>L('بازیکن‌ها چپ و راست صفحه، کنار هم روبه‌روی نمایشگر (مناسب تلویزیون لمسی). هیچ نیمه‌ای برعکس نمی‌شه.','Players stand side by side facing the screen, left vs right (great for a touch TV). Nothing is flipped.'),
+};
+function getLayoutPref(){return read('duelLayout')||'auto';}
+function renderMenu(){
+  applyLang();
+  $('#menuHead').innerHTML=`<div class="logo">🎮</div><h1>${L('دوئل دو نفره','Two-Player Duel')}</h1><p>${L('۴۹ بازی رقابتی برای دو نفر روی یک صفحهٔ لمسی — از موبایل تا تلویزیون لمسی. هر بازیکن یک نیمهٔ صفحه رو کنترل می‌کنه و هر کی زودتر به امتیاز هدف برسه برنده‌ست!','49 competitive games for two players on one touch screen — from phones to touch TVs. Each player controls one half of the screen; first to the target score wins!')}</p>`;
+  // language box
+  $('#langBox').innerHTML=`<div class="optTitle">🌐 ${L('زبان','Language')}</div><div class="seg" id="langSeg"><button data-m="fa">🇮🇷 فارسی</button><button data-m="en">🇬🇧 English</button></div>`;
+  const lseg=$('#langSeg');
+  lseg.querySelectorAll('button').forEach(b=>b.classList.toggle('segOn',b.dataset.m===LANG));
+  lseg.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||b.dataset.m===LANG)return;
+    LANG=b.dataset.m;store('duelLang',LANG);renderMenu();
+  });
+  // layout box
+  const m=getLayoutPref();
+  $('#layoutBox').innerHTML=`<div class="optTitle">📺 ${L('چیدمان صفحه','Screen layout')}</div><div class="seg" id="layoutSeg"><button data-m="auto">🔄 ${L('خودکار','Auto')}</button><button data-m="portrait">📱 ${L('بالا/پایین','Top / Bottom')}</button><button data-m="landscape">📺 ${L('چپ/راست','Left / Right')}</button></div><div class="optDesc" id="layoutDesc"></div>`;
+  const seg=$('#layoutSeg');
+  function refreshSeg(){
+    const mm=getLayoutPref();
+    seg.querySelectorAll('button').forEach(b=>b.classList.toggle('segOn',b.dataset.m===mm));
+    $('#layoutDesc').textContent=(DESC[mm]||DESC.auto)();
+  }
+  seg.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    store('duelLayout',b.dataset.m);refreshSeg();
+  });
+  refreshSeg();
+  // cards
+  const list=$('#gameList');list.innerHTML='';
+  GAMES.forEach(g=>{
+    const c=el('button','card',`<div class="cardIcon">${g.icon}</div><div class="cardName">${L(g.nf,g.ne)}</div><div class="cardDesc">${L(g.df,g.de)}</div><div class="cardTag">${L(TAGS[g.tag][0],TAGS[g.tag][1])} · ${L('تا '+toFa(g.target)+' امتیاز','to '+toFa(g.target)+' points')}</div>`);
+    c.dataset.game=g.id;c.style.setProperty('--accent',({reflex:'#f8a529',speed:'#fb718f',brain:'#b69aff',prec:'#5cd8d1',classic:'#55c9f3',luck:'#cde576'})[g.tag]);
+    c.addEventListener('click',()=>openGame(g.id));
+    list.appendChild(c);
+  });
+  setupArcSearch();
+  $('#hint').innerHTML=L('💡 گوشی یا نمایشگر رو بین دو نفر بذارید؛ هر بازیکن نیمهٔ خودش رو لمس می‌کنه.<br>برای تجربهٔ بهتر، مرورگر رو تمام‌صفحه کنید.','💡 Place the phone or display between two players; each player touches their own half.<br>For the best experience, make the browser fullscreen.');
+}
+renderMenu();
+const autoG=urlParams.get('g');
+if(autoG&&GAMES.some(g=>g.id===autoG))openGame(autoG);
+
+function setupArcSearch(){
+ document.getElementById('arcDiscovery')?.remove();const box=document.createElement('div');box.id='arcDiscovery';box.className='optBox';
+ box.innerHTML='<input id="arcSearch" type="search" aria-label="Search games" placeholder="'+L('جست‌وجوی بازی…','Search games…')+'"><div class="arcFilters"></div><p id="arcCount" class="optDesc"></p>';
+ document.getElementById('gameList').before(box);let tag='all';const input=box.querySelector('input');
+ function apply(){let count=0;document.querySelectorAll('.card').forEach(c=>{const g=GAMES.find(g=>g.id===c.dataset.game);const visible=(tag==='all'||g.tag===tag)&&(g.nf+' '+g.ne+' '+g.df+' '+g.de).toLowerCase().includes(input.value.toLowerCase());c.style.display=visible?'':'none';if(visible)count++});box.querySelector('#arcCount').textContent=toFa(count)+' '+L('بازی','games')}
+ ['all',...Object.keys(TAGS)].forEach(k=>{const b=document.createElement('button');b.textContent=k==='all'?L('همه','All'):L(...TAGS[k]);b.classList.toggle('active',k===tag);b.onclick=()=>{tag=k;box.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');apply()};box.querySelector('.arcFilters').appendChild(b)});input.oninput=apply;apply();
+}
+const originalEndMatch=endMatch;
+endMatch=function(w){originalEndMatch(w);if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const layer=document.createElement('div');layer.className='confetti';for(let i=0;i<50;i++){const particle=document.createElement('i');particle.style.left=(Math.random()*100)+'%';particle.style.background=['#f8a529','#55c9f3','#fb718f','#a8e6cf'][i%4];particle.style.animationDelay=(Math.random()*.35)+'s';layer.appendChild(particle)}gameEl.appendChild(layer);later(()=>layer.remove(),2300)};
+
+</script>
+</body>
+</html>

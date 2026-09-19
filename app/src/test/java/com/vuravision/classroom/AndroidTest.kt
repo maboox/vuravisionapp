@@ -243,16 +243,14 @@ class AndroidTest {
         a.store.replace(Lesson())
         views(a.window.decorView)
             .filterIsInstance<Button>()
-            .first { it.text.toString().endsWith(a.s("insert")) }
+            .first { it.text.toString()=="T  ${a.s("text")}" }
             .performClick()
-        val menu = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
-        menu.listView.performItemClick(null, 0, 0)
         val input = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
         views(input.window!!.decorView)
             .filterIsInstance<EditText>()
             .first()
             .setText("Beta classroom")
-        input.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+        views(input.window!!.decorView).filterIsInstance<Button>().first{it.text==a.s("apply")}.performClick()
         assertEquals("Beta classroom", a.store.page.items.single().text)
         a.store.undo()
         assertTrue(a.store.page.items.isEmpty())

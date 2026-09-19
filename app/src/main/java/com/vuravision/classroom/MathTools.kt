@@ -9,15 +9,17 @@ class MathTools {
         var s =
             input
                 .lowercase()
-                .replace(" ", "")
+                .replace(Regex("\\s+"), "")
                 .removePrefix("y=")
                 .replace("−", "-")
                 .replace("×", "*")
                 .replace("÷", "/")
                 .replace("²", "^2")
                 .replace("³", "^3")
-                .replace("π", "pi")
+                .replace("π", "pi").replace("٫", ".").replace("√(", "sqrt(")
         "۰۱۲۳۴۵۶۷۸۹".forEachIndexed { i, c -> s = s.replace(c, ('0'.code + i).toChar()) }
+        "٠١٢٣٤٥٦٧٨٩".forEachIndexed { i,c -> s=s.replace(c,('0'.code+i).toChar()) }
+        s=s.replace(Regex("([0-9)])(?=[a-df-z(])"),"$1*").replace(Regex("x(?=\\d|\\()"),"x*")
         return s.replace(Regex("(\\d|\\))(?=x|\\()"), "$1*")
     }
 
@@ -51,7 +53,7 @@ class MathTools {
 
     companion object {
         fun format(v: Double) =
-            if (abs(v - round(v)) < 1e-9) round(v).toLong().toString()
+            if (abs(v)<9e15 && abs(v - round(v)) < 1e-9) round(v).toLong().toString()
             else "%.6g".format(java.util.Locale.US, v)
     }
 }

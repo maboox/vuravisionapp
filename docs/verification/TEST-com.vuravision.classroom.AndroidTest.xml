@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.vuravision.classroom.AndroidTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-19T10:41:19" hostname="localhost" time="13.664">
+<testsuite name="com.vuravision.classroom.AndroidTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-19T12:22:26" hostname="localhost" time="10.072">
   <properties/>
-  <testcase name="traversalRejected" classname="com.vuravision.classroom.AndroidTest" time="2.883"/>
-  <testcase name="multiplePointersAndUndo" classname="com.vuravision.classroom.AndroidTest" time="3.09"/>
-  <testcase name="boardScreenshot" classname="com.vuravision.classroom.AndroidTest" time="1.937"/>
-  <testcase name="labSnapshots" classname="com.vuravision.classroom.AndroidTest" time="0.627"/>
-  <testcase name="boundedStream" classname="com.vuravision.classroom.AndroidTest" time="0.585"/>
-  <testcase name="missingAssetRejected" classname="com.vuravision.classroom.AndroidTest" time="0.06"/>
-  <testcase name="persianInterface" classname="com.vuravision.classroom.AndroidTest" time="0.881"/>
-  <testcase name="atomicSaveBackup" classname="com.vuravision.classroom.AndroidTest" time="0.035"/>
-  <testcase name="insertTextThroughInterfaceAndUndo" classname="com.vuravision.classroom.AndroidTest" time="1.292"/>
-  <testcase name="archiveRoundTrip" classname="com.vuravision.classroom.AndroidTest" time="0.064"/>
-  <testcase name="gameScreenAndAnswerLock" classname="com.vuravision.classroom.AndroidTest" time="2.181"/>
-  <testcase name="imageExport" classname="com.vuravision.classroom.AndroidTest" time="0.029"/>
+  <testcase name="traversalRejected" classname="com.vuravision.classroom.AndroidTest" time="2.617"/>
+  <testcase name="multiplePointersAndUndo" classname="com.vuravision.classroom.AndroidTest" time="2.447"/>
+  <testcase name="boardScreenshot" classname="com.vuravision.classroom.AndroidTest" time="2.263"/>
+  <testcase name="labSnapshots" classname="com.vuravision.classroom.AndroidTest" time="0.423"/>
+  <testcase name="boundedStream" classname="com.vuravision.classroom.AndroidTest" time="0.042"/>
+  <testcase name="missingAssetRejected" classname="com.vuravision.classroom.AndroidTest" time="0.039"/>
+  <testcase name="persianInterface" classname="com.vuravision.classroom.AndroidTest" time="0.589"/>
+  <testcase name="atomicSaveBackup" classname="com.vuravision.classroom.AndroidTest" time="0.068"/>
+  <testcase name="insertTextThroughInterfaceAndUndo" classname="com.vuravision.classroom.AndroidTest" time="1.096"/>
+  <testcase name="archiveRoundTrip" classname="com.vuravision.classroom.AndroidTest" time="0.049"/>
+  <testcase name="gameScreenAndAnswerLock" classname="com.vuravision.classroom.AndroidTest" time="0.393"/>
+  <testcase name="imageExport" classname="com.vuravision.classroom.AndroidTest" time="0.036"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

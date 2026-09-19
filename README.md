@@ -1,17 +1,29 @@
-# VuraVision Classroom Suite — 1.0.0
+# VuraVision Classroom Suite — 1.1.0
 
-Android 8+, English/Persian. Default screen is the whiteboard. Version code 3. The package ID remains `com.vuravision.classroom.beta` to preserve existing lesson storage; the displayed version is 1.0.0.
+Android 8+, English/Persian, version code 4. The application ID remains `com.vuravision.classroom.beta` for existing lesson compatibility; the displayed release is 1.1.0.
 
-Features: cached multi-touch ink, separate pen/highlighter profiles, 24 vector shapes, page strip and thumbnail management, five floating classroom widgets, 32 games/challenges, 16 labs, English/Persian model management, offline basic shape recognition, and LAN QR/PDF sharing. Your supplied logo is included.
+## Install or build
 
-Tap the active pen/highlighter again for settings. Shapes opens directly from the toolbar. Page controls remain visible. Drag floating tools by their title and minimize with −. Settings → About: tap version text seven times, then reopen Settings → Engineering for raw-pixel touch calibration and thick-tip width. Some controllers do not report distinguishable contact sizes.
+The install folder contains the universal release APK. To build on GitHub, extract this ZIP and push **the contents of VuraVision-1.1/** to the repository root, including `.github/`, `gradle/`, `gradlew` and `app/`. Uploading the ZIP itself will not trigger a build. Actions → Android APK produces a downloadable APK artifact on push. Manual Run workflow also runs the supplied Android device tests on an emulator.
 
-Push the contents inside `VuraVision-1.0/` to your repository root, including `.github/`, `gradlew`, `gradle/` and `app/`; pushing the ZIP alone does not build. A new commit triggers Actions. Download the APK artifact when the run succeeds.
+Java 17 + Android SDK 35: `./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest`. Optional HTML smoke checks: `npm ci && npm test` with Node 22+. They use a DOM and native Canvas, not a full browser or Android WebView.
 
-Recognition requires one Google model download per language, then works offline. The app exposes status/retry/errors and Download Manager diagnostics. A blocked Google endpoint or unavailable Download Manager cannot be fixed by UI code alone. The QR link uses **http**, must use a reachable Wi-Fi/Ethernet address, and remains active for 30 minutes while the app stays open; router client isolation can prevent connections.
+## What changed
 
-The APK is a release-mode build, using a development signing certificate unless you configure repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. Use your own stable key for commercial distribution and compatible future updates. **Export lessons before uninstalling a previous app if its signing certificate differs.** No private signing key is included.
+- Pen dialog: labeled color/thickness, live preview, separate fine/broad-tip appearance, distinct round ink and square opaque marker. Highlighter retains its independent color/width.
+- Dual-tip calibration: raw contact-width thresholds, palm behavior and diagnostics. Quick Guide → tap its heading three times → Engineering. Appearance is also accessible by re-tapping Pen.
+- Area eraser for ink and objects, alongside whole-stroke/object erasing. Undo and Object Actions → Restore erased areas preserve the original editable object. PDF erasures belong to their individual PDF page.
+- Selected object: tap it again for actions. Text supports bold, color, alignment and fitted bounds. Sticky notes have independent background color. Insert no longer duplicates Text or Shapes.
+- Uniform circles/regular shapes; directional line endpoints; cylinder/cone cap proportions. Function graphs retain equal x/y scale, accept `y=2x-5`, `x^2`, `sin(x);cos(x)` and have examples and explanations.
+- Selected PDF: vertical swipe or mouse wheel turns pages, toolbar buttons show the current page; horizontal drag moves the object.
+- Smart pen modes: text, arithmetic/linear/quadratic equation, graph, continuous automatic basic shapes. Circle existing ink, then review/edit recognition before applying. Original ink is retained by default.
+- Bundled Latin image OCR provides an offline option without downloading a language model. Optional Google digital-ink English/Persian models have status, fresh retry and concise diagnostics, including HTTP 404.
+- Discovery: 68 Persian simulations adapted from the supplied HTML, search, reset/pause and Add to board. Arcade: 49 bilingual games with categories/search and celebration effects. The existing 16 bilingual native labs and 32 native games/challenges remain available in a separate catalog.
 
-Local build: Java 17, Android SDK 35, then `./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest`.
+## Release notes and limits
 
-The version number is not a claim that every original-spec requirement has shipped. See `docs/CURRENT_SCOPE.md` and `docs/VERIFICATION.md` for limitations and actual verification.
+See `docs/CHANGES-1.1.md`, `docs/VERIFICATION.md` and `docs/DEVICE_ACCEPTANCE.md`. This version does not claim perfect recognition or hardware certification. Bundled OCR is Latin image recognition, not a general handwriting/formula model. Persian handwriting still requires its Google language model. An HTTP 404 from Google's model service remains an external dependency; a fresh retry is not a guaranteed fix.
+
+The release APK uses a development signing certificate unless the repository has your production secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Use your own stable signing key for distribution. Export `.vura` lessons before uninstalling a differently signed old build. No private key is included.
+
+LAN sharing uses http and a reachable Wi-Fi/Ethernet address. Keep the app open; the link expires after 30 minutes. Router client isolation can prevent access even on the same Wi-Fi. Classroom widgets float within this app, not over other Android apps.
