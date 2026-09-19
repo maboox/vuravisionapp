@@ -1,0 +1,5 @@
+{
+  "command": "clean testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest",
+  "exit_code": 0,
+  "evidence": "Execution runner completion returned exit_code 0 for the clean-build process. The concurrently streamed text log is partial."
+}

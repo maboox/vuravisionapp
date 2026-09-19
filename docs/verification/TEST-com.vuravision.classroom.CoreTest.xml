@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.CoreTest" tests="26" skipped="0" failures="0" errors="0" timestamp="2026-09-19T04:58:41" hostname="localhost" time="0.017">
+  <properties/>
+  <testcase name="projectile" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="undoRestoresNestedStroke" classname="com.vuravision.classroom.CoreTest" time="0.002"/>
+  <testcase name="calibratedPalm" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="unicodeMath" classname="com.vuravision.classroom.CoreTest" time="0.006"/>
+  <testcase name="tapRaceDeadline" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="timing" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="duplicateIdsRejected" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="finiteGeometry" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="unsupportedEquationRejected" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="validPageIndex" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="linearEquation" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="lockedAnswers" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="scaledStrokeHit" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="moveUndo" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="rotatedHit" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="ticTacToeWin" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="acidityLogarithm" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="rpsCycle" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="editClearsRedo" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="rotationRoundTrip" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="undefinedMathRejected" classname="com.vuravision.classroom.CoreTest" time="0.001"/>
+  <testcase name="earlyReaction" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="unsafeAssetRejected" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="oscillatorPeriods" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="tenRounds" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <testcase name="uncalibratedInput" classname="com.vuravision.classroom.CoreTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

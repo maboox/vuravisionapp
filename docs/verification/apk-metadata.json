@@ -1,0 +1,42 @@
+{
+  "sha256": "6d9bd5d5d2e00f93087ab6f751a032d5e6dc35f8cfa9983c5913676863bcf45f",
+  "size_bytes": 34652992,
+  "libraries": [
+    {
+      "library": "lib/arm64-v8a/libdigitalink.so",
+      "load_segment_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "at_least_16k": true
+    },
+    {
+      "library": "lib/armeabi-v7a/libdigitalink.so",
+      "load_segment_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "at_least_16k": false
+    },
+    {
+      "library": "lib/x86/libdigitalink.so",
+      "load_segment_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "at_least_16k": false
+    },
+    {
+      "library": "lib/x86_64/libdigitalink.so",
+      "load_segment_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "at_least_16k": true
+    }
+  ]
+}

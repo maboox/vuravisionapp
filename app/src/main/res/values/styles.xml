@@ -1,10 +1,3 @@
-<resources>
-    <style name="Theme.VuraVision" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">@color/vv_bg</item>
-        <item name="android:navigationBarColor">@color/vv_bg</item>
-        <item name="android:windowBackground">@color/vv_bg</item>
-        <item name="android:colorAccent">@color/vv_orange</item>
-    </style>
-</resources>
+<resources><style name="AppThemeBase" parent="android:style/Theme.Material.Light.NoActionBar">
+<item name="android:fontFamily">sans</item><item name="android:colorAccent">#E46D38</item><item name="android:windowLightStatusBar">false</item><item name="android:statusBarColor">#172A36</item><item name="android:navigationBarColor">#172A36</item>
+</style><style name="AppTheme" parent="AppThemeBase" /></resources>

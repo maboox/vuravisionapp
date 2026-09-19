@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.AndroidTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-19T04:58:33" hostname="localhost" time="7.694">
+  <properties/>
+  <testcase name="traversalRejected" classname="com.vuravision.classroom.AndroidTest" time="2.537"/>
+  <testcase name="multiplePointersAndUndo" classname="com.vuravision.classroom.AndroidTest" time="2.054"/>
+  <testcase name="boardScreenshot" classname="com.vuravision.classroom.AndroidTest" time="1.463"/>
+  <testcase name="labSnapshots" classname="com.vuravision.classroom.AndroidTest" time="0.367"/>
+  <testcase name="boundedStream" classname="com.vuravision.classroom.AndroidTest" time="0.025"/>
+  <testcase name="missingAssetRejected" classname="com.vuravision.classroom.AndroidTest" time="0.032"/>
+  <testcase name="persianInterface" classname="com.vuravision.classroom.AndroidTest" time="0.376"/>
+  <testcase name="atomicSaveBackup" classname="com.vuravision.classroom.AndroidTest" time="0.041"/>
+  <testcase name="insertTextThroughInterfaceAndUndo" classname="com.vuravision.classroom.AndroidTest" time="0.491"/>
+  <testcase name="archiveRoundTrip" classname="com.vuravision.classroom.AndroidTest" time="0.039"/>
+  <testcase name="gameScreenAndAnswerLock" classname="com.vuravision.classroom.AndroidTest" time="0.244"/>
+  <testcase name="imageExport" classname="com.vuravision.classroom.AndroidTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
