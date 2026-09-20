@@ -61,7 +61,22 @@ class UpgradeTest {
   views(a.window.decorView).filterIsInstance<Button>().first{it.contentDescription==a.s("previous")}.performClick();assertEquals(0,a.store.lesson.current)
   views(a.window.decorView).filterIsInstance<Button>().first{it.text.toString().endsWith(a.s("shape"))}.performClick();val gallery=org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog();assertEquals(24,views(gallery.window!!.decorView).filterIsInstance<TextView>().count{label->Shapes.keys.any{label.text==a.s(it)}});capture(gallery.window!!.decorView,"shape-gallery");gallery.dismiss();ctl.pause().stop().destroy()
  }
- @Test @Config(qualifiers="fa-port-xhdpi") fun compactPersianScreenKeepsMenuReachable(){context.getSharedPreferences("vura",0).edit().putString("language","fa").commit();val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get();val root=a.findViewById<View>(android.R.id.content);capture(root,"compact-fa",840,1500);val menu=views(root).filterIsInstance<Button>().first{it.text=="☰"};val rect=Rect();assertTrue(menu.getGlobalVisibleRect(rect));assertTrue(rect.right<=840);ctl.pause().stop().destroy()}
+ @Test @Config(qualifiers="fa-port-xhdpi") fun compactPersianScreenKeepsMenuReachable(){
+  context.getSharedPreferences("vura",0).edit().putString("language","fa").commit()
+  val ctl=Robolectric.buildActivity(MainActivity::class.java).setup()
+  try {
+   val a=ctl.get()
+   val root=a.findViewById<View>(android.R.id.content)
+   capture(root,"compact-fa",840,1500)
+   // The toolbar uses a vector icon; locate its localized accessible name.
+   val menus=views(root).filterIsInstance<Button>().filter{it.contentDescription==a.s("tools")}
+   assertEquals("Expected one accessible toolbar menu",1,menus.size)
+   val menu=menus.single()
+   val rect=Rect()
+   assertTrue("Menu must remain visible in compact Persian layout",menu.getGlobalVisibleRect(rect))
+   assertTrue(rect.right<=840)
+  } finally {ctl.pause().stop().destroy()}
+ }
  @Test fun labAndGameCatalogScreensHaveDescriptionsAndPreviews(){Labs.show(context){it.recycle()};var d=ShadowDialog.getLatestDialog();capture(d.window!!.decorView,"labs-catalog",1920,1080);d.dismiss();Games.show(context);d=ShadowDialog.getLatestDialog();capture(d.window!!.decorView,"games-catalog",1920,1080);d.dismiss()}
  private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
  private fun capture(v:View,name:String?,w:Int=1600,h:Int=900){views(v).forEach{it.setScrollIndicators(0)};v.measure(View.MeasureSpec.makeMeasureSpec(w,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(h,View.MeasureSpec.EXACTLY));v.layout(0,0,w,h);val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);v.draw(Canvas(b));if(name!=null)save(b,name);b.recycle()}
