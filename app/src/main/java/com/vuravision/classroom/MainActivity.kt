@@ -144,7 +144,10 @@ class MainActivity : Activity() {
             header.addView(button(s("games_short")){openExplorer(false)})
         }
         if(prefs.getBoolean("qrEnabled",false))header.addView(button(if(resources.configuration.screenWidthDp<600)"⇧" else s("share_short")){share()}.apply{contentDescription=s("share")})
-        header.addView(button("☰") { menu() }.apply { contentDescription = s("tools") })
+        header.addView(button("☰") { menu() }.apply {
+            id = R.id.main_menu_button
+            contentDescription = s("main_menu")
+        })
         root.addView(header)
         val strip = row().apply { setPadding(dp(12), dp(2), dp(12), dp(2)) }
         if(resources.configuration.screenWidthDp>=720)strip.addView(label(s("workspace").uppercase(Locale.getDefault()),10f,MUTED,true))

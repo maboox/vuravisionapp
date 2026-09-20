@@ -68,10 +68,11 @@ class UpgradeTest {
    val a=ctl.get()
    val root=a.findViewById<View>(android.R.id.content)
    capture(root,"compact-fa",840,1500)
-   // The toolbar uses a vector icon; locate its localized accessible name.
-   val menus=views(root).filterIsInstance<Button>().filter{it.contentDescription==a.s("tools")}
-   assertEquals("Expected one accessible toolbar menu",1,menus.size)
+   // Identify the navigation menu independently of icons and translated labels.
+   val menus=views(root).filterIsInstance<Button>().filter{it.id==R.id.main_menu_button}
+   assertEquals("Expected one main menu button",1,menus.size)
    val menu=menus.single()
+   assertEquals(a.s("main_menu"),menu.contentDescription)
    val rect=Rect()
    assertTrue("Menu must remain visible in compact Persian layout",menu.getGlobalVisibleRect(rect))
    assertTrue(rect.right<=840)

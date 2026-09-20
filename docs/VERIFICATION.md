@@ -1,5 +1,11 @@
 # Version 1.2 verification
 
+## Second supplied GitHub log — unique menu ID correction
+
+`Pasted markdown(4).md` reports 67 tests with one failure at `UpgradeTest.kt:73`: the assertion that exactly one button has the `tools` accessibility label. Source review confirms that both the header navigation menu and the classroom-tools dock button had that label. The previous selector correction was therefore incomplete.
+
+The header menu now has resource ID `main_menu_button` and its own English/Persian accessibility label, `Main menu` / `منوی اصلی`. The test selects by that unique ID, checks the accessible label, and retains its visibility and screen-boundary assertions. No tests are skipped. XML parsing and source/ZIP consistency are checked locally; the Android regression still requires a fresh CI run because the local compiler remains unavailable.
+
 ## Supplied GitHub build log and menu-test correction
 
 The user's `Pasted markdown(3).md` reports successful debug/release Kotlin compilation and 67 completed unit tests, with one failure: `UpgradeTest.compactPersianScreenKeepsMenuReachable`, a `NoSuchElementException`.

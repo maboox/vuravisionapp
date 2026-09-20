@@ -1,6 +1,6 @@
 # VuraVision 1.2 — unverified source checkpoint
 
-**No 1.2 APK is included.** The supplied GitHub run compiled debug/release Kotlin and ran 67 tests, with one failure in the compact Persian menu test. This checkpoint corrects that test's obsolete text-based icon lookup. The correction and full release workflow still require a fresh CI run.
+**No 1.2 APK is included.** The supplied GitHub runs compiled debug/release Kotlin and ran 67 tests, with one failure in the compact Persian menu test. The first selector fix matched two controls sharing a label. This checkpoint gives the main menu a unique resource ID and its own localized accessibility label, and updates the test to use that ID while retaining visibility checks. The correction and full release workflow still require a fresh CI run.
 
 Source changes include independent fine/broad pen styles (default fine-tip contact threshold 5 raw pixels), layer controls and persistence, cached eraser masks, PDF movement without swipe pagination, Smart lasso-only text/formula/graph gestures, hidden default-off QR, revised icons/panels and native implementations of 68 imported lab topics and 49 arcade topics with educational extras.
 
