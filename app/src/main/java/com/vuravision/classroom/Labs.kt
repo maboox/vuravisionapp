@@ -27,7 +27,7 @@ data class LabControl(val label: String, val min: Float, val max: Float, val val
 
 object Labs {
     val keys =
-        listOf("projectile", "pendulum", "spring", "waves", "quadratic", "trig", "ph", "coin") + ExtraLabs.keys
+        NativeLabs.keys + listOf("energy", "triangle_area", "statistics", "dilution", "trig")
 
     fun show(context: Context, insert: (Bitmap) -> Unit) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
@@ -80,7 +80,7 @@ object Labs {
     }
 
     fun controls(key: String) =
-        if(key in ExtraLabs.keys)ExtraLabs.controls(key)else when (key) {
+        if(key in NativeLabs.keys)NativeLabs.controls(key)else if(key in ExtraLabs.keys)ExtraLabs.controls(key)else when (key) {
             "projectile" ->
                 listOf(
                     LabControl("v (m/s)", 5f, 50f, 22f),
@@ -202,9 +202,11 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
     var time = 0.0
     private var last = 0L
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var sampleSeed=42
     private var trials = DoubleArray(1000) { Math.random() }
 
     fun resample() {
+        sampleSeed++
         trials = DoubleArray(1000) { Math.random() }
     }
 
@@ -219,7 +221,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         if (last != 0L && running) time += (now - last).coerceAtMost(50) / 1000.0
         last = now
         render(c, width, height)
-        if(isAttachedToWindow&&running&&key in listOf("projectile","pendulum","spring","waves"))postInvalidateOnAnimation()
+        if(isAttachedToWindow&&running&&(key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting")))postInvalidateOnAnimation()
     }
 
     override fun onAttachedToWindow() {
@@ -282,6 +284,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         c.translate((w - 1000 * scale) / 2, (h - 570 * scale) / 2)
         c.scale(scale, scale)
         text(c, context.s(key), 32f, 44f, 24f)
+        if(key in NativeLabs.keys){NativeLabs.draw(c,key,values,time,sampleSeed,context);c.restore();return}
         val a = values[0].toDouble()
         val b = values.getOrElse(1) { 0f }.toDouble()
         val d = values.getOrElse(2) { 0f }.toDouble()

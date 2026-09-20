@@ -1,29 +1,25 @@
-# VuraVision Classroom Suite — 1.1.0
+# VuraVision 1.2 — unverified source checkpoint
 
-Android 8+, English/Persian, version code 4. The application ID remains `com.vuravision.classroom.beta` for existing lesson compatibility; the displayed release is 1.1.0.
+**No 1.2 APK is included. Kotlin compilation, tests and lint have not completed.**
 
-## Install or build
+Source changes include independent fine/broad pen styles (default fine-tip contact threshold 5 raw pixels), layer controls and persistence, cached eraser masks, PDF movement without swipe pagination, Smart lasso-only text/formula/graph gestures, hidden default-off QR, revised icons/panels and native implementations of 68 imported lab topics and 49 arcade topics with educational extras.
 
-The install folder contains the universal release APK. To build on GitHub, extract this ZIP and push **the contents of VuraVision-1.1/** to the repository root, including `.github/`, `gradle/`, `gradlew` and `app/`. Uploading the ZIP itself will not trigger a build. Actions → Android APK produces a downloadable APK artifact on push. Manual Run workflow also runs the supplied Android device tests on an emulator.
+These are source changes, not verified functional-parity claims. Several simulations are simplified. Game rules, edge cases, device behavior and rendering require further review. Older screenshots and 1.1 documents are historical references only. Legacy HTML/reference code remains, but native catalogs are now the primary route.
 
-Java 17 + Android SDK 35: `./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest`. Optional HTML smoke checks: `npm ci && npm test` with Node 22+. They use a DOM and native Canvas, not a full browser or Android WebView.
+## Build
 
-## What changed
+Requires full JDK 17, Android SDK 35 and Gradle 8.11.1 (wrapper included):
 
-- Pen dialog: labeled color/thickness, live preview, separate fine/broad-tip appearance, distinct round ink and square opaque marker. Highlighter retains its independent color/width.
-- Dual-tip calibration: raw contact-width thresholds, palm behavior and diagnostics. Quick Guide → tap its heading three times → Engineering. Appearance is also accessible by re-tapping Pen.
-- Area eraser for ink and objects, alongside whole-stroke/object erasing. Undo and Object Actions → Restore erased areas preserve the original editable object. PDF erasures belong to their individual PDF page.
-- Selected object: tap it again for actions. Text supports bold, color, alignment and fitted bounds. Sticky notes have independent background color. Insert no longer duplicates Text or Shapes.
-- Uniform circles/regular shapes; directional line endpoints; cylinder/cone cap proportions. Function graphs retain equal x/y scale, accept `y=2x-5`, `x^2`, `sin(x);cos(x)` and have examples and explanations.
-- Selected PDF: vertical swipe or mouse wheel turns pages, toolbar buttons show the current page; horizontal drag moves the object.
-- Smart pen modes: text, arithmetic/linear/quadratic equation, graph, continuous automatic basic shapes. Circle existing ink, then review/edit recognition before applying. Original ink is retained by default.
-- Bundled Latin image OCR provides an offline option without downloading a language model. Optional Google digital-ink English/Persian models have status, fresh retry and concise diagnostics, including HTTP 404.
-- Discovery: 68 Persian simulations adapted from the supplied HTML, search, reset/pause and Add to board. Arcade: 49 bilingual games with categories/search and celebration effects. The existing 16 bilingual native labs and 32 native games/challenges remain available in a separate catalog.
+```sh
+./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
+```
 
-## Release notes and limits
+Resource and manifest processing completed here, but compilation stopped because the installed Java runtime lacks `JAVA_COMPILER`. System package installation was denied. See `docs/HANDOFF-1.2.md`.
 
-See `docs/CHANGES-1.1.md`, `docs/VERIFICATION.md` and `docs/DEVICE_ACCEPTANCE.md`. This version does not claim perfect recognition or hardware certification. Bundled OCR is Latin image recognition, not a general handwriting/formula model. Persian handwriting still requires its Google language model. An HTTP 404 from Google's model service remains an external dependency; a fresh retry is not a guaranteed fix.
+Application ID: `com.vuravision.classroom.beta`; version name: `1.2.0`; version code: `5`. The included GitHub Actions build workflow has not been run for this checkpoint.
 
-The release APK uses a development signing certificate unless the repository has your production secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Use your own stable signing key for distribution. Export `.vura` lessons before uninstalling a differently signed old build. No private key is included.
+`docs/UPDATED_SPEC.md` is the target mega prompt, **not a completion checklist**. `docs/ORIGINAL_SPEC.md` preserves the original requirements.
 
-LAN sharing uses http and a reachable Wi-Fi/Ethernet address. Keep the app open; the link expires after 30 minutes. Router client isolation can prevent access even on the same Wi-Fi. Classroom widgets float within this app, not over other Android apps.
+Release builds use development signing unless production signing environment variables are configured. No private key is included. A different signing certificate cannot update an existing installation. Export important `.vura` lessons before considering any uninstall.
+
+Google handwriting models remain an external dependency. Bundled Latin OCR is not general Persian handwriting/formula recognition. Contact thresholds and latency require testing on the target hardware.

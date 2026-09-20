@@ -138,7 +138,7 @@ class LessonFiles(private val media: Media) {
                 z.write(b)
                 z.closeEntry()
             }
-            entry("manifest.json", """{"format":"VuraVision","schema":2}""".toByteArray())
+            entry("manifest.json", """{"format":"VuraVision","schema":3}""".toByteArray())
             entry("document.json", Gson().toJson(doc).toByteArray())
             doc.pages
                 .flatMap { it.items }

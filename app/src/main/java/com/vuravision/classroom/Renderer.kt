@@ -176,8 +176,19 @@ class Renderer(private val media: Media) {
         c.restore()
     }
 
+    fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null) {
+        page.layers.filter { it.visible && it.opacity>0f }.forEach { layer ->
+            val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
+            page.items.filter { it.layerId==layer.id }.forEach { o ->
+                val bounds=itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) }
+                if(region==null || RectF.intersects(bounds,region))draw(c,o,sync)
+            }
+            c.restoreToCount(save)
+        }
+    }
+
     fun page(c: Canvas, page: Page, width: Int, height: Int, sync: Boolean) {
-        val b = contentBounds(page.items)
+        val b = contentBounds(page.visibleItems())
         b.inset(-40f, -40f)
         val scale = min(width / b.width(), height / b.height())
         val extraX = (width / scale - b.width()) / 2
@@ -190,7 +201,7 @@ class Renderer(private val media: Media) {
             page,
             RectF(b.left - extraX, b.top - extraY, b.right + extraX, b.bottom + extraY),
         )
-        page.items.forEach { draw(c, it, sync) }
+        scene(c,page,sync)
         c.restore()
     }
 }

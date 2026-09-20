@@ -32,6 +32,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         private set
     private var backing:Bitmap?=null
     private var backingDirty=true
+    private var dirtyRegion:RectF?=null
     private var cachedPage:Page?=null
     private var cachedCount=0
     var cacheRebuilds=0
@@ -63,7 +64,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         setBackgroundColor(Color.WHITE)
     }
 
-    fun chosen() = store.page.items.filter { it.id in selected }
+    fun chosen() = store.page.visibleItems().filter { it.id in selected && store.page.editable(it) }
 
     fun clearSelection() {
         selected.clear()
@@ -89,7 +90,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             reset()
             return
         }
-        val b = contentBounds(store.page.items)
+        val b = contentBounds(store.page.visibleItems())
         zoom =
             min(width / density / (b.width() + 90), height / density / (b.height() + 90))
                 .coerceIn(.15f, 6f)
@@ -99,6 +100,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun insert(o: Item) {
+        if(!store.page.canDraw())return
+        o.layerId=store.page.activeLayerId
         if(o.kind in listOf("text","sticky"))TextLayout.fit(o)
         val c = center()
         o.x = c.x - o.w / 2
@@ -137,16 +140,26 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         backing?.let { bitmap ->
             val target=Canvas(bitmap);target.save();transformCanvas(target)
             val page=store.page
-            if(backingDirty || cachedPage!==page || cachedCount>page.items.size) {
+            val full=backingDirty || cachedPage!==page || (cachedCount!=page.items.size && dirtyRegion==null)
+            if(full) {
                 val l=world(0f,0f);val r=world(width.toFloat(),height.toFloat())
                 renderer.background(target,page,RectF(l.x,l.y,r.x,r.y))
-                cachedCount=0;cachedPage=page;backingDirty=false;cacheRebuilds++
+                renderer.scene(target,page)
+                cachedPage=page;backingDirty=false;cacheRebuilds++
+            } else dirtyRegion?.let { region ->
+                target.save();target.clipRect(region)
+                renderer.background(target,page,region)
+                renderer.scene(target,page,region=region)
+                target.restore()
             }
-            for(i in cachedCount until page.items.size)renderer.draw(target,page.items[i])
+            dirtyRegion=null
             cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,0f,0f,null)
         }
         c.save();transformCanvas(c)
-        live.values.forEach { renderer.draw(c,it) }
+        live.values.forEach { o ->
+            val alpha=store.page.layers.firstOrNull{it.id==o.layerId}?.opacity?:1f
+            val save=c.saveLayerAlpha(null,(alpha*255).toInt());renderer.draw(c,o);c.restoreToCount(save)
+        }
         p.color = 0xffe46d38.toInt()
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1.5f / zoom
@@ -189,6 +202,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
                 actions[id] = behavior
                 if (behavior == "reject") return true
+                if(tool in listOf("pen","highlight","shape") || (tool=="smart" && smartMode=="shape")) {
+                    if(!store.page.canDraw()){actions[id]="reject";android.widget.Toast.makeText(context,context.tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"),android.widget.Toast.LENGTH_SHORT).show();return true}
+                }
                 if (tool == "erase" || behavior == "erase") {
                     checkpoint()
                     erase(at,eraseLast[id]?:at);eraseLast[id]=at
@@ -208,7 +224,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         }
                     if (mode.isEmpty()) {
                         val hit =
-                            store.page.items.asReversed().firstOrNull {
+                            store.page.visibleItems().asReversed().filter { store.page.editable(it) }.firstOrNull {
                                 it.hit(at.x, at.y, 9 / zoom)
                             }
                         if (hit == null) {
@@ -230,6 +246,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     live[id] =
                         Item(
                             kind = "shape",
+                            layerId = store.page.activeLayerId,
                             x = at.x,
                             y = at.y,
                             w = 1f,
@@ -240,14 +257,16 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         )
                 } else if (tool in listOf("pen", "highlight", "smart")) {
                     if(tool!="smart" || smartMode=="shape")checkpoint()
+                    val style=if(tool=="highlight")"highlight" else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
                     live[id] =
                         Item(
+                            layerId=store.page.activeLayerId,
                             w = 1f,
                             h = 1f,
                             color = if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
-                            width = if(tool=="highlight") inkWidth*4 else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth),
-                            shape = if(tool=="highlight") "marker" else penStyle,
-                            alpha = if (tool == "highlight") 75 else 255,
+                            width = (if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
+                            shape = if(style=="highlight") "marker" else style,
+                            alpha = if (style == "highlight") 75 else 255,
                             points =
                                 mutableListOf(
                                     Point(at.x, at.y, e.eventTime, e.getPressure(e.actionIndex))
@@ -273,9 +292,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     max(anchor.y, point.y),
                                 )
                         else if(hypot(point.x-anchor.x,point.y-anchor.y)>6/zoom) {
-                            val pdf=chosen().singleOrNull()?.takeIf{it.kind=="pdf"}
-                            if(mode=="pdf" || (mode=="move" && pdf!=null && abs(point.y-anchor.y)>abs(point.x-anchor.x)*1.5f))mode="pdf"
-                            else{checkpoint();transform(point)}
+                            checkpoint();transform(point)
                         }
                     } else
                         live[pid]?.let { o ->
@@ -322,26 +339,27 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         }
                     }
                     renderer.forgetInk(o.id)
-                    if(tool=="smart" && smartMode!="shape" && SmartSelection.isLoop(o)){
-                        val enclosed=SmartSelection.enclosed(o,store.page.items)
-                        if(enclosed.isNotEmpty()){post{onSmart(enclosed)}}else {checkpoint();store.page.items.add(o)}
+                    if(tool=="smart" && smartMode!="shape"){
+                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{store.page.editable(it)})else emptyList()
+                        if(enclosed.isNotEmpty())post{onSmart(enclosed)}
+                        else android.widget.Toast.makeText(context,context.tr("Circle existing writing with a closed loop. Use Pen to write.","دور نوشتهٔ قبلی یک خط بسته بکشید. برای نوشتن از قلم استفاده کنید."),android.widget.Toast.LENGTH_SHORT).show()
                     }else if(tool=="smart" && smartMode=="shape"){
                         val converted=ShapeRecognition.convert(o)
-                        store.page.items.add(converted?:o)
+                        store.page.items.add((converted?:o).apply{layerId=o.layerId})
                     }else {checkpoint();store.page.items.add(o)}
+                    if(tool!="smart" || smartMode=="shape")backingDirty=true
                 }
                 actions.remove(id);eraseLast.remove(id)
                 if (id == primary) {
                     box?.let { rect ->
                         selected.addAll(
                             store.page.items
-                                .filter { rect.contains(it.x + it.w / 2, it.y + it.h / 2) }
+                                .filter { store.page.editable(it) && rect.contains(it.x + it.w / 2, it.y + it.h / 2) }
                                 .map { it.id }
                         )
                     }
                     box = null
                     if(tool=="select"){
-                        if(mode=="pdf" && abs(at.y-anchor.y)>35/zoom){val pdf=chosen().singleOrNull();if(pdf!=null)store.edit{pdf.pdfPage=(pdf.pdfPage+if(at.y<anchor.y)1 else -1).coerceIn(0,pdf.pageCount-1)}}
                         if(mode=="move" && tappedSelected && hypot(at.x-anchor.x,at.y-anchor.y)<6/zoom)post{onObjectActions()}
                         onSelection()
                     }
@@ -403,25 +421,18 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     private fun erase(q: PointF,from:PointF=q) {
-        backingDirty=true
         val radius=eraserRadius/zoom
-        if(eraserMode=="area")store.page.items.filter{eraseObjects||it.kind=="ink"}.forEach{Erasing.cut(it,from,q,radius)}
+        val region=RectF(min(from.x,q.x)-radius-4/zoom,min(from.y,q.y)-radius-4/zoom,max(from.x,q.x)+radius+4/zoom,max(from.y,q.y)+radius+4/zoom)
+        if(dirtyRegion==null)dirtyRegion=region else dirtyRegion!!.union(region)
+        if(eraserMode=="area")store.page.items.filter{store.page.editable(it) && (eraseObjects||it.kind=="ink")}.forEach{Erasing.cut(it,from,q,radius)}
         else {
+            backingDirty=true
             val steps=ceil(hypot(q.x-from.x,q.y-from.y)/max(radius*.5f,1f)).toInt().coerceIn(1,20000)
-            store.page.items.removeAll { o -> !o.locked && (eraseObjects||o.kind=="ink") && (0..steps).any { i ->
+            store.page.items.removeAll { o -> !o.locked && store.page.editable(o) && (eraseObjects||o.kind=="ink") && (0..steps).any { i ->
                 val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)
             } }
         }
         selected.retainAll(store.page.items.map { it.id }.toSet())
-    }
-
-    override fun onGenericMotionEvent(event:MotionEvent):Boolean {
-        if(tool=="select" && event.action==MotionEvent.ACTION_SCROLL){
-            val o=chosen().singleOrNull()?.takeIf{it.kind=="pdf"}?:return super.onGenericMotionEvent(event)
-            val delta=event.getAxisValue(MotionEvent.AXIS_VSCROLL)
-            if(delta!=0f){store.edit{o.pdfPage=(o.pdfPage+if(delta<0)1 else -1).coerceIn(0,o.pageCount-1)};return true}
-        }
-        return super.onGenericMotionEvent(event)
     }
 
     private fun navigate(e: MotionEvent) {

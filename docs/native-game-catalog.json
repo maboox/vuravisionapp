@@ -1,0 +1,394 @@
+[
+  {
+    "id": "reaction",
+    "nf": "دوئل واکنش",
+    "ne": "Reflex Duel",
+    "df": "صبر کن سبز بشه؛ اولین ضربه می‌بره. زود بزنی امتیاز حریفه!",
+    "de": "Wait for green; first tap wins. Tap early and the point goes to your rival!",
+    "tag": "reflex"
+  },
+  {
+    "id": "draw",
+    "nf": "هفت‌تیرکش",
+    "ne": "Quick Draw",
+    "df": "فقط با کلمهٔ «حالا!» شلیک کن — کلمه‌های قلابی گولت نزنن!",
+    "de": "Fire only on “NOW!” — don't fall for the fake words!",
+    "tag": "reflex"
+  },
+  {
+    "id": "potato",
+    "nf": "بمب داغ",
+    "ne": "Hot Bomb",
+    "df": "بمب رو با ضربه پاس بده؛ تو دست هر کی بترکه باخته!",
+    "de": "Tap to pass the bomb; whoever holds it when it blows loses!",
+    "tag": "reflex"
+  },
+  {
+    "id": "timing",
+    "nf": "ضربهٔ دقیق",
+    "ne": "Perfect Timing",
+    "df": "نشانگر متحرک رو دقیقاً وسط ناحیهٔ سبز متوقف کن.",
+    "de": "Stop the moving marker dead-center in the green zone.",
+    "tag": "reflex"
+  },
+  {
+    "id": "stroop",
+    "nf": "رنگ و کلمه",
+    "ne": "Color vs Word",
+    "df": "فقط وقتی معنی کلمه با رنگ نوشته یکیه ضربه بزن.",
+    "de": "Tap only when the word matches its ink color.",
+    "tag": "reflex"
+  },
+  {
+    "id": "tap",
+    "nf": "جنگ کلیک",
+    "ne": "Tap War",
+    "df": "۱۰ ثانیه فرصت داری؛ هر کی بیشتر ضربه بزنه می‌بره!",
+    "de": "10 seconds; most taps wins!",
+    "tag": "speed"
+  },
+  {
+    "id": "tug",
+    "nf": "طناب‌کشی",
+    "ne": "Tug of War",
+    "df": "با ضربه‌های پشت‌سرهم گره رو به سمت خودت بکش.",
+    "de": "Tap rapidly to drag the knot to your side.",
+    "tag": "speed"
+  },
+  {
+    "id": "swipe",
+    "nf": "مسابقهٔ سابیدن",
+    "ne": "Scrub Race",
+    "df": "انگشتت رو تندتند بکش تا نوارت زودتر پر بشه.",
+    "de": "Scrub your finger fast to fill your bar first.",
+    "tag": "speed"
+  },
+  {
+    "id": "numrace",
+    "nf": "دنبال اعداد",
+    "ne": "Number Hunt",
+    "df": "اعداد ۱ تا ۱۲ رو به ترتیب پیدا کن و بزن.",
+    "de": "Find and tap 1–12 in order, fast.",
+    "tag": "speed"
+  },
+  {
+    "id": "sort",
+    "nf": "صعودی بزن",
+    "ne": "Sort Sprint",
+    "df": "۶ عدد رو از کوچیک به بزرگ زودتر از حریف بزن.",
+    "de": "Tap 6 numbers from smallest to largest before your rival.",
+    "tag": "speed"
+  },
+  {
+    "id": "pin",
+    "nf": "کد رو بزن",
+    "ne": "PIN Race",
+    "df": "کد ۴ رقمی رو زودتر روی صفحه‌کلید وارد کن.",
+    "de": "Type the 4-digit code on your keypad first.",
+    "tag": "speed"
+  },
+  {
+    "id": "tiles",
+    "nf": "خونه‌های روشن",
+    "ne": "Tile Rush",
+    "df": "همهٔ خونه‌های روشن رو زودتر از حریف خاموش کن.",
+    "de": "Clear all lit tiles before your opponent.",
+    "tag": "speed"
+  },
+  {
+    "id": "gridlight",
+    "nf": "دنبال نور",
+    "ne": "Follow the Light",
+    "df": "هر بار خونهٔ سبز رو بزن؛ ۸ بار زودتر از حریف.",
+    "de": "Tap the lit cell 8 times, faster than your rival.",
+    "tag": "speed"
+  },
+  {
+    "id": "math",
+    "nf": "ریاضی سریع",
+    "ne": "Fast Math",
+    "df": "اولین جواب درست امتیاز می‌گیره؛ جواب غلط یعنی قفل!",
+    "de": "First correct answer scores; a wrong one locks you out!",
+    "tag": "brain"
+  },
+  {
+    "id": "sum",
+    "nf": "جمع ذهنی",
+    "ne": "Mental Sum",
+    "df": "سه عدد پشت هم رد می‌شن؛ جمعشون رو سریع بزن.",
+    "de": "Three numbers flash by; tap their sum fast.",
+    "tag": "brain"
+  },
+  {
+    "id": "chain",
+    "nf": "زنجیرهٔ ریاضی",
+    "ne": "Math Chain",
+    "df": "از یک عدد شروع کن و دو مرحله حساب کن.",
+    "de": "Start from a number and apply two quick operations.",
+    "tag": "brain"
+  },
+  {
+    "id": "tfmath",
+    "nf": "درست یا غلط",
+    "ne": "True or False",
+    "df": "تساوی رو سریع قضاوت کن — اشتباه به نفع حریفه!",
+    "de": "Judge the equation fast — mistakes help your rival!",
+    "tag": "brain"
+  },
+  {
+    "id": "evenodd",
+    "nf": "زوج یا فرد",
+    "ne": "Even or Odd",
+    "df": "سریع بگو عدد زوجه یا فرد.",
+    "de": "Quick! Is the number even or odd?",
+    "tag": "brain"
+  },
+  {
+    "id": "operator",
+    "nf": "عملگر گمشده",
+    "ne": "Missing Operator",
+    "df": "علامت درست (+، −، ×) رو پیدا کن.",
+    "de": "Find the right operator (+, −, ×).",
+    "tag": "brain"
+  },
+  {
+    "id": "compare",
+    "nf": "مقایسهٔ ضرب‌ها",
+    "ne": "Which Is Bigger",
+    "df": "کدوم ضرب بزرگ‌تره؟ سریع بزن!",
+    "de": "Which product is bigger? Tap fast!",
+    "tag": "brain"
+  },
+  {
+    "id": "digits",
+    "nf": "حافظهٔ عددی",
+    "ne": "Digit Memory",
+    "df": "عدد ۵ رقمی رو حفظ کن و بین گزینه‌های شبیه پیداش کن.",
+    "de": "Memorize a 5-digit number, then spot it among lookalikes.",
+    "tag": "brain"
+  },
+  {
+    "id": "dots",
+    "nf": "شمارش نقطه‌ها",
+    "ne": "Dot Count",
+    "df": "سریع بشمر چند تا نقطه هست.",
+    "de": "Count the dots at a glance.",
+    "tag": "brain"
+  },
+  {
+    "id": "sheep",
+    "nf": "شمارش گوسفندها",
+    "ne": "Count the Sheep",
+    "df": "بین حیوون‌ها فقط گوسفندها رو بشمر!",
+    "de": "Count only the sheep in the herd!",
+    "tag": "brain"
+  },
+  {
+    "id": "clock",
+    "nf": "ساعت چنده؟",
+    "ne": "Clock Reader",
+    "df": "ساعت اموجی رو سریع بخون.",
+    "de": "Read the emoji clock fast.",
+    "tag": "brain"
+  },
+  {
+    "id": "simon",
+    "nf": "حافظهٔ رنگ‌ها",
+    "ne": "Color Simon",
+    "df": "ترتیب رنگ‌ها رو حفظ کن و زودتر تکرارش کن.",
+    "de": "Memorize the color order and repeat it first.",
+    "tag": "brain"
+  },
+  {
+    "id": "pattern",
+    "nf": "کپی الگو",
+    "ne": "Pattern Copy",
+    "df": "الگوی ۴ خونه‌ای رو حفظ و بازسازی کن.",
+    "de": "Memorize the 4-cell pattern and rebuild it.",
+    "tag": "brain"
+  },
+  {
+    "id": "colormem",
+    "nf": "حافظهٔ رنگ",
+    "ne": "Color Memory",
+    "df": "یک رنگ می‌بینی؛ بین رنگ‌های شبیه پیداش کن.",
+    "de": "See a color, then find it among similar shades.",
+    "tag": "brain"
+  },
+  {
+    "id": "emojiseq",
+    "nf": "ترتیب اموجی‌ها",
+    "ne": "Emoji Order",
+    "df": "ترتیب ۴ اموجی رو حفظ کن و درستش رو انتخاب کن.",
+    "de": "Memorize 4 emojis in order, then pick the right one.",
+    "tag": "brain"
+  },
+  {
+    "id": "scramble",
+    "nf": "حروف به‌هم‌ریخته",
+    "ne": "Word Scramble",
+    "df": "کلمهٔ به‌هم‌ریخته رو زودتر تشخیص بده.",
+    "de": "Unscramble the word before your rival.",
+    "tag": "brain"
+  },
+  {
+    "id": "odd",
+    "nf": "وصلهٔ ناجور",
+    "ne": "Odd One Out",
+    "df": "بین ۱۲ شکل، متفاوت رو زودتر پیدا کن.",
+    "de": "Spot the different one among 12.",
+    "tag": "prec"
+  },
+  {
+    "id": "letter",
+    "nf": "شکار حرف",
+    "ne": "Letter Hunt",
+    "df": "حرف متفاوت رو بین حروف شبیه پیدا کن.",
+    "de": "Find the odd letter among lookalikes.",
+    "tag": "prec"
+  },
+  {
+    "id": "shade",
+    "nf": "رنگ متفاوت",
+    "ne": "Odd Shade",
+    "df": "در شبکهٔ رنگی، خونهٔ متفاوت رو بزن.",
+    "de": "Tap the tile with a slightly different shade.",
+    "tag": "prec"
+  },
+  {
+    "id": "arrow",
+    "nf": "جهت فلش",
+    "ne": "Arrow Match",
+    "df": "دکمهٔ هم‌جهت با فلش رو سریع بزن.",
+    "de": "Tap the button matching the arrow, fast.",
+    "tag": "prec"
+  },
+  {
+    "id": "rstroop",
+    "nf": "دکمهٔ رنگی",
+    "ne": "Reverse Stroop",
+    "df": "دکمهٔ هم‌رنگِ «معنی» کلمه رو بزن، نه رنگ خودش!",
+    "de": "Tap the color of the word's MEANING, not its ink!",
+    "tag": "prec"
+  },
+  {
+    "id": "bigger",
+    "nf": "عدد بزرگ‌تر",
+    "ne": "Bigger Number",
+    "df": "سریع عدد بزرگ‌تر رو بزن.",
+    "de": "Tap the bigger number, fast.",
+    "tag": "prec"
+  },
+  {
+    "id": "bigcircle",
+    "nf": "دایرهٔ بزرگ‌تر",
+    "ne": "Bigger Circle",
+    "df": "دو دایرهٔ تقریباً هم‌اندازه؛ بزرگ‌تره رو تشخیص بده.",
+    "de": "Two nearly equal circles; spot the bigger one.",
+    "tag": "prec"
+  },
+  {
+    "id": "trap",
+    "nf": "ستاره و بمب",
+    "ne": "Stars & Bombs",
+    "df": "ستاره‌ها رو جمع کن، به بمب‌ها دست نزن!",
+    "de": "Collect stars, avoid the bombs!",
+    "tag": "prec"
+  },
+  {
+    "id": "evens",
+    "nf": "شکار زوج‌ها",
+    "ne": "Even Hunter",
+    "df": "فقط عددهای زوج رو شکار کن!",
+    "de": "Hunt only the even numbers!",
+    "tag": "prec"
+  },
+  {
+    "id": "mole",
+    "nf": "شکار همستر",
+    "ne": "Whack-a-Mole",
+    "df": "۱۵ ثانیه همسترها رو بزن؛ هر کی بیشتر زد می‌بره!",
+    "de": "15 seconds of whacking; most hits wins!",
+    "tag": "prec"
+  },
+  {
+    "id": "hold",
+    "nf": "پنج ثانیهٔ طلایی",
+    "ne": "Golden 5 Seconds",
+    "df": "دکمه رو نگه دار و دقیقاً سرِ ۵ ثانیه ول کن؛ تایمر قایم می‌شه!",
+    "de": "Hold and release at exactly 5 seconds; the timer hides!",
+    "tag": "prec"
+  },
+  {
+    "id": "pong",
+    "nf": "پینگ‌پنگ لمسی",
+    "ne": "Touch Pong",
+    "df": "راکتت رو با انگشت بکش و نذار توپ رد بشه.",
+    "de": "Drag your paddle; don't let the ball pass.",
+    "tag": "classic"
+  },
+  {
+    "id": "ttt",
+    "nf": "دوز",
+    "ne": "Tic-Tac-Toe",
+    "df": "سه تا ردیف کن و راند رو ببر.",
+    "de": "Line up three to take the round.",
+    "tag": "classic"
+  },
+  {
+    "id": "c4",
+    "nf": "چهار در یک ردیف",
+    "ne": "Connect Four",
+    "df": "مهره بنداز و زودتر چهارتایی ردیف کن.",
+    "de": "Drop discs and connect four first.",
+    "tag": "classic"
+  },
+  {
+    "id": "rps",
+    "nf": "سنگ کاغذ قیچی",
+    "ne": "Rock Paper Scissors",
+    "df": "مخفیانه انتخاب کن؛ نتیجه همزمان رو می‌شه.",
+    "de": "Pick in secret; reveal together.",
+    "tag": "classic"
+  },
+  {
+    "id": "penalty",
+    "nf": "پنالتی",
+    "ne": "Penalty Shootout",
+    "df": "شوتر و دروازه‌بان مخفیانه انتخاب می‌کنن؛ نقش‌ها عوض می‌شن!",
+    "de": "Striker and keeper pick in secret; roles swap each round!",
+    "tag": "classic"
+  },
+  {
+    "id": "pairs",
+    "nf": "جفت‌های حافظه",
+    "ne": "Memory Pairs",
+    "df": "کارت‌ها رو برگردون و زودتر همهٔ جفت‌ها رو پیدا کن.",
+    "de": "Flip cards and match all pairs first.",
+    "tag": "classic"
+  },
+  {
+    "id": "hilo",
+    "nf": "بالا یا پایین",
+    "ne": "Higher or Lower",
+    "df": "حدس بزن کارت بعدی بزرگ‌تره یا کوچیک‌تر.",
+    "de": "Guess if the next card is higher or lower.",
+    "tag": "luck"
+  },
+  {
+    "id": "dice",
+    "nf": "تاس شانس",
+    "ne": "Dice Duel",
+    "df": "تاس بریز؛ عدد بلندتر می‌بره!",
+    "de": "Roll the dice; higher number wins!",
+    "tag": "luck"
+  },
+  {
+    "id": "balloon",
+    "nf": "بادکنک",
+    "ne": "Balloon Pump",
+    "df": "بادکنک رو بزرگ کن ولی قبل ترکیدن ول کن!",
+    "de": "Inflate big — but release before it pops!",
+    "tag": "luck"
+  }
+]

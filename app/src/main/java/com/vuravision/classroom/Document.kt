@@ -34,6 +34,7 @@ data class Item(
     var textAlign: String = "start",
     var noteColor: Int = 0xffffe8b2.toInt(),
     var cuts: List<EraseCut> = emptyList(),
+    var layerId: String = "base",
 
 ) {
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
@@ -78,14 +79,23 @@ fun distance(px: Float, py: Float, ax: Float, ay: Float, bx: Float, by: Float): 
     return hypot(px - ax - t * dx, py - ay - t * dy)
 }
 
+data class Layer(var id: String = newId(), var name: String = "Layer", var visible: Boolean = true, var locked: Boolean = false, var opacity: Float = 1f)
+
 data class Page(
     var id: String = newId(),
     var background: String = "dots",
     var items: MutableList<Item> = mutableListOf(),
-)
+    var layers: MutableList<Layer> = mutableListOf(Layer(id="base", name="Layer 1")),
+    var activeLayerId: String = "base",
+) {
+    fun layer(item: Item) = layers.first { it.id == item.layerId }
+    fun visibleItems() = layers.filter { it.visible && it.opacity > 0f }.flatMap { l -> items.filter { it.layerId == l.id } }
+    fun editable(item: Item) = layer(item).let { it.visible && !it.locked && it.opacity > 0f }
+    fun canDraw() = layers.first { it.id == activeLayerId }.let { it.visible && !it.locked && it.opacity > 0f }
+}
 
 data class Lesson(
-    var schema: Int = 2,
+    var schema: Int = 3,
     var title: String = "",
     var current: Int = 0,
     var pages: MutableList<Page> = mutableListOf(Page()),
@@ -94,16 +104,29 @@ data class Lesson(
         copy(
             pages =
                 pages
-                    .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList()) }
+                    .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList(), layers = it.layers.map { l -> l.copy() }.toMutableList()) }
                     .toMutableList()
         )
 
     fun validate() {
-        require(schema == 2) { "Unsupported lesson version" }
+        require(schema in 2..3) { "Unsupported lesson version" }
+        if (schema == 2) {
+            pages.forEach { page ->
+                page.layers = mutableListOf(Layer(id="base", name="Layer 1"))
+                page.activeLayerId = "base"
+                page.items.forEach { it.layerId = "base" }
+            }
+            schema = 3
+        }
         require(pages.size in 1..200 && current in pages.indices)
         require(pages.sumOf { it.items.size } <= 20000)
         var points = 0
         pages.forEach { page ->
+            require(page.layers.size in 1..100)
+            require(page.layers.map { it.id }.distinct().size == page.layers.size)
+            require(page.layers.all { it.id.isNotBlank() && it.name.length <= 200 && it.opacity.isFinite() && it.opacity in 0f..1f })
+            require(page.layers.any { it.id == page.activeLayerId })
+            require(page.items.all { o -> page.layers.any { it.id == o.layerId } })
             require(page.items.map { it.id }.distinct().size == page.items.size)
             page.items.forEach { o ->
                 require(o.kind in setOf("ink", "text", "sticky", "shape", "image", "pdf", "graph"))
@@ -138,7 +161,7 @@ class Store(var lesson: Lesson = Lesson()) {
 
     // Point samples are shared in history and detached before arbitrary edits.
     private fun snapshot() = lesson.copy(pages = lesson.pages.map { page ->
-        page.copy(items = page.items.map { it.copy() }.toMutableList())
+        page.copy(items = page.items.map { it.copy() }.toMutableList(), layers = page.layers.map { it.copy() }.toMutableList())
     }.toMutableList())
     fun checkpoint() {
         past.addLast(snapshot())
@@ -180,12 +203,13 @@ class Store(var lesson: Lesson = Lesson()) {
 
 data class TouchProfile(
     var calibrated: Boolean = false,
-    var thin: Float = 10f,
+    var thin: Float = 5f,
     var palm: Float = 50f,
     var palmErase: Boolean = false,
     var multiTouch: Boolean = true,
     var thickWidth: Float = 10f,
     var thickColor: Int = 0xffe45756.toInt(),
+    var thickStyle: String = "round",
 ) {
     fun classify(tool: Int, major: Float) =
         when {
@@ -196,6 +220,8 @@ data class TouchProfile(
             major <= thin -> "thin"
             else -> "finger / thick tip"
         }
+
+    fun style(tool:Int, major:Float, normal:String) = if(classify(tool,major)=="finger / thick tip") thickStyle else normal
 
     fun color(tool:Int, major:Float, normal:Int) = if(classify(tool,major)=="finger / thick tip") thickColor else normal
 

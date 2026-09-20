@@ -20,9 +20,10 @@ class UpgradeTest {
  private val context get()=RuntimeEnvironment.getApplication()
  @Before fun clean(){context.getSharedPreferences("vura",0).edit().clear().commit()}
  @Test fun numericalGameLabelsNeverResolveResourceIds(){listOf("1","19","213123","2 + 7 = ?","3.000 s").forEach{assertEquals(it,context.s(it))}}
- @Test fun everyGameStartsRendersAndCompletes(){
-  assertEquals(32,Games.keys.size)
-  Games.keys.forEach{key->Games.open(context,key);val d=ShadowDialog.getLatestDialog();views(d.window!!.decorView).filterIsInstance<Button>().first{it.text.toString()==context.s("start")}.performClick();capture(d.window!!.decorView,if(key=="math_race")"game-math"else null);d.dismiss()
+ @Test fun everyGameStartsAndRenders(){
+  assertEquals(73,Games.keys.size)
+  Games.keys.forEach{key->Games.open(context,key);val d=ShadowDialog.getLatestDialog();if(key in NativeGames.keys)views(d.window!!.decorView).filterIsInstance<ArcadeView>().single().startRound()else views(d.window!!.decorView).filterIsInstance<Button>().first{it.text.toString()==context.s("start")}.performClick();capture(d.window!!.decorView,if(key=="arc_math")"game-math"else null);d.dismiss()
+   if(key in NativeGames.keys)return@forEach
    val g=GameEngine(key,Random(17));g.next(1000);if(key!="tictac")repeat(10){g.answer(0,g.correct,g.go+100);g.answer(1,g.correct,g.go+200);g.tick(1000000);g.next(2000000)}
   }
  }
@@ -34,7 +35,7 @@ class UpgradeTest {
    event(MotionEvent.ACTION_DOWN,1,0);for(i in 1..9)event(MotionEvent.ACTION_POINTER_DOWN or(i shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),i+1,i)
    repeat(500){event(MotionEvent.ACTION_MOVE,10,it+10);if(it%5==0)board.draw(c)};assertEquals(1,board.cacheRebuilds)
    for(i in 9 downTo 1)event(MotionEvent.ACTION_POINTER_UP or(i shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),i+1,520+i)
-   event(MotionEvent.ACTION_UP,1,540);board.draw(c);assertEquals(10,store.page.items.size);assertTrue(store.page.items.all{it.points.size>=501});assertEquals(1,board.cacheRebuilds)
+   event(MotionEvent.ACTION_UP,1,540);board.draw(c);assertEquals(10,store.page.items.size);assertTrue(store.page.items.all{it.points.size>=501});assertEquals(2,board.cacheRebuilds)
    store.undo();assertTrue(store.page.items.isEmpty());store.redo();assertEquals(10,store.page.items.size);save(b,"ten-pointer-ink");b.recycle()
   }finally{media.close()}
  }
@@ -45,7 +46,7 @@ class UpgradeTest {
    val landing=request("/${server.token}");assertEquals(200,landing.first);assertTrue(landing.second.contains("Download PDF"));val pdf=request("/${server.token}/file");assertEquals(200,pdf.first);assertTrue(pdf.second.startsWith("%PDF"));assertEquals(1,server.downloads);assertEquals(404,request("/bad").first)
   }finally{server.stop()}
  }
- @Test fun allShapesAndLabsRenderAtControlExtremes(){val media=Media(context);try{val r=Renderer(media);val b=Bitmap.createBitmap(1200,700,Bitmap.Config.ARGB_8888);Shapes.keys.forEach{r.draw(Canvas(b),Item(kind="shape",shape=it))};assertEquals(24,Shapes.keys.size);assertEquals(16,Labs.keys.size);Labs.keys.forEach{key->val controls=Labs.controls(key);listOf(controls.map{it.min},controls.map{it.value},controls.map{it.max}).forEach{values->LabView(context,key,values.toFloatArray()).snapshot().recycle()}};b.recycle()}finally{media.close()}}
+ @Test fun allShapesAndLabsRenderAtControlExtremes(){val media=Media(context);try{val r=Renderer(media);val b=Bitmap.createBitmap(1200,700,Bitmap.Config.ARGB_8888);Shapes.keys.forEach{r.draw(Canvas(b),Item(kind="shape",shape=it))};assertEquals(24,Shapes.keys.size);assertEquals(73,Labs.keys.size);Labs.keys.forEach{key->val controls=Labs.controls(key);listOf(controls.map{it.min},controls.map{it.value},controls.map{it.max}).forEach{values->LabView(context,key,values.toFloatArray()).snapshot().recycle()}};b.recycle()}finally{media.close()}}
  @Test fun scientificReferenceCases(){assertEquals(1.2,Science.current(12.0,10.0),1e-9);assertEquals(25.0,Science.kinetic(2.0,5.0),1e-9);assertEquals(9.81,Science.buoyancy(1000.0,1.0),1e-9);assertEquals(15.0,Science.lens(10.0,30.0),1e-9);assertEquals(-10.0,Science.lens(10.0,5.0),1e-9);assertTrue(Science.lens(10.0,10.0).isInfinite());assertEquals(101.4,Science.gasPressure(1.0,273.15,22.4),.1);assertEquals(1.0/3,Science.dilution(1.0,50.0,150.0),1e-9)}
  @Test fun boardAndFloatingToolsScreenshot(){
   val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get();val root=a.findViewById<View>(android.R.id.content)

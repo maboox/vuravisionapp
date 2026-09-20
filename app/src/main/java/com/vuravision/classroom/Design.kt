@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
+import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -51,18 +53,46 @@ fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
     Button(this).apply {
         text = value
         textSize = 13f
+        val icon = when(value.firstOrNull()) {
+            '✎' -> R.drawable.feather_edit_3
+            '▱' -> R.drawable.feather_edit_2
+            '↖' -> R.drawable.feather_mouse_pointer
+            '✥' -> R.drawable.feather_move
+            '△' -> R.drawable.feather_triangle
+            '＋' -> R.drawable.feather_plus
+            '✦' -> R.drawable.feather_zap
+            '◷' -> R.drawable.feather_clock
+            '☰' -> R.drawable.feather_menu
+            '↶' -> R.drawable.feather_rotate_ccw
+            '↷' -> R.drawable.feather_rotate_cw
+            '‹' -> R.drawable.feather_chevron_left
+            '›' -> R.drawable.feather_chevron_right
+            '⋯' -> R.drawable.feather_more_horizontal
+            '⇧' -> R.drawable.feather_share_2
+            else -> null
+        }
+        if(icon!=null){
+            text=value.drop(1).trim()
+            val drawable=context.getDrawable(icon)!!.mutate()
+            drawable.setTint(if(active)Color.WHITE else NAVY)
+            drawable.setBounds(0,0,dp(22),dp(22))
+            setCompoundDrawablesRelative(drawable,null,null,null)
+            compoundDrawablePadding=if(text.isEmpty())0 else dp(7)
+            contentDescription=when(value.firstOrNull()){'↶'->s("undo");'↷'->s("redo");'‹'->s("previous");'›'->s("next");'☰'->s("tools");else->text}
+        }
         isAllCaps = false
         minWidth = dp(52)
         minimumWidth = dp(52)
         minHeight = dp(46)
         minimumHeight = dp(46)
         setTextColor(if (active) Color.WHITE else NAVY)
-        background =
+        background = RippleDrawable(ColorStateList.valueOf(if(active)0x33ffffff else 0x2220194f),
             rounded(
                 if (active) NAVY else Color.WHITE,
                 dp(12).toFloat(),
-                if (active) NAVY else 0xffdfe5e4.toInt(),
-            )
+                if (active) NAVY else 0xffded9ef.toInt(),
+            ),null)
+        elevation=dp(if(active)3 else 1).toFloat()
         setPadding(dp(14), dp(8), dp(14), dp(8))
         setOnClickListener { action() }
         layoutParams =

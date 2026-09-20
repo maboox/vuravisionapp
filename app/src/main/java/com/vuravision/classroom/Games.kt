@@ -216,7 +216,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
 
 object Games {
     val keys =
-        listOf("reaction", "tap_race", "math_race", "bigger", "even_odd", "timing", "tictac", "rps") + QuizCatalog.keys
+        NativeGames.keys + QuizCatalog.keys
 
     fun show(context: Context) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
@@ -278,6 +278,7 @@ object Games {
     }
 
     fun open(context: Context, key: String) {
+        if(key in NativeGames.keys){NativeGames.open(context,key);return}
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val handler = Handler(Looper.getMainLooper())
         var game = GameEngine(key)
