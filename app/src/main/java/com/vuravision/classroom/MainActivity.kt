@@ -393,7 +393,7 @@ class MainActivity : Activity() {
         slider(c,tr("Text size","اندازهٔ متن"),item.width,120){item.width=it}
         if(sticky){c.addView(label(tr("Note background","رنگ یادداشت"),16f,NAVY,true));palette(c,item.noteColor){item.noteColor=it;value.background=rounded(it,dp(8).toFloat())}}
         val d=dialog(s(if(sticky)"sticky"else"text"),ScrollView(this).apply{addView(c)})
-        c.addView(button(s("apply"),true){if(value.text.isBlank()){value.error=s("empty");return@button};item.text=value.text.toString();item.textAlign=listOf("start","center","end")[align.selectedItemPosition];TextLayout.fit(item)
+        c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;item.textAlign=listOf("start","center","end")[align.selectedItemPosition];TextLayout.fit(item)
             if(existing==null)board.insert(item)else store.edit{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
     }
     private fun graph(initial:String="y=2x-5",existing:Item?=null){
