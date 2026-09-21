@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.content.res.ColorStateList
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -60,13 +61,15 @@ fun Context.label(value: String, size: Float = 16f, color: Int = NAVY, bold: Boo
         setPadding(dp(4), dp(4), dp(4), dp(4))
     }
 
+private fun Context.materialContext() = ContextThemeWrapper(this, R.style.AppTheme)
+
 private fun enabledColors(enabled: Int, disabled: Int) = ColorStateList(
     arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
     intArrayOf(disabled, enabled),
 )
 
 fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
-    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+    MaterialButton(materialContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
         text = value
         textSize = 14f
         isAllCaps = false
@@ -119,7 +122,7 @@ fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
     }
 
 fun Context.field(value: String = "", hintValue: String = "") =
-    TextInputEditText(this).apply {
+    TextInputEditText(materialContext()).apply {
         setText(value)
         hint = hintValue
         textSize = 17f
@@ -137,7 +140,7 @@ fun Context.card(
     cornerRadius: Int = 20,
     elevation: Int = 1,
     stroke: Int = OUTLINE,
-) = MaterialCardView(this).apply {
+) = MaterialCardView(materialContext()).apply {
     radius = dp(cornerRadius).toFloat()
     cardElevation = dp(elevation).toFloat()
     setCardBackgroundColor(color)
