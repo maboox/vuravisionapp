@@ -1,0 +1,4 @@
+<resources>
+ <string name="ruler">Ruler</string><string name="set_square">Set square</string><string name="protractor">Protractor</string><string name="compass">Compass</string>
+ <string name="mind_map">Tree / mind map</string><string name="add_branch">Add branch</string><string name="draw_with_tool">Draw with tool</string>
+</resources>

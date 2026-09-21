@@ -9,7 +9,7 @@ object ShapeRecognition {
    if(span<8 || pts.any{distance(it.first,it.second,a.first,a.second,b.first,b.second)>max(5f,span*.09f)})return null
    return Item(kind="shape",shape="line",x=min(a.first,b.first),y=min(a.second,b.second),w=abs(b.first-a.first).coerceAtLeast(1f),h=abs(b.second-a.second).coerceAtLeast(1f),flipX=b.first<a.first,flipY=b.second>=a.second,color=o.color,width=o.width)
   }
-  if(!SmartSelection.isLoop(o))return null
+  if(!SmartSelection.isLoop(o) && kind !in listOf("circle","ellipse"))return null
   return Item(kind="shape",shape=kind,x=o.x,y=o.y,w=o.w,h=if(kind in listOf("circle","square"))o.w else o.h,color=o.color,width=o.width)
  }
  fun detect(items:List<Item>):String {
@@ -17,6 +17,10 @@ object ShapeRecognition {
   if(pts.size<3)return "line"
   val l=pts.minOf{it.first};val r=pts.maxOf{it.first};val t=pts.minOf{it.second};val b=pts.maxOf{it.second};val w=(r-l).coerceAtLeast(1f);val h=(b-t).coerceAtLeast(1f)
   val first=pts.first();val last=pts.last()
+  val radii=pts.map{(x,y)->hypot((x-(l+r)/2)/(w/2),(y-(t+b)/2)/(h/2))}
+  val radialError=radii.map{abs(it-1f)}.average()
+  val angularCoverage=pts.map{(x,y)->((atan2((y-(t+b)/2).toDouble(),(x-(l+r)/2).toDouble())+PI)*12/(2*PI)).toInt().coerceIn(0,11)}.distinct().size
+  if(radialError<.13 && angularCoverage>=10)return if(abs(w/h-1)<.15f)"circle"else"ellipse"
   if(hypot(first.first-last.first,first.second-last.second)>hypot(w,h)*.35f)return "line"
   val edge=pts.count{(x,y)->minOf((x-l)/w,(r-x)/w,(y-t)/h,(b-y)/h)<.08f}.toFloat()/pts.size
   if(edge>.7f)return if(abs(w/h-1)<.15f)"square"else"rectangle"

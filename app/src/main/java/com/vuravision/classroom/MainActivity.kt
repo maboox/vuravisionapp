@@ -26,6 +26,8 @@ class MainActivity : Activity() {
     private lateinit var pageStrip:LinearLayout
     private lateinit var canvasHost:FrameLayout
     private lateinit var floatingTools:ClassroomWidgets
+    private lateinit var selectionBar:LinearLayout
+    private lateinit var selectionHost:HorizontalScrollView
     private var pageSignature=""
     private var dockSignature=""
     private val handler = Handler(Looper.getMainLooper())
@@ -54,13 +56,16 @@ class MainActivity : Activity() {
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
+        pendingExport = prefs.getString("pendingExport", null)?.let { name ->
+            File(cacheDir, "exports").resolve(File(name).name).takeIf { it.isFile && it.length()>0 }
+        }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         media = Media(this)
         files = LessonFiles(media)
         board = Board(this, store, Renderer(media))
         board.profile =
             TouchProfile(
-                prefs.getBoolean("calibrated", false),
+                true,
                 prefs.getFloat("thin", 5f),
                 prefs.getFloat("palm", 50f),
                 prefs.getBoolean("palmErase", false),
@@ -77,6 +82,7 @@ class MainActivity : Activity() {
         board.highlightWidth=prefs.getFloat("highlightWidth",6f)
         board.profile.thickStyle=prefs.getString("thickStyle","round")?:"round"
         board.penStyle=prefs.getString("penStyle","round")?:"round"
+        board.touchMode=prefs.getBoolean("touchMode",false)
         smartSource=prefs.getString("smartSource","offline")?:"offline"
         board.smartMode=prefs.getString("smartMode","text")?:"text"
         buildUI()
@@ -162,6 +168,9 @@ class MainActivity : Activity() {
         root.addView(strip)
         canvasHost=FrameLayout(this);canvasHost.addView(board,FrameLayout.LayoutParams(-1,-1))
         floatingTools=ClassroomWidgets(this,canvasHost)
+        selectionBar=row().apply{pad(4);background=rounded(Color.WHITE,dp(16).toFloat(),0xffe1dfeb.toInt());elevation=dp(5).toFloat()}
+        selectionHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
+        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(58),Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply{setMargins(dp(12),dp(12),dp(12),0)})
         root.addView(canvasHost,LinearLayout.LayoutParams(-1,0,1f))
         pageStrip=row().apply{pad(3)};root.addView(scrollRow(pageStrip))
         dock = row().apply { pad(5) }
@@ -178,6 +187,7 @@ class MainActivity : Activity() {
 
     private fun refreshDock() {
         if(!::dock.isInitialized)return
+        refreshSelectionBar()
         val signature="${board.tool}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
         if(signature==dockSignature)return
         dockSignature=signature;dock.removeAllViews()
@@ -191,16 +201,47 @@ class MainActivity : Activity() {
             if(k=="pen")dock.addView(button("△  ${s("shape")}",board.tool=="shape"){shapes()})
         }
         dock.addView(button(tr("Layers","لایه‌ها")){layers()})
+        dock.addView(button(tr("Split","تقسیم")){splitSettings()})
+        dock.addView(button(if(board.touchMode)tr("Pen + touch","قلم + لمس")else tr("Two tips","دو سر قلم")){if(!board.isDrawing){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}})
         dock.addView(button("T  ${s("text")}"){addText(false)})
         dock.addView(button("＋  ${s("insert")}"){insert()})
-        dock.addView(button("✦  ${s("smart")}",board.tool=="smart"){smart()})
         dock.addView(button("◷  ${s("tools")}"){classroomTools()})
-        board.chosen().singleOrNull()?.takeIf{it.kind=="pdf" && board.tool=="select"}?.let{pdf->
-            dock.addView(button("‹ PDF"){board.edit{it.pdfPage=(it.pdfPage-1).coerceAtLeast(0)}})
-            dock.addView(label("${pdf.pdfPage+1} / ${pdf.pageCount}",14f))
-            dock.addView(button("PDF ›"){board.edit{it.pdfPage=(it.pdfPage+1).coerceAtMost(it.pageCount-1)}})
+    }
+    private fun refreshSelectionBar(){
+        if(!::selectionBar.isInitialized)return
+        val items=board.chosen();selectionHost.visibility=if(items.isEmpty())View.GONE else View.VISIBLE
+        selectionBar.removeAllViews();if(items.isEmpty())return
+        fun icon(key:String,title:String=s(key),action:()->Unit){selectionBar.addView(ActionIcon(this,key,title,action),LinearLayout.LayoutParams(dp(48),dp(48)))}
+        val pdf=items.singleOrNull()?.takeIf{it.kind=="pdf"}
+        if(pdf!=null){
+            icon("previous"){if(pdf.pdfPage>0)board.edit{it.pdfPage--}}
+            selectionBar.addView(button("${pdf.pdfPage+1} / ${pdf.pageCount}"){input(s("page_picker"),"${pdf.pdfPage+1}"){v->val n=v.toInt();require(n in 1..pdf.pageCount);board.edit{it.pdfPage=n-1}}})
+            icon("next"){if(pdf.pdfPage<pdf.pageCount-1)board.edit{it.pdfPage++}}
         }
-        if(board.chosen().isNotEmpty())dock.addView(button("${s("edit")} · ${board.chosen().size}",true){editSelection()})
+        if(items.any{it.kind in listOf("ink","text","sticky")}){
+            icon("text",tr("Convert to text","تبدیل به متن")){board.smartMode="text";processSmart(board.chosen())}
+            icon("formula",tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
+            icon("graph",tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
+        }
+        icon("color"){colors()}
+        icon("copy"){clipboard=board.chosen().map{it.deepCopy()};toast(s("copy"))}
+        icon("duplicate"){
+            val copies=duplicateItems(board.chosen()).onEach{it.x+=24;it.y+=24;it.locked=false}
+            store.edit{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
+        }
+        icon("delete"){board.delete()}
+        icon("more",s("edit")){editSelection()}
+    }
+    private fun splitSettings(){
+        val c=column().apply{pad(16)};val d=dialog(tr("Split board","تقسیم تخته"),ScrollView(this).apply{addView(c)})
+        val r=row();c.addView(r)
+        for(n in 1..4)r.addView(button("$n",store.page.panes.size==n){board.split(n);d.dismiss();splitSettings()})
+        store.page.panes.forEachIndexed{i,pane->
+            c.addView(label(tr("Panel ${i+1} · pen","بخش ${i+1} · قلم"),16f,NAVY,true))
+            palette(c,pane.color){color->store.edit{pane.color=color}}
+            c.addView(label(tr("Background","پس‌زمینه")))
+            palette(c,pane.background){color->store.edit{pane.background=color}}
+        }
     }
     private fun refreshPages() {
         if(!::pageStrip.isInitialized)return
@@ -241,6 +282,9 @@ class MainActivity : Activity() {
     }
     private fun penSettings(){
         val c=column().apply{pad(20)};val body=column();var broad=false
+        c.addView(Switch(this).apply{text=tr("Two pen tips","دو سر قلم");isChecked=!board.touchMode;setOnCheckedChangeListener{_,checked->board.touchMode=!checked;prefs.edit().putBoolean("touchMode",!checked).apply();dockSignature="";refreshDock()}})
+        c.addView(label(tr("Off: one broad contact selects; two pan or zoom. Fine-tip writing stays active.","خاموش: یک تماس پهن برای انتخاب و دو تماس برای جابه‌جایی یا زوم. سر باریک همچنان می‌نویسد."),13f,MUTED))
+        c.addView(button(tr("Contact calibration","تنظیم اندازهٔ تماس")){calibrateTips()})
         fun tipStyle()=if(broad)board.profile.thickStyle else board.penStyle
         val preview=object:View(this){override fun onDraw(canvas:Canvas){
             val style=tipStyle();val color=if(broad)board.profile.thickColor else board.penColor
@@ -308,14 +352,13 @@ class MainActivity : Activity() {
     private fun calibrateTips(){
         val c=column().apply{pad(20)}
         c.addView(label(tr("Contact width comes from the touch controller. Calibrate in raw pixels, not screen centimetres. Unknown/zero contact sizes use the fine tip.","اندازهٔ تماس را کنترلر لمس گزارش می‌کند. آستانه‌ها با پیکسل خام تنظیم می‌شوند، نه سانتی‌متر صفحه. اندازهٔ صفر یا نامشخص، سر باریک محسوب می‌شود."),14f,MUTED))
-        val enabled=CheckBox(this).apply{text=tr("Enable dual-tip detection","تشخیص دو سر قلم فعال باشد");isChecked=board.profile.calibrated};c.addView(enabled)
         c.addView(label(tr("Fine tip maximum contact width (px)","بیشترین عرض تماس سر باریک (پیکسل)"),14f));val thin=field(board.profile.thin.toString());c.addView(thin)
         c.addView(label(tr("Palm rejection starts at (px)","شروع تشخیص کف دست (پیکسل)"),14f));val palm=field(board.profile.palm.toString());c.addView(palm)
         val palmErase=CheckBox(this).apply{text=s("palm_erase");isChecked=board.profile.palmErase};c.addView(palmErase)
         c.addView(label(tr("Between these thresholds: broad-tip color and thickness. Set each tip's appearance in Pen settings.","بین این دو آستانه، رنگ و ضخامت سر پهن اعمال می‌شود. ظاهر هر دو سر را از تنظیمات قلم انتخاب کنید."),14f))
         c.addView(button(s("touch_test")){dialog(s("touch_test"),TouchDiagnostics(this,board.profile).apply{minimumHeight=dp(320)})})
         val d=dialog(tr("Dual-tip calibration","کالیبراسیون دو سر قلم"),ScrollView(this).apply{addView(c)})
-        c.addView(button(s("apply"),true){val a=thin.text.toString().toFloatOrNull();val b=palm.text.toString().toFloatOrNull();if(a==null||b==null||!a.isFinite()||!b.isFinite()||a<=0||b<=a){thin.error=tr("Use 0 < fine < palm","باید ۰ < سر باریک < کف دست باشد");return@button};board.profile.calibrated=enabled.isChecked;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;prefs.edit().putBoolean("calibrated",enabled.isChecked).putFloat("thin",a).putFloat("palm",b).putBoolean("palmErase",palmErase.isChecked).apply();savePens();d.dismiss()})
+        c.addView(button(s("apply"),true){val a=thin.text.toString().toFloatOrNull();val b=palm.text.toString().toFloatOrNull();if(a==null||b==null||!a.isFinite()||!b.isFinite()||a<=0||b<=a){thin.error=tr("Use 0 < fine < palm","باید ۰ < سر باریک < کف دست باشد");return@button};board.profile.calibrated=true;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;prefs.edit().putBoolean("calibrated",true).putFloat("thin",a).putFloat("palm",b).putBoolean("palmErase",palmErase.isChecked).apply();savePens();d.dismiss()})
     }
     private fun eraserSettings(){
         val c=column().apply{pad(20)};c.addView(label(tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."),14f,MUTED))
@@ -349,6 +392,7 @@ class MainActivity : Activity() {
 
     private fun shapes() {
         val c=column().apply{pad(12)};val d=dialog(s("shape"),ScrollView(this).apply{addView(c)})
+        c.addView(button(tr("Automatic shape recognition","تشخیص خودکار شکل")){board.tool="smart";board.smartMode="shape";board.clearSelection();refreshDock();d.dismiss()})
         Shapes.keys.chunked(4).forEach{chunk->val r=row();chunk.forEach{key->
             val cell=column().apply{gravity=Gravity.CENTER;pad(5);background=rounded(PAPER,dp(10).toFloat())}
             cell.addView(object:View(this){private val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=TEAL;style=Paint.Style.STROKE;strokeWidth=dp(2).toFloat()}
@@ -481,7 +525,7 @@ class MainActivity : Activity() {
         if(!dirty || destroyed)return
         if(board.isDrawing){handler.postDelayed(autosave,1000);return}
         dirty = false
-        val doc = store.lesson.copyDeep()
+        val doc = store.lesson.copyForSave()
         val target = lessonFile()
         worker.execute {
             try {
@@ -695,8 +739,10 @@ class MainActivity : Activity() {
         val items = board.chosen()
         if (items.isEmpty()) return
         val one = items.singleOrNull()
-        val keys = mutableListOf("delete", "duplicate", "copy", "lock", "front", "back", "color")
+        val keys = mutableListOf("delete", "duplicate", "copy", "lock", "front", "back", "color", "smart")
         if (one?.kind in listOf("text", "sticky", "graph")) keys.add("text")
+        if(one?.shape=="mindnode")keys.add("add_branch")
+        if(one?.shape in GeometryTools.keys)keys.add("draw_with_tool")
         if(one!=null && one.cuts.isNotEmpty())keys.add("restore_erased")
         if (one?.kind in listOf("text", "sticky")) keys.add("text_size")
         if (one?.kind == "graph") keys.add("domain")
@@ -705,6 +751,9 @@ class MainActivity : Activity() {
         keys.add("paste")
         choices(s("edit"), keys) { i ->
             when (keys[i]) {
+                "smart" -> smartSettings()
+                "add_branch" -> mindNode(one)
+                "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.edit{store.page.items.add(result)}}}
                 "delete" -> board.delete()
                 "copy" -> {
                     clipboard = items.map { it.deepCopy() }
@@ -712,10 +761,9 @@ class MainActivity : Activity() {
                 }
                 "duplicate" -> {
                     store.edit {
-                        items
-                            .map {
-                                it.deepCopy().apply {
-                                    id = newId()
+                        duplicateItems(items)
+                            .onEach {
+                                it.apply {
                                     x += 24
                                     y += 24
                                     locked = false
@@ -776,10 +824,10 @@ class MainActivity : Activity() {
         val bounds = contentBounds(clipboard)
         store.edit {
             val pasted =
-                clipboard.map {
-                    it.deepCopy().apply {
-                        id = newId()
+                duplicateItems(clipboard).onEach {
+                    it.apply {
                         layerId = store.page.activeLayerId
+                        pane = board.activePane
                         x += c.x - bounds.centerX()
                         y += c.y - bounds.centerY()
                         locked = false
@@ -831,7 +879,7 @@ class MainActivity : Activity() {
             r.addView(button("${s("page_short")} ${i+1}",i==store.lesson.current){switchPage(i);d.dismiss()},LinearLayout.LayoutParams(0,dp(50),1f))
             r.addView(button("⋯"){choices(s("pages"),listOf("duplicate","move_left","move_right","delete")){action->
                 fun perform(){store.edit{when(action){
-                    0->if(store.lesson.pages.size<200){store.lesson.pages.add(i+1,page.copy(id=newId(),layers=page.layers.map{it.copy()}.toMutableList(),items=page.items.map{it.deepCopy().apply{id=newId()}}.toMutableList()));store.lesson.current=i+1}
+                    0->if(store.lesson.pages.size<200){store.lesson.pages.add(i+1,page.copy(id=newId(),layers=page.layers.map{it.copy()}.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList(),items=duplicateItems(page.items).toMutableList()));store.lesson.current=i+1}
                     1,2->{val target=i+if(action==1)-1 else 1;if(target in store.lesson.pages.indices){java.util.Collections.swap(store.lesson.pages,i,target);store.lesson.current=target}}
                     3->if(store.lesson.pages.size>1){store.lesson.pages.removeAt(i);store.lesson.current=store.lesson.current.coerceAtMost(store.lesson.pages.lastIndex)}
                 }};board.clearSelection();board.reset();d.dismiss();pages()}
@@ -860,7 +908,7 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != RESULT_OK) return
-        if(requestCode==104){val f=File(cacheDir,"lab-snapshot.png");if(f.exists()){val bitmap=BitmapFactory.decodeFile(f.path);if(bitmap!=null)insertBitmap(bitmap);f.delete()};return}
+        if(requestCode==105){val f=File(cacheDir,"lab-snapshot.png");if(f.exists()){val bitmap=BitmapFactory.decodeFile(f.path);if(bitmap!=null)insertBitmap(bitmap);f.delete()};return}
         val uri = data?.data ?: return
         when (requestCode) {
             101 ->
@@ -902,12 +950,16 @@ class MainActivity : Activity() {
             104 -> {
                 val file = pendingExport ?: return
                 work({
+                    check(file.isFile && file.length()>0) { "Export is missing. Your internal lesson is preserved; please export again." }
                     requireNotNull(contentResolver.openOutputStream(uri, "wt")).use { out ->
-                        file.inputStream().use { it.copyTo(out) }
+                        val count=file.inputStream().use { it.copyTo(out) }
+                        check(count==file.length() && count>0) { "Incomplete export" }
+                        out.flush()
                     }
                 }) {
                     toast(s("saved"))
                     pendingExport = null
+                    prefs.edit().remove("pendingExport").apply()
                 }
             }
         }
@@ -922,12 +974,12 @@ class MainActivity : Activity() {
     }
 
     private fun export(ext: String, all: Boolean, done: (File) -> Unit) {
-        val doc = store.lesson.copyDeep()
+        val doc = store.lesson.copyForSave()
         work({
             val folder = File(cacheDir, "exports").apply { mkdirs() }
             val target = File(folder, "VuraVision-${System.currentTimeMillis()}.$ext")
             val renderer = Renderer(media)
-            if (ext == "vura") target.outputStream().use { files.write(doc, it) }
+            if (ext == "vura") files.atomic(doc, target)
             else if (ext == "pdf") {
                 val pdf = PdfDocument()
                 try {
@@ -962,6 +1014,7 @@ class MainActivity : Activity() {
 
     private fun createDocument(file: File, mime: String) {
         pendingExport = file
+        prefs.edit().putString("pendingExport", file.name).apply()
         try {
             startActivityForResult(
                 Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -1035,6 +1088,30 @@ class MainActivity : Activity() {
     }
 
     private var smartSource="offline"
+    private fun smartSettings(){
+        val c=column().apply{pad(20)}
+        val keys=listOf("offline","en-US","fa")
+        val source=Spinner(this).apply{adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
+        val review=Switch(this).apply{text=tr("Review before applying","بررسی نتیجه قبل از اعمال");isChecked=prefs.getBoolean("smartReview",false)};c.addView(review)
+        val d=dialog(s("smart"),c)
+        c.addView(button(s("apply")){smartSource=keys[source.selectedItemPosition];prefs.edit().putString("smartSource",smartSource).putBoolean("smartReview",review.isChecked).apply();d.dismiss()})
+        c.addView(button(s("models")){d.dismiss();models()})
+    }
+    private fun applySmart(original:List<Item>,value:String,mode:String){
+        require(value.isNotBlank()){"No recognition result"}
+        require(original.all{v->store.page.items.any{it===v} && store.page.editable(v) && !v.locked}){"Selection changed"}
+        val b=contentBounds(original);val first=original.first();val size=if(first.kind=="text")first.width else b.height().coerceIn(18f,64f)
+        val o=when(mode){
+            "formula"->{val clean=value.trim();val expression=clean.trimEnd('=',' ');val answer=if(expression.contains('='))SmartMath.steps(expression)else SmartMath.result(expression);Item(kind="text",text=if(expression.contains('='))answer else (if(clean.endsWith('='))"" else "= ")+answer,width=size)}
+            "graph"->{value.split(';').forEach{MathTools().compile(it)};Item(kind="graph",text=value,w=560f,h=400f)}
+            else->Item(kind="text",text=value,width=size)
+        }
+        o.color=first.color;o.layerId=first.layerId;o.pane=first.pane;if(o.kind=="text")TextLayout.fit(o)
+        o.x=if(mode=="formula")b.right+16 else b.left;o.y=if(mode=="graph")b.bottom+20 else b.top
+        if(mode=="formula" && o.text.contains('\n')){o.x=b.left;o.y=b.bottom+20}
+        store.edit{if(mode=="text")store.page.items.removeAll(original.toSet());store.page.items.add(o)}
+        board.selected.clear();board.selected.add(o.id);refreshDock()
+    }
     private fun smart(){
         val c=column().apply{pad(20)}
         c.addView(label(tr("Choose what the smart pen should do","کار قلم هوشمند را انتخاب کنید"),18f,NAVY,true))
@@ -1049,7 +1126,7 @@ class MainActivity : Activity() {
     private fun processSmart(items:List<Item>){
         val chosen=items.filter{store.page.editable(it)&&!it.locked&&it.kind in listOf("ink","text","sticky")};if(chosen.isEmpty())return
         val pageId=store.page.id;val mode=board.smartMode
-        fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};reviewSmart(chosen,values,mode)}
+        fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};if(values.isEmpty()||prefs.getBoolean("smartReview",false))reviewSmart(chosen,values,mode)else try{applySmart(chosen,values.first(),mode)}catch(e:Exception){toast(e.message?:s("error"));reviewSmart(chosen,values,mode)}}
         if(mode=="shape"){store.edit{chosen.filter{it.kind=="ink"}.forEach{o->ShapeRecognition.convert(o)?.let{store.page.items.remove(o);it.layerId=o.layerId;store.page.items.add(it)}}};board.clearSelection();return}
         if(chosen.all{it.kind!="ink"}){reviewResult(listOf(chosen.joinToString("\n"){it.text}));return}
         val strokes=chosen.filter{it.kind=="ink"};status.text=s("busy")
@@ -1063,7 +1140,7 @@ class MainActivity : Activity() {
         val text=field(candidates.firstOrNull().orEmpty()).apply{if(mode!="text"){layoutDirection=View.LAYOUT_DIRECTION_LTR;textDirection=View.TEXT_DIRECTION_LTR}};c.addView(text)
         val options=row();candidates.take(3).forEach{v->options.addView(button(v.take(40)){text.setText(v)})};c.addView(scrollRow(options))
         val result=label("",19f,TEAL,true).apply{setTextIsSelectable(true)};c.addView(result)
-        val keep=CheckBox(this).apply{this.text=s("keep_ink");isChecked=true};c.addView(keep)
+        val keep=CheckBox(this).apply{this.text=s("keep_ink");isChecked=mode!="text";isEnabled=mode=="text"};c.addView(keep)
         fun prepared():Item{val value=text.text.toString();require(value.isNotBlank()){s("empty")};return when(mode){
             "formula"->Item(kind="text",text="$value\n${SmartMath.result(value)}",width=30f).also{TextLayout.fit(it)}
             "graph"->{require(value.split(';').size in 1..3);value.split(';').forEach{MathTools().compile(it)};Item(kind="graph",text=value,w=560f,h=400f)}
@@ -1071,7 +1148,12 @@ class MainActivity : Activity() {
         }}
         c.addView(button(tr("Preview result","پیش‌نمایش نتیجه")){try{val item=prepared();result.text=if(item.kind=="graph")tr("Function is valid — Apply to plot","تابع معتبر است — برای رسم، اعمال را بزنید")else item.text;text.error=null}catch(e:Exception){text.error=e.message;result.text=""}})
         val d=dialog(s("review"),ScrollView(this).apply{addView(c)})
-        c.addView(button(s("apply"),true){try{require(store.page.id==pageId){"Page changed"};val item=prepared();item.layerId=original.first().layerId;require(original.all{store.page.editable(it)}){"Layer locked"};val bounds=contentBounds(original);item.x=bounds.left;item.y=if(keep.isChecked)bounds.bottom+20 else bounds.top;store.edit{if(!keep.isChecked)store.page.items.removeAll{v->!v.locked&&original.any{it.id==v.id}};store.page.items.add(item)};board.selected.clear();board.selected.add(item.id);refreshDock();d.dismiss()}catch(e:Exception){text.error=e.message}})
+        c.addView(button(s("apply"),true){try{
+            require(store.page.id==pageId){"Page changed"}
+            if(mode!="text" || !keep.isChecked)applySmart(original,text.text.toString(),mode)
+            else {val item=prepared();val first=original.first();item.layerId=first.layerId;item.pane=first.pane;item.color=first.color;require(original.all{v->store.page.items.any{it===v}&&store.page.editable(v)&&!v.locked}){"Selection changed"};val bounds=contentBounds(original);item.x=bounds.left;item.y=bounds.bottom+20;store.edit{store.page.items.add(item)};board.selected.clear();board.selected.add(item.id);refreshDock()}
+            d.dismiss()
+        }catch(e:Exception){text.error=e.message}})
     }
 
     private fun models(){
@@ -1089,7 +1171,7 @@ class MainActivity : Activity() {
             fun update(){recognition.installed(lang,{ready->if(!destroyed){state.text=s(if(ready)"installed"else"not_installed");install.text=s(if(ready)"installed"else"install");install.isEnabled=!ready&&!busy}},::failed)}
             fun download(){if(busy)return;busy=true;install.isEnabled=false;progress.visibility=View.VISIBLE;state.text=s("downloading");recognition.download(lang,{if(!destroyed){busy=false;progress.visibility=View.GONE;update()}},{if(!destroyed)failed(it)})}
             install.setOnClickListener{download()}
-            r.addView(button(tr("Fresh retry","دانلود تازه")){if(!busy){recognition.remove(lang,{download()},::failed)}})
+            r.addView(button(tr("Retry download","تلاش مجدد")){if(!busy){recognition.installed(lang,{ready->if(ready)update()else download()},::failed)}})
             r.addView(button(s("check_status")){if(!busy)update()})
             r.addView(button(tr("Details","جزئیات")){val details="Model: $lang\nSDK: digital-ink 19.0.0\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\nAPI: ${Build.VERSION.SDK_INT}\nLocale: ${Locale.getDefault()}\n\n${raw.ifBlank{tr("No error recorded","خطایی ثبت نشده است")}}";val body=column().apply{pad(16)};body.addView(label(details,12f).apply{setTextIsSelectable(true)});body.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision diagnostics",details));toast(s("done"))});dialog(tr("Download diagnostics","گزارش دانلود"),ScrollView(this).apply{addView(body)})})
             update()
@@ -1163,7 +1245,25 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun classroomTools() {choices(s("tools"),listOf("timer","stopwatch","dice","scoreboard")){which->floatingTools.open(listOf("timer","stopwatch","dice","scoreboard")[which])}}
+    private fun classroomTools() {
+        val keys=listOf("timer","stopwatch","dice","scoreboard")+GeometryTools.keys+"mind_map"
+        choices(s("tools"),keys){i->val key=keys[i];when{
+            key=="mind_map"->mindNode(null)
+            key in GeometryTools.keys->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")120f else 360f,h=when(key){"ruler"->64f;"set_square","protractor"->180f;else->180f},color=board.penColor))
+            else->floatingTools.open(key)
+        }}
+    }
+    private fun mindNode(parent:Item?){
+        if(parent!=null&&(parent.locked||!store.page.editable(parent)))return
+        input(tr("Node text","متن گره"),""){value->
+            val o=Item(kind="sticky",shape="mindnode",text=value,width=24f,noteColor=0xffe2f2f0.toInt(),parentNode=parent?.id.orEmpty())
+            TextLayout.fit(o)
+            if(parent==null)board.insert(o) else {
+                o.layerId=parent.layerId;o.pane=parent.pane;o.x=parent.x+parent.w+90;o.y=parent.y+store.page.items.count{it.parentNode==parent.id}*100f
+                store.edit{store.page.items.add(o)};board.selected.clear();board.selected.add(o.id);refreshDock()
+            }
+        }
+    }
 
     private fun openExplorer(lab:Boolean){
         if(lab)Labs.show(this){insertBitmap(it)}else Games.show(this)

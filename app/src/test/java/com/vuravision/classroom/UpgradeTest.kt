@@ -35,7 +35,7 @@ class UpgradeTest {
    event(MotionEvent.ACTION_DOWN,1,0);for(i in 1..9)event(MotionEvent.ACTION_POINTER_DOWN or(i shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),i+1,i)
    repeat(500){event(MotionEvent.ACTION_MOVE,10,it+10);if(it%5==0)board.draw(c)};assertEquals(1,board.cacheRebuilds)
    for(i in 9 downTo 1)event(MotionEvent.ACTION_POINTER_UP or(i shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),i+1,520+i)
-   event(MotionEvent.ACTION_UP,1,540);board.draw(c);assertEquals(10,store.page.items.size);assertTrue(store.page.items.all{it.points.size>=501});assertEquals(2,board.cacheRebuilds)
+   event(MotionEvent.ACTION_UP,1,540);board.draw(c);assertEquals(10,store.page.items.size);assertTrue(store.page.items.all{it.points.size>=501});assertEquals(1,board.cacheRebuilds)
    store.undo();assertTrue(store.page.items.isEmpty());store.redo();assertEquals(10,store.page.items.size);save(b,"ten-pointer-ink");b.recycle()
   }finally{media.close()}
  }

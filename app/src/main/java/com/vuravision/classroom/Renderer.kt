@@ -100,6 +100,7 @@ class Renderer(private val media: Media) {
                 c.restore()
             }
             "shape" -> {
+                if(o.shape in GeometryTools.keys){GeometryTools.draw(c,o);c.restore();return}
                 p.style = Paint.Style.STROKE
                 if(o.flipX && o.shape in listOf("line","arrow","double_arrow")) { c.translate(o.w,0f);c.scale(-1f,1f) }
                 if(o.flipY && o.shape in listOf("line","arrow","double_arrow")) { c.translate(0f,o.h);c.scale(1f,-1f) }
@@ -144,6 +145,14 @@ class Renderer(private val media: Media) {
         p.color = 0xff879aa6.toInt()
         c.drawLine(o.w / 2, 0f, o.w / 2, o.h, p)
         c.drawLine(0f, o.h / 2, o.w, o.h / 2, p)
+        p.textSize=12f;p.style=Paint.Style.FILL;p.color=NAVY
+        for(i in -10..10){
+            if(i==0)continue
+            val x=o.w/2+i*step*sx;val y=o.h/2-i*step*sy;val label=MathTools.format((i*step).toDouble())
+            if(x in 18f..o.w-25f)c.drawText(label,x+3,o.h/2+16,p)
+            if(y in 28f..o.h-16f)c.drawText(label,o.w/2+5,y-3,p)
+        }
+        c.drawText("0",o.w/2+4,o.h/2+16,p);c.drawText("x",o.w-16,o.h/2-8,p);c.drawText("y",o.w/2+8,16f,p)
         val colors = listOf(0xffe46d38.toInt(), 0xff218c91.toInt(), 0xff7465bc.toInt())
         o.text.split(';').take(3).forEachIndexed { index, s ->
             try {
@@ -176,18 +185,29 @@ class Renderer(private val media: Media) {
         c.restore()
     }
 
-    fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null) {
+    fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null) {
         page.layers.filter { it.visible && it.opacity>0f }.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
-            page.items.filter { it.layerId==layer.id }.forEach { o ->
-                val bounds=itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) }
-                if(region==null || RectF.intersects(bounds,region))draw(c,o,sync)
+            page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) }.forEach { o ->
+                if(o.parentNode.isNotEmpty())page.items.firstOrNull{it.id==o.parentNode && it.pane==o.pane && page.layer(it).visible}?.let{parent->
+                    p.reset();p.isAntiAlias=true;p.color=TEAL;p.strokeWidth=2f;p.style=Paint.Style.STROKE
+                    c.drawLine(parent.x+parent.w/2,parent.y+parent.h/2,o.x+o.w/2,o.y+o.h/2,p)
+                }
+                if(region==null || RectF.intersects(itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) },region))draw(c,o,sync)
             }
             c.restoreToCount(save)
         }
     }
 
     fun page(c: Canvas, page: Page, width: Int, height: Int, sync: Boolean) {
+        if(page.panes.size>1){
+            val n=page.panes.size;val columns=if(n==4)2 else n;val rows=if(n==4)2 else 1
+            page.panes.forEachIndexed{i,p->
+                val w=width/columns;val h=height/rows;c.save();c.translate((i%columns*w).toFloat(),(i/columns*h).toFloat());c.clipRect(0,0,w,h)
+                val subset=page.copy(items=page.items.filter{it.pane==i}.toMutableList(),panes=mutableListOf(p.copy()))
+                page(c,subset,w,h,sync);c.restore()
+            };return
+        }
         val b = contentBounds(page.visibleItems())
         b.inset(-40f, -40f)
         val scale = min(width / b.width(), height / b.height())
@@ -201,6 +221,7 @@ class Renderer(private val media: Media) {
             page,
             RectF(b.left - extraX, b.top - extraY, b.right + extraX, b.bottom + extraY),
         )
+        if(page.panes[0].background!=Color.WHITE)c.drawColor(page.panes[0].background)
         scene(c,page,sync)
         c.restore()
     }

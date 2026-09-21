@@ -2,6 +2,14 @@ package com.vuravision.classroom
 import kotlin.math.*
 /** Explicit polynomial parser. No sample-based guesses about whether an equation is linear. */
 object SmartMath {
+ fun steps(input:String):String{
+  val s=MathTools().normalize(input);val sides=s.split('=');require(sides.size==2){"Expected an equation"}
+  val c=(Parser(sides[0]).parse()-Parser(sides[1]).parse()).c;val a=c[2];val b=c[1];val d=c[0];val f=MathTools.Companion::format
+  val answer=solve(input)
+  if(abs(a)<1e-12){if(abs(b)<1e-12)return answer;return "${f(b)}x + (${f(d)}) = 0\n${f(b)}x = ${f(-d)}\n$answer"}
+  val delta=b*b-4*a*d
+  return "${f(a)}x² + (${f(b)})x + (${f(d)}) = 0\nΔ = (${f(b)})² − 4 × (${f(a)}) × (${f(d)}) = ${f(delta)}\n"+(if(delta>=0)"x = (−(${f(b)}) ± √${f(delta)}) / (${f(2*a)})\n" else "")+answer
+ }
  private class Poly(val c:DoubleArray){
   init{require(c.all{it.isFinite()}){"Numbers are too large"}}
   operator fun plus(b:Poly)=Poly(DoubleArray(3){c[it]+b.c[it]})

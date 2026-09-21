@@ -130,6 +130,15 @@ class Media(val context: Context) {
 }
 
 class LessonFiles(private val media: Media) {
+    fun verify(file:File){
+        check(file.length()>0){"Empty archive"}
+        ZipFile(file).use{zip->
+            val entry=requireNotNull(zip.getEntry("document.json")){"Missing document"}
+            val doc=zip.getInputStream(entry).bufferedReader().use{Gson().fromJson(it,Lesson::class.java)}
+            doc.validate()
+            doc.pages.flatMap{it.items}.filter{it.asset.isNotEmpty()}.forEach{check(zip.getEntry("assets/${it.asset}")!=null){"Missing asset"}}
+        }
+    }
     fun write(doc: Lesson, out: OutputStream) {
         doc.validate()
         ZipOutputStream(BufferedOutputStream(out)).use { z ->
@@ -225,13 +234,17 @@ class LessonFiles(private val media: Media) {
         destination.parentFile?.mkdirs()
         val tmp = File(destination.path + ".tmp")
         tmp.outputStream().use { write(doc, it) }
+        verify(tmp)
         RandomAccessFile(tmp, "rw").use { it.fd.sync() }
         val backup = File(destination.path + ".bak")
         if (destination.exists()) {
             backup.delete()
             check(destination.renameTo(backup)) { "Could not preserve previous save" }
         }
-        check(tmp.renameTo(destination)) { "Could not commit save" }
+        if(!tmp.renameTo(destination)){
+            if(backup.exists() && !destination.exists())backup.renameTo(destination)
+            error("Could not commit save; previous version preserved")
+        }
     }
 
     private fun sha(file: File): String {

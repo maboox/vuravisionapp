@@ -1,0 +1,4 @@
+<resources>
+ <string name="ruler">خط‌کش</string><string name="set_square">گونیا</string><string name="protractor">نقاله</string><string name="compass">پرگار</string>
+ <string name="mind_map">درخت / نقشهٔ ذهنی</string><string name="add_branch">افزودن شاخه</string><string name="draw_with_tool">رسم با ابزار</string>
+</resources>

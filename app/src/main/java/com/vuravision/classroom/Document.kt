@@ -5,6 +5,12 @@ import kotlin.math.*
 
 fun newId(): String = UUID.randomUUID().toString()
 
+/** Keep connections within a copied tree; detach references outside the selection. */
+fun duplicateItems(items: List<Item>): List<Item> {
+    val ids=items.associate{it.id to newId()}
+    return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty()}}
+}
+
 data class Point(var x: Float = 0f, var y: Float = 0f, var t: Long = 0, var pressure: Float = 1f)
 
 data class Item(
@@ -35,6 +41,8 @@ data class Item(
     var noteColor: Int = 0xffffe8b2.toInt(),
     var cuts: List<EraseCut> = emptyList(),
     var layerId: String = "base",
+    var pane: Int = 0,
+    var parentNode: String = "",
 
 ) {
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
@@ -80,6 +88,7 @@ fun distance(px: Float, py: Float, ax: Float, ay: Float, bx: Float, by: Float): 
 }
 
 data class Layer(var id: String = newId(), var name: String = "Layer", var visible: Boolean = true, var locked: Boolean = false, var opacity: Float = 1f)
+data class Pane(var color:Int=0xff20194f.toInt(),var background:Int=-1,var zoom:Float=1f,var tx:Float=0f,var ty:Float=0f)
 
 data class Page(
     var id: String = newId(),
@@ -87,6 +96,7 @@ data class Page(
     var items: MutableList<Item> = mutableListOf(),
     var layers: MutableList<Layer> = mutableListOf(Layer(id="base", name="Layer 1")),
     var activeLayerId: String = "base",
+    var panes: MutableList<Pane> = mutableListOf(Pane()),
 ) {
     fun layer(item: Item) = layers.first { it.id == item.layerId }
     fun visibleItems() = layers.filter { it.visible && it.opacity > 0f }.flatMap { l -> items.filter { it.layerId == l.id } }
@@ -100,11 +110,13 @@ data class Lesson(
     var current: Int = 0,
     var pages: MutableList<Page> = mutableListOf(Page()),
 ) {
+    // Committed point lists are immutable; Store.edit detaches them before edits.
+    fun copyForSave()=copy(pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
     fun copyDeep() =
         copy(
             pages =
                 pages
-                    .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList(), layers = it.layers.map { l -> l.copy() }.toMutableList()) }
+                    .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList(), layers = it.layers.map { l -> l.copy() }.toMutableList(),panes=it.panes.map{p->p.copy()}.toMutableList()) }
                     .toMutableList()
         )
 
@@ -122,6 +134,9 @@ data class Lesson(
         require(pages.sumOf { it.items.size } <= 20000)
         var points = 0
         pages.forEach { page ->
+            require(page.panes.size in 1..4)
+            require(page.panes.all{it.zoom.isFinite() && it.zoom in .15f..6f && it.tx.isFinite() && it.ty.isFinite()})
+            require(page.items.all{it.pane in page.panes.indices})
             require(page.layers.size in 1..100)
             require(page.layers.map { it.id }.distinct().size == page.layers.size)
             require(page.layers.all { it.id.isNotBlank() && it.name.length <= 200 && it.opacity.isFinite() && it.opacity in 0f..1f })
@@ -161,7 +176,7 @@ class Store(var lesson: Lesson = Lesson()) {
 
     // Point samples are shared in history and detached before arbitrary edits.
     private fun snapshot() = lesson.copy(pages = lesson.pages.map { page ->
-        page.copy(items = page.items.map { it.copy() }.toMutableList(), layers = page.layers.map { it.copy() }.toMutableList())
+        page.copy(items = page.items.map { it.copy() }.toMutableList(), layers = page.layers.map { it.copy() }.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList())
     }.toMutableList())
     fun checkpoint() {
         past.addLast(snapshot())
