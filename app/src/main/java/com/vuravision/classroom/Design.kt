@@ -4,17 +4,28 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.RippleDrawable
 import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.textfield.TextInputEditText
 
-val NAVY = 0xff20194f.toInt()
-val ORANGE = 0xfff8a529.toInt()
-val PAPER = 0xfff3f2fa.toInt()
-val MUTED = 0xff60727a.toInt()
-val TEAL = 0xff167b79.toInt()
+// Semantic VuraVision tokens. Feature code should use these rather than ad-hoc colors.
+val NAVY = 0xff2d2463.toInt()
+val ORANGE = 0xffd97800.toInt()
+val PAPER = 0xfff8f7fc.toInt()
+val MUTED = 0xff625f6b.toInt()
+val TEAL = 0xff0f716f.toInt()
+val SURFACE = Color.WHITE
+val SURFACE_VARIANT = 0xfff0eef6.toInt()
+val PRIMARY_CONTAINER = 0xffe8e2ff.toInt()
+val SECONDARY_CONTAINER = 0xffcdeeeB.toInt()
+val OUTLINE = 0xffd8d4e1.toInt()
+val OUTLINE_STRONG = 0xffb9b4c7.toInt()
+val DANGER = 0xffb3261e.toInt()
+val SUCCESS = 0xff287d58.toInt()
 
 fun Context.s(key: String): String {
     val name = if (key == "new") "new_lesson" else key
@@ -49,10 +60,26 @@ fun Context.label(value: String, size: Float = 16f, color: Int = NAVY, bold: Boo
         setPadding(dp(4), dp(4), dp(4), dp(4))
     }
 
+private fun enabledColors(enabled: Int, disabled: Int) = ColorStateList(
+    arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
+    intArrayOf(disabled, enabled),
+)
+
 fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
-    Button(this).apply {
+    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
         text = value
-        textSize = 13f
+        textSize = 14f
+        isAllCaps = false
+        letterSpacing = 0f
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        cornerRadius = dp(14)
+        insetTop = 0
+        insetBottom = 0
+        strokeWidth = dp(1)
+        strokeColor = enabledColors(if (active) NAVY else OUTLINE, OUTLINE)
+        backgroundTintList = enabledColors(if (active) NAVY else SURFACE, SURFACE_VARIANT)
+        rippleColor = ColorStateList.valueOf(if (active) 0x33ffffff else 0x1f2d2463)
+        elevation = dp(if (active) 3 else 0).toFloat()
         val icon = when(value.firstOrNull()) {
             '✎' -> R.drawable.feather_edit_3
             '▱' -> R.drawable.feather_edit_2
@@ -73,42 +100,51 @@ fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
         }
         if(icon!=null){
             text=value.drop(1).trim()
-            val drawable=context.getDrawable(icon)!!.mutate()
-            drawable.setTint(if(active)Color.WHITE else NAVY)
-            drawable.setBounds(0,0,dp(22),dp(22))
-            setCompoundDrawablesRelative(drawable,null,null,null)
-            compoundDrawablePadding=if(text.isEmpty())0 else dp(7)
+            setIconResource(icon)
+            iconTint = enabledColors(if(active)Color.WHITE else NAVY, MUTED)
+            iconSize = dp(22)
+            iconPadding = if(text.isEmpty())0 else dp(7)
+            iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
             contentDescription=when(value.firstOrNull()){'↶'->s("undo");'↷'->s("redo");'‹'->s("previous");'›'->s("next");'☰'->s("tools");else->text}
         }
-        isAllCaps = false
         minWidth = dp(52)
         minimumWidth = dp(52)
-        minHeight = dp(46)
-        minimumHeight = dp(46)
-        setTextColor(if (active) Color.WHITE else NAVY)
-        background = RippleDrawable(ColorStateList.valueOf(if(active)0x33ffffff else 0x2220194f),
-            rounded(
-                if (active) NAVY else Color.WHITE,
-                dp(12).toFloat(),
-                if (active) NAVY else 0xffded9ef.toInt(),
-            ),null)
-        elevation=dp(if(active)3 else 1).toFloat()
-        setPadding(dp(14), dp(8), dp(14), dp(8))
+        minHeight = dp(48)
+        minimumHeight = dp(48)
+        setTextColor(enabledColors(if (active) Color.WHITE else NAVY, MUTED))
+        setPadding(dp(16), dp(8), dp(16), dp(8))
         setOnClickListener { action() }
         layoutParams =
-            LinearLayout.LayoutParams(-2, dp(46)).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) }
+            LinearLayout.LayoutParams(-2, dp(48)).apply { setMargins(dp(4), dp(3), dp(4), dp(3)) }
     }
 
 fun Context.field(value: String = "", hintValue: String = "") =
-    EditText(this).apply {
+    TextInputEditText(this).apply {
         setText(value)
         hint = hintValue
         textSize = 17f
         setTextColor(NAVY)
-        setPadding(dp(12), dp(10), dp(12), dp(10))
-        background = rounded(PAPER, dp(8).toFloat())
-        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(6), 0, dp(6)) }
+        setHintTextColor(MUTED)
+        minHeight = dp(56)
+        setPadding(dp(16), dp(12), dp(16), dp(12))
+        background = rounded(SURFACE, dp(12).toFloat(), OUTLINE_STRONG)
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(8), 0, dp(8)) }
     }
+
+fun Context.card(
+    content: View,
+    color: Int = SURFACE,
+    cornerRadius: Int = 20,
+    elevation: Int = 1,
+    stroke: Int = OUTLINE,
+) = MaterialCardView(this).apply {
+    radius = dp(cornerRadius).toFloat()
+    cardElevation = dp(elevation).toFloat()
+    setCardBackgroundColor(color)
+    strokeColor = stroke
+    strokeWidth = dp(1)
+    addView(content)
+}
 
 fun Context.scrollRow(children: LinearLayout) =
     HorizontalScrollView(this).apply {

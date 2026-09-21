@@ -8,6 +8,8 @@ import android.graphics.pdf.PdfDocument
 import android.os.*
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -115,16 +117,24 @@ class MainActivity : Activity() {
             column().apply {
                 setBackgroundColor(PAPER)
                 fitsSystemWindows = true
+                clipToPadding = false
             }
         setContentView(root)
         val header =
             row().apply {
                 setBackgroundColor(NAVY)
-                setPadding(dp(12), dp(5), dp(12), dp(5))
+                setPadding(dp(16), dp(8), dp(16), dp(8))
+                elevation = dp(8).toFloat()
             }
         header.addView(
-            ImageView(this).apply { setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.CENTER_CROP;contentDescription="VuraVision" },
-            LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp<600)48 else 72),dp(48)),
+            ImageView(this).apply {
+                setImageResource(R.drawable.vura_brand)
+                scaleType=ImageView.ScaleType.FIT_CENTER
+                contentDescription="VuraVision"
+                background=rounded(Color.WHITE,dp(12).toFloat())
+                setPadding(dp(5),dp(5),dp(5),dp(5))
+            },
+            LinearLayout.LayoutParams(dp(if(resources.configuration.screenWidthDp<600)48 else 68),dp(48)).apply{marginEnd=dp(12)},
         )
         titleView =
             label("VuraVision", 17f, Color.WHITE, true).apply {
@@ -155,7 +165,11 @@ class MainActivity : Activity() {
             contentDescription = s("main_menu")
         })
         root.addView(header)
-        val strip = row().apply { setPadding(dp(12), dp(2), dp(12), dp(2)) }
+        val strip = row().apply {
+            setPadding(dp(16), dp(5), dp(16), dp(5))
+            setBackgroundColor(SURFACE)
+            elevation=dp(2).toFloat()
+        }
         if(resources.configuration.screenWidthDp>=720)strip.addView(label(s("workspace").uppercase(Locale.getDefault()),10f,MUTED,true))
         status = label(s("ready"), 11f, MUTED)
         strip.addView(status, LinearLayout.LayoutParams(0, -2, 1f))
@@ -166,15 +180,16 @@ class MainActivity : Activity() {
         strip.addView(touch)
         strip.addView(button(s("fit")){board.fit()})
         root.addView(strip)
-        canvasHost=FrameLayout(this);canvasHost.addView(board,FrameLayout.LayoutParams(-1,-1))
+        canvasHost=FrameLayout(this).apply{setBackgroundColor(SURFACE)};canvasHost.addView(board,FrameLayout.LayoutParams(-1,-1))
         floatingTools=ClassroomWidgets(this,canvasHost)
         selectionBar=row().apply{pad(4);background=rounded(Color.WHITE,dp(16).toFloat(),0xffe1dfeb.toInt());elevation=dp(5).toFloat()}
         selectionHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
         canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(58),Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply{setMargins(dp(12),dp(12),dp(12),0)})
         root.addView(canvasHost,LinearLayout.LayoutParams(-1,0,1f))
-        pageStrip=row().apply{pad(3)};root.addView(scrollRow(pageStrip))
-        dock = row().apply { pad(5) }
-        root.addView(scrollRow(dock))
+        pageStrip=row().apply{setPadding(dp(10),dp(5),dp(10),dp(3))}
+        root.addView(scrollRow(pageStrip).apply{setBackgroundColor(SURFACE);elevation=dp(2).toFloat()})
+        dock = row().apply { setPadding(dp(10),dp(5),dp(10),dp(8)) }
+        root.addView(scrollRow(dock).apply{setBackgroundColor(SURFACE);elevation=dp(6).toFloat()})
         refreshDock();refreshPages()
     }
 
@@ -411,18 +426,15 @@ class MainActivity : Activity() {
     }
 
     private fun dialog(title: String, content: View): AlertDialog =
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(title)
             .setView(content)
             .setNegativeButton(s("close"), null)
             .create()
-            .also {
-                it.show()
-                it.window?.setBackgroundDrawable(rounded(Color.WHITE, dp(20).toFloat()))
-            }
+            .also { it.show() }
 
     private fun choices(title: String, keys: List<String>, action: (Int) -> Unit) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(title)
             .setItems(keys.map { s(it) }.toTypedArray()) { _, i -> action(i) }
             .setNegativeButton(s("cancel"), null)
@@ -430,7 +442,7 @@ class MainActivity : Activity() {
     }
 
     private fun confirm(title: String, action: () -> Unit) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setMessage(title)
             .setNegativeButton(s("cancel"), null)
             .setPositiveButton(s("apply")) { _, _ -> action() }
@@ -451,7 +463,7 @@ class MainActivity : Activity() {
             }
         box.addView(edit)
         val d =
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(title)
                 .setView(box)
                 .setNegativeButton(s("cancel"), null)
@@ -472,7 +484,7 @@ class MainActivity : Activity() {
         lastError = "${e.javaClass.simpleName}: ${e.message}"
         if (!destroyed) {
             status.text = s("error")
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(s("error"))
                 .setMessage(lastError)
                 .setPositiveButton(s("close"), null)
@@ -484,7 +496,7 @@ class MainActivity : Activity() {
         if (loading) return
         loading = true
         val progress =
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setView(
                     row().apply {
                         pad(24)
@@ -650,7 +662,7 @@ class MainActivity : Activity() {
                 "$name  ·  ${java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT,java.text.DateFormat.SHORT).format(java.util.Date(f.lastModified()))}"
             }
         }) { names ->
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(s("recent"))
                 .setItems(names.toTypedArray()) { _, i -> loadFile(list[i]) }
                 .setNegativeButton(s("cancel"), null)
@@ -1053,7 +1065,7 @@ class MainActivity : Activity() {
                 val qr=ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url}
                 c.addView(qr,LinearLayout.LayoutParams(dp(230),dp(230)))
                 val address=label(url,12f).apply{setTextIsSelectable(true)};c.addView(address)
-                if(urls.size>1)c.addView(button(s("network_address")){AlertDialog.Builder(this).setItems(urls.toTypedArray()){_,index->address.text=urls[index];qr.setImageBitmap(Sharing.qr(urls[index]));qr.contentDescription=urls[index]}.show()})
+                if(urls.size>1)c.addView(button(s("network_address")){MaterialAlertDialogBuilder(this).setItems(urls.toTypedArray()){_,index->address.text=urls[index];qr.setImageBitmap(Sharing.qr(urls[index]));qr.contentDescription=urls[index]}.show()})
                 c.addView(label(s("share_troubleshoot"),12f,MUTED))
                 val count = label("${s("downloads")}: 0", 12f, MUTED)
                 c.addView(count)

@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | Kotlin / AGP / Gradle | 2.1.20 / 8.9.2 / 8.11.1, Java 17 | Pinned, tested build toolchain |
 | Android Canvas / PdfRenderer / PdfDocument | Platform APIs, app minimum 26 | Native drawing and PDF rendering, not a PDF editing SDK |
+| Material Components for Android | 1.12.0 | Apache 2.0; Material 3 controls and theming, customized with VuraVision semantic tokens |
 | ML Kit digital ink | 19.0.0 | Google SDK/model terms, not an open-source recognizer; actual model downloads |
 | ML Kit bundled Latin image OCR | 16.0.1 | Included model; no initial model download; Google SDK/model terms |
 | Gson | 2.12.1 | Apache 2.0; schema validation is independent of JSON parsing |
@@ -21,4 +22,4 @@ ML Kit downloads the language models you select. Recognition then runs on-device
 
 LAN QR sharing serves the exported PDF over HTTP. Anyone with the token URL and local-network access can download it while active. Use a trusted classroom network. Client isolation can block transfers. Closing the dialog keeps sharing active; Stop sharing ends it and expiry is 30 minutes. The app process must remain alive. It does not publish a public Internet link.
 
-Primary references: [ML Kit integration](https://developers.google.com/ml-kit/vision/digital-ink-recognition/android), [ML Kit terms](https://developers.google.com/ml-kit/terms), [Gson](https://github.com/google/gson), [ZXing](https://github.com/zxing/zxing), [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd), [exp4j](https://github.com/fasseg/exp4j), [Android command-line builds](https://developer.android.com/build/building-cmdline), [apksigner](https://developer.android.com/tools/apksigner), [Gradle action](https://github.com/gradle/actions), [artifact action](https://github.com/actions/upload-artifact).
+Primary references: [Material Components](https://github.com/material-components/material-components-android), [ML Kit integration](https://developers.google.com/ml-kit/vision/digital-ink-recognition/android), [ML Kit terms](https://developers.google.com/ml-kit/terms), [Gson](https://github.com/google/gson), [ZXing](https://github.com/zxing/zxing), [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd), [exp4j](https://github.com/fasseg/exp4j), [Android command-line builds](https://developer.android.com/build/building-cmdline), [apksigner](https://developer.android.com/tools/apksigner), [Gradle action](https://github.com/gradle/actions), [artifact action](https://github.com/actions/upload-artifact).

@@ -10,12 +10,13 @@ class ClassroomWidgets(private val context:Context,private val host:FrameLayout)
  fun closeAll(){handler.removeCallbacksAndMessages(null);widgets.values.forEach{host.removeView(it)};widgets.clear()}
  fun open(key:String){
   widgets[key]?.let{it.bringToFront();return}
-  val card=context.column().apply{background=rounded(Color.WHITE,context.dp(18).toFloat(),0xffdad6ee.toInt());elevation=context.dp(10).toFloat();pad(10)}
+  val content=context.column().apply{pad(12)}
+  val card=context.card(content,cornerRadius=22,elevation=8,stroke=OUTLINE_STRONG)
   val head=context.row();val drag=context.label("⠿  ${context.s(key)}",15f,NAVY,true);head.addView(drag,LinearLayout.LayoutParams(0,-2,1f))
   val body=context.column();var minimized=false;val tasks=mutableListOf<Runnable>()
   head.addView(context.button("−"){minimized=!minimized;body.visibility=if(minimized)View.GONE else View.VISIBLE}.apply{contentDescription=context.s("minimize")})
   head.addView(context.button("×"){tasks.forEach{handler.removeCallbacks(it)};host.removeView(card);widgets.remove(key)}.apply{contentDescription=context.s("close")})
-  card.addView(head);card.addView(body)
+  content.addView(head);content.addView(body)
   val display=context.label("0",36f,NAVY,true).apply{gravity=Gravity.CENTER;layoutDirection=View.LAYOUT_DIRECTION_LTR};body.addView(display)
   val buttons=context.row();body.addView(buttons)
   fun btn(text:String,action:()->Unit){buttons.addView(context.button(text,false,action),LinearLayout.LayoutParams(0,context.dp(48),1f))}

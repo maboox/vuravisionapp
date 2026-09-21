@@ -49,23 +49,26 @@ object Labs {
         keys.chunked(2).forEach { chunk ->
             val row = context.row()
             chunk.forEachIndexed { i, key ->
-                val card =
+                val cardContent =
                     context.column().apply {
                         pad(18)
-                        background = rounded(Color.WHITE, context.dp(18).toFloat())
-                        addView(context.label("0${keys.indexOf(key)+1}  /  LAB", 11f, TEAL, true))
-                        addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false},LinearLayout.LayoutParams(-1,context.dp(100)))
+                        addView(context.label("${keys.indexOf(key)+1}".padStart(2,'0') + "  /  LAB", 11f, TEAL, true))
+                        addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false},LinearLayout.LayoutParams(-1,context.dp(108)))
                         addView(context.label(context.s(key), 21f, NAVY, true))
-                        addView(context.label(context.s("ex_$key"), 13f, MUTED))
-                        setOnClickListener {
-                            d.dismiss()
-                            open(context, key, insert)
-                        }
+                        addView(context.label(context.s("ex_$key"), 13f, MUTED).apply{maxLines=3})
                     }
+                val card = context.card(cardContent, cornerRadius=20, elevation=2).apply {
+                    isClickable=true
+                    isFocusable=true
+                    setOnClickListener {
+                        d.dismiss()
+                        open(context, key, insert)
+                    }
+                }
                 row.addView(
                     card,
                     LinearLayout.LayoutParams(0,-2,1f).apply {
-                        setMargins(context.dp(5), context.dp(5), context.dp(5), context.dp(5))
+                        setMargins(context.dp(7), context.dp(7), context.dp(7), context.dp(7))
                     },
                 )
             }

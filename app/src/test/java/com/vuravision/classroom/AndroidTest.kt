@@ -245,7 +245,7 @@ class AndroidTest {
             .filterIsInstance<Button>()
             .first { it.text.toString()=="T  ${a.s("text")}" }
             .performClick()
-        val input = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+        val input = org.robolectric.shadows.ShadowDialog.getLatestDialog()
         views(input.window!!.decorView)
             .filterIsInstance<EditText>()
             .first()

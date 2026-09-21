@@ -236,12 +236,12 @@ object Games {
         root.addView(context.label(context.s("games_intro"), 15f, MUTED))
         val list = context.column()
         keys.forEachIndexed { i, key ->
-            val card =
-                context.row().apply {
-                    pad(10)
-                    background = rounded(android.graphics.Color.WHITE, 16f)
-                }
-            card.addView(context.label("${i+1}", 24f, ORANGE, true))
+            val cardContent = context.row().apply { pad(14) }
+            val number = context.label("${i+1}", 16f, NAVY, true).apply {
+                gravity=Gravity.CENTER
+                background=rounded(PRIMARY_CONTAINER,context.dp(12).toFloat())
+            }
+            cardContent.addView(number,LinearLayout.LayoutParams(context.dp(48),context.dp(48)).apply{marginEnd=context.dp(14)})
             val words = context.column()
             words.addView(context.label(context.s(key), 20f, NAVY, true))
             words.addView(
@@ -260,14 +260,15 @@ object Games {
                 )
             )
             if(key in QuizCatalog.keys || key=="math_race") { val example=GameEngine(key,Random(42)).apply{next(0)};words.addView(context.label(example.question,16f,TEAL,true)) }
-            card.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
-            card.addView(
+            cardContent.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
+            cardContent.addView(
                 context.button(context.s("start"), true) {
                     d.dismiss()
                     open(context, key)
                 }
             )
-            list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 5, 0, 5) })
+            val card=context.card(cardContent,cornerRadius=20,elevation=1)
+            list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, context.dp(6), 0, context.dp(6)) })
         }
         root.addView(
             ScrollView(context).apply { addView(list) },

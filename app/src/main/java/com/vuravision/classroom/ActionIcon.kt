@@ -5,18 +5,25 @@ import android.graphics.*
 import android.view.View
 import android.content.res.ColorStateList
 import android.graphics.drawable.RippleDrawable
+import android.view.ViewOutlineProvider
 
 /** Small native line icons. No bitmap allocation, animations or blur in the ink path. */
 class ActionIcon(context:Context, val symbol:String, title:String, action:()->Unit):View(context){
  private val p=Paint(Paint.ANTI_ALIAS_FLAG)
  init { contentDescription=title;tooltipText=title;isFocusable=true;isClickable=true
-  background=RippleDrawable(ColorStateList.valueOf(0x1820194f),rounded(Color.TRANSPARENT,context.dp(10).toFloat()),null)
+  background=RippleDrawable(
+   ColorStateList.valueOf(0x1f2d2463),
+   rounded(if(symbol=="delete")0xfffff1f0.toInt() else SURFACE_VARIANT,context.dp(14).toFloat(),if(symbol=="delete")0xffffd9d5.toInt() else OUTLINE),
+   null,
+  )
+  elevation=context.dp(1).toFloat()
+  outlineProvider=ViewOutlineProvider.BACKGROUND
   setOnClickListener{action()}
  }
- override fun onMeasure(w:Int,h:Int){setMeasuredDimension(resolveSize(context.dp(48),w),resolveSize(context.dp(48),h))}
+ override fun onMeasure(w:Int,h:Int){setMeasuredDimension(resolveSize(context.dp(52),w),resolveSize(context.dp(52),h))}
  override fun onDraw(c:Canvas){
   c.save();c.translate(width/2f,height/2f);c.scale(context.dp(24)/24f,context.dp(24)/24f);c.translate(-12f,-12f)
-  p.color=if(symbol=="delete")0xffbd4553.toInt() else NAVY;p.style=Paint.Style.STROKE;p.strokeWidth=1.7f;p.strokeCap=Paint.Cap.ROUND;p.strokeJoin=Paint.Join.ROUND
+  p.color=if(symbol=="delete")DANGER else NAVY;p.style=Paint.Style.STROKE;p.strokeWidth=1.7f;p.strokeCap=Paint.Cap.ROUND;p.strokeJoin=Paint.Join.ROUND
   fun line(x:Float,y:Float,a:Float,b:Float)=c.drawLine(x,y,a,b,p)
   when(symbol){
    "copy","duplicate"->{c.drawRoundRect(8f,8f,21f,21f,2f,2f,p);line(4f,16f,3f,16f);line(3f,16f,3f,3f);line(3f,3f,16f,3f);if(symbol=="duplicate"){line(11f,14f,18f,14f);line(14.5f,11f,14.5f,18f)}}

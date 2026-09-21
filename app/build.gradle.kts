@@ -32,6 +32,7 @@ android {
     lint { abortOnError = true }
 }
 dependencies {
+    implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")

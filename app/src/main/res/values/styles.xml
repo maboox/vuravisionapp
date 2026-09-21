@@ -1,3 +1,46 @@
-<resources><style name="AppThemeBase" parent="android:style/Theme.Material.Light.NoActionBar">
-<item name="android:fontFamily">sans</item><item name="android:colorAccent">#F8A529</item><item name="android:windowLightStatusBar">false</item><item name="android:statusBarColor">#20194F</item><item name="android:navigationBarColor">#20194F</item>
-</style><style name="AppTheme" parent="AppThemeBase" /></resources>
+<resources>
+    <style name="AppThemeBase" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/vura_primary</item>
+        <item name="colorOnPrimary">@color/vura_on_primary</item>
+        <item name="colorPrimaryContainer">@color/vura_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/vura_on_primary_container</item>
+        <item name="colorSecondary">@color/vura_secondary</item>
+        <item name="colorOnSecondary">@color/vura_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/vura_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/vura_on_secondary_container</item>
+        <item name="colorTertiary">@color/vura_tertiary</item>
+        <item name="colorOnTertiary">@color/vura_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/vura_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/vura_on_tertiary_container</item>
+        <item name="android:colorBackground">@color/vura_background</item>
+        <item name="colorSurface">@color/vura_surface</item>
+        <item name="colorSurfaceVariant">@color/vura_surface_variant</item>
+        <item name="colorOnSurface">@color/vura_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/vura_on_surface_variant</item>
+        <item name="colorOutline">@color/vura_outline</item>
+        <item name="colorError">@color/vura_error</item>
+        <item name="colorOnError">@color/vura_on_error</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/vura_primary</item>
+        <item name="android:navigationBarColor">@color/vura_primary</item>
+        <item name="android:windowBackground">@color/vura_background</item>
+        <item name="materialAlertDialogTheme">@style/VuraAlertDialog</item>
+        <item name="alertDialogTheme">@style/VuraAlertDialog</item>
+    </style>
+
+    <style name="VuraAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/vura_primary</item>
+        <item name="colorSecondary">@color/vura_secondary</item>
+        <item name="colorSurface">@color/vura_surface</item>
+        <item name="shapeAppearanceMediumComponent">@style/VuraShape.Dialog</item>
+    </style>
+
+    <style name="VuraShape.Dialog" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="AppTheme" parent="AppThemeBase" />
+</resources>
