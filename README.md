@@ -15,7 +15,7 @@ chmod +x gradlew
 ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-The supplied Actions log confirms debug/release Kotlin compilation and 82 of 83 tests passing in the latest run. This updated archive revises the remaining RTL window test setup and adds full failure diagnostics and needs another Actions run. Local Gradle execution remains blocked by `Network is unreachable`. See [verification status](docs/VERIFICATION-1.4.md). Do not treat added tests as passing until Actions completes.
+The latest supplied Actions run passed `testDebugUnitTest` and completed `assembleRelease` and `assembleDebugAndroidTest`. It stopped at release lint: the new `WorkspaceIcon` extended a platform image button. This archive uses `AppCompatImageButton` as required by the lint rule. Run Actions again to verify lint, APK signing checks and artifact upload. Local Gradle execution remains blocked by `Network is unreachable`. See [verification status](docs/VERIFICATION-1.4.md).
 
 ## Changes
 

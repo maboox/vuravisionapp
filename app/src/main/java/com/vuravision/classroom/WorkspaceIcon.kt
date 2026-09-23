@@ -3,10 +3,10 @@ package com.vuravision.classroom
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.RippleDrawable
-import android.widget.ImageButton
+import androidx.appcompat.widget.AppCompatImageButton
 
 /** Feather-based, 48dp touch targets; labels remain available to accessibility and long press. */
-class WorkspaceIcon(context:Context,key:String,title:String,active:Boolean=false,action:()->Unit):ImageButton(context){
+class WorkspaceIcon(context:Context,key:String,title:String,active:Boolean=false,action:()->Unit):AppCompatImageButton(context){
     init {
         val resource=when(key){
             "pen"->R.drawable.feather_edit_2;"erase"->R.drawable.vura_eraser

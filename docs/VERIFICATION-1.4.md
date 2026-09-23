@@ -2,6 +2,10 @@
 
 Date: 2026-09-23. Base commit: `1a31802` from the supplied archive.
 
+## Latest supplied Actions run
+
+`testDebugUnitTest` passed. `assembleRelease` and `assembleDebugAndroidTest` completed. The workflow failed at `lintRelease` with one error in `WorkspaceIcon.kt`: `AppCompatCustomView` requires a custom image button to extend `AppCompatImageButton`. The source now extends that class. The same log reported 618 lint warnings; lint stops on errors. APK verification and artifact upload have not yet run successfully, and the one-line fix still needs a fresh CI run.
+
 ## Follow-up from supplied GitHub Actions log
 
 The supplied run compiled debug/release Kotlin and unit-test Kotlin successfully, then ran 83 tests: 81 passed and 2 failed. It stopped at `testDebugUnitTest`; APK assembly and release lint completion are not established by this log. Deprecation warnings and native-library stripping messages were not the reported failure.
