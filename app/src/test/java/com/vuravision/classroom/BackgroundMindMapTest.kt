@@ -3,6 +3,7 @@ package com.vuravision.classroom
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
@@ -40,6 +42,7 @@ class BackgroundMindMapTest {
             val hex=views(picker.window!!.decorView).filterIsInstance<TextInputEditText>().single()
             hex.setText("#123ABC")
             picker.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
             assertEquals(Color.parseColor("#123ABC"),activity.store.page.panes[0].background)
             assertEquals("hatch",activity.store.page.background)
             background.dismiss()

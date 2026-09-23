@@ -15,7 +15,7 @@ chmod +x gradlew
 ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-The supplied Actions run for version 1.5 reported four unit test failures, addressed in 1.6. The subsequent run compiled the 1.6 source and passed 90 of 91 tests. Its remaining failure exposed an incorrect face-to-face touch coordinate conversion, corrected in the previous source delivery. Version 1.7 adds the features below and still needs a fresh Actions run. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.7.md).
+The latest supplied Actions run compiled version 1.7 and passed 92 of 93 unit tests. The remaining failure showed that the custom color had not been applied when the test checked it. The dialog now uses the standard apply callback, disables Apply for invalid hex, and the test drains the UI queue before asserting. This correction still needs a fresh Actions run. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.7.md).
 
 ## Changes
 

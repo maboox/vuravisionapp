@@ -1,6 +1,6 @@
 # VuraVision 1.7 — verification status
 
-The supplied GitHub Actions report for 1.6 compiled the app and passed 90 of 91 JVM tests. The remaining face-to-face touch test exposed a normalized coordinate error, corrected in the previous source delivery. The new 1.7 changes have not yet run through Android compilation, lint or device tests in Actions.
+The latest supplied GitHub Actions report for 1.7 compiled debug/release code and passed 92 of 93 JVM tests. In the remaining `BackgroundMindMapTest.pageBackgroundKeepsPatternAndCustomColorTogether` failure, the custom color was still white when asserted. The picker now uses the dialog's standard Apply callback and disables Apply for invalid hex; the test processes the UI queue before asserting. These last changes have not run in Actions. Lint and APK verification did not complete in the failed workflow.
 
 This source adds focused graphics tests for the combined background panel, custom hex color, page-specific colors, and connector ordering behind both mind-map boxes. Static source checks and archive CRC verification do not establish a successful Android build. Run the repository's `Android APK` workflow and inspect `verification-<run>` for any test or lint failures; the APK artifact is `VuraVision-1.7-<run>` after a successful run.
 

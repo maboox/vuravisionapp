@@ -86,16 +86,19 @@ object ColorPickerDialog {
             .setTitle(context.tr("Custom color","رنگ دلخواه"))
             .setView(content)
             .setNegativeButton(context.s("cancel"),null)
-            .setPositiveButton(context.s("apply"),null)
-            .create()
-        d.setOnShowListener{
-            d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
-                val color=parse(hex.text?.toString().orEmpty())
-                if(color==null){hex.error=context.tr("Enter a six-digit hex color, such as #27A890","کد شش‌رقمی مثل #27A890 وارد کنید");return@setOnClickListener}
-                onPick(color);d.dismiss()
+            .setPositiveButton(context.s("apply")){_,_->
+                parse(hex.text?.toString().orEmpty())?.let(onPick)
             }
-        }
-        d.show()
+            .show()
+        val apply=d.getButton(AlertDialog.BUTTON_POSITIVE)
+        apply.isEnabled=parse(hex.text?.toString().orEmpty())!=null
+        hex.addTextChangedListener(object:TextWatcher{
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){
+                apply.isEnabled=parse(s?.toString().orEmpty())!=null
+            }
+            override fun afterTextChanged(s:Editable?){}
+        })
         return d
     }
 }
