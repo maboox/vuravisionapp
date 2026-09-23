@@ -13,6 +13,14 @@ Corrections in this archive:
 
 These follow-up corrections have not been rerun in CI here. Run Actions again; no tests are skipped or disabled.
 
+## Second supplied Actions run and follow-up
+
+The second supplied log reports **82/83 tests passing**. Text insertion now passes. The Persian menu test still fails at `getGlobalVisibleRect`; resizing decor alone did not resolve it. The log does not include view bounds, so the exact clipping ancestor is not proven.
+
+The revised test declares a 420×750 dp portrait display at xhdpi, explicitly attaches the activity, drains the main looper and captures the actual laid-out window without manually overriding its bounds. It retains full-menu visibility checks, verifies RTL, and exercises the menu click. Failure messages include the complete ancestor geometry. Gradle now prints full test exception messages in Actions. No assertions are mocked, bypassed or disabled. A new CI run is still required; this fix has not been executed locally.
+
+Reference for lifecycle APIs: https://robolectric.org/javadoc/latest/org/robolectric/android/controller/ActivityController.html
+
 ## Executed locally
 
 - Source review of document snapshots, archive import/atomic save, shared drawing/export renderer, model download API and token-scoped LAN sharing.

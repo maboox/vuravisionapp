@@ -61,26 +61,41 @@ class UpgradeTest {
   views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("previous")}.performClick();assertEquals(0,a.store.lesson.current)
   views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("shape")}.performClick();val gallery=org.robolectric.shadows.ShadowDialog.getLatestDialog();assertEquals(24,views(gallery.window!!.decorView).filterIsInstance<TextView>().count{label->Shapes.keys.any{label.text==a.s(it)}});capture(gallery.window!!.decorView,"shape-gallery");gallery.dismiss();ctl.pause().stop().destroy()
  }
- @Test @Config(qualifiers="fa-port-xhdpi") fun compactPersianScreenKeepsMenuReachable(){
+ @Test @Config(qualifiers="fa-w420dp-h750dp-port-xhdpi") fun compactPersianScreenKeepsMenuReachable(){
   context.getSharedPreferences("vura",0).edit().putString("language","fa").commit()
-  val ctl=Robolectric.buildActivity(MainActivity::class.java).setup()
+  val ctl=Robolectric.buildActivity(MainActivity::class.java).setup().visible()
   try {
    val a=ctl.get()
-   val root=a.findViewById<View>(android.R.id.content)
-   // Lay out the complete window. Resizing only android.R.id.content leaves
-   // its decor ancestors at the default test viewport, clipping RTL controls.
-   capture(a.window.decorView,"compact-fa",840,1500)
-   // Identify the navigation menu independently of icons and translated labels.
-   val menus=views(root).filter{it.id==R.id.main_menu_button}
+   Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+   val decor=a.window.decorView
+   // Use the attached window's viewport; never enlarge just its children for this
+   // visibility test. ViewRootImpl also clips to the configured display bounds.
+   val width=decor.width
+   val height=decor.height
+   assertTrue("Attached window must be laid out: ${width}x${height}",width>0 && height>0)
+   val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
+   try{decor.draw(Canvas(bitmap));save(bitmap,"compact-fa")}finally{bitmap.recycle()}
+   val menus=views(decor).filter{it.id==R.id.main_menu_button}
    assertEquals("Expected one main menu button",1,menus.size)
    val menu=menus.single()
    assertEquals(a.s("main_menu"),menu.contentDescription)
+   assertEquals("Test must exercise RTL layout",View.LAYOUT_DIRECTION_RTL,menu.layoutDirection)
+   val geometry=generateSequence(menu){it.parent as? View}.joinToString(" <- "){
+    "${it.javaClass.simpleName}[${it.left},${it.top},${it.right},${it.bottom}; visibility=${it.visibility}; scroll=${it.scrollX},${it.scrollY}]"
+   }
    val rect=Rect()
-   assertTrue("Menu must remain visible in compact Persian layout",menu.getGlobalVisibleRect(rect))
-   assertTrue("Menu must have a nonzero size",menu.width>0 && menu.height>0)
-   assertEquals("Menu must not be horizontally clipped",menu.width,rect.width())
-   assertEquals("Menu must not be vertically clipped",menu.height,rect.height())
-   assertTrue("Menu must stay inside the window",rect.left>=0 && rect.top>=0 && rect.right<=840 && rect.bottom<=1500)
+   assertTrue("Menu must remain visible. Window=${width}x${height}; $geometry",menu.getGlobalVisibleRect(rect))
+   assertTrue("Menu must have a nonzero size. $geometry",menu.width>0 && menu.height>0)
+   assertEquals("Menu must not be horizontally clipped. $geometry",menu.width,rect.width())
+   assertEquals("Menu must not be vertically clipped. $geometry",menu.height,rect.height())
+   val windowRect=Rect()
+   assertTrue("Window must be visible",decor.getGlobalVisibleRect(windowRect))
+   assertTrue("Menu $rect must stay inside window $windowRect. $geometry",windowRect.contains(rect))
+   assertTrue("Menu must be clickable",menu.performClick())
+   val dialog=ShadowDialog.getLatestDialog()
+   assertNotNull("Menu click must open navigation",dialog)
+   assertTrue("Navigation must be showing",dialog.isShowing)
+   dialog.dismiss()
   } finally {ctl.pause().stop().destroy()}
  }
  @Test fun labAndGameCatalogScreensHaveDescriptionsAndPreviews(){Labs.show(context){it.recycle()};var d=ShadowDialog.getLatestDialog();capture(d.window!!.decorView,"labs-catalog",1920,1080);d.dismiss();Games.show(context);d=ShadowDialog.getLatestDialog();capture(d.window!!.decorView,"games-catalog",1920,1080);d.dismiss()}
