@@ -41,10 +41,11 @@ class Renderer(private val media: Media) {
 
     private val functions = object : android.util.LruCache<String, (Double) -> Double>(32) {}
 
-    fun background(c: Canvas, page: Page, area: RectF) {
-        c.drawColor(if (page.background == "dark") 0xff172a36.toInt() else Color.WHITE)
+    fun background(c: Canvas, page: Page, area: RectF, fill:Int=page.panes.firstOrNull()?.background?:Color.WHITE) {
+        val color=if(page.background=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
+        c.drawColor(color)
         if (page.background !in listOf("dots", "grid", "ruled")) return
-        p.color = 0xffe4eaed.toInt()
+        p.color = if(android.graphics.Color.luminance(color)<.35)0x55ffffff else 0xffd8dce2.toInt()
         p.strokeWidth = 1f
         p.style = Paint.Style.FILL
         val step = 32f
@@ -189,7 +190,7 @@ class Renderer(private val media: Media) {
         page.layers.filter { it.visible && it.opacity>0f }.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
             page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) }.forEach { o ->
-                if(o.parentNode.isNotEmpty())page.items.firstOrNull{it.id==o.parentNode && it.pane==o.pane && page.layer(it).visible}?.let{parent->
+                if(o.shape=="mindnode" && o.parentNode.isNotEmpty())page.items.firstOrNull{it.id==o.parentNode && it.pane==o.pane && page.layer(it).visible}?.let{parent->
                     p.reset();p.isAntiAlias=true;p.color=TEAL;p.strokeWidth=2f;p.style=Paint.Style.STROKE
                     c.drawLine(parent.x+parent.w/2,parent.y+parent.h/2,o.x+o.w/2,o.y+o.h/2,p)
                 }
@@ -221,7 +222,6 @@ class Renderer(private val media: Media) {
             page,
             RectF(b.left - extraX, b.top - extraY, b.right + extraX, b.bottom + extraY),
         )
-        if(page.panes[0].background!=Color.WHITE)c.drawColor(page.panes[0].background)
         scene(c,page,sync)
         c.restore()
     }

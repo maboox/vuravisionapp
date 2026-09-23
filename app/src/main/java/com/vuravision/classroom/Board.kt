@@ -39,6 +39,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var smartMode="text"
     var onSmart:(List<Item>)->Unit={}
     var onObjectActions:()->Unit={}
+    var onMindAdd:(Item,Boolean)->Unit={_,_->}
     private var tappedSelected=false
     private val eraseLast=mutableMapOf<Int,PointF>()
     var penColor=NAVY
@@ -82,6 +83,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private var ty:Float get()=pane.ty;set(v){pane.ty=v}
     private val density = resources.displayMetrics.density
     private val live = mutableMapOf<Int, Item>()
+    private val guides=mutableMapOf<Int,Item>()
+    private val holdCallbacks=mutableMapOf<Int,Runnable>()
+    private val holdAt=mutableMapOf<Int,PointF>()
+    private val heldStart=mutableMapOf<Int,PointF>()
+    private val heldOriginal=mutableMapOf<Int,Item>()
+    private val heldEnd=mutableMapOf<Int,PointF>()
+    private val mindStart=mutableMapOf<Int,PointF>()
     private val actions = mutableMapOf<Int, String>()
     private var changed = false
     private var primary = -1
@@ -92,6 +100,30 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private var original = listOf<Item>()
     private var box: RectF? = null
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    private fun snap(id:Int,point:PointF):PointF = guides[id]?.let{
+        GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom)
+    }?:point
+    private fun cancelHold(id:Int){holdCallbacks.remove(id)?.let{removeCallbacks(it)};holdAt.remove(id)}
+    private fun scheduleHold(id:Int,at:PointF){
+        if(heldStart.containsKey(id))return
+        val last=holdAt[id]
+        if(last!=null && hypot(last.x-at.x,last.y-at.y)<4f/zoom)return
+        cancelHold(id);holdAt[id]=PointF(at.x,at.y)
+        val callback=Runnable{
+            holdCallbacks.remove(id);holdAt.remove(id)
+            val ink=live[id]?:return@Runnable
+            if(ink.kind!="ink" || ink.points.size<3)return@Runnable
+            val shape=ShapeRecognition.live(ink)?:return@Runnable
+            shape.id=ink.id;shape.layerId=ink.layerId;shape.pane=ink.pane
+            shape.alpha=ink.alpha;shape.dashLength=ink.dashLength;shape.dashGap=ink.dashGap
+            heldStart[id]=PointF(ink.points.first().x,ink.points.first().y)
+            heldEnd[id]=PointF(ink.points.last().x,ink.points.last().y)
+            heldOriginal[id]=shape.deepCopy()
+            live[id]=shape;renderer.forgetInk(ink.id);postInvalidateOnAnimation()
+        }
+        holdCallbacks[id]=callback;postDelayed(callback,2000)
+    }
 
     init {
         isFocusable = true
@@ -112,6 +144,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun center() = paneRect(activePane.coerceIn(store.page.panes.indices)).let{world(it.centerX(),it.centerY())}
 
     fun reset() {
+        holdCallbacks.keys.toList().forEach(::cancelHold)
+        live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
         activePane=activePane.coerceIn(store.page.panes.indices)
         backingDirty=true
         zoom = 1f
@@ -158,7 +192,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun delete() {
-        store.edit { store.page.items.removeAll { it.id in selected && !it.locked && store.page.editable(it) } }
+        val ids=MindMap.group(store.page,chosen()).mapTo(mutableSetOf()){it.id}
+        store.edit { store.page.items.removeAll { it.id in ids } }
         clearSelection()
     }
 
@@ -183,15 +218,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 page.panes.indices.forEach{index->
                     target.save();transformCanvas(target,index)
                     val screen=paneRect(index);val l=world(screen.left,screen.top,index);val r=world(screen.right,screen.bottom,index)
-                    renderer.background(target,page,RectF(l.x,l.y,r.x,r.y))
-                    if(page.panes[index].background!=Color.WHITE)target.drawColor(page.panes[index].background)
+                    renderer.background(target,page,RectF(l.x,l.y,r.x,r.y),page.panes[index].background)
                     renderer.scene(target,page,pane=index);target.restore()
                 }
                 cachedPage=page;backingDirty=false;cacheRebuilds++
             } else dirtyRegion?.let { region ->
                 target.save();transformCanvas(target);target.clipRect(region)
-                renderer.background(target,page,region)
-                if(pane.background!=Color.WHITE)target.drawColor(pane.background)
+                renderer.background(target,page,region,pane.background)
                 renderer.scene(target,page,region=region,pane=activePane)
                 target.restore()
             }
@@ -215,6 +248,18 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             p.style = Paint.Style.FILL
             c.drawCircle(b.right, b.bottom, 10f / zoom, p)
             c.drawCircle(b.centerX(), b.top - 28 / zoom, 10f / zoom, p)
+            items.singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->
+                p.color=TEAL;p.strokeWidth=2f/zoom
+                val radius=15f/zoom
+                listOf(node.x+node.w+30f/zoom to node.y+node.h/2,
+                    node.x+node.w/2 to node.y+node.h+30f/zoom).forEach{(x,y)->
+                    p.style=Paint.Style.FILL;c.drawCircle(x,y,radius,p)
+                    p.color=Color.WHITE;p.style=Paint.Style.STROKE
+                    c.drawLine(x-7/zoom,y,x+7/zoom,y,p)
+                    c.drawLine(x,y-7/zoom,x,y+7/zoom,p)
+                    p.color=TEAL
+                }
+            }
         }
         box?.let {
             p.style = Paint.Style.STROKE
@@ -230,6 +275,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
         val id = e.getPointerId(e.actionIndex)
+        if(e.actionMasked==MotionEvent.ACTION_CANCEL){
+            holdCallbacks.keys.toList().forEach(::cancelHold)
+            live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+            pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true
+        }
         if(e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN)){
             val n=store.page.panes.indices.firstOrNull{paneRect(it).contains(e.getX(e.actionIndex),e.getY(e.actionIndex))}?:0
             pointerPanes[id]=n
@@ -278,6 +328,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
                 actions[id] = behavior
                 if (behavior == "reject") return true
+                if(e.actionMasked==MotionEvent.ACTION_DOWN && effectiveTool=="select"){
+                    chosen().singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->
+                        val child=hypot(at.x-(node.x+node.w+30f/zoom),at.y-(node.y+node.h/2))<22f/zoom
+                        val sibling=hypot(at.x-(node.x+node.w/2),at.y-(node.y+node.h+30f/zoom))<22f/zoom
+                        if(child||sibling){actions[id]="mind_add";post{onMindAdd(node,sibling)};return true}
+                    }
+                }
                 if(id !in broadPointers && (tool in listOf("pen","highlight","shape") || (tool=="smart" && smartMode=="shape"))) {
                     if(!store.page.canDraw()){actions[id]="reject";android.widget.Toast.makeText(context,context.tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"),android.widget.Toast.LENGTH_SHORT).show();return true}
                 }
@@ -316,7 +373,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                 selected.clear()
                                 selected.add(hit.id)
                             }
-                            original = chosen().filter { !it.locked }.map { it.deepCopy() }
+                            original = MindMap.group(store.page,chosen()).map { it.deepCopy() }
                             mode = "move"
                         }
                     }
@@ -341,6 +398,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
                     val splitInk=store.page.panes.size>1
                     val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
+                    val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==pointerPanes[id] && it.shape in GeometryTools.keys &&
+                        GeometryTools.snap(it,at.x,at.y,14f/store.page.panes[it.pane].zoom)!=null}
+                    if(guide!=null)guides[id]=guide
+                    val start=snap(id,at)
+                    mindStart[id]=at
                     live[id] =
                         Item(
                             layerId=store.page.activeLayerId,
@@ -355,9 +417,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             alpha = if (style == "highlight") 75 else 255,
                             points =
                                 mutableListOf(
-                                    Point(at.x, at.y, e.eventTime, e.getPressure(e.actionIndex))
+                                    Point(start.x, start.y, e.eventTime, e.getPressure(e.actionIndex))
                                 ),
                         )
+                    if(tool=="pen")scheduleHold(id,start)
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -386,34 +449,48 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     } else
                         live[pid]?.let { o ->
                             if (o.kind == "shape") {
-                                o.flipX=point.x<anchor.x;o.flipY=point.y>=anchor.y
-                                val dx=point.x-anchor.x;val dy=point.y-anchor.y
-                                o.w=abs(dx).coerceAtLeast(1f);o.h=abs(dy).coerceAtLeast(1f)
-                                if(Shapes.uniform(shape)){val size=max(o.w,o.h);o.w=size;o.h=size}
-                                o.x=if(dx<0)anchor.x-o.w else anchor.x
-                                o.y=if(dy<0)anchor.y-o.h else anchor.y
+                                val endpoint=if(pid in heldStart)snap(pid,point) else point
+                                if(pid in heldOriginal && o.shape!="line"){
+                                    val base=heldOriginal.getValue(pid);val last=heldEnd.getValue(pid)
+                                    val dx=endpoint.x-last.x;val dy=endpoint.y-last.y
+                                    o.x=base.x;o.y=base.y
+                                    o.w=(base.w+dx).coerceAtLeast(4f);o.h=(base.h+dy).coerceAtLeast(4f)
+                                    if(Shapes.uniform(o.shape)){val side=max(o.w,o.h);o.w=side;o.h=side}
+                                }else{
+                                    val start=heldStart[pid]?:anchor
+                                    o.flipX=endpoint.x<start.x;o.flipY=endpoint.y>=start.y
+                                    val dx=endpoint.x-start.x;val dy=endpoint.y-start.y
+                                    o.w=abs(dx).coerceAtLeast(1f);o.h=abs(dy).coerceAtLeast(1f)
+                                    if(Shapes.uniform(o.shape)){val size=max(o.w,o.h);o.w=size;o.h=size}
+                                    o.x=if(dx<0)start.x-o.w else start.x
+                                    o.y=if(dy<0)start.y-o.h else start.y
+                                }
                             } else {
                                 for (j in 0 until e.historySize) {
                                     val q = world(e.getHistoricalX(i, j), e.getHistoricalY(i, j),pointerPanes[pid]?:activePane)
+                                    val snapped=snap(pid,q)
                                     o.points.add(
                                         Point(
-                                            q.x,
-                                            q.y,
+                                            snapped.x,
+                                            snapped.y,
                                             e.getHistoricalEventTime(j),
                                             e.getHistoricalPressure(i, j),
                                         )
                                     )
                                 }
-                                o.points.add(Point(point.x, point.y, e.eventTime, e.getPressure(i)))
+                                val snapped=snap(pid,point)
+                                o.points.add(Point(snapped.x, snapped.y, e.eventTime, e.getPressure(i)))
+                                if(tool=="pen")scheduleHold(pid,snapped)
                             }
                         }
                 }
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> {
+                cancelHold(id)
                 live.remove(id)?.let { o ->
                     if (o.kind == "ink") {
-                        o.points.add(Point(at.x, at.y, e.eventTime))
+                        val end=snap(id,at);o.points.add(Point(end.x,end.y,e.eventTime))
                         val left = o.points.minOf { it.x }
                         val top = o.points.minOf { it.y }
                         o.w = (o.points.maxOf { it.x } - left).coerceAtLeast(1f)
@@ -427,6 +504,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             it.y -= top
                         }
                     }
+                    if(tool=="pen")mindStart[id]?.let{if(MindMap.attach(store.page,o,it.x,it.y))backingDirty=true}
                     renderer.forgetInk(o.id)
                     if(tool=="smart" && smartMode!="shape"){
                         val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{store.page.editable(it)})else emptyList()
@@ -438,6 +516,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     }else {checkpoint();store.page.items.add(o)}
                     if(tool!="smart")commitToBacking(o) else if(smartMode=="shape")backingDirty=true
                 }
+                guides.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
                 val wasSelection=actions[id]=="select"
                 actions.remove(id);eraseLast.remove(id);broadPointers.remove(id);pointerPanes.remove(id)
                 if (id == primary) {
@@ -492,7 +571,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             .coerceIn(.05f, 20f)
                     o.x = b.left + (base.x - b.left) * factor
                     o.y = b.top + (base.y - b.top) * factor
-                    if(original.size==1 && base.kind=="shape" && !Shapes.uniform(base.shape) && base.shape !in GeometryTools.keys){
+                    if(original.size==1 && base.kind=="shape" && base.shape=="ruler"){
+                        o.w=(base.w+point.x-anchor.x).coerceIn(40f,100000f)
+                        o.h=base.h
+                    }else if(original.size==1 && base.kind=="shape" && !Shapes.uniform(base.shape) && base.shape !in GeometryTools.keys){
                         o.w=(base.w+point.x-anchor.x).coerceIn(4f,100000f)
                         o.h=(base.h+point.y-anchor.y).coerceIn(4f,100000f)
                     }else{o.w=(base.w*factor).coerceIn(.01f,100000f);o.h=(base.h*factor).coerceIn(.01f,100000f);if(base.kind=="text"){o.width=(base.width*factor).coerceIn(.1f,200f);TextLayout.fit(o)}}

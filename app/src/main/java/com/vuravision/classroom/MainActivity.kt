@@ -9,6 +9,7 @@ import android.os.*
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
 import java.util.Locale
@@ -87,13 +88,14 @@ class MainActivity : Activity() {
         board.dashGap=prefs.getFloat("dashGap",8f)
         board.penStyle=prefs.getString("penStyle","round")?:"round"
         board.touchMode=prefs.getBoolean("touchMode",false)
-        smartSource=prefs.getString("smartSource","offline")?:"offline"
+        smartSource=prefs.getString("smartSource","auto")?:"auto"
         board.smartMode=prefs.getString("smartMode","text")?:"text"
         buildUI()
         media.ready = { handler.post { if(!destroyed)board.sceneChanged() } }
         media.error = { message -> handler.post { status.text = s("error") + ": " + message } }
         board.onSelection = { refreshDock() }
         board.onObjectActions={editSelection()}
+        board.onMindAdd={node,sibling->mindNode(node,sibling)}
         board.onSmart={processSmart(it)}
         store.changed = {
             dirty = true
@@ -140,7 +142,7 @@ class MainActivity : Activity() {
         header.addView(icon("files",s("files")){fileMenu()})
         header.addView(icon("undo",s("undo")){store.undo();board.clearSelection()})
         header.addView(icon("redo",s("redo")){store.redo();board.clearSelection()})
-        header.addView(icon("share",s("share")){share()})
+        header.addView(icon("share",s("share")){shareOptions()})
         floating(header,Gravity.TOP or Gravity.START)
         // Titles/status remain available in the document menu; canvas chrome uses icons.
         titleView=label("");status=label("");pageLabel=label("")
@@ -215,15 +217,22 @@ class MainActivity : Activity() {
             icon("next"){if(pdf.pdfPage<pdf.pageCount-1)board.edit{it.pdfPage++}}
         }
         if(items.any{it.kind in listOf("ink","text","sticky")}){
-            icon("text",tr("Convert to text","تبدیل به متن")){board.smartMode="text";processSmart(board.chosen())}
+            icon("text",tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
             icon("formula",tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
             selectionBar.addView(this.icon("convert",tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())})
             icon("graph",tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
         }
+        if(items.singleOrNull()?.shape=="mindnode"){
+            val node=items.single()
+            icon("insert",tr("Add child","افزودن فرزند")){mindNode(node)}
+            icon("insert",tr("Add sibling","افزودن هم‌سطح")){mindNode(node,true)}
+            icon("text",tr("Add text","افزودن متن")){textEditor(node)}
+        }
+        if(items.any{it.kind=="ink"})icon("shape",tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
         icon("color"){colors()}
-        icon("copy"){clipboard=board.chosen().map{it.deepCopy()};toast(s("copy"))}
+        icon("copy"){clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()};toast(s("copy"))}
         icon("duplicate"){
-            val copies=duplicateItems(board.chosen()).onEach{it.x+=24;it.y+=24;it.locked=false}
+            val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
             store.edit{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
         }
         icon("delete"){board.delete()}
@@ -254,7 +263,7 @@ class MainActivity : Activity() {
             })
             actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){
                 val c=column().apply{pad(12)};palette(c,pane.background){color->store.edit{pane.background=color}}
-                dialog(tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه"),c)
+                dialog(tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه"),ScrollView(this).apply{addView(c)})
             })
             overlay.addView(actions,FrameLayout.LayoutParams(dp(100),dp(52)).apply{
                 leftMargin=((i%columns+1)*canvasHost.width/columns-dp(112)).coerceAtLeast(dp(76))
@@ -285,7 +294,8 @@ class MainActivity : Activity() {
     }
     private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).apply()}
     private fun palette(c:LinearLayout,initial:Int,changed:(Int)->Unit){
-        val colors=listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
+        val colors=listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt(),
+            0xfff6f7f9.toInt(),0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt(),0xffd2d4db.toInt(),0xff94a9bf.toInt(),0xff263b57.toInt(),0xff314633.toInt())
         val buttons=mutableListOf<Button>()
         colors.chunked(5).forEach{chunk->c.addView(row().apply{chunk.forEach{color->
             val b=button(if(color==initial)"✓" else "●"){}.apply{setTextColor(if(Color.red(color)*.299+Color.green(color)*.587+Color.blue(color)*.114>160)NAVY else Color.WHITE);backgroundTintList=android.content.res.ColorStateList.valueOf(color);strokeColor=android.content.res.ColorStateList.valueOf(OUTLINE_STRONG);strokeWidth=dp(1);setPadding(0,0,0,0);minWidth=0;minimumWidth=0;textSize=22f;contentDescription=String.format(Locale.US,"#%06X",color and 0xffffff)}
@@ -420,7 +430,8 @@ class MainActivity : Activity() {
         slider(c,tr("Text size","اندازهٔ متن"),item.width,120){item.width=it}
         if(sticky){c.addView(label(tr("Note background","رنگ یادداشت"),16f,NAVY,true));palette(c,item.noteColor){item.noteColor=it;value.background=rounded(it,dp(8).toFloat())}}
         val d=dialog(s(if(sticky)"sticky"else"text"),ScrollView(this).apply{addView(c)})
-        c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;item.textAlign=listOf("start","center","end")[align.selectedItemPosition];TextLayout.fit(item)
+        c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;item.textAlign=listOf("start","center","end")[align.selectedItemPosition];val oldWidth=item.w;val oldHeight=item.h;TextLayout.fit(item)
+            if(item.shape=="mindnode"){item.w=maxOf(oldWidth,item.w);item.h=maxOf(oldHeight,item.h)}
             if(existing==null)board.insert(item)else store.edit{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
     }
     private fun graph(initial:String="y=2x-5",existing:Item?=null){
@@ -614,15 +625,12 @@ class MainActivity : Activity() {
     }
 
     private fun menu() {
-        choices(store.lesson.title.ifBlank{"VuraVision"}+" · "+status.text, listOf("files", "lab", "games", "tools", "settings", "help", "rename")) {
+        choices(store.lesson.title.ifBlank{"VuraVision"}+" · "+status.text, listOf("lab", "games", "settings", "help")) {
             when (it) {
-                0 -> fileMenu()
-                1 -> openExplorer(true)
-                2 -> openExplorer(false)
-                3 -> classroomTools()
-                4 -> settings()
-                5 -> quickGuide()
-                6 -> rename()
+                0 -> openExplorer(true)
+                1 -> openExplorer(false)
+                2 -> settings()
+                3 -> quickGuide()
             }
         }
     }
@@ -633,13 +641,13 @@ class MainActivity : Activity() {
         val d=dialog("VuraVision",ScrollView(this).apply{addView(c)})
         title.setOnClickListener{taps++;if(taps==3){prefs.edit().putBoolean("engineering",true).apply();d.dismiss();engineering()}}
         c.addView(label(s("help_text"),16f))
-        c.addView(label(tr("Re-tap Pen or Eraser to configure it. Select an item, then tap it again for actions. Use the PDF previous/next buttons to turn pages; drag in any direction to move it. Smart: choose a mode, then circle your writing. Shape mode converts each completed drawing automatically.","برای تنظیم قلم یا پاک‌کن، دوباره روی ابزار فعال بزنید. شیء را انتخاب و دوباره لمس کنید تا عملیات باز شود. برای ورق‌زدن PDF دکمه‌های قبلی/بعدی را بزنید؛ کشیدن در هر جهت فایل را جابه‌جا می‌کند. در Smart حالت را انتخاب و دور نوشته خط بکشید. حالت شکل هر ترسیم را خودکار تبدیل می‌کند."),16f))
+        c.addView(label(tr("Re-tap Pen or Eraser to configure it. Select writing to use the smart actions above it. Hold the pen still at the end of a shape for two seconds to adjust it. Select a mind-map node to add a child with the side plus or a sibling with the lower plus. Share PDF through a cloud app for people on another network.","برای تنظیم قلم یا پاک‌کن، دوباره روی آن بزنید. برای عملیات هوشمند، نوشته را انتخاب کنید و از نوار بالای آن استفاده کنید. انتهای شکل را دو ثانیه با قلم نگه دارید تا بتوانید اندازه‌اش را تنظیم کنید. در مایندمپ، به‌علاوهٔ کنار گره فرزند و به‌علاوهٔ زیر گره هم‌سطح می‌سازد. برای افراد روی شبکهٔ دیگر، PDF را با برنامهٔ ابری به اشتراک بگذارید."),16f))
     }
 
     private fun fileMenu() {
         choices(
             s("files"),
-            listOf("new", "open", "save", "recent", "export_pdf", "export_png", "export_jpg"),
+            listOf("new", "open", "save", "recent", "export_pdf", "export_png", "export_jpg", "rename"),
         ) {
             when (it) {
                 0 ->
@@ -657,6 +665,7 @@ class MainActivity : Activity() {
                 4 -> exportChoice("pdf")
                 5 -> exportChoice("png")
                 6 -> exportChoice("jpg")
+                7 -> rename()
             }
         }
     }
@@ -797,12 +806,12 @@ class MainActivity : Activity() {
                 "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.edit{store.page.items.add(result)}}}
                 "delete" -> board.delete()
                 "copy" -> {
-                    clipboard = items.map { it.deepCopy() }
+                    clipboard = MindMap.group(store.page,items).map { it.deepCopy() }
                     toast(s("copy"))
                 }
                 "duplicate" -> {
                     store.edit {
-                        duplicateItems(items)
+                        duplicateItems(MindMap.group(store.page,items))
                             .onEach {
                                 it.apply {
                                     x += 24
@@ -912,6 +921,11 @@ class MainActivity : Activity() {
         val actions=row()
         actions.addView(button("＋ ${s("add_page")}",true){addPage();d.dismiss()})
         actions.addView(button(s("background")){choices(s("background"),listOf("white","dark","dots","grid","ruled")){i->store.edit{store.page.background=listOf("white","dark","dots","grid","ruled")[i]};d.dismiss()}})
+        actions.addView(button(tr("Background color","رنگ پس‌زمینه")){
+            val paletteBox=column().apply{pad(12)};val pane=store.page.panes[board.activePane]
+            palette(paletteBox,pane.background){color->store.edit{pane.background=color}}
+            dialog(tr("Background color","رنگ پس‌زمینه"),ScrollView(this).apply{addView(paletteBox)})
+        })
         actions.addView(button(s("clear")){confirm(s("clear_confirm")){store.edit{store.page.items.removeAll{!it.locked && store.page.editable(it)}};board.clearSelection();d.dismiss()}})
         c.addView(scrollRow(actions))
         store.lesson.pages.forEachIndexed{i,page->
@@ -1071,6 +1085,38 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun shareOptions(){
+        val choices=arrayOf(tr("Send PDF via another app / cloud","فرستادن PDF با برنامهٔ دیگر / فضای ابری"),
+            tr("QR for a public HTTPS link","QR برای لینک عمومی HTTPS"),
+            tr("QR on the same local network","QR روی شبکهٔ محلی"))
+        MaterialAlertDialogBuilder(this).setTitle(s("share"))
+            .setItems(choices){_,index->when(index){0->sharePdf();1->publicQr();else->share()}}
+            .setNegativeButton(s("cancel"),null).show()
+    }
+    private fun sharePdf(){
+        export("pdf",true){file->try{
+            val uri=FileProvider.getUriForFile(this,"$packageName.files",file)
+            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{
+                type="application/pdf";putExtra(Intent.EXTRA_STREAM,uri)
+                clipData=ClipData.newRawUri(file.name,uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            },s("share")))
+        }catch(e:Exception){error(e)}}
+    }
+    private fun publicQr(){
+        input(tr("Paste a public HTTPS link to your uploaded PDF","لینک عمومی HTTPS فایل PDF بارگذاری‌شده را وارد کنید")) {raw->
+            val url=raw.trim();val uri=android.net.Uri.parse(url)
+            require(uri.scheme=="https" && !uri.host.isNullOrBlank() && uri.authority?.contains('@')!=true){
+                tr("Enter a valid public HTTPS address","نشانی معتبر و عمومی HTTPS وارد کنید")
+            }
+            val c=column().apply{pad(20);gravity=Gravity.CENTER}
+            c.addView(label(tr("Anyone with access to this public link can open it from another network. Check sharing permissions in the cloud app.","هر کسی که به این لینک عمومی دسترسی داشته باشد می‌تواند از شبکهٔ دیگر آن را باز کند. مجوزهای اشتراک را در برنامهٔ ابری بررسی کنید."),14f,MUTED))
+            c.addView(ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url},LinearLayout.LayoutParams(dp(230),dp(230)))
+            c.addView(label(url,12f).apply{setTextIsSelectable(true)})
+            c.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",url));toast(s("done"))})
+            dialog(s("share"),c)
+        }
+    }
     private fun share() {
         export("pdf", true) { file ->
             try {
@@ -1130,15 +1176,17 @@ class MainActivity : Activity() {
         }
     }
 
-    private var smartSource="offline"
+    private var smartSource="auto"
     private fun smartSettings(){
         val c=column().apply{pad(20)}
-        val keys=listOf("offline","en-US","fa")
-        val source=Spinner(this).apply{adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
+        c.addView(label(tr("Select ink, then use the actions above it to recognize text, solve, convert units, or recognize shapes. Drawing a loop is not needed.","دست‌نویس را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست."),14f,MUTED))
+        val keys=listOf("auto","offline","en-US","fa")
+        val source=Spinner(this).apply{adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Auto · English / Persian","خودکار · انگلیسی / فارسی"),tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
         val review=Switch(this).apply{text=tr("Review before applying","بررسی نتیجه قبل از اعمال");isChecked=prefs.getBoolean("smartReview",false)};c.addView(review)
         val d=dialog(s("smart"),c)
-        c.addView(button(s("apply")){smartSource=keys[source.selectedItemPosition];prefs.edit().putString("smartSource",smartSource).putBoolean("smartReview",review.isChecked).apply();d.dismiss()})
+        d.setOnDismissListener{smartSource=keys[source.selectedItemPosition];prefs.edit().putString("smartSource",smartSource).putBoolean("smartReview",review.isChecked).apply()}
         c.addView(button(s("models")){d.dismiss();models()})
+        c.addView(label(tr("Auto uses installed handwriting models and falls back to bundled Latin OCR. Install Persian and English models below when needed.","حالت خودکار از مدل‌های دست‌نویس نصب‌شده استفاده می‌کند و در غیر این صورت سراغ تشخیص لاتین همراه برنامه می‌رود. مدل‌های فارسی و انگلیسی را در صورت نیاز نصب کنید."),13f,MUTED))
     }
     private fun applySmart(original:List<Item>,value:String,mode:String){
         require(value.isNotBlank()){"No recognition result"}
@@ -1156,17 +1204,7 @@ class MainActivity : Activity() {
         store.edit{if(mode=="text")store.page.items.removeAll(original.toSet());store.page.items.add(o)}
         board.selected.clear();board.selected.add(o.id);refreshDock()
     }
-    private fun smart(){
-        val c=column().apply{pad(20)}
-        c.addView(label(tr("Choose what the smart pen should do","کار قلم هوشمند را انتخاب کنید"),18f,NAVY,true))
-        c.addView(label(tr("Shape: draw normally; each completed stroke becomes geometry. Other modes: circle existing ink to recognize it. This tool only selects existing writing; it never adds ink. Review every recognition before applying.","شکل: عادی بکشید؛ هر خط کامل به شکل هندسی تبدیل می‌شود. حالت‌های دیگر: دور نوشتهٔ قبلی خط بکشید. این ابزار فقط نوشتهٔ قبلی را انتخاب می‌کند و چیزی روی تخته نمی‌نویسد. نتیجه را قبل از اعمال بررسی کنید."),14f,MUTED))
-        val source=Spinner(this);source.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Offline Latin OCR · no download","تشخیص لاتین آفلاین · بدون دانلود"),tr("Google English handwriting","دست‌نویس انگلیسی گوگل"),tr("Google Persian handwriting","دست‌نویس فارسی گوگل")));source.setSelection(listOf("offline","en-US","fa").indexOf(smartSource).coerceAtLeast(0));c.addView(source)
-        val d=dialog(s("smart"),ScrollView(this).apply{addView(c)})
-        listOf("text" to tr("Text","متن"),"convert" to tr("Convert units · 12 inch to cm","تبدیل واحد · ۱۲ اینچ به سانتی‌متر"),"formula" to tr("Calculate / solve equation","محاسبه / حل معادله"),"graph" to tr("Plot function","رسم تابع"),"shape" to tr("Automatic shapes · offline","اشکال خودکار · آفلاین")).forEach{(key,title)->c.addView(button(title,board.smartMode==key){smartSource=listOf("offline","en-US","fa")[source.selectedItemPosition];board.smartMode=key;board.tool="smart";board.clearSelection();prefs.edit().putString("smartSource",smartSource).putString("smartMode",key).apply();refreshDock();status.text=title;d.dismiss()})}
-        if(board.chosen().isNotEmpty())c.addView(button(tr("Process current selection","پردازش انتخاب فعلی")){smartSource=listOf("offline","en-US","fa")[source.selectedItemPosition];d.dismiss();processSmart(board.chosen())})
-        c.addView(button(s("models")){d.dismiss();models()})
-        c.addView(label(tr("Offline Latin OCR works best on clear separated characters. It does not recognize Persian or stacked fractions, integrals and general symbolic notation. Formula solving supports arithmetic and linear/quadratic equations in x.","تشخیص لاتین آفلاین برای حروف و اعداد واضح و جدا مناسب‌تر است. فارسی، کسر چندطبقه، انتگرال و نمادگذاری عمومی ریاضی را تشخیص نمی‌دهد. حل فرمول شامل محاسبات و معادلات خطی/درجه‌دو با x است."),13f,MUTED))
-    }
+    private fun smart(){smartSettings()}
     private fun processSmart(items:List<Item>){
         val chosen=items.filter{store.page.editable(it)&&!it.locked&&it.kind in listOf("ink","text","sticky")};if(chosen.isEmpty())return
         val pageId=store.page.id;val mode=board.smartMode
@@ -1175,7 +1213,17 @@ class MainActivity : Activity() {
         if(chosen.all{it.kind!="ink"}){reviewResult(listOf(chosen.joinToString("\n"){it.text}));return}
         val strokes=chosen.filter{it.kind=="ink"};status.text=s("busy")
         fun fallback(e:Exception){lastError=android.util.Log.getStackTraceString(e);status.text=s("error");toast(recognition.failure(this,e));reviewResult(emptyList())}
-        if(smartSource=="offline")OfflineText.recognize(chosen,board.renderer,::reviewResult,::fallback)
+        if(smartSource=="auto"){
+            fun latin()=OfflineText.recognize(chosen,board.renderer,::reviewResult,::fallback)
+            fun english(persian:List<String>){recognition.installed("en-US",{ready->
+                if(ready)recognition.recognize("en-US",strokes,{english->
+                    val faText=persian.firstOrNull().orEmpty()
+                    reviewResult(if(faText.any{it in '\u0600'..'\u06ff'})persian+english else english+persian)
+                },{if(persian.isNotEmpty())reviewResult(persian)else latin()})
+                else if(persian.isNotEmpty())reviewResult(persian)else latin()
+            },{if(persian.isNotEmpty())reviewResult(persian)else latin()})}
+            recognition.installed("fa",{ready->if(ready)recognition.recognize("fa",strokes,::english,{english(emptyList())})else english(emptyList())},{english(emptyList())})
+        }else if(smartSource=="offline")OfflineText.recognize(chosen,board.renderer,::reviewResult,::fallback)
         else recognition.installed(smartSource,{installed->if(installed)recognition.recognize(smartSource,strokes,::reviewResult,::fallback)else{status.text=s("model_required");reviewResult(emptyList());toast(s("model_required"))}},::fallback)
     }
     private fun reviewSmart(original:List<Item>,candidates:List<String>,mode:String){
@@ -1234,14 +1282,19 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","models","input_controls","cache","about")
+        val keys=mutableListOf("language","ui_size","models","input_controls","cache","about")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
-            "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();recreate()}
+            "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
+            "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
+                .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
+                    listOf(.85f,1f,1.2f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
+                    persist();prefs.edit().putFloat("uiScale",listOf(.85f,1f,1.2f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
+                }.show()
             "models"->models()
             "input_controls"->inputSettings()
             "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
-            "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
+            "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
             "engineering"->engineering()
         }}
     }
@@ -1307,16 +1360,25 @@ class MainActivity : Activity() {
             else->floatingTools.open(key)
         }}
     }
-    private fun mindNode(parent:Item?){
+    private fun mindNode(parent:Item?,sibling:Boolean=false){
         if(parent!=null&&(parent.locked||!store.page.editable(parent)))return
-        input(tr("Node text","متن گره"),""){value->
-            val o=Item(kind="sticky",shape="mindnode",text=value,width=24f,noteColor=0xffe2f2f0.toInt(),parentNode=parent?.id.orEmpty())
-            TextLayout.fit(o)
-            if(parent==null)board.insert(o) else {
-                o.layerId=parent.layerId;o.pane=parent.pane;o.x=parent.x+parent.w+90;o.y=parent.y+store.page.items.count{it.parentNode==parent.id}*100f
-                store.edit{store.page.items.add(o)};board.selected.clear();board.selected.add(o.id);refreshDock()
-            }
+        if(parent==null && !store.page.canDraw()){toast(tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"));return}
+        fun node(x:Float,y:Float,parentId:String="",layer:String=store.page.activeLayerId,pane:Int=board.activePane)=
+            Item(kind="sticky",shape="mindnode",width=24f,w=180f,h=120f,x=x,y=y,
+                noteColor=0xffe2f2f0.toInt(),parentNode=parentId,layerId=layer,pane=pane)
+        val added=if(parent==null){
+            val center=board.center();val root=node(center.x-200,center.y-60)
+            listOf(root,node(root.x+root.w+90,root.y-85,root.id),node(root.x+root.w+90,root.y+85,root.id))
+        }else{
+            val parentId=if(sibling)parent.parentNode else parent.id
+            val peers=store.page.items.filter{it.shape=="mindnode" && it.parentNode==parentId && it.pane==parent.pane}
+            val x=if(sibling)parent.x else parent.x+parent.w+90
+            val y=if(sibling)maxOf(parent.y+parent.h+24,peers.maxOfOrNull{it.y+it.h+24}?:parent.y)
+                  else maxOf(parent.y,peers.maxOfOrNull{it.y+it.h+24}?:parent.y)
+            listOf(node(x,y,parentId,parent.layerId,parent.pane))
         }
+        store.edit{store.page.items.addAll(added)}
+        board.selected.clear();board.selected.add(added.first().id);board.tool="select";board.sceneChanged();refreshDock()
     }
 
     private fun openExplorer(lab:Boolean){

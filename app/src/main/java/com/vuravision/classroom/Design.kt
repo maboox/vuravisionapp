@@ -35,7 +35,8 @@ fun Context.s(key: String): String {
     return if (id == 0) key.replace('_', ' ') else getString(id)
 }
 
-fun Context.dp(n: Int) = (n * resources.displayMetrics.density + .5f).toInt()
+fun Context.uiScale()=getSharedPreferences("vura",Context.MODE_PRIVATE).getFloat("uiScale",1f).coerceIn(.8f,1.25f)
+fun Context.dp(n: Int) = (n * resources.displayMetrics.density * uiScale() + .5f).toInt()
 
 fun rounded(color: Int, radius: Float = 16f, stroke: Int = Color.TRANSPARENT) =
     GradientDrawable().apply {
@@ -55,7 +56,7 @@ fun Context.row() =
 fun Context.label(value: String, size: Float = 16f, color: Int = NAVY, bold: Boolean = false) =
     TextView(this).apply {
         text = value
-        textSize = size
+        textSize = size * uiScale()
         setTextColor(color)
         if (bold) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         setPadding(dp(4), dp(4), dp(4), dp(4))
@@ -71,7 +72,7 @@ private fun enabledColors(enabled: Int, disabled: Int) = ColorStateList(
 fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
     MaterialButton(materialContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
         text = value
-        textSize = 14f
+        textSize = 14f * uiScale()
         isAllCaps = false
         letterSpacing = 0f
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)

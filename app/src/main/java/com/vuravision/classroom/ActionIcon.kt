@@ -30,6 +30,8 @@ class ActionIcon(context:Context, val symbol:String, title:String, action:()->Un
    "delete"->{line(3f,6f,21f,6f);line(9f,3f,15f,3f);line(6f,6f,7f,21f);line(7f,21f,17f,21f);line(17f,21f,18f,6f);line(10f,10f,10f,17f);line(14f,10f,14f,17f)}
    "color"->{c.drawCircle(12f,12f,9f,p);for(i in 0..2){p.style=Paint.Style.FILL;p.color=intArrayOf(TEAL,ORANGE,0xff7465bc.toInt())[i];c.drawCircle(7f+i*5,12f,2f,p)}}
    "text"->{line(4f,5f,20f,5f);line(12f,5f,12f,21f);line(8f,21f,16f,21f)}
+   "insert"->{line(12f,4f,12f,20f);line(4f,12f,20f,12f)}
+   "shape"->{line(12f,3f,22f,20f);line(22f,20f,2f,20f);line(2f,20f,12f,3f)}
    "formula"->{line(5f,8f,19f,8f);line(5f,16f,19f,16f)}
    "graph"->{line(3f,3f,3f,21f);line(3f,21f,22f,21f);val path=Path();path.moveTo(5f,17f);path.cubicTo(11f,17f,11f,4f,20f,5f);c.drawPath(path,p)}
    "previous","next"->{val sign=if(symbol=="next")1 else -1;line(12f-sign*3,5f,12f+sign*4,12f);line(12f+sign*4,12f,12f-sign*3,19f)}

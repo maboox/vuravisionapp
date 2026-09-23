@@ -54,7 +54,7 @@ class Version14Test {
             call(a,"penSettings");val d=ShadowDialog.getLatestDialog();val all=views(d.window!!.decorView)
             assertFalse(all.filterIsInstance<Switch>().any{it.text=="Two pen tips"})
             val colors=all.filterIsInstance<com.google.android.material.button.MaterialButton>().filter{it.contentDescription?.startsWith("#")==true}
-            assertEquals(10,colors.size)
+            assertEquals(20,colors.size)
             colors.forEach{assertEquals(Color.parseColor(it.contentDescription.toString()),it.backgroundTintList!!.defaultColor)}
             d.dismiss()
         }finally{c.pause().stop().destroy()}
