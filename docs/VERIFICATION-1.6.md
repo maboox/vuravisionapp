@@ -1,6 +1,6 @@
 # VuraVision 1.6 — build and device checks
 
-The supplied GitHub Actions log for 1.5 compiled both debug and release Kotlin code, then ran 87 JVM tests with four failures. The rotated ruler and compass tests used Android `PointF` in a plain JVM runner; they now run under Robolectric. The open-circle threshold was adjusted so a near-complete hand-drawn circle is accepted. The palette test now expects the 21 visible colors. None of these fixes, nor the new games and labs changes, have run in Actions yet.
+The supplied GitHub Actions log for 1.5 compiled both debug and release Kotlin code, then ran 87 JVM tests with four failures. The rotated ruler and compass tests now run under Robolectric; the circle threshold and palette expectation were corrected. The later 1.6 run compiled the updated code and passed 90 of 91 tests. Its sole failure was `GamesLabsTest.faceToFaceMirrorsTheAnswerHitArea`: the face-to-face hit test transformed normalized 0–1 touch coordinates as if they were 500×600 pixel coordinates. This source corrects the transform to `1 - x` and `1 - y`. That final fix has not yet been run in Actions.
 
 ## Checks in this source
 

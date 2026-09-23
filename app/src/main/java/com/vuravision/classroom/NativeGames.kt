@@ -102,8 +102,9 @@ class ArcadeView(context:Context,val key:String):View(context){
  private fun local(x:Float,y:Float,player:Int):PointF{
   val r=panels()[player];val scale=min(r.width()/500f,r.height()/600f).coerceAtLeast(.001f)
   val left=r.left+(r.width()-500f*scale)/2;val top=r.top+(r.height()-600f*scale)/2
+  // optionBounds uses 0..1 coordinates; mirror within that same range.
   val q=PointF((x-left)/(500f*scale),(y-top)/(600f*scale))
-  if(face&&player==0){q.x=500f-q.x;q.y=600f-q.y};return q
+  if(face&&player==0){q.x=1f-q.x;q.y=1f-q.y};return q
  }
  private fun text(c:Canvas,value:String,x:Float,y:Float,size:Float,color:Int=NAVY){p.color=color;p.style=Paint.Style.FILL;p.textSize=size;p.textAlign=Paint.Align.CENTER;c.drawText(value,x,y,p)}
  private fun rect(c:Canvas,r:RectF,color:Int){p.color=color;p.style=Paint.Style.FILL;c.drawRoundRect(r,14f,14f,p)}

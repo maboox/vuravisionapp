@@ -15,7 +15,7 @@ chmod +x gradlew
 ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-The supplied Actions run for version 1.5 compiled the debug and release Kotlin code and reported four unit test failures; all four cases were addressed in 1.6. This source still needs a new Actions run. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.6.md).
+The supplied Actions run for version 1.5 compiled the debug and release Kotlin code and reported four unit test failures; all four cases were addressed in 1.6. The subsequent run compiled the 1.6 source and passed 90 of 91 tests. Its remaining failure exposed an incorrect face-to-face touch coordinate conversion, now corrected in this source. A fresh Actions run is still required for a green build and release lint. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.6.md).
 
 ## Changes
 
