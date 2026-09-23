@@ -242,8 +242,8 @@ class AndroidTest {
         val a = ctl.get()
         a.store.replace(Lesson())
         views(a.window.decorView)
-            .filterIsInstance<Button>()
-            .first { it.text.toString()=="T  ${a.s("text")}" }
+            .filterIsInstance<WorkspaceIcon>()
+            .single { it.contentDescription == a.s("text") }
             .performClick()
         val input = org.robolectric.shadows.ShadowDialog.getLatestDialog()
         views(input.window!!.decorView)

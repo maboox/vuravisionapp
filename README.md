@@ -15,7 +15,7 @@ chmod +x gradlew
 ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-This revision has **not** been compiled or run locally: Gradle's distribution download failed with `Network is unreachable`. See [verification status](docs/VERIFICATION-1.4.md). Do not treat added tests as passing until Actions completes.
+The supplied Actions log confirms debug/release Kotlin compilation and 81 of 83 tests passing. This updated archive corrects the two failing UI tests and needs another Actions run. Local Gradle execution remains blocked by `Network is unreachable`. See [verification status](docs/VERIFICATION-1.4.md). Do not treat added tests as passing until Actions completes.
 
 ## Changes
 

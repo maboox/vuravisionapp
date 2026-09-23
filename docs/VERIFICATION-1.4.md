@@ -2,6 +2,17 @@
 
 Date: 2026-09-23. Base commit: `1a31802` from the supplied archive.
 
+## Follow-up from supplied GitHub Actions log
+
+The supplied run compiled debug/release Kotlin and unit-test Kotlin successfully, then ran 83 tests: 81 passed and 2 failed. It stopped at `testDebugUnitTest`; APK assembly and release lint completion are not established by this log. Deprecation warnings and native-library stripping messages were not the reported failure.
+
+Corrections in this archive:
+
+- `AndroidTest.insertTextThroughInterfaceAndUndo` now locates the new text `WorkspaceIcon` by its accessibility label, instead of searching for the removed `Button` caption. Text insertion and Undo assertions remain.
+- `UpgradeTest.compactPersianScreenKeepsMenuReachable` measures/layouts the complete decor window at the capture dimensions. Previously only the content child was resized, allowing unchanged ancestor bounds to clip an RTL menu positioned on the right. The test retains the visibility assertion and now also checks that the whole menu fits inside the window.
+
+These follow-up corrections have not been rerun in CI here. Run Actions again; no tests are skipped or disabled.
+
 ## Executed locally
 
 - Source review of document snapshots, archive import/atomic save, shared drawing/export renderer, model download API and token-scoped LAN sharing.
