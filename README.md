@@ -1,25 +1,36 @@
-# VuraVision 1.2 — unverified source checkpoint
+# VuraVision 1.4.0 — source for GitHub Actions
 
-**No 1.2 APK is included.** The supplied GitHub runs compiled debug/release Kotlin and ran 67 tests, with one failure in the compact Persian menu test. The first selector fix matched two controls sharing a label. This checkpoint gives the main menu a unique resource ID and its own localized accessibility label, and updates the test to use that ID while retaining visibility checks. The correction and full release workflow still require a fresh CI run.
+Android classroom whiteboard, Kotlin/native Views. Application ID remains `com.vuravision.classroom.beta`; version code is **7**. No newly built APK is included in this archive.
 
-Source changes include independent fine/broad pen styles (default fine-tip contact threshold 5 raw pixels), layer controls and persistence, cached eraser masks, PDF movement without swipe pagination, Smart lasso-only text/formula/graph gestures, hidden default-off QR, revised icons/panels and native implementations of 68 imported lab topics and 49 arcade topics with educational extras.
+## Build and test
 
-These are source changes, not verified functional-parity claims. Several simulations are simplified. Game rules, edge cases, device behavior and rendering require further review. Older screenshots and 1.1 documents are historical references only. Legacy HTML/reference code remains, but native catalogs are now the primary route.
+Extract the archive and place the **contents** of its `vuravisionapp` folder at your GitHub repository root, including `.github` and Gradle files. Push, or run **Actions → Android APK → Run workflow**. The workflow runs JVM tests, release lint, APK assembly and APK verification. A manual run also runs the existing device tests.
 
-## Build
+Download `VuraVision-1.4-<run number>` from the successful build's artifacts. Screenshots produced by tests are under `build/qa` in the verification artifact. Existing screenshots in `docs/screenshots` are historical, not images of 1.4.
 
-Requires full JDK 17, Android SDK 35 and Gradle 8.11.1 (wrapper included):
+Local build requires JDK 17 and Android SDK 35:
 
 ```sh
-./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
+chmod +x gradlew
+./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-Resource and manifest processing completed here, but compilation stopped because the installed Java runtime lacks `JAVA_COMPILER`. System package installation was denied. See `docs/HANDOFF-1.2.md`.
+This revision has **not** been compiled or run locally: Gradle's distribution download failed with `Network is unreachable`. See [verification status](docs/VERIFICATION-1.4.md). Do not treat added tests as passing until Actions completes.
 
-Application ID: `com.vuravision.classroom.beta`; version name: `1.2.0`; version code: `5`. The included GitHub Actions build workflow has not been run for this checkpoint.
+## Changes
 
-`docs/UPDATED_SPEC.md` is the target mega prompt, **not a completion checklist**. `docs/ORIGINAL_SPEC.md` preserves the original requirements.
+- White canvas, floating icon-only navigation, scrolling vertical tool dock, icon page navigation. Tooltips/accessibility labels identify controls; menus and settings retain names. Lower-corner full-screen button hides/restores chrome and system bars.
+- Pen palette uses actual Material background colors. Duplicate two-tip/input-mode switch removed from the pen panel; input mode remains on the main dock. Fine/broad appearance profiles remain independently editable.
+- Adjustable dash length and gap, persisted on each stroke and used by both live drawing and exports. Older strokes retain their original width-relative pattern.
+- Nonmodal layer panel beside the canvas: active layer, visibility, lock, opacity, drag-handle reorder, accessible up/down alternatives, rename (hold the name), move selection and confirmed deletion.
+- Split count applies immediately. Each panel has small pen/background controls; pen color, width, style and dash settings are independent and saved with the lesson.
+- Smart → Convert units supports common length, mass, area, volume, speed, time and temperature units, English aliases and several Persian aliases/digits. Examples: `12 inch to cm`, `2 kg to g`, `32 F to C`. Results preserve the original writing. Incompatible units and temperatures below absolute zero are rejected. Recognition accuracy remains dependent on the selected OCR source; review/correct text when needed.
+- QR sharing is a public toolbar action. It exports all lesson pages to PDF, offers alternate LAN addresses and Copy link, and stops when its window closes or after 30 minutes. Both devices must be on a reachable local network. This is file delivery, not live collaboration.
+- Model errors distinguish refused connections, DNS failures, timeouts and 404. Added network settings and offline OCR actions. The supplied error is `ECONNREFUSED` to `dl.google.com:443`; application code cannot guarantee access through an unavailable network route. Persian handwriting still needs Google's model.
+- Image export checks compression success and nonempty output. Clear-page respects object/layer locks. Autosave failure and backup recovery are surfaced even with the status strip removed.
 
-Release builds use development signing unless production signing environment variables are configured. No private key is included. A different signing certificate cannot update an existing installation. Export important `.vura` lessons before considering any uninstall.
+## Installation
 
-Google handwriting models remain an external dependency. Bundled Latin OCR is not general Persian handwriting/formula recognition. Contact thresholds and latency require testing on the target hardware.
+Keep the existing production signing key in GitHub Secrets so updates can install over your current app. The workflow falls back to development signing when no production key is supplied. Export important `.vura` lessons before any uninstall. No signing credentials are included.
+
+Earlier scope/specification/handoff files are historical references. This README and `docs/VERIFICATION-1.4.md` describe the current delivery.

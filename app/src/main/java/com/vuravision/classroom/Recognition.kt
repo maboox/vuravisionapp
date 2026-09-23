@@ -9,7 +9,10 @@ class Recognition {
     fun downloadManagerReady(context:android.content.Context):Boolean=try{val state=context.packageManager.getApplicationEnabledSetting("com.android.providers.downloads");state !in listOf(2,3,4)}catch(_:IllegalArgumentException){false}
     fun failure(context:android.content.Context,e:Exception):String {
         val trace=android.util.Log.getStackTraceString(e)
-        return if(trace.contains("404"))context.tr("Model server returned HTTP 404 (file unavailable). Retry a fresh download or use offline Latin OCR. This is not proof that Download Manager is disabled.","سرور مدل خطای HTTP 404 داد (فایل در دسترس نیست). دانلود تازه را امتحان کنید یا از تشخیص لاتین آفلاین استفاده کنید. این خطا به‌تنهایی نشانهٔ غیرفعال بودن دانلودمنیجر نیست.")
+        return if(trace.contains("ECONNREFUSED") || trace.contains("ConnectException"))context.tr("The connection to the model server was refused or could not be established. Try another network, check VPN/proxy/firewall settings, then Retry. Offline Latin OCR is available without this download.","اتصال به سرور مدل رد شد یا برقرار نشد. شبکهٔ دیگری را امتحان کنید، تنظیمات VPN، پراکسی یا فایروال را بررسی و دوباره تلاش کنید. تشخیص لاتین آفلاین بدون این دانلود قابل استفاده است.")
+        else if(trace.contains("UnknownHostException"))context.tr("The model server address could not be resolved. Check the network and DNS settings, then Retry.","نشانی سرور مدل پیدا نشد. اتصال شبکه و تنظیمات DNS را بررسی و دوباره تلاش کنید.")
+        else if(trace.contains("SocketTimeoutException"))context.tr("The model download timed out. Try a stable network and Retry.","زمان اتصال برای دانلود مدل تمام شد. با شبکهٔ پایدار دوباره تلاش کنید.")
+        else if(trace.contains("404"))context.tr("Model server returned HTTP 404 (file unavailable). Retry a fresh download or use offline Latin OCR. This is not proof that Download Manager is disabled.","سرور مدل خطای HTTP 404 داد (فایل در دسترس نیست). دانلود تازه را امتحان کنید یا از تشخیص لاتین آفلاین استفاده کنید. این خطا به‌تنهایی نشانهٔ غیرفعال بودن دانلودمنیجر نیست.")
         else context.tr("Download failed. Retry or open diagnostics for the provider error.","دانلود انجام نشد. دوباره تلاش کنید یا جزئیات فنی خطای سرویس را ببینید.")
     }
 

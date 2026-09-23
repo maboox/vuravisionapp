@@ -23,9 +23,9 @@
         <item name="android:fontFamily">sans</item>
         <item name="fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">@color/vura_primary</item>
-        <item name="android:navigationBarColor">@color/vura_primary</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@color/vura_surface</item>
+        <item name="android:navigationBarColor">@color/vura_surface</item>
         <item name="android:windowBackground">@color/vura_background</item>
         <item name="materialAlertDialogTheme">@style/VuraAlertDialog</item>
         <item name="alertDialogTheme">@style/VuraAlertDialog</item>

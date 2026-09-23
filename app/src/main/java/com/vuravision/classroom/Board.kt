@@ -46,6 +46,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var penWidth=4f
     var highlightWidth=6f
     var penStyle="round"
+    var dashLength=12f
+    var dashGap=8f
     var inkColor:Int
         get()=if(tool=="highlight")highlightColor else penColor
         set(v) { if(tool=="highlight")highlightColor=v else penColor=v }
@@ -336,7 +338,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         )
                 } else if (tool in listOf("pen", "highlight", "smart")) {
                     if(tool!="smart" || smartMode=="shape")checkpoint()
-                    val style=if(tool=="highlight")"highlight" else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
+                    val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
+                    val splitInk=store.page.panes.size>1
+                    val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
                     live[id] =
                         Item(
                             layerId=store.page.activeLayerId,
@@ -344,8 +348,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             w = 1f,
                             h = 1f,
                             color = if(store.page.panes.size>1)store.page.panes[pointerPanes[id]?:activePane].color else if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
-                            width = (if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
+                            width = (if(splitInk)drawingPane.penWidth else if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
                             shape = if(style=="highlight") "marker" else style,
+                            dashLength=if(splitInk)drawingPane.dashLength else dashLength,
+                            dashGap=if(splitInk)drawingPane.dashGap else dashGap,
                             alpha = if (style == "highlight") 75 else 255,
                             points =
                                 mutableListOf(

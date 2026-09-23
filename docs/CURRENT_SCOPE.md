@@ -1,3 +1,5 @@
+> Historical document. For the 1.4 source delivery, see `../README.md` and `VERIFICATION-1.4.md`.
+
 # Current scope — 1.1
 
 24 shapes; 49 HTML arcade games plus 32 native games/challenges; 68 Persian HTML simulations plus 16 bilingual native labs. Counts describe separate catalogs and may include overlapping subject areas.

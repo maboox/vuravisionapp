@@ -14,16 +14,16 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 
 // Semantic VuraVision tokens. Feature code should use these rather than ad-hoc colors.
-val NAVY = 0xff2d2463.toInt()
+val NAVY = 0xff24262e.toInt()
 val ORANGE = 0xffd97800.toInt()
-val PAPER = 0xfff8f7fc.toInt()
+val PAPER = 0xfff6f7f9.toInt()
 val MUTED = 0xff625f6b.toInt()
 val TEAL = 0xff0f716f.toInt()
 val SURFACE = Color.WHITE
-val SURFACE_VARIANT = 0xfff0eef6.toInt()
-val PRIMARY_CONTAINER = 0xffe8e2ff.toInt()
+val SURFACE_VARIANT = 0xfff4f5f7.toInt()
+val PRIMARY_CONTAINER = 0xffe9ecff.toInt()
 val SECONDARY_CONTAINER = 0xffcdeeeB.toInt()
-val OUTLINE = 0xffd8d4e1.toInt()
+val OUTLINE = 0xffe3e5e9.toInt()
 val OUTLINE_STRONG = 0xffb9b4c7.toInt()
 val DANGER = 0xffb3261e.toInt()
 val SUCCESS = 0xff287d58.toInt()

@@ -43,6 +43,8 @@ data class Item(
     var layerId: String = "base",
     var pane: Int = 0,
     var parentNode: String = "",
+    var dashLength: Float = 0f,
+    var dashGap: Float = 0f,
 
 ) {
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
@@ -88,7 +90,7 @@ fun distance(px: Float, py: Float, ax: Float, ay: Float, bx: Float, by: Float): 
 }
 
 data class Layer(var id: String = newId(), var name: String = "Layer", var visible: Boolean = true, var locked: Boolean = false, var opacity: Float = 1f)
-data class Pane(var color:Int=0xff20194f.toInt(),var background:Int=-1,var zoom:Float=1f,var tx:Float=0f,var ty:Float=0f)
+data class Pane(var color:Int=0xff20194f.toInt(),var background:Int=-1,var zoom:Float=1f,var tx:Float=0f,var ty:Float=0f,var penWidth:Float=4f,var penStyle:String="round",var dashLength:Float=12f,var dashGap:Float=8f)
 
 data class Page(
     var id: String = newId(),
@@ -135,6 +137,7 @@ data class Lesson(
         var points = 0
         pages.forEach { page ->
             require(page.panes.size in 1..4)
+            require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in listOf("round","dashed","marker","highlight") && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
             require(page.panes.all{it.zoom.isFinite() && it.zoom in .15f..6f && it.tx.isFinite() && it.ty.isFinite()})
             require(page.items.all{it.pane in page.panes.indices})
             require(page.layers.size in 1..100)
@@ -152,6 +155,7 @@ data class Lesson(
                 )
                 require(o.w in .01f..100000f && o.h in .01f..100000f && o.inkW > 0 && o.inkH > 0)
                 require(o.width in .1f..200f)
+                require(o.dashLength.isFinite() && o.dashGap.isFinite() && o.dashLength in 0f..1000f && o.dashGap in 0f..1000f)
                 require(o.pageCount > 0 && o.pdfPage in 0 until o.pageCount)
                 require(o.domain in .1f..1000f)
                 require(o.text.length <= 100000)

@@ -1,9 +1,9 @@
 <resources>
     <!-- VuraVision semantic palette: calm, high-contrast surfaces for classroom displays. -->
-    <color name="vura_primary">#2D2463</color>
+    <color name="vura_primary">#4262E8</color>
     <color name="vura_on_primary">#FFFFFF</color>
-    <color name="vura_primary_container">#E8E2FF</color>
-    <color name="vura_on_primary_container">#1A104B</color>
+    <color name="vura_primary_container">#E9ECFF</color>
+    <color name="vura_on_primary_container">#24262E</color>
     <color name="vura_secondary">#0F716F</color>
     <color name="vura_on_secondary">#FFFFFF</color>
     <color name="vura_secondary_container">#CDEEEB</color>
@@ -12,13 +12,13 @@
     <color name="vura_on_tertiary">#FFFFFF</color>
     <color name="vura_tertiary_container">#FFE0BA</color>
     <color name="vura_on_tertiary_container">#5B3000</color>
-    <color name="vura_background">#F8F7FC</color>
+    <color name="vura_background">#F6F7F9</color>
     <color name="vura_on_background">#211F27</color>
     <color name="vura_surface">#FFFFFF</color>
-    <color name="vura_surface_variant">#F0EEF6</color>
+    <color name="vura_surface_variant">#F4F5F7</color>
     <color name="vura_on_surface">#211F27</color>
     <color name="vura_on_surface_variant">#625F6B</color>
-    <color name="vura_outline">#D8D4E1</color>
+    <color name="vura_outline">#E3E5E9</color>
     <color name="vura_outline_strong">#B9B4C7</color>
     <color name="vura_error">#B3261E</color>
     <color name="vura_on_error">#FFFFFF</color>

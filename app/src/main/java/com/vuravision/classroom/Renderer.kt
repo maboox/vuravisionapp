@@ -72,7 +72,7 @@ class Renderer(private val media: Media) {
         p.strokeWidth = o.width
         p.strokeCap = if(o.shape=="marker") Paint.Cap.SQUARE else Paint.Cap.ROUND
         if(o.kind=="ink" && o.shape=="marker" && o.alpha==255)p.strokeWidth=o.width*1.8f
-        if(o.shape=="dashed") p.pathEffect=DashPathEffect(floatArrayOf(o.width*3,o.width*2),0f)
+        if(o.shape=="dashed") p.pathEffect=DashPathEffect(floatArrayOf(if(o.dashLength>0)o.dashLength else o.width*3,if(o.dashGap>0)o.dashGap else o.width*2),0f)
         p.strokeJoin = Paint.Join.ROUND
         when (o.kind) {
             "ink" -> {

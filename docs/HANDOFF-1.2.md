@@ -1,3 +1,5 @@
+> Historical document. For the 1.4 source delivery, see `../README.md` and `VERIFICATION-1.4.md`.
+
 # Resume checklist — 1.2
 
 This is a recoverable source checkpoint, not a finished APK.

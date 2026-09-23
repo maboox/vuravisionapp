@@ -225,7 +225,7 @@
 <string name="thick_width">Thick tip stroke width (1–24)</string>
 <string name="network_address">Choose Wi-Fi / Ethernet address</string>
 <string name="stop_sharing">Stop sharing now</string>
-<string name="share_troubleshoot">The link stays active for 30 minutes after closing this window while the app remains open. Use http, not https. If unreachable, try the other LAN address and check router guest/client isolation.</string>
+<string name="share_troubleshoot">Keep this window open while downloading. Sharing stops when you close it, stop sharing, or after 30 minutes. Both devices must be on the same local network. If unreachable, choose another LAN address and check guest Wi-Fi/client isolation.</string>
 <string name="model_download_help">Each text model needs an initial download from Google. Enable Android Download Manager. If the network blocks Google model servers, use an accessible connection and retry. Installed models work offline.</string>
 <string name="download_manager_disabled">Android Download Manager is missing or disabled. Enable it in system settings.</string>
 <string name="download_slow">Download is taking longer than expected. Check connection, then check status or retry. The provider does not expose percentage progress.</string>
@@ -284,4 +284,5 @@
 <string name="unit_length">Meters to centimeters</string>
 <string name="mean">Find the mean</string>
 <string name="restore_erased">Restore erased areas</string>
+<string name="input_controls">Touch input</string>
 </resources>

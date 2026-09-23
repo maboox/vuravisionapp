@@ -1,3 +1,5 @@
+> Historical document. For the 1.4 source delivery, see `../README.md` and `VERIFICATION-1.4.md`.
+
 # Architecture
 
 Native Kotlin Android views. BoardView batches input by pointer and keeps completed content in a bitmap; active paths append samples to cached geometry. Store records page/object snapshots for undo and detaches points before generic mutations. Toolbar state and page-strip signatures avoid rebuilding view trees for ordinary strokes. Autosave defers while drawing.

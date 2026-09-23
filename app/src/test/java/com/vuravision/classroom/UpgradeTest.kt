@@ -52,14 +52,14 @@ class UpgradeTest {
   val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get();val root=a.findViewById<View>(android.R.id.content)
   a.store.lesson.title="VuraVision · Explore together";a.store.edit{a.store.page.items.add(Item(kind="text",text="Learning starts with a question.",x=50f,y=40f,w=780f,h=75f,width=36f,color=NAVY));a.store.page.items.add(Item(kind="graph",text="sin(x); cos(x)",x=50f,y=160f,w=530f,h=270f));a.store.page.items.add(Item(kind="shape",shape="hexagon",x=690f,y=190f,w=160f,h=150f,color=TEAL));a.store.page.items.add(Item(kind="text",text="Predict. Draw. Discover.",x=620f,y=365f,w=370f,h=60f,width=23f,color=TEAL))}
   capture(root,"workspace-v1",2400,1400)
-  views(root).filterIsInstance<Button>().first{it.text.toString().endsWith(a.s("tools"))}.performClick();val d=org.robolectric.shadows.ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog;d.listView.performItemClick(null,0,0)
+  views(root).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("tools")}.performClick();val d=org.robolectric.shadows.ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog;d.listView.performItemClick(null,0,0)
   capture(root,"workspace-floating-timer",2400,1400);ctl.pause().stop().destroy()
  }
  @Test fun penProfilesPagesAndShapeGalleryAreReachable(){
   val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get();a.board.tool="pen";a.board.inkColor=Color.RED;a.board.inkWidth=3f;a.board.tool="highlight";a.board.inkColor=Color.YELLOW;a.board.inkWidth=8f;a.board.tool="pen";assertEquals(Color.RED,a.board.inkColor);assertEquals(3f,a.board.inkWidth);a.board.tool="highlight";assertEquals(Color.YELLOW,a.board.inkColor);assertEquals(8f,a.board.inkWidth)
-  views(a.window.decorView).filterIsInstance<Button>().first{it.text.contains(a.s("add_page"))}.performClick();assertEquals(2,a.store.lesson.pages.size);assertEquals(1,a.store.lesson.current)
-  views(a.window.decorView).filterIsInstance<Button>().first{it.contentDescription==a.s("previous")}.performClick();assertEquals(0,a.store.lesson.current)
-  views(a.window.decorView).filterIsInstance<Button>().first{it.text.toString().endsWith(a.s("shape"))}.performClick();val gallery=org.robolectric.shadows.ShadowDialog.getLatestDialog();assertEquals(24,views(gallery.window!!.decorView).filterIsInstance<TextView>().count{label->Shapes.keys.any{label.text==a.s(it)}});capture(gallery.window!!.decorView,"shape-gallery");gallery.dismiss();ctl.pause().stop().destroy()
+  views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("add_page")}.performClick();assertEquals(2,a.store.lesson.pages.size);assertEquals(1,a.store.lesson.current)
+  views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("previous")}.performClick();assertEquals(0,a.store.lesson.current)
+  views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==a.s("shape")}.performClick();val gallery=org.robolectric.shadows.ShadowDialog.getLatestDialog();assertEquals(24,views(gallery.window!!.decorView).filterIsInstance<TextView>().count{label->Shapes.keys.any{label.text==a.s(it)}});capture(gallery.window!!.decorView,"shape-gallery");gallery.dismiss();ctl.pause().stop().destroy()
  }
  @Test @Config(qualifiers="fa-port-xhdpi") fun compactPersianScreenKeepsMenuReachable(){
   context.getSharedPreferences("vura",0).edit().putString("language","fa").commit()
@@ -69,7 +69,7 @@ class UpgradeTest {
    val root=a.findViewById<View>(android.R.id.content)
    capture(root,"compact-fa",840,1500)
    // Identify the navigation menu independently of icons and translated labels.
-   val menus=views(root).filterIsInstance<Button>().filter{it.id==R.id.main_menu_button}
+   val menus=views(root).filter{it.id==R.id.main_menu_button}
    assertEquals("Expected one main menu button",1,menus.size)
    val menu=menus.single()
    assertEquals(a.s("main_menu"),menu.contentDescription)
