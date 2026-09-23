@@ -2,11 +2,17 @@ package com.vuravision.classroom
 
 import android.app.Dialog
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.*
 import android.view.Gravity
+import android.view.View
 import android.widget.*
+import android.text.TextWatcher
+import android.text.Editable
 import kotlin.math.*
 import kotlin.random.Random
+import com.google.android.material.button.MaterialButton
 
 class GameEngine(val key: String, private val random: Random = Random.Default) {
     val scores = IntArray(2)
@@ -234,7 +240,17 @@ object Games {
         head.addView(context.button(context.s("close")) { d.dismiss() })
         root.addView(head)
         root.addView(context.label(context.s("games_intro"), 15f, MUTED))
+        val search=EditText(context).apply{
+            hint=context.tr("Search games","جست‌وجوی بازی‌ها")
+            inputType=android.text.InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+            background=rounded(SURFACE,context.dp(14).toFloat(),OUTLINE)
+            setPadding(context.dp(16),context.dp(10),context.dp(16),context.dp(10))
+        }
+        root.addView(search,LinearLayout.LayoutParams(-1,context.dp(52)).apply{setMargins(0,context.dp(12),0,context.dp(8))})
+        val filters=context.row();root.addView(context.scrollRow(filters))
         val list = context.column()
+        val cards=mutableListOf<Pair<String,View>>()
         keys.forEachIndexed { i, key ->
             val cardContent = context.row().apply { pad(14) }
             val number = context.label("${i+1}", 16f, NAVY, true).apply {
@@ -261,15 +277,36 @@ object Games {
             )
             if(key in QuizCatalog.keys || key=="math_race") { val example=GameEngine(key,Random(42)).apply{next(0)};words.addView(context.label(example.question,16f,TEAL,true)) }
             cardContent.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
-            cardContent.addView(
-                context.button(context.s("start"), true) {
-                    d.dismiss()
-                    open(context, key)
-                }
-            )
-            val card=context.card(cardContent,cornerRadius=20,elevation=1)
+            cardContent.addView(WorkspaceIcon(context,"next",context.s("start")){d.dismiss();open(context,key)})
+            val card=context.card(cardContent,cornerRadius=20,elevation=1).apply{
+                isClickable=true;isFocusable=true;contentDescription=context.s(key)
+                setOnClickListener{d.dismiss();open(context,key)}
+            }
+            cards.add(key to card)
             list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, context.dp(6), 0, context.dp(6)) })
         }
+        var category="all"
+        val filterButtons=mutableListOf<Pair<String,MaterialButton>>()
+        fun refresh(){val query=search.text.toString().trim().lowercase()
+            cards.forEach{(key,card)->
+                val matching=category=="all" || (category=="duel" && key in NativeGames.keys) || (category=="quiz" && key in QuizCatalog.keys)
+                card.visibility=if(matching&&(context.s(key)+" "+context.s("rule_${key.removePrefix("arc_" )}")).lowercase().contains(query))View.VISIBLE else View.GONE
+            }
+            filterButtons.forEach{(id,button)->val active=id==category
+                button.backgroundTintList=ColorStateList.valueOf(if(active)NAVY else SURFACE)
+                button.strokeColor=ColorStateList.valueOf(if(active)NAVY else OUTLINE)
+                button.setTextColor(if(active)Color.WHITE else NAVY)
+            }
+        }
+        listOf("all" to context.tr("All","همه"),"duel" to context.tr("Two-player","دونفره"),"quiz" to context.tr("Math & puzzles","ریاضی و معما")).forEach{(id,title)->
+            val button=context.button(title,id==category){category=id;refresh()}
+            filterButtons.add(id to button);filters.addView(button)
+        }
+        search.addTextChangedListener(object:TextWatcher{
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){refresh()}
+            override fun afterTextChanged(s:Editable?){}
+        })
         root.addView(
             ScrollView(context).apply { addView(list) },
             LinearLayout.LayoutParams(-1, 0, 1f),
@@ -283,7 +320,7 @@ object Games {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val handler = Handler(Looper.getMainLooper())
         var game = GameEngine(key)
-        var face = false
+        var face = context.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT
         var started = false
         val root =
             context.column().apply {
@@ -403,7 +440,6 @@ object Games {
                                 if (player == 0) 0xffe9f1ef.toInt() else 0xffffeee3.toInt(),
                                 24f,
                             )
-                        if (face && player == 0) rotation = 180f
                     }
                 col.addView(
                     context.label(
@@ -421,14 +457,15 @@ object Games {
                         else -> context.s(game.question)
                     }
                 col.addView(
-                    context.label(prompt, 26f, NAVY, true).apply {
+                    context.label(prompt, if(prompt.length>32)19f else 26f, NAVY, true).apply {
                         gravity = Gravity.CENTER
                         prompts.add(this)
                     }
                 )
                 if (game.answers[player] != null && !game.resolved)
                     col.addView(context.label(context.s("choice_locked"), 16f))
-                val opts = context.row()
+                val verticalOptions=game.options.size>2
+                val opts = if(verticalOptions)context.column()else context.row()
                 game.options.forEachIndexed { i, value ->
                     opts.addView(
                         context
@@ -450,16 +487,22 @@ object Games {
                                 isEnabled =
                                     !game.resolved && game.answers[player] == null ||
                                         key == "tap_race" && !game.resolved
-                                minHeight = context.dp(64)
+                                minHeight = context.dp(56)
                             },
-                        LinearLayout.LayoutParams(0, context.dp(78), 1f).apply {
+                        (if (verticalOptions) LinearLayout.LayoutParams(-1, context.dp(56))
+                        else LinearLayout.LayoutParams(0, context.dp(78), 1f)).apply {
                             setMargins(context.dp(3), 0, context.dp(3), 0)
                         },
                     )
                 }
                 col.addView(opts, LinearLayout.LayoutParams(-1, -2))
                 players.addView(
-                    col,
+                    ScrollView(context).apply {
+                        isFillViewport=true
+                        isVerticalScrollBarEnabled=false
+                        addView(col)
+                        if(face&&player==0)rotation=180f
+                    },
                     if (face) LinearLayout.LayoutParams(-1, 0, 1f).apply { setMargins(4, 4, 4, 4) }
                     else LinearLayout.LayoutParams(0, -1, 1f).apply { setMargins(4, 4, 4, 4) },
                 )

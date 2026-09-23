@@ -2,8 +2,13 @@ package com.vuravision.classroom
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import kotlin.math.*
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk=[28])
 class GeometryMindMapTest {
     @Test fun rotatedRulerProjectsNearbyInkOntoItsEdge(){
         val ruler=Item(kind="shape",shape="ruler",x=100f,y=100f,w=300f,h=50f,rotation=45f)

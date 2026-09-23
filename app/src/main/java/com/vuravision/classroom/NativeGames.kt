@@ -55,7 +55,7 @@ class ArcadeRound(val key:String,val random:Random=Random.Default){
    "pairs"->{options=(0..5).flatMap{listOf(it,it)}.shuffled(random).map{it.toString()};prompt="Match pairs / جفت‌ها را پیدا کن"}
    "rps"->{options=listOf("Rock / سنگ","Paper / کاغذ","Scissors / قیچی");prompt="Secret choice / انتخاب مخفی"}
    "penalty"->{options=listOf("Left / چپ","Centre / وسط","Right / راست");prompt="Striker vs keeper / مهاجم و دروازه‌بان"}
-   "hilo"->{target=random.nextInt(1,14);sequence=listOf(random.nextInt(1,14));options=listOf("Higher / بالاتر","Lower / پایین‌تر");prompt="Card: $target"}
+   "hilo"->{target=random.nextInt(1,14);var next=random.nextInt(1,14);while(next==target)next=random.nextInt(1,14);sequence=listOf(next);options=listOf("Higher / بالاتر","Lower / پایین‌تر");prompt="Card: $target"}
    "dice"->{options=listOf("Roll / تاس");prompt="Roll / تاس"}
    else->{options=listOf("TAP / بزن");prompt="Ready / آماده"}
   }
@@ -89,8 +89,9 @@ class ArcadeView(context:Context,val key:String):View(context){
  private val contacts=mutableMapOf<Int,Int>()
  private val previous=mutableMapOf<Int,PointF>()
  private val timed=setOf("tap","swipe","mole","trap","evens")
- private val memory=setOf("digits","simon","pattern","colormem","emojiseq","sum")
+ private val memory=setOf("digits","simon","pattern","colormem","emojiseq","sum","pin")
  private val sequenceKeys=setOf("numrace","sort","pin","simon","pattern","emojiseq","gridlight")
+ private val wholePanelKeys=setOf("reaction","draw","potato","timing","tap","tug","swipe","hold","balloon")
  init{setBackgroundColor(Color.WHITE);isFocusable=true;contentDescription=context.s("arc_$key")}
  fun stop(){active=false;contacts.clear()}
  fun restart(){scores.fill(0);round=0;startRound(true)}
@@ -98,10 +99,24 @@ class ArcadeView(context:Context,val key:String):View(context){
  private fun finish(winner:Int){if(!active)return;active=false;ended=true;if(winner>=0)scores[winner]++;message=if(winner<0)context.tr("Draw","مساوی")else context.s(if(winner==0)"player1"else"player2")+" · "+context.s("winner");if(scores.any{it>=5})message+=" · "+context.tr("Match complete","پایان مسابقه");invalidate()}
  private fun bothMeasured(){if(measure.all{it.isFinite()})finish(if(abs(measure[0]-measure[1])<.001)-1 else if(measure[0]<measure[1])0 else 1)}
  private fun panels():List<RectF> = if(face || width<height)listOf(RectF(8f,70f,width-8f,height/2f),RectF(8f,height/2f+8,width-8f,height-8f))else listOf(RectF(8f,70f,width/2f-4,height-8f),RectF(width/2f+4,70f,width-8f,height-8f))
- private fun local(x:Float,y:Float,player:Int):PointF{val r=panels()[player];val q=PointF((x-r.left)/r.width(),(y-r.top)/r.height());if(face&&player==0){q.x=1-q.x;q.y=1-q.y};return q}
+ private fun local(x:Float,y:Float,player:Int):PointF{
+  val r=panels()[player];val scale=min(r.width()/500f,r.height()/600f).coerceAtLeast(.001f)
+  val left=r.left+(r.width()-500f*scale)/2;val top=r.top+(r.height()-600f*scale)/2
+  val q=PointF((x-left)/(500f*scale),(y-top)/(600f*scale))
+  if(face&&player==0){q.x=500f-q.x;q.y=600f-q.y};return q
+ }
  private fun text(c:Canvas,value:String,x:Float,y:Float,size:Float,color:Int=NAVY){p.color=color;p.style=Paint.Style.FILL;p.textSize=size;p.textAlign=Paint.Align.CENTER;c.drawText(value,x,y,p)}
  private fun rect(c:Canvas,r:RectF,color:Int){p.color=color;p.style=Paint.Style.FILL;c.drawRoundRect(r,14f,14f,p)}
  private fun circle(c:Canvas,x:Float,y:Float,r:Float,color:Int){p.color=color;p.style=Paint.Style.FILL;c.drawCircle(x,y,r,p)}
+ private fun optionText(c:Canvas,label:String,r:RectF){
+  val lines=if(" / " in label)label.split(" / ",limit=2)else listOf(label)
+  val maxWidth=(r.width()-20f).coerceAtLeast(40f)
+  val size=lines.fold(25f){current,line->
+   p.textSize=current;p.typeface=Typeface.create("sans-serif-medium",Typeface.NORMAL)
+   min(current,(current*maxWidth/p.measureText(line).coerceAtLeast(1f)).coerceIn(13f,25f))
+  }
+  lines.forEachIndexed{index,line->text(c,line,r.centerX(),r.centerY()+(index-(lines.size-1)/2f)*size*1.15f+size*.35f,size,NAVY)}
+ }
  private fun optionBounds(index:Int,count:Int):RectF{val cols=if(count>6)3 else if(count==1)1 else 2;val rows=ceil(count.toDouble()/cols).toInt();val w=.88f/cols;val h=.48f/rows;return RectF(.06f+(index%cols)*w,.45f+(index/cols)*h,.06f+(index%cols+1)*w-.02f,.45f+(index/cols+1)*h-.02f)}
  override fun onDraw(c:Canvas){
   val now=SystemClock.elapsedRealtime();val elapsed=(now-start)/1000.0
@@ -115,7 +130,11 @@ class ArcadeView(context:Context,val key:String):View(context){
   text(c,"${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round",width/2f,42f,28f)
   if(key in setOf("ttt","c4")){drawBoard(c);if(active)postInvalidateOnAnimation();return}
   if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);if(active)postInvalidateOnAnimation();return}
-  panels().forEachIndexed{player,r->c.save();c.translate(r.left,r.top);if(face&&player==0){c.translate(r.width(),r.height());c.rotate(180f)};c.scale(r.width()/500f,r.height()/600f);drawPanel(c,player,now,elapsed);c.restore()}
+  panels().forEachIndexed{player,r->c.save();c.clipRect(r);rect(c,r,if(player==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());
+   val scale=min(r.width()/500f,r.height()/600f).coerceAtLeast(.001f)
+   c.translate(r.left+(r.width()-500f*scale)/2,r.top+(r.height()-600f*scale)/2)
+   if(face&&player==0){c.translate(500f*scale,600f*scale);c.rotate(180f)}
+   c.scale(scale,scale);drawPanel(c,player,now,elapsed);c.restore()}
   if(active&&isAttachedToWindow)postInvalidateOnAnimation()
  }
  private fun drawPanel(c:Canvas,i:Int,now:Long,elapsed:Double){
@@ -152,8 +171,8 @@ class ArcadeView(context:Context,val key:String):View(context){
    if(key=="pairs"){if(j !in used[i]&&j !in opened[i])label="?"else color=0xffc5e9d7.toInt()}
    if(j in used[i]&&key in sequenceKeys)color=0xffd6d9dc.toInt()
    rect(c,r,color)
-   if(key=="bigcircle")circle(c,r.centerX(),r.centerY(),if(j==game.correct)42f else 37f,accent)
-   else text(c,label,r.centerX(),r.centerY()+8,if(value.length>14)16f else 24f,NAVY)
+   if(key=="bigcircle")circle(c,r.centerX(),r.centerY(),if(j==game.correct)55f else 32f,accent)
+   else optionText(c,label,r)
   }
  }
  private fun drawBoard(c:Canvas){val cols=if(key=="ttt")3 else 7;val rows=if(key=="ttt")3 else 6;val size=min(width*.9f/cols,(height-150f)/rows);val left=(width-cols*size)/2;val top=100f;for(row in 0 until rows)for(col in 0 until cols){val idx=row*cols+col;rect(c,RectF(left+col*size+3,top+row*size+3,left+(col+1)*size-3,top+(row+1)*size-3),PAPER);if(cells[idx]>=0)circle(c,left+(col+.5f)*size,top+(row+.5f)*size,size*.3f,if(cells[idx]==0)TEAL else ORANGE)};text(c,if(active)context.s(if(turn==0)"player1"else"player2")else message.ifBlank{context.s("start")},width/2f,height-15f,22f)}
@@ -183,7 +202,9 @@ class ArcadeView(context:Context,val key:String):View(context){
   val idx=e.actionIndex;val pid=e.getPointerId(idx);val now=SystemClock.elapsedRealtime()
   when(e.actionMasked){
    MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN->{requestUnbufferedDispatch(e);parent?.requestDisallowInterceptTouchEvent(true);if(key in setOf("ttt","c4")){boardTap(e.getX(idx),e.getY(idx));invalidate();return true};val i=if(key=="pong")if(e.getX(idx)<width/2)0 else 1 else panels().indexOfFirst{it.contains(e.getX(idx),e.getY(idx))};if(i<0)return true;contacts[pid]=i;previous[pid]=PointF(e.getX(idx),e.getY(idx));if(key in setOf("hold","balloon")&&pressed[i]==0L)pressed[i]=now
-    val q=local(e.getX(idx),e.getY(idx),i);val option=game.options.indices.firstOrNull{optionBounds(it,game.options.size).contains(q.x,q.y)}?:-1;choose(i,option,now)}
+    if(key!="pong"){
+     val q=local(e.getX(idx),e.getY(idx),i);val option=if(key in wholePanelKeys)0 else game.options.indices.firstOrNull{optionBounds(it,game.options.size).contains(q.x,q.y)}?:-1;choose(i,option,now)
+    }}
    MotionEvent.ACTION_MOVE->{for(j in 0 until e.pointerCount){val id=e.getPointerId(j);val i=contacts[id]?:continue;val x=e.getX(j);val y=e.getY(j);if(key=="pong")paddles[i]=((y-70)/(height-70.0)).coerceIn(.12,.88);if(key=="swipe"){val old=previous[id]?:PointF(x,y);progress[i]+=hypot(x-old.x,y-old.y).toInt();previous[id]=PointF(x,y)}}}
    MotionEvent.ACTION_UP,MotionEvent.ACTION_POINTER_UP->{val i=contacts.remove(pid);previous.remove(pid);if(i!=null&&pressed[i]>0){if(key=="hold")measure[i]=abs((now-pressed[i])/1000.0-5);if(key=="balloon")measure[i]=-(now-pressed[i]).toDouble();pressed[i]=0;bothMeasured()};performClick()}
    MotionEvent.ACTION_CANCEL->{contacts.clear();previous.clear();pressed.fill(0);active=false;message=context.tr("Round interrupted. Start again.","دور متوقف شد. دوباره شروع کنید.")}

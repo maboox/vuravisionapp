@@ -1,12 +1,12 @@
-# VuraVision 1.5.0 — source for GitHub Actions
+# VuraVision 1.6.0 — source for GitHub Actions
 
-Android classroom whiteboard, Kotlin/native Views. Application ID remains `com.vuravision.classroom.beta`; version code is **8**. No newly built APK is included in this archive.
+Android classroom whiteboard, Kotlin/native Views. Application ID remains `com.vuravision.classroom.beta`; version code is **9**. No newly built APK is included in this archive.
 
 ## Build and test
 
 Extract the archive and place the **contents** of its `vuravisionapp` folder at your GitHub repository root, including `.github` and Gradle files. Push, or run **Actions → Android APK → Run workflow**. The workflow runs JVM tests, release lint, APK assembly and APK verification. A manual run also runs the existing device tests.
 
-Download `VuraVision-1.5-<run number>` from the successful build's artifacts. Screenshots produced by tests are under `build/qa` in the verification artifact. Existing screenshots in `docs/screenshots` are historical.
+Download `VuraVision-1.6-<run number>` from the successful build's artifacts. Screenshots produced by tests are under `build/qa` in the verification artifact. Existing screenshots in `docs/screenshots` are historical.
 
 Local build requires JDK 17 and Android SDK 35:
 
@@ -15,9 +15,12 @@ chmod +x gradlew
 ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
 ```
 
-The supplied Actions run for the prior source passed unit tests and assembled APKs, then stopped at release lint. The icon superclass was corrected. Version 1.5 changes have not been built in Actions yet. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.5.md).
+The supplied Actions run for version 1.5 compiled the debug and release Kotlin code and reported four unit test failures; all four cases were addressed in 1.6. This source still needs a new Actions run. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.6.md).
 
 ## Changes
+
+- Games: native two-player panels preserve their aspect ratio, face-to-face touch areas mirror with the screen, reaction and tap games accept the entire panel, Pong touches control paddles without ending the round, high/low cards differ, and memory PINs stop showing after the reveal. Game search and category filters, full-card opening and more readable option layouts make games easier to browse and play.
+- Labs: responsive catalog columns and stacked, scrollable controls fix cramped screens. Charts get readable explanation cards and bars that represent negative values. Orbit, pendulum, electrolysis, osmosis, half-life, Benford, pressure, Markov weather, the light clock, gas, electrical circuits, buoyancy and dilution now respond visibly to controls or time. New controls reset the animation clock; reset restores the original parameters. Focused tests cover game interaction and lab output.
 
 - White canvas, floating icon-only navigation, scrolling vertical tool dock, icon page navigation. Tooltips/accessibility labels identify controls; menus and settings retain names. Lower-corner full-screen button hides/restores chrome and system bars.
 - Pen palette uses actual Material background colors. Duplicate two-tip/input-mode switch removed from the pen panel; input mode remains on the main dock. Fine/broad appearance profiles remain independently editable.
@@ -39,4 +42,4 @@ The supplied Actions run for the prior source passed unit tests and assembled AP
 
 Keep the existing production signing key in GitHub Secrets so updates can install over your current app. The workflow falls back to development signing when no production key is supplied. Export important `.vura` lessons before any uninstall. No signing credentials are included.
 
-Earlier scope/specification/handoff files are historical references. This README and `docs/VERIFICATION-1.5.md` describe the current delivery.
+Earlier scope/specification/handoff files are historical references. This README and `docs/VERIFICATION-1.6.md` describe the current delivery.

@@ -58,7 +58,7 @@ object ShapeRecognition {
         val radii=pts.map{hypot((it.first-cx)/(w/2).coerceAtLeast(1f),(it.second-cy)/(h/2).coerceAtLeast(1f))}
         val radialError=radii.map{abs(it-1f)}.average()
         val sectors=pts.map{(x,y)->((atan2((y-cy).toDouble(),(x-cx).toDouble())+PI)*16/(2*PI)).toInt().coerceIn(0,15)}.distinct().size
-        if(radialError<.115 && sectors>=13 && pathLength>diag*2.1f)
+        if(radialError<.115 && sectors>=13 && pathLength>diag*1.8f)
             return if(abs(w-h)/max(w,h)<.16f)"circle"else"ellipse"
         return "unknown"
     }

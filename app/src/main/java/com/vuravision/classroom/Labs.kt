@@ -46,7 +46,8 @@ object Labs {
         root.addView(header)
         root.addView(context.label(context.s("lab_intro"), 15f, MUTED))
         val list = context.column()
-        keys.chunked(2).forEach { chunk ->
+        val columns=when{context.resources.configuration.screenWidthDp<620->1;context.resources.configuration.screenWidthDp<1200->2;else->3}
+        keys.chunked(columns).forEach { chunk ->
             val row = context.row()
             chunk.forEachIndexed { i, key ->
                 val cardContent =
@@ -143,7 +144,7 @@ object Labs {
         header.addView(context.button(context.s("close")) { d.dismiss() })
         c.addView(header)
         c.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
-        val sliders=context.row()
+        val sliders=context.column()
         val sliderViews=mutableListOf<SeekBar>()
         controls.forEachIndexed { i, control ->
             val col = context.column()
@@ -162,6 +163,7 @@ object Labs {
                                 if (control.label in listOf("n", "N")) v = round(v)
                                 view.values[i] = v
                                 label.text = "${control.label} = ${fmt(v)}"
+                                if(u)view.time=0.0
                                 view.invalidate()
                             }
 
@@ -172,10 +174,10 @@ object Labs {
                     )
                 }
             )
-            sliders.addView(col, LinearLayout.LayoutParams(0, -2, 1f))
+            sliders.addView(col, LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,context.dp(3),0,context.dp(3))})
         }
-        c.addView(sliders)
-        c.addView(context.label(context.s("ex_$key"), 13f, MUTED))
+        sliders.addView(context.label(context.s("ex_$key"), 13f, MUTED))
+        c.addView(ScrollView(context).apply{addView(sliders);isFillViewport=false},LinearLayout.LayoutParams(-1,context.dp(if(context.resources.configuration.screenWidthDp<620)190 else 235)))
         val r = context.row()
         r.addView(
             context.button(context.s("pause")) {
@@ -224,7 +226,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         if (last != 0L && running) time += (now - last).coerceAtMost(50) / 1000.0
         last = now
         render(c, width, height)
-        if(isAttachedToWindow&&running&&(key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting")))postInvalidateOnAnimation()
+        if(isAttachedToWindow&&running&&(key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline")))postInvalidateOnAnimation()
     }
 
     override fun onAttachedToWindow() {
@@ -445,7 +447,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
                     23f,
                 )
             }
-            else -> ExtraLabs.draw(c,key,values,context)
+            else -> ExtraLabs.draw(c,key,values,context,time)
         }
         c.restore()
     }
