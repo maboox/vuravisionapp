@@ -262,8 +262,7 @@ class MainActivity : Activity() {
                 dialog(tr("Panel ${i+1}: pen","بخش ${i+1}: قلم"),ScrollView(this).apply{addView(c)})
             })
             actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){
-                val c=column().apply{pad(12)};palette(c,pane.background){color->store.edit{pane.background=color}}
-                dialog(tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه"),ScrollView(this).apply{addView(c)})
+                backgroundSettings(i)
             })
             overlay.addView(actions,FrameLayout.LayoutParams(dp(100),dp(52)).apply{
                 leftMargin=((i%columns+1)*canvasHost.width/columns-dp(112)).coerceAtLeast(dp(76))
@@ -293,15 +292,51 @@ class MainActivity : Activity() {
         board.clearSelection();board.reset()
     }
     private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).apply()}
-    private fun palette(c:LinearLayout,initial:Int,changed:(Int)->Unit){
-        val colors=listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt(),
-            0xfff6f7f9.toInt(),0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt(),0xffd2d4db.toInt(),0xff94a9bf.toInt(),0xff263b57.toInt(),0xff314633.toInt())
+    private val backgroundSwatches get()=listOf(Color.WHITE,Color.BLACK,0xff172a36.toInt(),PAPER,0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt())
+    private fun palette(c:LinearLayout,initial:Int,background:Boolean=false,changed:(Int)->Unit){
+        val colors=if(background)backgroundSwatches else listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
         val buttons=mutableListOf<Button>()
+        var current=initial
         colors.chunked(5).forEach{chunk->c.addView(row().apply{chunk.forEach{color->
             val b=button(if(color==initial)"✓" else "●"){}.apply{setTextColor(if(Color.red(color)*.299+Color.green(color)*.587+Color.blue(color)*.114>160)NAVY else Color.WHITE);backgroundTintList=android.content.res.ColorStateList.valueOf(color);strokeColor=android.content.res.ColorStateList.valueOf(OUTLINE_STRONG);strokeWidth=dp(1);setPadding(0,0,0,0);minWidth=0;minimumWidth=0;textSize=22f;contentDescription=String.format(Locale.US,"#%06X",color and 0xffffff)}
-            b.setOnClickListener{buttons.forEach{it.text="●"};b.text="✓";changed(color)};buttons.add(b)
+            b.setOnClickListener{buttons.forEach{it.text="●"};b.text="✓";current=color;changed(color)};buttons.add(b)
             addView(b,LinearLayout.LayoutParams(0,dp(48),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
         }})}
+        val custom=button(tr("Custom color…","رنگ دلخواه…")){
+            ColorPickerDialog.show(this,current){color->current=color;buttons.forEach{it.text=if(it.contentDescription==String.format(Locale.US,"#%06X",color and 0xffffff))"✓" else "●"};changed(color)}
+        }
+        c.addView(custom)
+    }
+
+    private fun backgroundSettings(paneIndex:Int=board.activePane){
+        val page=store.page;val pane=page.panes[paneIndex.coerceIn(page.panes.indices)]
+        val c=column().apply{pad(16)}
+        c.addView(label(tr("Page pattern","الگوی صفحه"),17f,NAVY,true))
+        c.addView(label(tr("The pattern applies to this page; color applies to the selected panel.","الگو برای این صفحه و رنگ برای بخش انتخابی اعمال می‌شود."),13f,MUTED))
+        val patterns=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"))
+        val patternRows=column();c.addView(patternRows)
+        fun refreshPattern(){patternRows.removeAllViews();patterns.chunked(3).forEach{chunk->
+            patternRows.addView(row().apply{chunk.forEach{(key,title)->
+                addView(button(title,if(page.background in listOf("white","dark"))key=="plain" else page.background==key){
+                    store.edit{
+                        if(page.background=="dark")page.panes.forEach{if(it.background==Color.WHITE)it.background=0xff172a36.toInt()}
+                        page.background=key
+                    }
+                    refreshPattern()
+                },LinearLayout.LayoutParams(0,dp(52),1f).apply{setMargins(dp(2),dp(4),dp(2),dp(4))})
+            }})
+        }}
+        refreshPattern()
+        c.addView(label(tr("Background color","رنگ پس‌زمینه"),17f,NAVY,true))
+        val initial=if(page.background=="dark"&&pane.background==Color.WHITE)0xff172a36.toInt() else pane.background
+        palette(c,initial,background=true){color->store.edit{
+            if(page.background=="dark"){
+                page.panes.forEach{if(it.background==Color.WHITE)it.background=0xff172a36.toInt()}
+                page.background="plain"
+            }
+            pane.background=color
+        }}
+        dialog(tr("Background · page ${store.lesson.current+1}","پس‌زمینه · صفحهٔ ${store.lesson.current+1}"),ScrollView(this).apply{addView(c)})
     }
     private fun slider(c:LinearLayout,name:String,value:Float,maxValue:Int=40,undoable:Boolean=false,changed:(Float)->Unit){
         val title=label("$name · ${value.toInt()}",15f,NAVY,true);title.setPadding(dp(4),dp(18),dp(4),dp(8));c.addView(title)
@@ -641,7 +676,7 @@ class MainActivity : Activity() {
         val d=dialog("VuraVision",ScrollView(this).apply{addView(c)})
         title.setOnClickListener{taps++;if(taps==3){prefs.edit().putBoolean("engineering",true).apply();d.dismiss();engineering()}}
         c.addView(label(s("help_text"),16f))
-        c.addView(label(tr("Re-tap Pen or Eraser to configure it. Select writing to use the smart actions above it. Hold the pen still at the end of a shape for two seconds to adjust it. Select a mind-map node to add a child with the side plus or a sibling with the lower plus. Share PDF through a cloud app for people on another network.","برای تنظیم قلم یا پاک‌کن، دوباره روی آن بزنید. برای عملیات هوشمند، نوشته را انتخاب کنید و از نوار بالای آن استفاده کنید. انتهای شکل را دو ثانیه با قلم نگه دارید تا بتوانید اندازه‌اش را تنظیم کنید. در مایندمپ، به‌علاوهٔ کنار گره فرزند و به‌علاوهٔ زیر گره هم‌سطح می‌سازد. برای افراد روی شبکهٔ دیگر، PDF را با برنامهٔ ابری به اشتراک بگذارید."),16f))
+        c.addView(label(tr("Re-tap Pen or Eraser to configure it. Select writing to use the smart actions above it. Hold the pen still at the end of a shape for one second to adjust it. Select a mind-map node to add a child with the side plus or a sibling with the lower plus. Share PDF through a cloud app for people on another network.","برای تنظیم قلم یا پاک‌کن، دوباره روی آن بزنید. برای عملیات هوشمند، نوشته را انتخاب کنید و از نوار بالای آن استفاده کنید. انتهای شکل را یک ثانیه با قلم نگه دارید تا بتوانید اندازه‌اش را تنظیم کنید. در مایندمپ، به‌علاوهٔ کنار گره فرزند و به‌علاوهٔ زیر گره هم‌سطح می‌سازد. برای افراد روی شبکهٔ دیگر، PDF را با برنامهٔ ابری به اشتراک بگذارید."),16f))
     }
 
     private fun fileMenu() {
@@ -709,34 +744,20 @@ class MainActivity : Activity() {
     }
 
     private fun colors() {
-        val colors =
-            listOf(
-                    0xff243746,
-                    0xffe46d38,
-                    0xff167b79,
-                    0xff6373c2,
-                    0xffd35473,
-                    0xffe5b633,
-                    0xffeeeeee,
-                    0xff000000,
-                )
-                .map { it.toInt() }
-        val r = row().apply { pad(12) }
-        val d = dialog(s("color"), r)
-        colors.forEach { color ->
-            r.addView(
-                button("●") {
-                        board.inkColor = color
-                        if (board.chosen().isNotEmpty()) board.edit { it.color = color }
-                        d.dismiss()
-                    }
-                    .apply {
-                        setTextColor(color)
-                        textSize = 28f
-                    },
-                LinearLayout.LayoutParams(0, dp(54), 1f),
-            )
+        val chosen=board.chosen()
+        val initial=chosen.singleOrNull()?.let{if(it.kind=="sticky")it.noteColor else it.color}?:board.inkColor
+        val c=column().apply{pad(16)}
+        palette(c,initial){color->
+            if(chosen.isEmpty()){board.inkColor=color;savePens()}
+            else board.edit{item->
+                if(item.kind=="sticky"){
+                    item.noteColor=color
+                    if(Color.luminance(color)<.25 && Color.luminance(item.color)<.35)item.color=Color.WHITE
+                    else if(Color.luminance(color)>.65 && Color.luminance(item.color)>.65)item.color=NAVY
+                }else item.color=color
+            }
         }
+        dialog(tr("Color","رنگ"),ScrollView(this).apply{addView(c)})
     }
 
     private fun width() {
@@ -920,12 +941,7 @@ class MainActivity : Activity() {
         val c=column().apply{pad(14)};val d=dialog(s("pages"),ScrollView(this).apply{addView(c)})
         val actions=row()
         actions.addView(button("＋ ${s("add_page")}",true){addPage();d.dismiss()})
-        actions.addView(button(s("background")){choices(s("background"),listOf("white","dark","dots","grid","ruled")){i->store.edit{store.page.background=listOf("white","dark","dots","grid","ruled")[i]};d.dismiss()}})
-        actions.addView(button(tr("Background color","رنگ پس‌زمینه")){
-            val paletteBox=column().apply{pad(12)};val pane=store.page.panes[board.activePane]
-            palette(paletteBox,pane.background){color->store.edit{pane.background=color}}
-            dialog(tr("Background color","رنگ پس‌زمینه"),ScrollView(this).apply{addView(paletteBox)})
-        })
+        actions.addView(button(s("background")){backgroundSettings()})
         actions.addView(button(s("clear")){confirm(s("clear_confirm")){store.edit{store.page.items.removeAll{!it.locked && store.page.editable(it)}};board.clearSelection();d.dismiss()}})
         c.addView(scrollRow(actions))
         store.lesson.pages.forEachIndexed{i,page->

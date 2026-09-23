@@ -59,6 +59,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var isCommitting=false
         private set
     private var backing:Bitmap?=null
+    private var backingCanvas:Canvas?=null
     private var backingDirty=true
     private var dirtyRegion:RectF?=null
     private var cachedPage:Page?=null
@@ -122,7 +123,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             heldOriginal[id]=shape.deepCopy()
             live[id]=shape;renderer.forgetInk(ink.id);postInvalidateOnAnimation()
         }
-        holdCallbacks[id]=callback;postDelayed(callback,2000)
+        holdCallbacks[id]=callback;postDelayed(callback,1000)
     }
 
     init {
@@ -206,12 +207,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
         backing?.recycle();backing=if(w>0 && h>0)Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888) else null
+        backingCanvas=backing?.let{Canvas(it)}
         backingDirty=true
     }
     private fun transformCanvas(c:Canvas,index:Int=activePane) {val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val p=store.page.panes[n];c.clipRect(r);c.translate(r.left,r.top);c.scale(density,density);c.translate(p.tx,p.ty);c.scale(p.zoom,p.zoom) }
     override fun onDraw(c:Canvas) {
         backing?.let { bitmap ->
-            val target=Canvas(bitmap);target.save()
+            val target=backingCanvas?:Canvas(bitmap);target.save()
             val page=store.page
             val full=backingDirty || cachedPage!==page || (cachedCount!=page.items.size && dirtyRegion==null)
             if(full) {
@@ -443,7 +445,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     max(anchor.y, point.y),
                                 )
                         }
-                        else if(hypot(point.x-anchor.x,point.y-anchor.y)>6/zoom) {
+                        else if(hypot(point.x-anchor.x,point.y-anchor.y)>4/zoom) {
                             checkpoint();transform(point)
                         }
                     } else
@@ -466,8 +468,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     o.y=if(dy<0)start.y-o.h else start.y
                                 }
                             } else {
+                                val paneIndex=pointerPanes[pid]?:activePane
+                                val rect=paneRect(paneIndex)
+                                val state=store.page.panes[paneIndex]
+                                val scale=density*state.zoom
                                 for (j in 0 until e.historySize) {
-                                    val q = world(e.getHistoricalX(i, j), e.getHistoricalY(i, j),pointerPanes[pid]?:activePane)
+                                    val q=PointF((e.getHistoricalX(i,j)-rect.left-density*state.tx)/scale,
+                                        (e.getHistoricalY(i,j)-rect.top-density*state.ty)/scale)
                                     val snapped=snap(pid,q)
                                     o.points.add(
                                         Point(
@@ -526,7 +533,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     box = null
                     lasso.clear()
                     if(wasSelection){
-                        if(mode=="move" && tappedSelected && hypot(at.x-anchor.x,at.y-anchor.y)<6/zoom)post{onObjectActions()}
+                        if(mode=="move" && tappedSelected && hypot(at.x-anchor.x,at.y-anchor.y)<4/zoom)post{onObjectActions()}
                         onSelection()
                     }
                 }

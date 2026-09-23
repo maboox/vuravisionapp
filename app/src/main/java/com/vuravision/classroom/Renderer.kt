@@ -44,7 +44,7 @@ class Renderer(private val media: Media) {
     fun background(c: Canvas, page: Page, area: RectF, fill:Int=page.panes.firstOrNull()?.background?:Color.WHITE) {
         val color=if(page.background=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
         c.drawColor(color)
-        if (page.background !in listOf("dots", "grid", "ruled")) return
+        if (page.background !in listOf("dots", "grid", "ruled", "hatch")) return
         p.color = if(android.graphics.Color.luminance(color)<.35)0x55ffffff else 0xffd8dce2.toInt()
         p.strokeWidth = 1f
         p.style = Paint.Style.FILL
@@ -54,6 +54,14 @@ class Renderer(private val media: Media) {
         val top = floor(area.top / step).toInt()
         val bottom = ceil(area.bottom / step).toInt()
         if ((right - left).toLong() * (bottom - top) > 400000) return
+        if(page.background=="hatch"){
+            c.save();c.clipRect(area)
+            val diagonals=ceil((area.height()+area.width())/step).toInt()
+            for(i in 0..diagonals){val x=area.left-area.height()+i*step
+                c.drawLine(x,area.top,x+area.height(),area.bottom,p)
+            }
+            c.restore();return
+        }
         for (y in top..bottom) if (page.background == "dots")
             for (x in left..right) c.drawCircle(x * step, y * step, 1.1f, p)
         else c.drawLine(area.left, y * step, area.right, y * step, p)
@@ -187,13 +195,29 @@ class Renderer(private val media: Media) {
     }
 
     fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null) {
-        page.layers.filter { it.visible && it.opacity>0f }.forEach { layer ->
+        val visibleLayers=page.layers.filter { it.visible && it.opacity>0f }
+        // Draw all branches first: a parent may occur before its child in item order.
+        val nodes=page.items.filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
+        if(nodes.isNotEmpty()){
+            val layerOpacity=visibleLayers.associate{it.id to it.opacity}
+            nodes.values.forEach{child->
+                val parent=nodes[child.parentNode]?:return@forEach
+                if(child.pane!=parent.pane || pane!=null&&child.pane!=pane)return@forEach
+                val opacity=minOf(layerOpacity[child.layerId]?:0f,layerOpacity[parent.layerId]?:0f)
+                if(opacity<=0f)return@forEach
+                val x=parent.x+parent.w/2;val y=parent.y+parent.h/2
+                val xx=child.x+child.w/2;val yy=child.y+child.h/2
+                if(region!=null){
+                    val bounds=RectF(minOf(x,xx),minOf(y,yy),maxOf(x,xx),maxOf(y,yy)).apply{inset(-3f,-3f)}
+                    if(!RectF.intersects(bounds,region))return@forEach
+                }
+                p.reset();p.isAntiAlias=true;p.color=TEAL;p.alpha=(opacity*255).toInt();p.strokeWidth=2f;p.style=Paint.Style.STROKE
+                c.drawLine(x,y,xx,yy,p)
+            }
+        }
+        visibleLayers.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
             page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) }.forEach { o ->
-                if(o.shape=="mindnode" && o.parentNode.isNotEmpty())page.items.firstOrNull{it.id==o.parentNode && it.pane==o.pane && page.layer(it).visible}?.let{parent->
-                    p.reset();p.isAntiAlias=true;p.color=TEAL;p.strokeWidth=2f;p.style=Paint.Style.STROKE
-                    c.drawLine(parent.x+parent.w/2,parent.y+parent.h/2,o.x+o.w/2,o.y+o.h/2,p)
-                }
                 if(region==null || RectF.intersects(itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) },region))draw(c,o,sync)
             }
             c.restoreToCount(save)
