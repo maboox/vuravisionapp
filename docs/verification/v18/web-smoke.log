@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> vuravision-verification@1.1.0 test
+> node scripts/web-smoke.cjs
+
+{
+  "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+  "labs": 204,
+  "labFailures": [],
+  "games": 49,
+  "gameFailures": [],
+  "errors": []
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Version14Test" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:58" hostname="fb4cd6e3444d" time="0.779">
+  <properties/>
+  <testcase name="refusedConnectionHasActionableMessage" classname="com.vuravision.classroom.Version14Test" time="0.03"/>
+  <testcase name="iconWorkspaceCanHideAndRestoreAndShareIsPublic" classname="com.vuravision.classroom.Version14Test" time="0.156"/>
+  <testcase name="layersAreInCanvasAndOpacityIsUndoable" classname="com.vuravision.classroom.Version14Test" time="0.241"/>
+  <testcase name="conversionPreservesWritingAndUndoRemovesOnlyResult" classname="com.vuravision.classroom.Version14Test" time="0.094"/>
+  <testcase name="dashLayersAndSplitSurviveArchiveAndExportRenders" classname="com.vuravision.classroom.Version14Test" time="0.03"/>
+  <testcase name="paletteRetainsRealColorsAndNoDuplicateModeSwitch" classname="com.vuravision.classroom.Version14Test" time="0.22"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

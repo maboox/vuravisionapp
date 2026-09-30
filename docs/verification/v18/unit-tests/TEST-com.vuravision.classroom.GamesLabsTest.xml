@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.GamesLabsTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:41" hostname="fb4cd6e3444d" time="0.183">
+  <properties/>
+  <testcase name="reactionsAcceptTheWholePanelAndPongTouchDoesNotEndTheRound" classname="com.vuravision.classroom.GamesLabsTest" time="0.059"/>
+  <testcase name="highLowAlwaysHasDistinctCards" classname="com.vuravision.classroom.GamesLabsTest" time="0.049"/>
+  <testcase name="faceToFaceMirrorsTheAnswerHitArea" classname="com.vuravision.classroom.GamesLabsTest" time="0.033"/>
+  <testcase name="visualLabControlsChangeTheRenderedDiagram" classname="com.vuravision.classroom.GamesLabsTest" time="0.042"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

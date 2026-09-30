@@ -1,0 +1,33 @@
+{
+  "application_id": "com.vuravision.classroom.beta",
+  "version_name": "1.8.0",
+  "version_code": 11,
+  "guide_chapters": 24,
+  "licensing": false,
+  "artwork": {
+    "mona-vura": {
+      "paths": 124,
+      "points": 19524
+    },
+    "aurora": {
+      "paths": 139,
+      "points": 18178
+    }
+  },
+  "verification": {
+    "jvm": {
+      "tests": 101,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint_errors": 0,
+    "lint_warnings": 648,
+    "release_build": "passed_with_temporary_validation_key",
+    "html_labs": 204,
+    "html_games": 49,
+    "html_failures": 0,
+    "physical_panel_tested": false,
+    "emulator_instrumentation_run": false
+  }
+}

@@ -43,6 +43,7 @@ class MainActivity : Activity() {
     private var sharing: Sharing? = null
     private var shareDialog: Dialog? = null
     private var taps = 0
+    private var artPlayer: ArtPlayer? = null
     private val autosave = Runnable { persist() }
     private var dirty = false
     private var loading = false
@@ -90,6 +91,10 @@ class MainActivity : Activity() {
         board.touchMode=prefs.getBoolean("touchMode",false)
         smartSource=prefs.getString("smartSource","auto")?:"auto"
         board.smartMode=prefs.getString("smartMode","text")?:"text"
+        board.holdRecognitionEnabled=prefs.getBoolean("holdRecognition",true)
+        board.holdDelayMillis=prefs.getLong("holdDelay",1000L).coerceIn(500L,2500L)
+        board.holdTolerance=prefs.getFloat("holdTolerance",4f).coerceIn(2f,12f)
+        board.guideSnapEnabled=prefs.getBoolean("guideSnap",true)
         buildUI()
         media.ready = { handler.post { if(!destroyed)board.sceneChanged() } }
         media.error = { message -> handler.post { status.text = s("error") + ": " + message } }
@@ -447,8 +452,21 @@ class MainActivity : Activity() {
         val d=dialog(tr("Dual-tip calibration","کالیبراسیون دو سر قلم"),ScrollView(this).apply{addView(c)})
         c.addView(button(s("apply"),true){val a=thin.text.toString().toFloatOrNull();val b=palm.text.toString().toFloatOrNull();if(a==null||b==null||!a.isFinite()||!b.isFinite()||a<=0||b<=a){thin.error=tr("Use 0 < fine < palm","باید ۰ < سر باریک < کف دست باشد");return@button};board.profile.calibrated=true;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;prefs.edit().putBoolean("calibrated",true).putFloat("thin",a).putFloat("palm",b).putBoolean("palmErase",palmErase.isChecked).apply();savePens();d.dismiss()})
     }
+    private fun palmControls(c:LinearLayout){
+        c.addView(label(tr("Palm erasing","پاک‌کردن با کف دست"),18f,NAVY,true))
+        c.addView(Switch(this).apply{
+            text=tr("Use palm as a temporary eraser","کف دست، پاک‌کن موقت باشد")
+            isChecked=board.profile.palmErase
+            setOnCheckedChangeListener{_,enabled->
+                board.profile.palmErase=enabled
+                prefs.edit().putBoolean("palmErase",enabled).apply()
+            }
+        })
+        c.addView(label(tr("Requires a touch controller that reports contact width. If the palm is ignored or mistaken for a pen, calibrate its threshold. Eraser size and mode below also apply to the palm.","نیازمند گزارش اندازهٔ تماس توسط کنترلر لمس است. اگر کف دست تشخیص داده نشد یا مثل قلم عمل کرد، آستانه را تنظیم کنید. اندازه و حالت پاک‌کن برای کف دست هم اعمال می‌شود."),14f,MUTED))
+        c.addView(button(tr("Calibrate palm / test touch","تنظیم کف دست / تست لمس")){calibrateTips()})
+    }
     private fun eraserSettings(){
-        val c=column().apply{pad(20)};c.addView(label(tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."),14f,MUTED))
+        val c=column().apply{pad(20)};palmControls(c);c.addView(label(tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."),14f,MUTED))
         val modes=RadioGroup(this);listOf("stroke" to tr("Whole stroke / object","کل خط / شیء"),"area" to tr("Area eraser","پاک‌کن ناحیه‌ای")).forEach{(key,title)->modes.addView(RadioButton(this).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString("eraserMode",key).apply()}})};c.addView(modes)
         slider(c,tr("Radius","شعاع"),board.eraserRadius,80){board.eraserRadius=it;prefs.edit().putFloat("eraserRadius",it).apply()}
         c.addView(CheckBox(this).apply{text=tr("Include objects (otherwise ink only)","روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)");isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean("eraseObjects",v).apply()}})
@@ -671,12 +689,7 @@ class MainActivity : Activity() {
     }
 
     private fun quickGuide(){
-        val c=column().apply{pad(20)};var taps=0
-        val title=label(s("help"),24f,NAVY,true);c.addView(title)
-        val d=dialog("VuraVision",ScrollView(this).apply{addView(c)})
-        title.setOnClickListener{taps++;if(taps==3){prefs.edit().putBoolean("engineering",true).apply();d.dismiss();engineering()}}
-        c.addView(label(s("help_text"),16f))
-        c.addView(label(tr("Re-tap Pen or Eraser to configure it. Select writing to use the smart actions above it. Hold the pen still at the end of a shape for one second to adjust it. Select a mind-map node to add a child with the side plus or a sibling with the lower plus. Share PDF through a cloud app for people on another network.","برای تنظیم قلم یا پاک‌کن، دوباره روی آن بزنید. برای عملیات هوشمند، نوشته را انتخاب کنید و از نوار بالای آن استفاده کنید. انتهای شکل را یک ثانیه با قلم نگه دارید تا بتوانید اندازه‌اش را تنظیم کنید. در مایندمپ، به‌علاوهٔ کنار گره فرزند و به‌علاوهٔ زیر گره هم‌سطح می‌سازد. برای افراد روی شبکهٔ دیگر، PDF را با برنامهٔ ابری به اشتراک بگذارید."),16f))
+        UserGuide.show(this,media){prefs.edit().putBoolean("engineering",true).apply();engineering()}
     }
 
     private fun fileMenu() {
@@ -1298,7 +1311,7 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","ui_size","models","input_controls","cache","about")
+        val keys=mutableListOf("language","ui_size","models","input_controls","help","cache","about")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
@@ -1309,6 +1322,7 @@ class MainActivity : Activity() {
                 }.show()
             "models"->models()
             "input_controls"->inputSettings()
+            "help"->quickGuide()
             "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
             "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
             "engineering"->engineering()
@@ -1316,8 +1330,11 @@ class MainActivity : Activity() {
     }
 
     private fun engineering() {
-        choices(s("engineering"), listOf("touch_test", "thresholds", "report", "stress")) {
+        choices(s("engineering"), listOf("touch_test", "thresholds", "report", "stress", "advanced_board", "secret_studio", "maboox")) {
             when (it) {
+                4 -> advancedBoard()
+                5 -> secretStudio()
+                6 -> maboox()
                 0 ->
                     dialog(
                         s("touch_test"),
@@ -1340,6 +1357,8 @@ class MainActivity : Activity() {
                     dialog(s("report"), ScrollView(this).apply { addView(text) })
                 }
                 3 -> {
+                    if(board.isDrawing)return@choices
+                    confirm(tr("Add 300 test strokes? Undo removes them.","۳۰۰ خط آزمایشی اضافه شود؟ با بازگردانی حذف می‌شوند.")) {
                     store.edit {
                         repeat(300) { n ->
                             store.page.items.add(
@@ -1363,9 +1382,79 @@ class MainActivity : Activity() {
                         }
                     }
                     board.fit()
+                    }
                 }
             }
         }
+    }
+
+    private fun advancedBoard(){
+        if(board.isDrawing){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return}
+        val c=column().apply{pad(20)}
+        c.addView(label(tr("Behind the board","پشت پردهٔ تخته"),22f,NAVY,true))
+        fun toggle(en:String,fa:String,initial:Boolean,change:(Boolean)->Unit){
+            c.addView(Switch(this).apply{text=tr(en,fa);isChecked=initial;setOnCheckedChangeListener{_,v->change(v)}})
+        }
+        toggle("Hold to recognize geometry","تشخیص هندسی با مکث",board.holdRecognitionEnabled){v->board.holdRecognitionEnabled=v;prefs.edit().putBoolean("holdRecognition",v).apply()}
+        val delayLabel=label("");c.addView(delayLabel)
+        fun delayText(){delayLabel.text=tr("Hold time: ${board.holdDelayMillis} ms","زمان مکث: ${board.holdDelayMillis} میلی‌ثانیه")}
+        delayText()
+        c.addView(SeekBar(this).apply{max=20;progress=((board.holdDelayMillis-500)/100).toInt();contentDescription=tr("Shape hold time","زمان مکث تشخیص شکل");setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onStartTrackingTouch(v:SeekBar?){}
+            override fun onStopTrackingTouch(v:SeekBar?){}
+            override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){if(user){board.holdDelayMillis=500L+n*100L;prefs.edit().putLong("holdDelay",board.holdDelayMillis).apply();delayText()}}
+        })})
+        val toleranceLabel=label("");c.addView(toleranceLabel)
+        fun toleranceText(){toleranceLabel.text=tr("Stationary pen tolerance: ${board.holdTolerance.toInt()}","حساسیت ثابت‌ماندن قلم: ${board.holdTolerance.toInt()}")}
+        toleranceText()
+        c.addView(SeekBar(this).apply{max=10;progress=board.holdTolerance.toInt()-2;contentDescription=tr("Stationary pen tolerance","حساسیت ثابت‌ماندن قلم");setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onStartTrackingTouch(v:SeekBar?){}
+            override fun onStopTrackingTouch(v:SeekBar?){}
+            override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){if(user){board.holdTolerance=(n+2).toFloat();prefs.edit().putFloat("holdTolerance",board.holdTolerance).apply();toleranceText()}}
+        })})
+        toggle("Snap pen to ruler / compass","اتصال قلم به خط‌کش و پرگار",board.guideSnapEnabled){v->board.guideSnapEnabled=v;prefs.edit().putBoolean("guideSnap",v).apply()}
+        toggle("Reject palm instead of erasing","نادیده‌گرفتن کف دست به‌جای پاک‌کردن",!board.profile.palmErase){v->board.profile.palmErase=!v;prefs.edit().putBoolean("palmErase",!v).apply()}
+        c.addView(label(tr("Lower hold time responds faster. A larger tolerance accepts more small hand movements. These settings are saved on this device.","زمان مکث کمتر، تشخیص سریع‌تر می‌دهد. مقدار حساسیت بزرگ‌تر، لرزش بیشتری را می‌پذیرد. تنظیمات روی همین دستگاه ذخیره می‌شوند."),14f,MUTED))
+        c.addView(button(tr("Reset advanced settings","بازنشانی تنظیمات پیشرفته")){
+            board.holdRecognitionEnabled=true;board.holdDelayMillis=1000L;board.holdTolerance=4f;board.guideSnapEnabled=true
+            prefs.edit().remove("holdRecognition").remove("holdDelay").remove("holdTolerance").remove("guideSnap").apply()
+            toast(tr("Defaults restored; reopen this panel to refresh controls","مقادیر پیش‌فرض برگشت؛ برای نمایش مقادیر تازه پنل را دوباره باز کنید"))
+        })
+        dialog(tr("Behind the board","پشت پردهٔ تخته"),ScrollView(this).apply{addView(c)})
+    }
+    private fun secretStudio(){
+        val c=column().apply{pad(20)}
+        c.addView(label(tr("The secret studio","آتلیهٔ مخفی"),24f,NAVY,true))
+        c.addView(label(tr("Watch portraits drawn stroke by stroke with the board's own pens. Each drawing opens on a new page and can be edited, erased, saved or exported. Undo removes the new page. These are original stylized illustrations.","پرتره‌ها با قلم خود تخته، خط‌به‌خط رسم می‌شوند. هر نقاشی در صفحهٔ تازه باز می‌شود و قابل ویرایش، پاک‌کردن، ذخیره و خروجی است. بازگردانی، صفحهٔ نقاشی را حذف می‌کند. این‌ها تصویرسازی‌های گرافیکی اختصاصی‌اند."),15f,MUTED))
+        val d=dialog(tr("The secret studio","آتلیهٔ مخفی"),ScrollView(this).apply{addView(c)})
+        listOf("mona-vura" to tr("Mona × Vura · Renaissance remix","مونا × ویورا · برداشت رنسانسی"),"aurora" to tr("Aurora · anime portrait","آرورا · پرترهٔ انیمه")).forEach{(key,title)->
+            c.addView(button(title){
+                if(board.isDrawing){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return@button}
+                try{val artwork=Artwork.load(this,key);d.dismiss();artPlayer?.stop();artPlayer=ArtPlayer(this,board,store,artwork).also{it.start()}}catch(e:Exception){error(e)}
+            })
+        }
+        c.addView(button(tr("A tiny surprise: constellation","سورپرایز کوچک: صورت فلکی")){
+            if(board.isDrawing)return@button
+            d.dismiss();val page=Page(background="plain",panes=mutableListOf(Pane(background=0xff152538.toInt())))
+            val points=listOf(90f to 220f,210f to 140f,325f to 235f,425f to 150f,510f to 265f,410f to 360f,250f to 380f)
+            store.edit{
+                store.lesson.pages.add(page);store.lesson.current=store.lesson.pages.lastIndex
+                points.zipWithNext().forEach{(a,b)->page.items.add(Item(kind="ink",color=0xff97bdcc.toInt(),width=2f,w=600f,h=460f,inkW=600f,inkH=460f,points=mutableListOf(Point(a.first,a.second),Point(b.first,b.second))))}
+                points.forEach{(x,y)->page.items.add(Item(kind="shape",shape="star",x=x-12,y=y-12,w=24f,h=24f,color=0xffffcc80.toInt(),width=2f))}
+                page.items.add(Item(kind="text",text="Beyond Vision",x=180f,y=435f,w=300f,h=60f,color=Color.WHITE,width=24f))
+            };board.reset();board.clearSelection();board.fit()
+        })
+        c.addView(label("Powered by Maboox",14f,TEAL,true))
+    }
+    private fun maboox(){
+        val c=column().apply{pad(24)}
+        c.addView(label("Powered by Maboox",25f,NAVY,true))
+        c.addView(label(tr("A little craft behind every classroom.","کمی هنر، پشت هر کلاس."),16f,MUTED))
+        c.addView(label("maboox@yahoo.com",18f,TEAL).apply{setTextIsSelectable(true);textDirection=View.TEXT_DIRECTION_LTR})
+        c.addView(button(tr("Copy email","کپی ایمیل")){
+            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Maboox","maboox@yahoo.com"));toast(tr("Email copied","ایمیل کپی شد"))
+        })
+        dialog("Maboox",c)
     }
 
     private fun classroomTools() {
@@ -1420,6 +1509,7 @@ class MainActivity : Activity() {
     }
 
     override fun onStop() {
+        artPlayer?.pause()
         handler.removeCallbacks(autosave)
         persist()
         super.onStop()
@@ -1427,6 +1517,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        artPlayer?.stop()
         floatingTools.closeAll()
         handler.removeCallbacksAndMessages(null)
         sharing?.stop()

@@ -1,48 +1,36 @@
-# VuraVision 1.7.0 — source for GitHub Actions
+# VuraVision 1.8.0
 
-Android classroom whiteboard, Kotlin/native Views. Application ID remains `com.vuravision.classroom.beta`; version code is **10**. No newly built APK is included in this archive.
+Native Kotlin classroom whiteboard. Version code **11**; application ID remains `com.vuravision.classroom.beta`. No licensing service, serial-number gate or account requirement.
 
-## Build and test
+## New in 1.8
 
-Extract the archive and place the **contents** of its `vuravisionapp` folder at your GitHub repository root, including `.github` and Gradle files. Push, or run **Actions → Android APK → Run workflow**. The workflow runs JVM tests, release lint, APK assembly and APK verification. A manual run also runs the existing device tests.
+- Palm erasing, calibration and touch diagnostics are accessible from the normal Eraser settings. Select Eraser, then re-tap it. Palm erasing remains opt-in; its switch persists. Reliable distinction requires contact width from the device controller. Eraser mode and radius also apply to palm contacts.
+- Held-shape resizing scales around the actual first stroke sample, including right/bottom starts and edge starts. Closed outlines use a virtual opposite handle driven by displacement from the held endpoint, avoiding a size jump when recognition occurs. Squares and circles retain their aspect ratio.
+- Offline illustrated bilingual guide: 24 chapters, search, in-guide Persian/English toggle, steps and practice tips. Accessible through Help and Settings → Help. Examples use the application's object renderer; workspace and eraser screenshots come from this version's automated rendering.
+- Hidden advanced controls: hold recognition toggle, hold duration (500–2500 ms), stationary pen tolerance, ruler/compass snapping and palm rejection. Open the guide and tap its heading three times.
+- Secret studio: original stylized Renaissance portrait with the Vura emblem and original anime character Aurora, drawn progressively using editable board ink. New page per artwork, pause/resume, playback speed, stop and one-step undo. A constellation is an additional surprise.
+- Hidden `Powered by Maboox` credits and copyable `maboox@yahoo.com` email.
+- Production APK builds fail if the production key is missing, rather than silently using a development key. Pull-request checks produce a clearly named debug APK.
 
-Download `VuraVision-1.7-<run number>` from the successful build's artifacts. Screenshots produced by tests are under `build/qa` in the verification artifact. Existing screenshots in `docs/screenshots` are historical.
+## GitHub Actions
 
-Local build requires JDK 17 and Android SDK 35:
+Extract the ZIP and commit its **contents at repository root**, including `.github`, `app`, Gradle files and wrapper. Do not upload the ZIP itself as the build project.
 
-```sh
-chmod +x gradlew
-./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
-```
+Set these repository Actions secrets:
 
-The latest supplied Actions run compiled version 1.7 and passed 92 of 93 unit tests. The remaining failure showed that the custom color had not been applied when the test checked it. The dialog now uses the standard apply callback, disables Apply for invalid hex, and the test drains the UI queue before asserting. This correction still needs a fresh Actions run. Local compilation is unavailable without Gradle and the Android SDK. See [verification status](docs/VERIFICATION-1.7.md).
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded private keystore file |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | Key alias |
+| `ANDROID_KEY_PASSWORD` | Key password |
 
-## Changes
+Push or run **Android APK** manually. Download `VuraVision-1.8-<run>` from successful run artifacts; it contains `VuraVision-1.8.apk` and `SHA256SUMS.txt`. Pull-request APKs are named `VuraVision-1.8-debug.apk` and are not customer releases. Reports are in a separate verification artifact. A manual workflow also runs the existing emulator instrumented tests.
 
-- Background settings now combine page pattern and the selected panel's color in one dialog. White, black and other presets sit beside a custom HSV/hex picker; plain, dots, grid, ruled and hatch patterns work with any chosen color. New pages keep their own colors.
-- Pen and selected sticky or mind-map nodes have preset colors and the same custom picker. Node color changes the box fill; mind-map branches render behind all boxes, including parents.
-- Holding the pen at the end of a shape for one second enables live shape adjustment. Dragging selected items starts after a smaller movement. Historical ink coordinates reuse the current pane transform, and the cached canvas is reused while drawing.
-- Games: native two-player panels preserve their aspect ratio, face-to-face touch areas mirror with the screen, reaction and tap games accept the entire panel, Pong touches control paddles without ending the round, high/low cards differ, and memory PINs stop showing after the reveal. Game search and category filters, full-card opening and more readable option layouts make games easier to browse and play.
-- Labs: responsive catalog columns and stacked, scrollable controls fix cramped screens. Charts get readable explanation cards and bars that represent negative values. Orbit, pendulum, electrolysis, osmosis, half-life, Benford, pressure, Markov weather, the light clock, gas, electrical circuits, buoyancy and dilution now respond visibly to controls or time. New controls reset the animation clock; reset restores the original parameters. Focused tests cover game interaction and lab output.
+Keep the keystore and credentials safely backed up; never commit them. Future in-place updates require the same application ID and signing key, plus a higher version code. Export lessons before uninstalling a development-signed installation that cannot be upgraded with your production key.
 
-- White canvas, floating icon-only navigation, scrolling vertical tool dock, icon page navigation. Tooltips/accessibility labels identify controls; menus and settings retain names. Lower-corner full-screen button hides/restores chrome and system bars.
-- Pen palette uses actual Material background colors. Duplicate two-tip/input-mode switch removed from the pen panel; input mode remains on the main dock. Fine/broad appearance profiles remain independently editable.
-- Adjustable dash length and gap, persisted on each stroke and used by both live drawing and exports. Older strokes retain their original width-relative pattern.
-- Nonmodal layer panel beside the canvas: active layer, visibility, lock, opacity, drag-handle reorder, accessible up/down alternatives, rename (hold the name), move selection and confirmed deletion.
-- Split count applies immediately. Each panel has small pen/background controls; pen color, width, style and dash settings are independent and saved with the lesson.
-- Smart → Convert units supports common length, mass, area, volume, speed, time and temperature units, English aliases and several Persian aliases/digits. Examples: `12 inch to cm`, `2 kg to g`, `32 F to C`. Results preserve the original writing. Incompatible units and temperatures below absolute zero are rejected. Recognition accuracy remains dependent on the selected OCR source; review/correct text when needed.
-- QR sharing is a public toolbar action. It exports all lesson pages to PDF, offers alternate LAN addresses and Copy link, and stops when its window closes or after 30 minutes. Both devices must be on a reachable local network. This is file delivery, not live collaboration.
-- Model errors distinguish refused connections, DNS failures, timeouts and 404. Added network settings and offline OCR actions. The supplied error is `ECONNREFUSED` to `dl.google.com:443`; application code cannot guarantee access through an unavailable network route. Persian handwriting still needs Google's model.
-- Image export checks compression success and nonempty output. Clear-page respects object/layer locks. Autosave failure and backup recovery are surfaced even with the status strip removed.
-- Ruler, set square and protractor edges and the compass circle guide pen strokes that start near them; select a guide to move, rotate or resize it. The ruler can change length without changing thickness.
-- Mind map starts with three blank nodes. Pen strokes starting inside a node become attached, expand its bounds on release and follow its branch when moved, copied or deleted. The side plus adds a child; the lower plus adds a sibling; typed text is optional.
-- Hold the pen still at the end of a stroke for one second to convert recognized lines and shapes for live adjustment. Triangle, quadrilateral and circle classification has been revised.
-- Lesson Files and Classroom Tools no longer repeat in the main menu; Rename moved to Lesson Files. UI size has Small/Medium/Large settings. More background colors preserve dots/grid/ruled patterns. The Persian app label is VuraVision and About includes “Beyond Vision.”
-- Smart toolbar opens language/model settings only; selected writing uses the contextual actions. Auto compares installed English and Persian handwriting models, falling back to bundled Latin OCR when unavailable. A recognized shape action is available on selected ink.
-- For different networks, share the exported PDF through an installed cloud app and make a QR from its public HTTPS link. The local QR still requires reachable devices on the same LAN. The app has no hosted backend and cannot publish or validate cloud permissions itself.
+## Validation and scope
 
-## Installation
+See `docs/VERIFICATION-1.8.md` for current validation and limitations. Historical documents report earlier builds only. Touch controller behavior and physical latency need testing on the actual panel. Core board and guide work offline; optional handwriting model downloads and network sharing have their own connectivity requirements.
 
-Keep the existing production signing key in GitHub Secrets so updates can install over your current app. The workflow falls back to development signing when no production key is supplied. Export important `.vura` lessons before any uninstall. No signing credentials are included.
-
-Earlier scope/specification/handoff files are historical references. This README and `docs/VERIFICATION-1.7.md` describe the current delivery.
+Artwork source is in `scripts/generate-studio.py` (optional Python + Pillow). The shipped JSON assets require no generator at build time. Artwork is original stylized vector/pen illustration, not a reproduction of a photographed painting or an existing anime character. All drawing data remains ordinary editable `.vura` ink.

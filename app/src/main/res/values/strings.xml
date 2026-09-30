@@ -160,7 +160,7 @@
 <string name="scoreboard">Scoreboard</string>
 <string name="curtain">Screen curtain</string>
 <string name="reveal">Tap to reveal the board</string>
-<string name="help">Quick guide</string>
+<string name="help">User guide</string>
 <string name="help_text">Start writing directly. Tap the active pen/highlighter again for settings. Shapes are on the main toolbar. The page strip adds and switches pages; long-press a page for management. Select objects to move, resize, rotate or edit. Classroom widgets float over the board; drag their header. Seven taps on the About version text unlock calibration. Export .vura lessons before uninstalling.</string>
 <string name="projectile">Projectile motion</string>
 <string name="pendulum">Pendulum</string>

@@ -36,6 +36,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var eraserMode="stroke"
     var eraserRadius=18f
     var eraseObjects=true
+    var holdRecognitionEnabled=true
+    var holdDelayMillis=1000L
+    var holdTolerance=4f
+    var guideSnapEnabled=true
     var smartMode="text"
     var onSmart:(List<Item>)->Unit={}
     var onObjectActions:()->Unit={}
@@ -102,14 +106,14 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private var box: RectF? = null
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    private fun snap(id:Int,point:PointF):PointF = guides[id]?.let{
+    private fun snap(id:Int,point:PointF):PointF = (if(guideSnapEnabled)guides[id] else null)?.let{
         GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom)
     }?:point
     private fun cancelHold(id:Int){holdCallbacks.remove(id)?.let{removeCallbacks(it)};holdAt.remove(id)}
     private fun scheduleHold(id:Int,at:PointF){
-        if(heldStart.containsKey(id))return
+        if(!holdRecognitionEnabled || heldStart.containsKey(id))return
         val last=holdAt[id]
-        if(last!=null && hypot(last.x-at.x,last.y-at.y)<4f/zoom)return
+        if(last!=null && hypot(last.x-at.x,last.y-at.y)<holdTolerance/store.page.panes[pointerPanes[id]?:activePane].zoom)return
         cancelHold(id);holdAt[id]=PointF(at.x,at.y)
         val callback=Runnable{
             holdCallbacks.remove(id);holdAt.remove(id)
@@ -123,7 +127,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             heldOriginal[id]=shape.deepCopy()
             live[id]=shape;renderer.forgetInk(ink.id);postInvalidateOnAnimation()
         }
-        holdCallbacks[id]=callback;postDelayed(callback,1000)
+        holdCallbacks[id]=callback;postDelayed(callback,holdDelayMillis)
     }
 
     init {
@@ -276,6 +280,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
+        if(!isEnabled)return true
         val id = e.getPointerId(e.actionIndex)
         if(e.actionMasked==MotionEvent.ACTION_CANCEL){
             holdCallbacks.keys.toList().forEach(::cancelHold)
@@ -400,7 +405,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
                     val splitInk=store.page.panes.size>1
                     val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
-                    val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==pointerPanes[id] && it.shape in GeometryTools.keys &&
+                    val guide=if(!guideSnapEnabled)null else store.page.visibleItems().asReversed().firstOrNull{it.pane==pointerPanes[id] && it.shape in GeometryTools.keys &&
                         GeometryTools.snap(it,at.x,at.y,14f/store.page.panes[it.pane].zoom)!=null}
                     if(guide!=null)guides[id]=guide
                     val start=snap(id,at)
@@ -454,10 +459,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                 val endpoint=if(pid in heldStart)snap(pid,point) else point
                                 if(pid in heldOriginal && o.shape!="line"){
                                     val base=heldOriginal.getValue(pid);val last=heldEnd.getValue(pid)
-                                    val dx=endpoint.x-last.x;val dy=endpoint.y-last.y
-                                    o.x=base.x;o.y=base.y
-                                    o.w=(base.w+dx).coerceAtLeast(4f);o.h=(base.h+dy).coerceAtLeast(4f)
-                                    if(Shapes.uniform(o.shape)){val side=max(o.w,o.h);o.w=side;o.h=side}
+                                    val start=heldStart.getValue(pid)
+                                    HeldShapeResize.apply(o,base,start.x,start.y,last.x,last.y,endpoint.x,endpoint.y)
                                 }else{
                                     val start=heldStart[pid]?:anchor
                                     o.flipX=endpoint.x<start.x;o.flipY=endpoint.y>=start.y

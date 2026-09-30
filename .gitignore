@@ -5,3 +5,7 @@ local.properties
 *.keystore
 .idea/
 install/
+
+.kotlin/
+*.p12
+keystore.properties

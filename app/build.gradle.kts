@@ -6,8 +6,8 @@ android {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.7.0"
+        versionCode = 11
+        versionName = "1.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -22,7 +22,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName(if(!signingPath.isNullOrBlank())"production" else "debug")
+            if (!signingPath.isNullOrBlank()) signingConfig = signingConfigs.getByName("production")
         }
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -54,4 +54,17 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
         showCauses = true
         showStackTraces = true
     }
+}
+
+// Customer releases must never silently use the development certificate.
+val validateReleaseSigning by tasks.registering {
+    doLast {
+        val required = listOf("ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD")
+        val missing = required.filter { System.getenv(it).isNullOrBlank() }
+        if (missing.isNotEmpty()) throw GradleException("Production signing is required. Missing environment settings: ${missing.joinToString()}")
+        if (!file(System.getenv("ANDROID_KEYSTORE_PATH")).isFile) throw GradleException("Production keystore file does not exist")
+    }
+}
+tasks.matching { it.name in listOf("packageRelease", "assembleRelease", "bundleRelease") }.configureEach {
+    dependsOn(validateReleaseSigning)
 }

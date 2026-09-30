@@ -32,27 +32,44 @@ jobs:
             printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vuravision-release.jks"
             echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vuravision-release.jks" >> "$GITHUB_ENV"
           else
-            echo 'No production key configured; building with a development signing certificate.'
+            echo '::error::ANDROID_KEYSTORE_BASE64 is required for a production APK.'
+            exit 1
           fi
-      - name: Build, test, and lint
+      - name: Test and build pull request (no signing secrets)
+        if: github.event_name == 'pull_request'
+        run: bash ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+      - name: Build, test, and lint production APK
+        if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          chmod +x gradlew
-          ./gradlew --no-daemon --stacktrace testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
+          for setting in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!setting}" ]; then
+              echo "::error::$setting is required for production signing."
+              exit 1
+            fi
+          done
+          bash ./gradlew --no-daemon --stacktrace validateReleaseSigning testDebugUnitTest lintRelease assembleRelease assembleDebugAndroidTest
       - name: Verify APK
         run: |
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 app/build/outputs/apk/release/app-release.apk
           mkdir -p artifacts
-          cp app/build/outputs/apk/release/app-release.apk artifacts/VuraVision-1.7.apk
+          if [ "${{ github.event_name }}" = 'pull_request' ]; then
+            APK=app/build/outputs/apk/debug/app-debug.apk
+            OUTPUT=VuraVision-1.8-debug.apk
+          else
+            APK=app/build/outputs/apk/release/app-release.apk
+            OUTPUT=VuraVision-1.8.apk
+          fi
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "$APK"
+          cp "$APK" "artifacts/$OUTPUT"
           cd artifacts
-          sha256sum VuraVision-1.7.apk > SHA256SUMS.txt
+          sha256sum "$OUTPUT" > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: VuraVision-1.7-${{ github.run_number }}
+          name: VuraVision-1.8-${{ github.run_number }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -96,7 +113,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: chmod +x gradlew && ./gradlew --no-daemon connectedDebugAndroidTest
+          script: bash ./gradlew --no-daemon connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
         if: always()
         with:

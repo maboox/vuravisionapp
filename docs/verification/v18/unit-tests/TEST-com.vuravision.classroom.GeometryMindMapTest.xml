@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.GeometryMindMapTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:41" hostname="fb4cd6e3444d" time="1.233">
+  <properties/>
+  <testcase name="freehandTriangleDoesNotTurnIntoCircle" classname="com.vuravision.classroom.GeometryMindMapTest" time="1.126"/>
+  <testcase name="inkStartingInsideNodeExpandsAndMovesWithItsTree" classname="com.vuravision.classroom.GeometryMindMapTest" time="0.031"/>
+  <testcase name="rotatedRulerProjectsNearbyInkOntoItsEdge" classname="com.vuravision.classroom.GeometryMindMapTest" time="0.031"/>
+  <testcase name="compassRadiusFollowsLegsAndSnapsToCircle" classname="com.vuravision.classroom.GeometryMindMapTest" time="0.044"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

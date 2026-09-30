@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Release18Test" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:43" hostname="fb4cd6e3444d" time="4.684">
+  <properties/>
+  <testcase name="captureCurrentWorkspaceInBothLanguages" classname="com.vuravision.classroom.Release18Test" time="1.302"/>
+  <testcase name="resizePreservesEveryStartingCornerAndDoesNotJump" classname="com.vuravision.classroom.Release18Test" time="0.028"/>
+  <testcase name="midpointAndCrossingKeepPivotAndUniformAspect" classname="com.vuravision.classroom.Release18Test" time="0.027"/>
+  <testcase name="artPlaybackRetainsPreviousPageAndStopsOnUndo" classname="com.vuravision.classroom.Release18Test" time="0.431"/>
+  <testcase name="palmSwitchIsPublicAndPersists" classname="com.vuravision.classroom.Release18Test" time="0.35"/>
+  <testcase name="guideIsCompleteSearchableAndBilingual" classname="com.vuravision.classroom.Release18Test" time="1.797"/>
+  <testcase name="actualHoldGestureAnchorsBottomRightAndUndoWorks" classname="com.vuravision.classroom.Release18Test" time="0.042"/>
+  <testcase name="artworkIsRealInkRoundTripsAndRenders" classname="com.vuravision.classroom.Release18Test" time="0.706"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

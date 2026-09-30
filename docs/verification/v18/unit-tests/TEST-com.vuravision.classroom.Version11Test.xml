@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Version11Test" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:56" hostname="fb4cd6e3444d" time="1.498">
+  <properties/>
+  <testcase name="masksActuallyRemovePixelsAndFollowResize" classname="com.vuravision.classroom.Version11Test" time="0.036"/>
+  <testcase name="areaEraserPreservesObjectAndHistory" classname="com.vuravision.classroom.Version11Test" time="0.024"/>
+  <testcase name="invalidEquationsNeverReturnGuessedAnswers" classname="com.vuravision.classroom.Version11Test" time="0.029"/>
+  <testcase name="pdfVerticalDragMovesWithoutChangingPage" classname="com.vuravision.classroom.Version11Test" time="0.023"/>
+  <testcase name="automaticSmartShapeNeedsNoRepeatedButton" classname="com.vuravision.classroom.Version11Test" time="0.029"/>
+  <testcase name="newStylesAndMasksSurviveSaveAndOldDocumentsHaveDefaults" classname="com.vuravision.classroom.Version11Test" time="0.024"/>
+  <testcase name="lassoUsesPolygonAndIgnoresLockedItems" classname="com.vuravision.classroom.Version11Test" time="0.023"/>
+  <testcase name="textBoundsAndStylesMatchRenderedLayout" classname="com.vuravision.classroom.Version11Test" time="0.022"/>
+  <testcase name="selectionSecondTapOpensActionsButDragDoesNot" classname="com.vuravision.classroom.Version11Test" time="0.037"/>
+  <testcase name="pdfErasuresAreScopedToCurrentPage" classname="com.vuravision.classroom.Version11Test" time="0.022"/>
+  <testcase name="hiddenSettingsOpenOnExactlyThreeGuideTaps" classname="com.vuravision.classroom.Version11Test" time="0.278"/>
+  <testcase name="uniformShapesAndCylinderCaps" classname="com.vuravision.classroom.Version11Test" time="0.024"/>
+  <testcase name="fastWholeEraserCannotJumpOverInk" classname="com.vuravision.classroom.Version11Test" time="0.024"/>
+  <testcase name="penEraserSmartAndTextDialogsRender" classname="com.vuravision.classroom.Version11Test" time="0.798"/>
+  <testcase name="mathSupportsPersianNumbersLinearQuadraticAndFunctions" classname="com.vuravision.classroom.Version11Test" time="0.025"/>
+  <testcase name="linesKeepStartAndEndInAllQuadrants" classname="com.vuravision.classroom.Version11Test" time="0.03"/>
+  <testcase name="dualTipsChooseIndependentAppearanceIncludingReportedStylus" classname="com.vuravision.classroom.Version11Test" time="0.046"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

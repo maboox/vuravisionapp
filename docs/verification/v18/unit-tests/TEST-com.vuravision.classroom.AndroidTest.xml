@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.AndroidTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:31" hostname="fb4cd6e3444d" time="8.92">
+  <properties/>
+  <testcase name="traversalRejected" classname="com.vuravision.classroom.AndroidTest" time="2.871"/>
+  <testcase name="multiplePointersAndUndo" classname="com.vuravision.classroom.AndroidTest" time="1.628"/>
+  <testcase name="boardScreenshot" classname="com.vuravision.classroom.AndroidTest" time="1.656"/>
+  <testcase name="labSnapshots" classname="com.vuravision.classroom.AndroidTest" time="0.353"/>
+  <testcase name="boundedStream" classname="com.vuravision.classroom.AndroidTest" time="0.032"/>
+  <testcase name="missingAssetRejected" classname="com.vuravision.classroom.AndroidTest" time="0.035"/>
+  <testcase name="persianInterface" classname="com.vuravision.classroom.AndroidTest" time="0.48"/>
+  <testcase name="atomicSaveBackup" classname="com.vuravision.classroom.AndroidTest" time="0.053"/>
+  <testcase name="insertTextThroughInterfaceAndUndo" classname="com.vuravision.classroom.AndroidTest" time="1.167"/>
+  <testcase name="archiveRoundTrip" classname="com.vuravision.classroom.AndroidTest" time="0.048"/>
+  <testcase name="gameScreenAndAnswerLock" classname="com.vuravision.classroom.AndroidTest" time="0.56"/>
+  <testcase name="imageExport" classname="com.vuravision.classroom.AndroidTest" time="0.034"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

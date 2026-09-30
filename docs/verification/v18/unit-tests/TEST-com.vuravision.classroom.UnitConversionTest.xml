@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.UnitConversionTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-30T10:30:47" hostname="fb4cd6e3444d" time="0.007">
+  <properties/>
+  <testcase name="invalidConversionsDoNotProducePlausibleAnswers" classname="com.vuravision.classroom.UnitConversionTest" time="0.004"/>
+  <testcase name="areaVolumeSpeedTime" classname="com.vuravision.classroom.UnitConversionTest" time="0.002"/>
+  <testcase name="temperaturesUseOffsets" classname="com.vuravision.classroom.UnitConversionTest" time="0.0"/>
+  <testcase name="lengthMassAndPersianDigits" classname="com.vuravision.classroom.UnitConversionTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
