@@ -59,6 +59,7 @@ fun Context.label(value: String, size: Float = 16f, color: Int = NAVY, bold: Boo
         textSize = size * uiScale()
         setTextColor(color)
         if (bold) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        Fonts.bind(this,bold)
         setPadding(dp(4), dp(4), dp(4), dp(4))
     }
 
@@ -118,6 +119,7 @@ fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
         setTextColor(enabledColors(if (active) Color.WHITE else NAVY, MUTED))
         setPadding(dp(16), dp(8), dp(16), dp(8))
         setOnClickListener { action() }
+        Fonts.bind(this,bold=true)
         layoutParams =
             LinearLayout.LayoutParams(-2, dp(48)).apply { setMargins(dp(4), dp(3), dp(4), dp(3)) }
     }
@@ -133,6 +135,7 @@ fun Context.field(value: String = "", hintValue: String = "") =
         setPadding(dp(16), dp(12), dp(16), dp(12))
         background = rounded(SURFACE, dp(12).toFloat(), OUTLINE_STRONG)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(8), 0, dp(8)) }
+        Fonts.bind(this)
     }
 
 fun Context.card(

@@ -456,12 +456,14 @@
     "stepsEn": [
       "Open Settings to choose Persian or English, interface size, recognition models and input controls. The guide has its own language switch.",
       "If palm erasing is unreliable, use Eraser → calibration and inspect reported contact size. If drawing is blocked, select a visible unlocked layer.",
-      "If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling."
+      "If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling.",
+      "Settings → Fonts chooses Persian and English independently, with previews. New text and smart conversion keep the font pair in the project. Optionally apply the pair to editable text on the active page; Undo restores the previous fonts."
     ],
     "stepsFa": [
       "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
       "اگر پاک‌کردن کف دست قابل اعتماد نیست، از پاک‌کن وارد کالیبراسیون و اندازهٔ گزارش‌شده را بررسی کنید. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.",
-      "اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید."
+      "اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید.",
+      "تنظیمات → فونت‌ها، انتخاب مستقل فارسی و انگلیسی و پیش‌نمایش دارد. متن تازه و تبدیل هوشمند فونت‌ها را در پروژه نگه می‌دارند. می‌توانید روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال کنید؛ بازگردانی فونت قبلی را برمی‌گرداند."
     ],
     "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
     "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."

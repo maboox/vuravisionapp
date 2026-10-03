@@ -6,8 +6,8 @@ android {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.9.3"
+        versionCode = 16
+        versionName = "1.9.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")

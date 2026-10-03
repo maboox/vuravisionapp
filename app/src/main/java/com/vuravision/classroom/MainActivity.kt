@@ -69,6 +69,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
+        Fonts.initialize(this)
         pendingExport = prefs.getString("pendingExport", null)?.let { name ->
             File(cacheDir, "exports").resolve(File(name).name).takeIf { it.isFile && it.length()>0 }
         }
@@ -108,6 +109,7 @@ class MainActivity : Activity() {
         board.holdTolerance=prefs.getFloat("holdTolerance",4f).coerceIn(2f,12f)
         board.guideSnapEnabled=prefs.getBoolean("guideSnap",true)
         buildUI()
+        Fonts.applyTree(window.decorView)
         media.assetReady = { asset -> handler.post { if(!destroyed){
             if(projectStore.page.items.any{it.asset==asset})whiteboard.sceneChanged()
             pdfPane?.mediaReady(asset)
@@ -504,8 +506,11 @@ class MainActivity : Activity() {
     private fun textEditor(existing:Item?,sticky:Boolean=existing?.kind=="sticky"){
         if(existing?.locked==true)return
         val item=existing?.deepCopy()?:Item(kind=if(sticky)"sticky"else"text",width=if(sticky)24f else 32f,color=board.penColor)
+        Fonts.stamp(item)
         val c=column().apply{pad(20)};val value=field(item.text,tr("Write your text…","متن را بنویسید…"));value.minLines=2;c.addView(value)
-        c.addView(CheckBox(this).apply{text=tr("Bold","پررنگ");isChecked=item.bold;setOnCheckedChangeListener{_,v->item.bold=v;value.setTypeface(null,if(v)Typeface.BOLD else Typeface.NORMAL)}})
+        Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))
+        c.addView(CheckBox(this).apply{text=tr("Bold","پررنگ");isChecked=item.bold;setOnCheckedChangeListener{_,v->item.bold=v;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))}})
+        c.addView(CheckBox(this).apply{text=tr("Italic","مورب");isChecked=item.italic;setOnCheckedChangeListener{_,v->item.italic=v;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))}})
         c.addView(label(tr("Alignment","تراز متن"),16f,NAVY,true));val align=Spinner(this);align.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Start","ابتدای سطر"),tr("Center","وسط"),tr("End","انتهای سطر")));align.setSelection(listOf("start","center","end").indexOf(item.textAlign).coerceAtLeast(0));c.addView(align)
         c.addView(label(tr("Text color","رنگ متن"),16f,NAVY,true));palette(c,item.color){item.color=it;value.setTextColor(it)}
         slider(c,tr("Text size","اندازهٔ متن"),item.width,120){item.width=it}
@@ -550,14 +555,14 @@ class MainActivity : Activity() {
             .setView(content)
             .setNegativeButton(s("close"), null)
             .create()
-            .also { it.show() }
+            .also { it.show();Fonts.onShown(it) }
 
     private fun choices(title: String, keys: List<String>, action: (Int) -> Unit) {
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
             .setItems(keys.map { s(it) }.toTypedArray()) { _, i -> action(i) }
             .setNegativeButton(s("cancel"), null)
-            .show()
+            .show().also{Fonts.onShown(it)}
     }
 
     private fun confirm(title: String, action: () -> Unit) {
@@ -1510,10 +1515,11 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","ui_size","models","input_controls","help","cache","about")
+        val keys=mutableListOf("language","fonts","ui_size","models","input_controls","help","cache","about")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
+            "fonts"->fontSettings()
             "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
                     listOf(.85f,1f,1.2f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
@@ -1526,6 +1532,48 @@ class MainActivity : Activity() {
             "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
             "engineering"->engineering()
         }}
+    }
+
+    private fun fontSettings(){
+        val content=column().apply{pad(16)}
+        content.addView(label(tr("Choose independent fonts for Persian and English. New text, sticky notes and smart conversion keep these fonts in the project and PDF exports.","فونت فارسی و انگلیسی را جدا انتخاب کنید. متن تازه، یادداشت و تبدیل هوشمند این فونت‌ها را در پروژه و خروجی PDF حفظ می‌کنند."),14f,MUTED))
+        var fa=Fonts.persianId;var en=Fonts.englishId
+        val faChoice=button(""){};val enChoice=button(""){}
+        val preview=label("نمونهٔ فارسی: یادگیری با ویوراویژن\nEnglish: Learning with VuraVision\n۱۲۳۴۵۶۷۸۹۰ · 1234567890",21f)
+        fun refreshPreview(){
+            faChoice.text=tr("Persian","فارسی")+": "+Fonts.persian.first{it.id==fa}.let{tr(it.en,it.fa)}
+            enChoice.text=tr("English","انگلیسی")+": "+Fonts.english.first{it.id==en}.let{tr(it.en,it.fa)}
+            Fonts.bind(preview,fontFa=fa,fontEn=en)
+        }
+        fun choose(families:List<Fonts.Family>,persian:Boolean){
+            val list=column().apply{pad(8)}
+            val picker=dialog(tr("Choose font","انتخاب فونت"),ScrollView(this).apply{addView(list)})
+            families.forEach{family->
+                val row=column().apply{pad(10)}
+                row.addView(label(tr(family.en,family.fa),15f,NAVY,true))
+                val sample=label(if(persian)"یادگیری، خلاقیت و نوشتن ۱۲۳"else"Learning, creativity and writing 123",22f)
+                // Preview each row with that family's face, not the current global choice.
+                Fonts.bind(sample,fontFa=if(persian)family.id else fa,fontEn=if(persian)en else family.id)
+                row.addView(sample);row.setOnClickListener{if(persian)fa=family.id else en=family.id;refreshPreview();picker.dismiss()}
+                list.addView(row,LinearLayout.LayoutParams(-1,-2))
+            }
+        }
+        faChoice.setOnClickListener{choose(Fonts.persian,true)};enChoice.setOnClickListener{choose(Fonts.english,false)}
+        content.addView(faChoice);content.addView(enChoice);content.addView(preview)
+        val existing=CheckBox(this).apply{text=tr("Also apply to editable text on the active page (Undo available)","روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال شود (قابل بازگردانی)")}
+        content.addView(existing)
+        val dialog=dialog(s("fonts"),ScrollView(this).apply{addView(content)})
+        refreshPreview()
+        content.addView(button(s("apply"),true){
+            if(board.isDrawing)return@button
+            Fonts.choose(this,fa,en)
+            if(existing.isChecked){
+                val items=store.page.items.filter{it.kind in listOf("text","sticky") && !it.locked && store.page.editable(it)}
+                if(items.isNotEmpty())store.editMetadata{items.forEach{item->val w=item.w;val h=item.h;Fonts.stamp(item,true);TextLayout.fit(item);if(item.kind=="sticky"){item.w=maxOf(w,item.w);item.h=maxOf(h,item.h)}}}
+            }
+            Fonts.applyTree(window.decorView);whiteboard.sceneChanged();pdfPane?.refreshText()
+            dialog.dismiss();toast(s("saved"))
+        })
     }
 
     private fun engineering() {

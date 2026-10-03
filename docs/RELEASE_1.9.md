@@ -1,4 +1,12 @@
-# VuraVision 1.9.3
+# VuraVision 1.9.4
+
+## 1.9.4 offline bilingual fonts
+
+Settings → Fonts selects Persian and English independently, with family previews. Bundled families: Kahroba, Vazirmatn, Sahel, Shabnam, B Nazanin, B Zar, B Titr, Montserrat, Rubik and Bahnschrift, alongside system sans/serif/monospace choices. Regular/bold variants are grouped as families, not listed as separate font sizes. Text editing also supports italic.
+
+New text, sticky notes and smart-conversion results stamp both selected family IDs into project objects. Mixed Persian/Latin text uses separate metric-affecting spans, including measurement and exported PDF rendering. Existing objects can be changed on the active page with Undo; protected, locked or hidden items are excluded. Legacy objects with no font IDs retain the system face until explicitly reformatted. The schema remains backward compatible. Native labels, buttons, fields and common dialogs use the selected fonts. The legacy HTML lab/game page body and canvas labels remain controlled by their packaged HTML styles.
+
+Font files are local and faces are cached. Variable uploaded families are instantiated as static regular/bold faces before packaging. StaticLayout caching avoids remeasuring unchanged board text. FontsTest adds five Android regression tests for script runs, preference/project persistence, caching, cursor/preview stability and the settings/apply/undo flow. Current verification: 119 unit tests passed, debug/release lint passed with zero errors (671 warnings per variant), debug APK and instrumented-test APK assembled, debug APK ZIP alignment passed. Font settings preview was rendered and inspected. Device/emulator tests were not executed and physical-panel performance remains unmeasured. Full records are in docs/FONTS.md and docs/VERIFICATION_1.9.4.json.
 
 ## 1.9.3 PDF stability and unlock recovery
 
@@ -7,9 +15,9 @@
 - Fullscreen, return to split, side swaps and copying a page from fullscreen request layout directly on PdfSplitLayout. Visibility is synchronized before measurement.
 - Layers includes Unlock all on this page, with independent undo for the active board/PDF page. Hidden objects and layer locks can be recovered; hidden-layer visibility stays as configured and the PDF source item remains locked.
 - SmartMath remains a one-variable linear/quadratic solver, not a two-variable system solver.
-- Four Robolectric regression tests cover unlock/undo/protected PDF source, retained frames after cache clearing, split-layout updates without touch, and solver scope. They are added for Actions and have NOT been run locally.
+- Four Robolectric regression tests cover unlock/undo/protected PDF source, retained frames after cache clearing, split-layout updates without touch, and solver scope. They were added for Actions in 1.9.3. They are included in the full unit-test suite run for 1.9.4.
 
-Offline source structure and ZIP integrity checks passed. The Android SDK is unavailable here, so compilation, unit tests and actual display-panel flicker/performance verification remain pending. versionCode is 15 and versionName is 1.9.3.
+At the time of the 1.9.3 delivery, offline source structure and ZIP integrity checks passed; the Android SDK was unavailable, so Android checks were pending. The 1.9.4 verification below supersedes that status for the current source. Physical display-panel flicker/performance checks remain pending. 1.9.3 used versionCode 15 and versionName 1.9.3.
 
 ## 1.9.2 unit-test compilation correction
 
@@ -39,7 +47,7 @@ The supplied GitHub Actions log reports recursive Kotlin return-type inference b
 - All 73 native experiments have a subject and lesson-topic classification, subject/topic filters, localized descriptions and search. The 68-experiment HTML fallback also has a searchable card catalog.
 - Package ID and release signing remain unchanged. No activation or serial-number feature was added.
 
-## Verification in this session
+## Original 1.9.0 session verification (historical)
 
 Passed locally:
 
@@ -57,6 +65,6 @@ Android compilation, lint and device checks could not run here: the Gradle distr
 
 ## Build and device verification
 
-Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.3-<run number>. Run the workflow manually to also execute Android device PDF tests.
+Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.4-<run number>. Run the workflow manually to also execute Android device PDF tests.
 
 On the panel, compare the same heavy .vura, large image and multi-page PDF against 1.8: drag/resize a large photo, zoom a dense page out/in, scroll a PDF with the broad tip, switch two-tip mode, draw and erase on two pages, resize the divider, undo on both sides, save original/new PDF and reopen both the PDF and .vura project. File providers that do not grant write permission require Save as new PDF.

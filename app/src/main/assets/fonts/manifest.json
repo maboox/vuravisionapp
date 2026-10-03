@@ -1,0 +1,170 @@
+[
+  {
+    "file": "bahnschrift_bold.ttf",
+    "family": "Bahnschrift",
+    "weight": 700,
+    "bytes": 123812,
+    "sha256": "72213700819bded842f78b7567c4f3aa8efee792e8e6c6a7d7a67d484193a1e9",
+    "persian": false
+  },
+  {
+    "file": "bahnschrift_regular.ttf",
+    "family": "Bahnschrift",
+    "weight": 400,
+    "bytes": 122540,
+    "sha256": "90891e2dd4c52c931d50b753592eab50b83cb08500934a63ecb0d40c2330b15b",
+    "persian": false
+  },
+  {
+    "file": "kahroba_bold.ttf",
+    "family": "Kahroba B",
+    "weight": 700,
+    "bytes": 60464,
+    "sha256": "0fa51d3f8e0773b03f385fbc04efc7599c05c969d771c963c5892c55b9d05e96",
+    "persian": true
+  },
+  {
+    "file": "kahroba_regular.ttf",
+    "family": "Kahroba RG",
+    "weight": 400,
+    "bytes": 56814,
+    "sha256": "78a8f9b30ba743d0e8bca60c88d106cde94660d4af2de2aa74d835e7bc275435",
+    "persian": true
+  },
+  {
+    "file": "montserrat_bold.ttf",
+    "family": "Montserrat Thin",
+    "weight": 700,
+    "bytes": 344856,
+    "sha256": "3e49d078cb0af35c866e7b4c5b66c7331db57ae1c9ca5796779bc1e65c4c899e",
+    "persian": false
+  },
+  {
+    "file": "montserrat_regular.ttf",
+    "family": "Montserrat Thin",
+    "weight": 400,
+    "bytes": 344684,
+    "sha256": "8fcbdd205bba4dbba47a438c46c951fb664b094b98451a1273ecc890de48ae23",
+    "persian": false
+  },
+  {
+    "file": "nazanin_bold.ttf",
+    "family": "B Nazanin",
+    "weight": 700,
+    "bytes": 60724,
+    "sha256": "8ae584a998cf26ee7f600ca11b687e31faf3d650b2197482db66b4585a0730bb",
+    "persian": true
+  },
+  {
+    "file": "nazanin_regular.ttf",
+    "family": "B Nazanin",
+    "weight": 400,
+    "bytes": 61608,
+    "sha256": "ec8b48f02ef9fcf855ed2f64fbb83650bf9707957ba5c887a86cd16c6ae45d65",
+    "persian": true
+  },
+  {
+    "file": "rubik_bold.ttf",
+    "family": "Rubik Light",
+    "weight": 700,
+    "bytes": 208136,
+    "sha256": "9f9ca0c2e2e9975b652a3ceef0ef15cdff904d448b4077869a7efe649559b4a9",
+    "persian": true
+  },
+  {
+    "file": "rubik_bolditalic.ttf",
+    "family": "Rubik",
+    "weight": 700,
+    "bytes": 146128,
+    "sha256": "38638b7aef713b932ad19976f614d5ae14658269c4c9d879b409022675525fbf",
+    "persian": false
+  },
+  {
+    "file": "rubik_italic.ttf",
+    "family": "Rubik",
+    "weight": 400,
+    "bytes": 143392,
+    "sha256": "be159c7ef033367c65fb31d4a8461edfbdb23665e37a0bc75d6adccc0b7444dc",
+    "persian": false
+  },
+  {
+    "file": "rubik_regular.ttf",
+    "family": "Rubik Light",
+    "weight": 400,
+    "bytes": 208092,
+    "sha256": "f61a7963928a7582876232f680ddf84f4744363ec705dfa8cc91e36d2efcc0b7",
+    "persian": true
+  },
+  {
+    "file": "sahel_bold.ttf",
+    "family": "Sahel",
+    "weight": 700,
+    "bytes": 76372,
+    "sha256": "d714fa224c92bc51d0e477337ef69e8818c2eff8f41e6698de35639e3857ae7b",
+    "persian": true
+  },
+  {
+    "file": "sahel_regular.ttf",
+    "family": "Sahel",
+    "weight": 400,
+    "bytes": 75308,
+    "sha256": "5de2fe8cd1995f10fb5a570b66e3ff40183f16bc8c692519b61e8c0281679675",
+    "persian": true
+  },
+  {
+    "file": "shabnam_bold.ttf",
+    "family": "Shabnam",
+    "weight": 700,
+    "bytes": 86980,
+    "sha256": "4e7320e31b4654e4a48ffc52e09487cd4ac026169be49badcbd6093e375b3ac5",
+    "persian": true
+  },
+  {
+    "file": "shabnam_regular.ttf",
+    "family": "Shabnam",
+    "weight": 400,
+    "bytes": 84240,
+    "sha256": "7c14586fe687065babbf04a9815a5fc607fcd01bf356a53c988b644f2f2654ad",
+    "persian": true
+  },
+  {
+    "file": "titr_bold.ttf",
+    "family": "B Titr",
+    "weight": 700,
+    "bytes": 61268,
+    "sha256": "fa3c85a89e94d85d2027af98b8e587a247e625a2a9eecd4b69a5c49f141cb874",
+    "persian": true
+  },
+  {
+    "file": "vazirmatn_bold.ttf",
+    "family": "Vazirmatn",
+    "weight": 700,
+    "bytes": 123036,
+    "sha256": "f635fdbea28f265de395ba83b4b1570dcf2f58d13c65469e61903b1c2d2ae723",
+    "persian": true
+  },
+  {
+    "file": "vazirmatn_regular.ttf",
+    "family": "Vazirmatn",
+    "weight": 400,
+    "bytes": 122752,
+    "sha256": "b69fd4c680b8f3f225feabcc655a2c585d97627b8f5f5c0f9985e894069f3a56",
+    "persian": true
+  },
+  {
+    "file": "zar_bold.ttf",
+    "family": "B Zar",
+    "weight": 700,
+    "bytes": 63344,
+    "sha256": "59231e12ebfea971a40ee0c2d81c83b6b8746d9d62a5df412050466cd5994232",
+    "persian": true
+  },
+  {
+    "file": "zar_regular.ttf",
+    "family": "B Zar",
+    "weight": 400,
+    "bytes": 62568,
+    "sha256": "1084debd239185dcdb87723b9ccc03ce25eb04b3ea57d749af4a213515001583",
+    "persian": true
+  }
+]

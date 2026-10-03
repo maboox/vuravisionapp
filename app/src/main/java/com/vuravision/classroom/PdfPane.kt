@@ -189,6 +189,7 @@ class PdfPane(
     fun beginResize(){interactiveResize=true;boards.values.forEach{it.interactiveResize=true;it.releaseBacking();it.invalidate()}}
     fun endResize(){interactiveResize=false;boards.values.forEach{it.finishResize()}}
     fun mediaReady(asset:String){if(asset==state.asset)boards.values.forEach{it.sceneChanged()}}
+    fun refreshText(){boards.values.forEach{it.sceneChanged()};Fonts.applyTree(this)}
     fun dispose(){disposed=true;removeCallbacks(materializeTask);materializePosted=false;boards.values.forEach{it.reset();it.releaseBacking();it.renderer.releasePdfFrame()};boards.clear();stores.clear()}
 }
 object PdfTouch {

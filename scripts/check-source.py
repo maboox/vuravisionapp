@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline structural checks; does not replace the Kotlin compiler or Android lint."""
 from pathlib import Path
-import json,re,xml.etree.ElementTree as ET
+import json,re,hashlib,xml.etree.ElementTree as ET
 root=Path(__file__).resolve().parents[1]
 errors=[]
 for p in (root/'app/src').rglob('*.xml'):
@@ -47,5 +47,12 @@ keys=re.findall(r'"([^"]+)"',lab_ids)+['energy','triangle_area','statistics','di
 classified=[]
 for ids in re.findall(r'"([a-z_ ]+)"\.split\(" "\)',(assets/'LabCatalog.kt').read_text()):classified+=ids.split()
 assert len(keys)==73 and set(classified)==set(keys) and len(classified)==len(set(classified))
+fonts=root/'app/src/main/assets/fonts'
+manifest=json.loads((fonts/'manifest.json').read_text())
+assert len(manifest)==21
+assert {m['file'] for m in manifest}==set(re.findall(r'"([a-z_]+\.ttf)"',(assets/'Fonts.kt').read_text()))
+for m in manifest:
+    data=(fonts/m['file']).read_bytes()
+    assert data[:4] in [b'\x00\x01\x00\x00',b'OTTO'] and len(data)==m['bytes'] and hashlib.sha256(data).hexdigest()==m['sha256']
 if errors:raise SystemExit('\n'.join(errors))
-print(json.dumps({'kotlin_delimiters':'pass (not compilation)','xml':'pass','guide_chapters':27,'native_labs_classified':73},indent=2))
+print(json.dumps({'kotlin_delimiters':'pass (not compilation)','xml':'pass','guide_chapters':27,'native_labs_classified':73,'font_faces_verified':len(manifest)},indent=2))

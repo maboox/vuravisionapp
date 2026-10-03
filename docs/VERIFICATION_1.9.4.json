@@ -1,0 +1,42 @@
+{
+  "version": "1.9.4",
+  "versionCode": 16,
+  "checked_on": "2026-10-03",
+  "android": {
+    "build": "passed",
+    "tasks": [
+      "testDebugUnitTest",
+      "lintDebug",
+      "lintRelease",
+      "assembleDebug",
+      "assembleDebugAndroidTest"
+    ],
+    "unit_tests": {
+      "suites": 14,
+      "tests": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "debug_errors": 0,
+      "release_errors": 0,
+      "warnings_each_variant": 671
+    },
+    "debug_apk_zipalign": "passed",
+    "device_tests_executed": false,
+    "production_signed_apk_built_locally": false
+  },
+  "source": {
+    "checks": "passed",
+    "font_faces": 21,
+    "font_bytes": 2637118,
+    "guide_chapters": 27,
+    "classified_native_labs": 73
+  },
+  "limits": [
+    "Physical panel performance/flicker/touch behavior has not been measured.",
+    "Production APK is built with the existing GitHub Actions signing secrets.",
+    "Legacy HTML lab/game fonts use existing packaged HTML styles."
+  ]
+}

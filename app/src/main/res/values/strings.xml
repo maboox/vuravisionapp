@@ -285,4 +285,5 @@
 <string name="mean">Find the mean</string>
 <string name="restore_erased">Restore erased areas</string>
 <string name="input_controls">Touch input</string>
+<string name="fonts">Fonts</string>
 </resources>

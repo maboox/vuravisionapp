@@ -45,6 +45,9 @@ data class Item(
     var parentNode: String = "",
     var dashLength: Float = 0f,
     var dashGap: Float = 0f,
+    var italic: Boolean = false,
+    var fontFa: String? = null,
+    var fontEn: String? = null,
 
 ) {
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
@@ -162,6 +165,7 @@ data class Lesson(
                 require(o.pageCount > 0 && o.pdfPage in 0 until o.pageCount)
                 require(o.domain in .1f..1000f)
                 require(o.text.length <= 100000)
+                require(listOf(o.fontFa,o.fontEn).all{it==null || it.matches(Regex("[a-z0-9_]{1,40}"))})
                 require(o.asset.isEmpty() || o.asset.matches(Regex("[a-zA-Z0-9._-]+")))
                 require(o.cuts.size <= 100000)
                 require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
