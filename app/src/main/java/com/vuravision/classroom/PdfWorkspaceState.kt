@@ -2,7 +2,7 @@ package com.vuravision.classroom
 
 /** Coordinates remain in PDF display points, independently of divider and zoom. */
 data class PdfSheet(var width: Float = 595f, var height: Float = 842f, var page: Page = Page(background="plain")) {
-    fun deepCopy() = copy(page=Lesson(pages=mutableListOf(page)).copyDeep().pages.first())
+    fun deepCopy(): PdfSheet = copy(page=Lesson(pages=mutableListOf(page)).copyDeep().pages.first())
 }
 data class PdfWorkspaceState(
     var asset: String = "", var sourceUri: String = "", var title: String = "PDF",
@@ -13,8 +13,8 @@ data class PdfWorkspaceState(
     var originalHash: String = "",
 ) {
     val unsaved get() = revision != savedRevision
-    fun copyForSave()=copy(sheets=sheets.map{it.copy(page=Lesson(pages=mutableListOf(it.page)).copyForSave().pages.first())}.toMutableList())
-    fun deepCopy()=copy(sheets=sheets.map{it.deepCopy()}.toMutableList())
+    fun copyForSave(): PdfWorkspaceState = copy(sheets=sheets.map{it.copy(page=Lesson(pages=mutableListOf(it.page)).copyForSave().pages.first())}.toMutableList())
+    fun deepCopy(): PdfWorkspaceState = copy(sheets=sheets.map{it.deepCopy()}.toMutableList())
     fun validate() {
         require(asset.matches(Regex("[a-zA-Z0-9._-]+")))
         require(title.length<=1000 && sourceUri.length<=10000)

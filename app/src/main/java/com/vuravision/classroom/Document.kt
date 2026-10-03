@@ -114,8 +114,8 @@ data class Lesson(
     var pdf: PdfWorkspaceState? = null,
 ) {
     // Committed point lists are immutable; Store.edit detaches them before edits.
-    fun copyForSave()=copy(pdf=pdf?.copyForSave(),pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
-    fun copyDeep() =
+    fun copyForSave(): Lesson = copy(pdf=pdf?.copyForSave(),pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
+    fun copyDeep(): Lesson =
         copy(
             pdf = pdf?.deepCopy(),
             pages =
