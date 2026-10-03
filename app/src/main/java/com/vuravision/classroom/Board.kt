@@ -10,6 +10,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var fixedPageWidth:Float?=null
     var fixedPageHeight:Float?=null
     var pdfBaseId:String?=null
+        set(value){field=value;renderer.retainPdfBase(value)}
     var erasePdfContent=false
     var pdfPalmErase=false
     var onActivate:()->Unit={}
@@ -93,6 +94,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var cacheRebuilds=0
         private set
     fun sceneChanged() { backingDirty=true;invalidate() }
+    /** Recover objects without selecting them first, while keeping the PDF source protected. */
+    fun unlockAll():Int {
+        if(isDrawing)return 0
+        val objects=store.page.items.filter{it.locked && it.id!=pdfBaseId}
+        val layers=store.page.layers.filter{it.locked}
+        val count=objects.size+layers.size
+        if(count>0){store.editMetadata{objects.forEach{it.locked=false};layers.forEach{it.locked=false}};clearSelection();sceneChanged()}
+        return count
+    }
     private fun commitToBacking(o:Item){
         val page=store.page;val layer=page.layers.lastOrNull{it.visible&&it.opacity>0}
         val bitmap=backing

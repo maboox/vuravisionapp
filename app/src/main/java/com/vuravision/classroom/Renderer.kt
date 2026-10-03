@@ -22,6 +22,11 @@ fun contentBounds(items: List<Item>): RectF {
 
 class Renderer(private val media: Media) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var pdfBaseId:String?=null
+    private var pdfFrame:Bitmap?=null
+    private var pdfFrameKey:String?=null
+    fun retainPdfBase(id:String?){if(pdfBaseId!=id){releasePdfFrame();pdfBaseId=id}}
+    fun releasePdfFrame(){pdfFrame=null;pdfFrameKey=null}
     private class InkPath(val owner:Item,val stride:Int=1) {
         val source=owner.points;val path=Path();var count=0
         fun update() {
@@ -130,7 +135,12 @@ class Renderer(private val media: Media) {
                 val matrix=Matrix();c.getMatrix(matrix)
                 val values=FloatArray(9);matrix.getValues(values)
                 val edge=(maxOf(o.w,o.h)*kotlin.math.hypot(values[0],values[3])).toInt()
-                val b = media.image(o, sync, edge)
+                val retain=!sync && o.kind=="pdf" && o.id==pdfBaseId
+                val key=o.asset+":"+o.pdfPage
+                if(retain && pdfFrameKey!=key){pdfFrame=null;pdfFrameKey=key}
+                // Bound page-preview cost; exports still render at their requested resolution.
+                val b = media.image(o, sync, if(retain)edge.coerceAtMost(1536)else edge, retained=if(retain)pdfFrame else null)
+                if(retain && b!=null)pdfFrame=b
                 if (b != null) {
                     p.isFilterBitmap = true
                     c.drawBitmap(b, null, RectF(0f, 0f, o.w, o.h), p)

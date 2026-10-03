@@ -419,6 +419,10 @@ class MainActivity : Activity() {
             content.removeAllViews()
             content.addView(label(tr("Top layer is in front. Drag the handle to reorder.","لایهٔ بالایی در جلو است. برای جابه‌جایی، دستگیره را بکشید."),13f,MUTED))
             content.addView(button(tr("Add layer","افزودن لایه")){if(store.page.layers.size<100){store.editMetadata{val l=Layer(name=tr("Layer","لایه")+" ${store.page.layers.size+1}");store.page.layers.add(l);store.page.activeLayerId=l.id};board.clearSelection();refresh()}})
+            content.addView(button(tr("Unlock all on this page","بازکردن همهٔ قفل‌ها در این صفحه")){
+                val count=board.unlockAll()
+                toast(if(count>0)tr("Objects and layers unlocked on this page","قفل آبجکت‌ها و لایه‌های این صفحه باز شد")else tr("No locked objects or layers","آبجکت یا لایهٔ قفل‌شده‌ای نیست"));refresh()
+            })
             store.page.layers.asReversed().forEach { layer ->
                 val isPdfBaseLayer=board.pdfBaseId!=null && store.page.items.any{it.id==board.pdfBaseId && it.layerId==layer.id}
                 val card=column().apply{pad(6);background=rounded(if(layer.id==store.page.activeLayerId)PRIMARY_CONTAINER else SURFACE,dp(10).toFloat(),OUTLINE)}
@@ -1030,6 +1034,9 @@ class MainActivity : Activity() {
         val split=PdfSplitLayout(this,state,whiteboard,reader){projectChanged()}
         workspaceHost.addView(split,FrameLayout.LayoutParams(-1,-1).apply{setMargins(dp(78),dp(76),dp(12),dp(76))})
     }
+    private fun refreshPdfPresentation(){
+        (pdfPane?.parent as? PdfSplitLayout)?.applyPresentation()
+    }
     private fun choosePdfImport(){
         MaterialAlertDialogBuilder(this).setTitle(tr("Open PDF","بازکردن PDF"))
             .setItems(arrayOf(tr("PDF object on board","PDF به‌صورت شیء روی تخته"),tr("Scrollable PDF beside board","PDF قابل اسکرول کنار تخته"))){_,i->
@@ -1074,8 +1081,8 @@ class MainActivity : Activity() {
             1->savePdf(false)
             2->{persist();toast(tr("Editable annotations are saved in the project","یادداشت‌های قابل‌ویرایش در پروژه ذخیره می‌شوند"))}
             3->{pdfPane?.toggleHand();toast(if(pdfPane?.hand==true)tr("Hand: drag to scroll","دست: برای اسکرول بکشید")else tr("Writing: use the selected tool","نوشتن: از ابزار انتخاب‌شده استفاده کنید"))}
-            4->{state.onRight=!state.onRight;workspaceHost.requestLayout();projectChanged()}
-            5->{state.fullscreen=!state.fullscreen;workspaceHost.requestLayout();projectChanged()}
+            4->{state.onRight=!state.onRight;refreshPdfPresentation();projectChanged()}
+            5->{state.fullscreen=!state.fullscreen;refreshPdfPresentation();projectChanged()}
             6->pdfPane?.fitWidth()
             7->copyPdfPage()
             8->choices(s("export_pdf"),listOf("current_page","all_pages")){n->export("pdf",n==1){createDocument(it,"application/pdf")}}
@@ -1138,7 +1145,7 @@ class MainActivity : Activity() {
                     val crop=Bitmap.createBitmap(full,left,top,w,h)
                     try{Item(kind="image",asset=media.save(crop),w=560f,h=560f*h/w)}finally{if(crop!==full)crop.recycle()}
                 }finally{full.recycle()}
-            }){item->activateBoard(whiteboard);state.fullscreen=false;workspaceHost.requestLayout();whiteboard.insert(item)}
+            }){item->activateBoard(whiteboard);state.fullscreen=false;refreshPdfPresentation();whiteboard.insert(item)}
         }
         MaterialAlertDialogBuilder(this).setTitle(tr("Copy PDF to board","کپی PDF به تخته"))
             .setItems(arrayOf(tr("Whole current page","تمام صفحهٔ فعلی"),tr("Select a region","انتخاب بخشی از صفحه"))){_,i->

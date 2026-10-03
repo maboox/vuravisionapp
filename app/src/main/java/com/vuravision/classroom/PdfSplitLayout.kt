@@ -22,8 +22,14 @@ class PdfSplitLayout(context:Context,private val state:PdfWorkspaceState,val whi
         }
         override fun performClick():Boolean{super.performClick();return true}
     }.apply{contentDescription=context.tr("Drag to resize PDF and board","برای تغییر اندازهٔ PDF و تخته بکشید")}
-    init {layoutDirection=LAYOUT_DIRECTION_LTR;addView(whiteboard);addView(pdf);addView(divider)}
+    init {layoutDirection=LAYOUT_DIRECTION_LTR;addView(whiteboard);addView(pdf);addView(divider);applyPresentation()}
+    private fun syncVisibility(){
+        whiteboard.visibility=if(state.fullscreen)GONE else VISIBLE
+        divider.visibility=if(state.fullscreen)GONE else VISIBLE
+    }
+    fun applyPresentation(){syncVisibility();requestLayout();invalidate();pdf.invalidate();whiteboard.invalidate()}
     override fun onMeasure(wSpec:Int,hSpec:Int){
+        syncVisibility()
         val w=MeasureSpec.getSize(wSpec);val h=MeasureSpec.getSize(hSpec);setMeasuredDimension(w,h)
         val d=context.dp(16);val pw=if(state.fullscreen)w else ((w-d)*state.ratio).toInt()
         pdf.measure(MeasureSpec.makeMeasureSpec(pw,MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(h,MeasureSpec.EXACTLY))
@@ -32,7 +38,6 @@ class PdfSplitLayout(context:Context,private val state:PdfWorkspaceState,val whi
     }
     override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int){
         val w=r-l;val h=b-t;val d=context.dp(16);val pw=pdf.measuredWidth
-        whiteboard.visibility=if(state.fullscreen)GONE else VISIBLE;divider.visibility=if(state.fullscreen)GONE else VISIBLE
         if(state.fullscreen){pdf.layout(0,0,w,h);return}
         if(state.onRight){whiteboard.layout(0,0,w-pw-d,h);divider.layout(w-pw-d,0,w-pw,h);pdf.layout(w-pw,0,w,h)}
         else{pdf.layout(0,0,pw,h);divider.layout(pw,0,pw+d,h);whiteboard.layout(pw+d,0,w,h)}

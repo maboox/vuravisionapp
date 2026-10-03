@@ -1,4 +1,15 @@
-# VuraVision 1.9.2
+# VuraVision 1.9.3
+
+## 1.9.3 PDF stability and unlock recovery
+
+- Mounted PDF page renderers retain their latest frame independently of shared LRU eviction. A sufficient retained or higher-quality cached frame avoids another render request. References are released when the page view is evicted or disposed. Workspace previews cap their longest edge at 1536 pixels; synchronous export resolution is unchanged.
+- Nearby-page materialization is coalesced to animation frames and waits for committed layout geometry. Unchanged page dimensions and page-number text no longer trigger redundant layout.
+- Fullscreen, return to split, side swaps and copying a page from fullscreen request layout directly on PdfSplitLayout. Visibility is synchronized before measurement.
+- Layers includes Unlock all on this page, with independent undo for the active board/PDF page. Hidden objects and layer locks can be recovered; hidden-layer visibility stays as configured and the PDF source item remains locked.
+- SmartMath remains a one-variable linear/quadratic solver, not a two-variable system solver.
+- Four Robolectric regression tests cover unlock/undo/protected PDF source, retained frames after cache clearing, split-layout updates without touch, and solver scope. They are added for Actions and have NOT been run locally.
+
+Offline source structure and ZIP integrity checks passed. The Android SDK is unavailable here, so compilation, unit tests and actual display-panel flicker/performance verification remain pending. versionCode is 15 and versionName is 1.9.3.
 
 ## 1.9.2 unit-test compilation correction
 
@@ -46,6 +57,6 @@ Android compilation, lint and device checks could not run here: the Gradle distr
 
 ## Build and device verification
 
-Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.2-<run number>. Run the workflow manually to also execute Android device PDF tests.
+Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.3-<run number>. Run the workflow manually to also execute Android device PDF tests.
 
 On the panel, compare the same heavy .vura, large image and multi-page PDF against 1.8: drag/resize a large photo, zoom a dense page out/in, scroll a PDF with the broad tip, switch two-tip mode, draw and erase on two pages, resize the divider, undo on both sides, save original/new PDF and reopen both the PDF and .vura project. File providers that do not grant write permission require Save as new PDF.

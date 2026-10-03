@@ -85,13 +85,17 @@ class Media(val context: Context) {
         (0 until pdf.pageCount).map { i->pdf.openPage(i).use{it.width.toFloat() to it.height.toFloat()} }
     }
     private fun quality(edge:Int)=when {edge<=768->768;edge<=1536->1536;else->2560}
-    fun image(item: Item, sync: Boolean = false, edge:Int=1600, priority:Int=0): Bitmap? {
+    fun image(item: Item, sync: Boolean = false, edge:Int=1600, priority:Int=0, retained:Bitmap?=null): Bitmap? {
         val size=if(item.kind=="pdf")quality(edge) else 2048
+        // A mounted PDF page keeps its last frame even when the shared LRU evicts it.
+        val held=retained?.takeIf{item.kind=="pdf" && !sync && !it.isRecycled}
+        if(held!=null && maxOf(held.width,held.height)>=size-1)return held
         val prefix=item.asset+":"+item.pdfPage+":"
         val key=prefix+size
         cache.get(key)?.let{return it}
         if(sync)return load(item,size).also{cache.put(key,it)}
-        val fallback=if(item.kind=="pdf") listOf(768,1536,2560).mapNotNull{cache.get(prefix+it)}.firstOrNull() else null
+        val fallback=if(item.kind=="pdf") (listOfNotNull(held)+listOf(2560,1536,768).mapNotNull{cache.get(prefix+it)}).maxByOrNull{maxOf(it.width,it.height)} else null
+        if(fallback!=null && maxOf(fallback.width,fallback.height)>=size-1)return fallback
         if(failed.contains(key))return fallback
         if(pending.add(key)){
             val copy=item.copy()

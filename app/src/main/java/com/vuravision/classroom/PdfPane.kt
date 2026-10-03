@@ -87,6 +87,9 @@ class PdfPane(
     private var pendingAnchor:Pair<Int,Float>?=null
     private var pendingScroll:Pair<Int,Int>?=null
     private var disposed=false
+    private var materializePosted=false
+    private val materializeTask=Runnable{materializePosted=false;materialize()}
+    private fun scheduleMaterialize(){if(!disposed && !materializePosted){materializePosted=true;postOnAnimation(materializeTask)}}
     var hand=false
     init {
         orientation=VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_LTR
@@ -112,13 +115,13 @@ class PdfPane(
             frames.add(frame);sheets.addView(frame,LayoutParams(-1,1).apply{setMargins(0,context.dp(8),0,context.dp(8))})
         }
         scroll.setOnScrollChangeListener{_,_,y,_,_->
-            state.scroll=y;materialize();viewChanged()
+            state.scroll=y;scheduleMaterialize();viewChanged()
         }
         horizontal.addOnLayoutChangeListener{_,l,_,r,_,ol,_,or,_->if(r-l!=or-ol)resize()}
         sheets.addOnLayoutChangeListener{_,_,_,_,_,_,_,_,_->
             pendingScroll?.let{(y,x)->pendingScroll=null;scroll.scrollTo(0,y);horizontal.scrollTo(x,0)}
             pendingAnchor?.let{(index,fraction)->pendingAnchor=null;frames.getOrNull(index)?.let{f->scroll.scrollTo(0,f.top+(fraction*f.height).toInt())}}
-            materialize()
+            scheduleMaterialize()
         }
         post{resize()}
     }
@@ -126,8 +129,8 @@ class PdfPane(
     fun writingMode(){hand=false;handButton.text=context.tr("Hand","دست")}
     private fun activateVisible(){boards[state.current]?.let{b->if(b!==currentBoard()){b.copyToolsFrom(currentBoard());activate(b)}}}
     fun activeBoard():Board?=boards[state.current]
-    fun goTo(index:Int){if(index !in frames.indices)return;state.current=index;scroll.smoothScrollTo(0,frames[index].top);updateNumber();materialize()}
-    private fun updateNumber(){pageNumber.text="${state.current+1} / ${state.sheets.size}"}
+    fun goTo(index:Int){if(index !in frames.indices)return;state.current=index;scroll.smoothScrollTo(0,frames[index].top);updateNumber();scheduleMaterialize()}
+    private fun updateNumber(){val text="${state.current+1} / ${state.sheets.size}";if(pageNumber.text.toString()!=text)pageNumber.text=text}
     fun setZoom(value:Float,focusY:Float=horizontal.height/2f,focusX:Float=horizontal.width/2f){
         val next=value.coerceIn(1f,3f);if(next==state.zoom)return
         val factor=next/state.zoom;val y=((scroll.scrollY+focusY)*factor-focusY).toInt()
@@ -139,20 +142,25 @@ class PdfPane(
         if(disposed || resizing || horizontal.width==0)return
         resizing=true
         val pageWidth=(horizontal.width*state.zoom).toInt().coerceAtLeast(1)
-        if(restored && state.zoom==lastZoom && frames.firstOrNull()?.width!=pageWidth){
+        if(restored && pendingAnchor==null && pendingScroll==null && state.zoom==lastZoom && frames.firstOrNull()?.width!=pageWidth){
             val index=frames.indexOfFirst{it.bottom>=scroll.scrollY}.coerceAtLeast(0)
             val frame=frames[index]
             if(frame.height>0)pendingAnchor=index to ((scroll.scrollY-frame.top).toFloat()/frame.height)
         }
         lastZoom=state.zoom
-        scroll.layoutParams=scroll.layoutParams.apply{width=pageWidth;height=ViewGroup.LayoutParams.MATCH_PARENT}
-        state.sheets.forEachIndexed{i,s->frames[i].layoutParams=frames[i].layoutParams.apply{width=pageWidth;height=(pageWidth*s.height/s.width).toInt().coerceIn(1,16384)}}
+        if(scroll.layoutParams.width!=pageWidth)scroll.layoutParams=scroll.layoutParams.apply{width=pageWidth;height=ViewGroup.LayoutParams.MATCH_PARENT}
+        state.sheets.forEachIndexed{i,s->
+            val pageHeight=(pageWidth*s.height/s.width).toInt().coerceIn(1,16384)
+            val frame=frames[i]
+            if(frame.layoutParams.width!=pageWidth || frame.layoutParams.height!=pageHeight)frame.layoutParams=frame.layoutParams.apply{width=pageWidth;height=pageHeight}
+        }
         resizing=false
-        post{materialize()}
+        scheduleMaterialize()
     }
     private fun materialize(){
         if(disposed || scroll.height==0)return
-        if(frames.firstOrNull()?.height==0){postOnAnimation{materialize()};return}
+        // Do not evict/create page views using temporary geometry during a layout pass.
+        if(sheets.isLayoutRequested || horizontal.isLayoutRequested || frames.firstOrNull()?.height==0){scheduleMaterialize();return}
         if(!restored){restored=true;scroll.scrollTo(0,restoreScroll)}
         val top=scroll.scrollY;val bottom=top+scroll.height
         val visible=frames.indices.filter{frames[it].bottom>=top-scroll.height/2 && frames[it].top<=bottom+scroll.height/2}
@@ -160,7 +168,7 @@ class PdfPane(
         updateNumber()
         boards.keys.toList().filter{it !in visible}.forEach{i->
             val b=boards.getValue(i)
-            if(!b.isDrawing && b!==currentBoard()) {frames[i].removeView(b);b.releaseBacking();boards.remove(i)}
+            if(!b.isDrawing && b!==currentBoard()) {frames[i].removeView(b);b.releaseBacking();b.renderer.releasePdfFrame();boards.remove(i)}
         }
         visible.forEach{i->
             if(i !in boards){
@@ -181,7 +189,7 @@ class PdfPane(
     fun beginResize(){interactiveResize=true;boards.values.forEach{it.interactiveResize=true;it.releaseBacking();it.invalidate()}}
     fun endResize(){interactiveResize=false;boards.values.forEach{it.finishResize()}}
     fun mediaReady(asset:String){if(asset==state.asset)boards.values.forEach{it.sceneChanged()}}
-    fun dispose(){disposed=true;boards.values.forEach{it.reset();it.releaseBacking()};boards.clear();stores.clear()}
+    fun dispose(){disposed=true;removeCallbacks(materializeTask);materializePosted=false;boards.values.forEach{it.reset();it.releaseBacking();it.renderer.releasePdfFrame()};boards.clear();stores.clear()}
 }
 object PdfTouch {
     fun scrolls(profile:TouchProfile,tool:Int,major:Float):Boolean = tool!=MotionEvent.TOOL_TYPE_STYLUS && tool!=MotionEvent.TOOL_TYPE_ERASER && major>profile.thin

@@ -193,12 +193,14 @@
     "stepsEn": [
       "Open Layers in the dock. Add a layer and select it before drawing. New content belongs to the active layer.",
       "Use eye, lock and opacity controls to hide, protect or fade content. Hold the layer name to rename it; drag its handle to change the order.",
-      "Select objects before using Move selection here. Layer changes are undoable. Keep a visible, unlocked layer selected when drawing."
+      "Select objects before using Move selection here. Layer changes are undoable. Keep a visible, unlocked layer selected when drawing.",
+      "Use Unlock all on this page to recover locked objects and layers without selecting them. Undo restores the locks. Other pages and the protected PDF source are unaffected; hidden layers stay hidden."
     ],
     "stepsFa": [
       "لایه‌ها را از نوار کناری باز کنید. لایهٔ تازه بسازید و قبل از رسم انتخابش کنید. محتوای تازه در لایهٔ فعال قرار می‌گیرد.",
       "با کنترل نمایش، قفل و کدری، محتوا را پنهان، محافظت یا کم‌رنگ کنید. برای تغییر نام، نام لایه را نگه دارید؛ دستگیره را برای تغییر ترتیب بکشید.",
-      "قبل از انتقال انتخاب به این لایه، اشیاء را انتخاب کنید. تغییرات لایه قابل بازگردانی‌اند. هنگام رسم، لایهٔ نمایان و باز انتخاب کنید."
+      "قبل از انتقال انتخاب به این لایه، اشیاء را انتخاب کنید. تغییرات لایه قابل بازگردانی‌اند. هنگام رسم، لایهٔ نمایان و باز انتخاب کنید.",
+      "برای بازکردن قفل آبجکت‌ها و لایه‌ها بدون انتخاب آن‌ها، «بازکردن همهٔ قفل‌ها در این صفحه» را بزنید. بازگردانی قفل‌ها را برمی‌گرداند. صفحه‌های دیگر و زمینهٔ محافظت‌شدهٔ PDF تغییری نمی‌کنند؛ لایهٔ پنهان همچنان پنهان می‌ماند."
     ],
     "tipEn": "Example: lock a worksheet layer, then draw answers in a second layer.",
     "tipFa": "نمونه: لایهٔ برگهٔ تمرین را قفل و پاسخ‌ها را در لایهٔ دوم بنویسید."
