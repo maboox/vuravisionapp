@@ -5,19 +5,12 @@ import android.text.*
 import kotlin.math.*
 
 fun itemBounds(item: Item): RectF {
-    val corners =
-        listOf(
-            item.global(0f, 0f),
-            item.global(item.w, 0f),
-            item.global(item.w, item.h),
-            item.global(0f, item.h),
-        )
-    return RectF(
-        corners.minOf { it.first },
-        corners.minOf { it.second },
-        corners.maxOf { it.first },
-        corners.maxOf { it.second },
-    )
+    if(item.rotation%360f==0f)return RectF(item.x,item.y,item.x+item.w,item.y+item.h)
+    val angle=item.rotation*PI/180
+    val hw=(abs(cos(angle))*item.w+abs(sin(angle))*item.h).toFloat()/2
+    val hh=(abs(sin(angle))*item.w+abs(cos(angle))*item.h).toFloat()/2
+    val cx=item.x+item.w/2;val cy=item.y+item.h/2
+    return RectF(cx-hw,cy-hh,cx+hw,cy+hh)
 }
 
 fun contentBounds(items: List<Item>): RectF {
@@ -29,18 +22,25 @@ fun contentBounds(items: List<Item>): RectF {
 
 class Renderer(private val media: Media) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
-    private class InkPath(val owner:Item) {
+    private class InkPath(val owner:Item,val stride:Int=1) {
         val source=owner.points;val path=Path();var count=0
         fun update() {
             if(count==0 && source.isNotEmpty()) { path.moveTo(source[0].x,source[0].y);count=1 }
-            while(count<source.size) { val v=source[count++];path.lineTo(v.x,v.y) }
+            while(count<source.size) { val index=count++;val v=source[index];if(index%stride==0 || index==source.lastIndex)path.lineTo(v.x,v.y) }
         }
     }
     private val inkPaths=object:android.util.LruCache<String,InkPath>(512) {}
-    fun forgetInk(id:String) { inkPaths.remove(id) }
+    fun forgetInk(id:String) { listOf(1,2,4,8).forEach{inkPaths.remove(id+":"+it)} }
 
     private val functions = object : android.util.LruCache<String, (Double) -> Double>(32) {}
 
+    companion object {
+        fun backgroundStep(pixelsPerUnit:Float):Float{
+            var step=32f
+            while(step*pixelsPerUnit<12f && step<32768f)step*=2f
+            return step
+        }
+    }
     fun background(c: Canvas, page: Page, area: RectF, fill:Int=page.panes.firstOrNull()?.background?:Color.WHITE) {
         val color=if(page.background=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
         c.drawColor(color)
@@ -48,7 +48,9 @@ class Renderer(private val media: Media) {
         p.color = if(android.graphics.Color.luminance(color)<.35)0x55ffffff else 0xffd8dce2.toInt()
         p.strokeWidth = 1f
         p.style = Paint.Style.FILL
-        val step = 32f
+        val matrix=Matrix();c.getMatrix(matrix);val transform=FloatArray(9);matrix.getValues(transform)
+        val pixelsPerUnit=hypot(transform[0],transform[3]).coerceAtLeast(.0001f)
+        val step=backgroundStep(pixelsPerUnit)
         val left = floor(area.left / step).toInt()
         val right = ceil(area.right / step).toInt()
         val top = floor(area.top / step).toInt()
@@ -88,8 +90,12 @@ class Renderer(private val media: Media) {
                 c.save()
                 c.scale(o.w / o.inkW, o.h / o.inkH)
                 p.style = Paint.Style.STROKE
-                val entry=inkPaths.get(o.id)?.takeIf { it.owner===o && it.source===o.points && it.count<=o.points.size }
-                    ?: InkPath(o).also { inkPaths.put(o.id,it) }
+                val matrix=Matrix();c.getMatrix(matrix);val values=FloatArray(9);matrix.getValues(values)
+                val scale=hypot(values[0],values[3])
+                val stride=if(sync)1 else if(scale<.25f)8 else if(scale<.5f)4 else if(scale<.8f)2 else 1
+                val key=o.id+":"+stride
+                val entry=inkPaths.get(key)?.takeIf { it.owner===o && it.source===o.points && it.count<=o.points.size }
+                    ?: InkPath(o,stride).also { inkPaths.put(key,it) }
                 entry.update()
                 if(o.points.size==1) { p.style=Paint.Style.FILL;c.drawCircle(o.points[0].x,o.points[0].y,o.width/2,p) }
                 else c.drawPath(entry.path,p)
@@ -121,7 +127,10 @@ class Renderer(private val media: Media) {
                 p.color = Color.WHITE
                 p.style = Paint.Style.FILL
                 c.drawRect(0f, 0f, o.w, o.h, p)
-                val b = media.image(o, sync)
+                val matrix=Matrix();c.getMatrix(matrix)
+                val values=FloatArray(9);matrix.getValues(values)
+                val edge=(maxOf(o.w,o.h)*kotlin.math.hypot(values[0],values[3])).toInt()
+                val b = media.image(o, sync, edge)
                 if (b != null) {
                     p.isFilterBitmap = true
                     c.drawBitmap(b, null, RectF(0f, 0f, o.w, o.h), p)
@@ -194,7 +203,7 @@ class Renderer(private val media: Media) {
         c.restore()
     }
 
-    fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null) {
+    fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null,exclude:Set<String> = emptySet()) {
         val visibleLayers=page.layers.filter { it.visible && it.opacity>0f }
         // Draw all branches first: a parent may occur before its child in item order.
         val nodes=page.items.filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
@@ -217,7 +226,7 @@ class Renderer(private val media: Media) {
         }
         visibleLayers.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
-            page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) }.forEach { o ->
+            page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) && it.id !in exclude }.forEach { o ->
                 if(region==null || RectF.intersects(itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) },region))draw(c,o,sync)
             }
             c.restoreToCount(save)

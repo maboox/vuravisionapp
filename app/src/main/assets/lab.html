@@ -138,6 +138,12 @@ body{background:radial-gradient(ellipse at 90% 0,rgba(125,79,225,.22),transparen
 .vuraTools button.active{background:#f8a529;color:#20194f}.vuraCount{font-size:13px;color:#c5bddf;margin-bottom:10px}
 button:focus-visible,input:focus-visible{outline:3px solid #f8a529;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.labCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px}
+.labCard{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:220px;padding:20px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:white;text-align:start;cursor:pointer;font:inherit}
+.labCard:hover{border-color:var(--brandOrange)}.labIcon{font-size:32px}.labBadge{font-size:12px;color:#bfcee4}.labCard strong{font-size:20px}.labCard p{font-size:14px;color:var(--text2)}
+.labFilters .on{background:var(--brandOrange);color:#20194f}
+.labFilters{display:flex;gap:8px;flex-wrap:wrap}.labCatalog select{font:inherit;color:white;border-radius:12px;background:var(--surface);padding:10px;margin-top:12px;max-width:100%}
 </style>
 </head>
 <body>
@@ -3407,7 +3413,7 @@ let last=performance.now();
 function loop(now){
  const dt=Math.min((now-last)/1000,.05);last=now;
  const k=CUR.subj,ex=CUR.exp[k];
- if(ex){
+ if(ex && !window.vuraCatalogOpen){
   const cv=CVS[k],{w,h}=fitCanvas(cv),ctx=CTX[k];
   if(!window.vuraPaused)ctx.clearRect(0,0,w,h);
   try{if(!window.vuraPaused)ex.frame(ex,ctx,w,h,dt,now/1000);}catch(err){console.error(ex.id,err);window.vuraErrors=window.vuraErrors||[];if(!window.vuraErrors.some(x=>x.id===ex.id))window.vuraErrors.push({id:ex.id,message:String(err)});const hint=$("#hint-"+k);hint.textContent="خطای اجرا — آزمایش را بازنشانی کنید / Simulation error — reset";hint.style.display="";}
@@ -3426,6 +3432,59 @@ search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();l
 document.getElementById('labPause').onclick=e=>{window.vuraPaused=!window.vuraPaused;e.target.textContent=window.vuraPaused?'▶ ادامه':'⏸ توقف';e.target.classList.toggle('active',window.vuraPaused)};
 document.getElementById('labReset').onclick=()=>{const ex=CUR.exp[CUR.subj];selectExp(CUR.subj,ex.id,true);window.vuraPaused=false;document.getElementById('labPause').textContent='⏸ توقف';document.getElementById('labPause').classList.remove('active')};
 window.vuraSnapshot=()=>{const cv=CVS[CUR.subj];const out=document.createElement('canvas');out.width=cv.width;out.height=cv.height;const ctx=out.getContext('2d');ctx.fillStyle='#15122e';ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(cv,0,0);return out.toDataURL('image/png')};
+
+// A searchable lesson catalog; no simulations render while browsing it.
+const LAB_TOPICS={
+ mechanics:['مکانیک','Mechanics'], waves:['موج و صدا','Waves and sound'], optics:['نور و نسبیت','Light and relativity'], matter:['ماده، گرما و فشار','Matter, heat and pressure'], electricity:['الکتریسیته','Electricity'],
+ atomic:['اتم و پیوند','Atoms and bonding'], solutions:['محلول و انتقال','Solutions and transport'], reactions:['واکنش‌ها','Reactions'], geometry:['هندسه','Geometry'], functions:['تابع و موج','Functions and waves'], numbers:['اعداد و الگوریتم','Numbers and algorithms'],
+ probability:['احتمال','Probability'], data:['تحلیل داده','Data analysis'], random:['فرایندهای تصادفی','Random processes']
+};
+const TOPIC_IDS={
+ mechanics:'orbit pendulum projectile spring collision incline freefall',waves:'standing doppler interference',optics:'lens lightclock',matter:'gas buoyancy heat pressure',electricity:'circuit',
+ atomic:'molecule atom periodic bonding',solutions:'states ph solubility titration diffusion osmosis density',reactions:'reaction halflife electrolysis flame equilibrium catalyst',
+ geometry:'circle fractal golden pythagoras polypi koch',functions:'waves quadratic tangent fourier lissajous series',numbers:'primes pascal collatz modcircle sorting',
+ probability:'coins dice montecarlo monty birthday bayes streaks ruin',data:'clt regression benford median sampling simpson',random:'galton walk markov'
+};
+const LAB_EN={orbit:'Gravity and orbits',pendulum:'Pendulum',projectile:'Projectile motion',spring:'Spring oscillation',collision:'Collisions',standing:'Standing waves',gas:'Ideal gas',molecule:'Molecules',states:'States of matter',ph:'Acids and pH',reaction:'Chemical reactions',atom:'Atomic structure',solubility:'Solubility',halflife:'Radioactive half-life',waves:'Wave functions',circle:'Trigonometric circle',fractal:'Fractals',golden:'Golden ratio',quadratic:'Quadratic functions',tangent:'Tangent and derivative',fourier:'Fourier series',galton:'Galton board',coins:'Coin probability',dice:'Dice probability',montecarlo:'Monte Carlo estimation',walk:'Random walk',clt:'Central limit theorem',regression:'Linear regression',incline:'Inclined plane',lens:'Lenses and optics',circuit:'Electric circuits',doppler:'Doppler effect',buoyancy:'Buoyancy',heat:'Heat transfer',periodic:'Periodic table',titration:'Acid-base titration',electrolysis:'Electrolysis',diffusion:'Diffusion',flame:'Flame tests',equilibrium:'Chemical equilibrium',primes:'Prime numbers',pythagoras:'Pythagorean theorem',polypi:'Estimating pi with polygons',lissajous:'Lissajous curves',series:'Numerical series',pascal:'Pascal triangle',monty:'Monty Hall problem',birthday:'Birthday paradox',bayes:'Bayes theorem',benford:'Benford law',median:'Mean and median',streaks:'Random streaks',freefall:'Free fall',interference:'Wave interference',pressure:'Fluid pressure',lightclock:'Light clock and relativity',bonding:'Chemical bonds',catalyst:'Catalysts',osmosis:'Osmosis',density:'Density',collatz:'Collatz sequence',modcircle:'Modular multiplication',koch:'Koch snowflake',sorting:'Sorting algorithms',sampling:'Sampling',ruin:'Gambler ruin',simpson:'Simpson paradox',markov:'Markov chains'};
+const LAB_SUBJECT_EN={physics:'Physics',chem:'Chemistry',math:'Mathematics',stats:'Statistics'};
+const catalogLanguage=new URLSearchParams(location.search).get('lang')==='en'?'en':'fa';
+const labL=(fa,en)=>catalogLanguage==='fa'?fa:en;
+const topicOf=id=>Object.entries(TOPIC_IDS).find(([,ids])=>ids.split(' ').includes(id))?.[0]||'data';
+const catalog=document.createElement('section');catalog.dir=catalogLanguage==='fa'?'rtl':'ltr';catalog.id='labCatalog';catalog.className='labCatalog';
+const catalogFilters=document.createElement('div');catalogFilters.className='labFilters';
+const topicSelect=document.createElement('select');topicSelect.id='labTopic';topicSelect.setAttribute('aria-label',labL('موضوع درس','Lesson topic'));
+const option=(value,text)=>{const o=document.createElement('option');o.value=value;o.textContent=text;topicSelect.appendChild(o)};
+option('all',labL('همهٔ موضوع‌ها','All lesson topics'));Object.entries(LAB_TOPICS).forEach(([k,t])=>option(k,labL(...t)));
+const cards=document.createElement('div');cards.className='labCards';const counts=document.createElement('p');counts.className='vuraCount';
+catalog.append(catalogFilters,topicSelect,counts,cards);tools.after(catalog);
+let catalogSubject='all';window.vuraCatalogOpen=false;
+['all',...Object.keys(SUBJECTS)].forEach(k=>{const b=document.createElement('button');b.className='exp';b.dataset.subject=k;b.textContent=k==='all'?labL('همهٔ درس‌ها','All subjects'):labL(SUBJECTS[k].label,LAB_SUBJECT_EN[k]);b.onclick=()=>{catalogSubject=k;applyLabCatalog()};catalogFilters.appendChild(b)});
+Object.entries(REG).forEach(([subject,list])=>list.forEach(ex=>{
+ const card=document.createElement('button');card.className='labCard';card.dataset.lab=ex.id;card.dataset.subject=subject;card.dataset.topic=topicOf(ex.id);
+ const badge=document.createElement('span');badge.className='labBadge';badge.textContent=labL(SUBJECTS[subject].label,LAB_SUBJECT_EN[subject])+' · '+labL(...LAB_TOPICS[topicOf(ex.id)]);
+ const icon=document.createElement('span');icon.className='labIcon';icon.textContent=ex.icon;
+ const title=document.createElement('strong');title.textContent=labL(ex.title,LAB_EN[ex.id]);
+ const description=document.createElement('p');description.textContent=labL(ex.learnTitle||ex.title,'Explore '+LAB_EN[ex.id].toLowerCase()+' by changing the experiment controls.');
+ card.append(badge,icon,title,description);card.onclick=()=>{setTab(subject,true);selectExp(subject,ex.id,true);showLabCatalog(false)};cards.appendChild(card);
+}));
+function applyLabCatalog(){
+ const q=search.value.trim().toLowerCase();let count=0;
+ cards.querySelectorAll('.labCard').forEach(card=>{
+  const ex=REG[card.dataset.subject].find(e=>e.id===card.dataset.lab);
+  const visible=(catalogSubject==='all'||card.dataset.subject===catalogSubject)&&(topicSelect.value==='all'||card.dataset.topic===topicSelect.value)&&[ex.title,ex.id,ex.learnTitle,LAB_EN[ex.id],card.textContent].join(' ').toLowerCase().includes(q);
+  card.hidden=!visible;card.style.display=visible?'':'none';if(visible)count++;
+ });
+ catalogFilters.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.subject===catalogSubject));
+ counts.textContent=labL(count+' آزمایش',count+' experiments');
+}
+function showLabCatalog(open){
+ window.vuraCatalogOpen=open;catalog.style.display=open?'':'none';nav.style.display=open?'none':'';
+ document.querySelectorAll('.panel').forEach(panel=>panel.style.display=open?'none':'');
+ document.getElementById('labCatalogButton').textContent=open?labL('ادامهٔ آزمایش','Continue experiment'):labL('فهرست درس‌ها و آزمایش‌ها','Subjects and experiments');
+}
+const catalogButton=document.createElement('button');catalogButton.id='labCatalogButton';catalogButton.onclick=()=>showLabCatalog(!window.vuraCatalogOpen);tools.prepend(catalogButton);
+topicSelect.onchange=applyLabCatalog;search.addEventListener('input',applyLabCatalog);
+applyLabCatalog();showLabCatalog(!location.hash);
 
 </script>
 </body>

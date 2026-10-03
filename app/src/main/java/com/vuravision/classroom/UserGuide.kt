@@ -30,6 +30,7 @@ object UserGuide {
         header.addView(context.button("×"){dialog.dismiss()}.apply{contentDescription=context.tr("Close guide","بستن راهنما")})
         val search=context.field()
         root.addView(search)
+        val chapterIndex=context.button(""){};root.addView(chapterIndex)
         val chapters=context.row();root.addView(context.scrollRow(chapters))
         val body=context.column().apply{pad(12)}
         val scroll=ScrollView(context).apply{addView(body);isFillViewport=true}
@@ -42,6 +43,12 @@ object UserGuide {
         fun lang(en:String,persian:String)=if(fa)persian else en
         fun renderBody() {
             root.layoutDirection=if(fa)View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+            chapterIndex.text=lang("All chapters · ${topics.size}","فهرست همهٔ فصل‌ها · ${topics.size}")
+            chapterIndex.setOnClickListener{
+                val names=topics.mapIndexed{i,t->"${i+1} · "+if(fa)t.titleFa else t.titleEn}.toTypedArray()
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(context).setTitle(lang("Chapters in order","فصل‌ها به ترتیب"))
+                    .setSingleChoiceItems(names,index){d,i->index=i;search.setText("");renderBody();d.dismiss()}.show()
+            }
             heading.text=lang("Learn VuraVision","آموزش VuraVision")
             search.hint=lang("Search tools and lessons…","جست‌وجوی ابزار و آموزش…")
             previous.text=lang("Previous","قبلی");next.text=lang("Next","بعدی")
@@ -80,7 +87,7 @@ object UserGuide {
             topics.forEachIndexed{i,t->
                 val haystack=listOf(t.titleEn,t.titleFa,t.stepsEn.joinToString(),t.stepsFa.joinToString()).joinToString(" ")
                 if(query.isBlank()||haystack.contains(query,ignoreCase=true)){
-                    chapters.addView(context.button("${i+1}. "+if(fa)t.titleFa else t.titleEn,i==index){index=i;renderBody();renderChapters()})
+                    chapters.addView(context.button("${i+1} · "+if(fa)t.titleFa else t.titleEn,i==index){index=i;renderBody();renderChapters()}.apply{textDirection=if(fa)View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR})
                 }
             }
             if(chapters.childCount==0)chapters.addView(context.label(lang("No chapters found","فصلی پیدا نشد"),15f,MUTED))
@@ -179,6 +186,17 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
                 renderer.draw(canvas,Item(kind="shape",shape="compass",x=610f,y=90f,w=135f,h=160f,color=TEAL))
                 shape("circle",537f,145f,200f,200f,TEAL,2f)
                 text("Start near the edge","از نزدیک لبه آغاز کنید",85f,336f)
+            }
+            "pdf-reader","pdf-save"->{
+                shape("rectangle",50f,40f,330f,335f,MUTED,2f)
+                shape("rectangle",430f,40f,380f,335f,TEAL,2f)
+                text("PDF","PDF",175f,86f,TEAL)
+                text("Board","تخته",555f,86f,TEAL)
+                line(listOf(100f to 145f,325f to 145f),MUTED,2f)
+                line(listOf(100f to 180f,325f to 180f),MUTED,2f)
+                line(listOf(110f to 214f,185f to 233f,230f to 211f,306f to 247f),ORANGE,4f)
+                line(listOf(405f to 65f,405f to 338f),TEAL,6f)
+                text("Save PDF / project","ذخیرهٔ PDF / پروژه",125f,398f)
             }
             "widgets"->{
                 note(85f,145f,SECONDARY_CONTAINER,"05:00");note(355f,145f,PRIMARY_CONTAINER,"12 : 08");shape("rectangle",627f,145f,96f,96f,ORANGE);for(y in listOf(170f,215f))for(x in listOf(650f,700f)){paint.color=NAVY;canvas.drawCircle(x,y,4f,paint)}

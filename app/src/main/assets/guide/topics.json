@@ -1,1 +1,467 @@
-[{"id":"workspace","titleEn":"Meet your board","titleFa":"آشنایی با تخته","stepsEn":["The top floating bar contains the main menu, lesson files, Undo, Redo and sharing. The left dock contains drawing and classroom tools. Hold an icon to see its name.","Tap Pen and write in the canvas. Tap the selected Pen icon again to open its settings; the same second-tap gesture opens Eraser settings.","The bottom page strip manages lesson pages. The corner full-screen button hides or restores the floating toolbars."],"stepsFa":["نوار شناور بالا شامل منوی اصلی، فایل درس، بازگردانی، انجام دوباره و اشتراک است. نوار کناری ابزارهای رسم و کلاس را دارد. برای دیدن نام ابزار، آیکون را نگه دارید.","قلم را انتخاب کنید و روی تخته بنویسید. برای تنظیمات قلم، دوباره روی آیکون قلم انتخاب‌شده بزنید؛ تنظیمات پاک‌کن هم با همین روش باز می‌شود.","نوار پایین برای مدیریت صفحه‌های درس است. دکمهٔ تمام‌صفحه در گوشه، نوارهای ابزار را پنهان یا دوباره نمایش می‌دهد."],"tipEn":"Try: draw one line, Undo, Redo, then hide and restore the toolbars.","tipFa":"تمرین: یک خط بکشید، بازگردانی و انجام دوباره را بزنید و نوار ابزار را پنهان و دوباره نمایان کنید."},{"id":"pen","titleEn":"Pen, color and highlighter","titleFa":"قلم، رنگ و هایلایتر","stepsEn":["Select Pen, then tap it again. Pick a preset color or open Custom color for the HSV selector and HEX field. Set thickness and stroke style.","Choose ink, marker, dashed or highlighter in the pen panel. Highlighter is translucent. Thin and broad contacts can have separate appearances.","Draw a short sample after changing settings. In a split board, each panel has its own pen control near its upper edge."],"stepsFa":["قلم را انتخاب و دوباره روی آن بزنید. یک رنگ آماده انتخاب کنید یا برای انتخابگر رنگ و کد رنگ، رنگ دلخواه را باز کنید. ضخامت و سبک خط را تنظیم کنید.","از پنل قلم، حالت جوهری، ماژیک، خط‌چین یا هایلایتر را انتخاب کنید. هایلایتر نیمه‌شفاف است. تماس باریک و پهن می‌توانند ظاهر جداگانه داشته باشند.","بعد از تغییر تنظیمات، یک نمونهٔ کوتاه بکشید. در تختهٔ تقسیم‌شده، هر بخش کنترل قلم خودش را نزدیک لبهٔ بالا دارد."],"tipEn":"Use a broad translucent highlighter over writing, then a thin dark pen for details.","tipFa":"روی نوشته هایلایتر پهن بکشید و برای جزئیات از قلم باریک و تیره استفاده کنید."},{"id":"dashes","titleEn":"Dashed strokes","titleFa":"خط‌چین","stepsEn":["Open Pen settings and select Dashed. Set dash length and gap separately; longer gaps create more widely spaced marks.","Choose color and thickness, draw your line and check its appearance. Dash settings travel with the stroke when you save or export.","For one panel of a split board, use that panel’s pen settings rather than the general pen panel."],"stepsFa":["تنظیمات قلم را باز و خط‌چین را انتخاب کنید. طول خط و فاصله را جدا تنظیم کنید؛ فاصلهٔ بیشتر، خط‌های دورتر از هم می‌سازد.","رنگ و ضخامت را انتخاب و خطی رسم کنید. تنظیمات خط‌چین همراه خط ذخیره و در خروجی حفظ می‌شوند.","برای تغییر خط‌چین در یک بخش از تختهٔ تقسیم‌شده، از تنظیمات قلم همان بخش استفاده کنید."],"tipEn":"Try two lines with the same thickness but different gaps.","tipFa":"تمرین: دو خط با ضخامت یکسان و فاصله‌های متفاوت بکشید."},{"id":"eraser","titleEn":"Eraser modes","titleFa":"حالت‌های پاک‌کن","stepsEn":["Select Eraser, then tap it again. Whole stroke / object removes an entire item when touched. Area eraser removes only the region along the eraser path.","Set the eraser radius. Enable Include objects to also erase text, shapes, images and PDF regions; turn it off to erase handwriting only.","Undo restores erased content. Locked items and locked or hidden layers are protected from normal editing."],"stepsFa":["پاک‌کن را انتخاب و دوباره روی آن بزنید. حالت کل خط یا شیء، تمام مورد لمس‌شده را حذف می‌کند. پاک‌کن ناحیه‌ای فقط قسمت زیر مسیر پاک‌کن را پاک می‌کند.","شعاع پاک‌کن را تنظیم کنید. گزینهٔ اعمال روی اشیاء، پاک‌کردن متن، شکل، تصویر و بخش‌های سند را هم فعال می‌کند؛ با خاموش‌بودن آن فقط دست‌نویس پاک می‌شود.","با بازگردانی، محتوا برمی‌گردد. اشیای قفل‌شده و لایه‌های قفل یا پنهان در برابر ویرایش معمولی محافظت می‌شوند."],"tipEn":"Try Area mode on a long line; only the crossed section should disappear.","tipFa":"تمرین: در حالت ناحیه‌ای روی وسط یک خط بلند بکشید؛ فقط همان بخش باید پاک شود."},{"id":"palm","titleEn":"Erase with your palm","titleFa":"پاک‌کردن با کف دست","stepsEn":["Open Eraser settings and enable Use palm as a temporary eraser. You can keep Pen selected and use the palm to erase.","Open Calibrate palm / test touch. Touch with the pen, a finger and the palm; compare the reported major widths. Set the palm threshold above pen/finger contact and at or below a reliable palm width.","Apply calibration and test in an empty area. Palm erasing uses the chosen eraser mode and radius. When disabled, recognized palm contacts are rejected."],"stepsFa":["تنظیمات پاک‌کن را باز و گزینهٔ کف دست، پاک‌کن موقت باشد را روشن کنید. می‌توانید قلم را انتخاب‌شده نگه دارید و با کف دست پاک کنید.","تنظیم کف دست یا تست لمس را باز کنید. با قلم، انگشت و کف دست لمس کنید و اندازهٔ گزارش‌شده را مقایسه کنید. آستانهٔ کف دست باید از اندازهٔ قلم و انگشت بیشتر و در محدودهٔ اندازهٔ قابل اعتماد کف دست باشد.","تنظیم را اعمال و در فضای خالی امتحان کنید. کف دست از حالت و شعاع پاک‌کن استفاده می‌کند. با خاموش‌بودن گزینه، تماس تشخیص‌داده‌شده به‌عنوان کف دست نادیده گرفته می‌شود."],"tipEn":"If the controller reports zero or identical sizes, this recognition cannot distinguish palm and pen reliably.","tipFa":"اگر کنترلر اندازهٔ صفر یا یکسان گزارش کند، تشخیص قابل اعتماد کف دست از قلم با این روش ممکن نیست."},{"id":"hold","titleEn":"Draw, hold, adjust","titleFa":"رسم، مکث، تنظیم شکل","stepsEn":["Draw a reasonably clear line, rectangle, square, triangle, circle or ellipse with Pen. Close polygon outlines near the point where you started.","Keep the pen down and hold still for about one second. A recognized stroke becomes an adjustable geometric shape.","Without lifting, move the pen to resize. The first drawing point stays anchored. For a closed outline, movement adjusts the opposite handle relative to the resting endpoint, so the shape does not jump. Lift to finish."],"stepsFa":["با قلم، خط، مستطیل، مربع، مثلث، دایره یا بیضی نسبتاً واضح بکشید. خط محیط چندضلعی را نزدیک نقطهٔ شروع ببندید.","بدون برداشتن قلم، حدود یک ثانیه ثابت نگه دارید. اگر تشخیص موفق باشد، دست‌نویس به شکل هندسی قابل تنظیم تبدیل می‌شود.","قبل از برداشتن قلم آن را حرکت دهید تا اندازه عوض شود. نقطهٔ شروع ثابت می‌ماند. در شکل بسته، حرکت نسبت به محل مکث، دستگیرهٔ مقابل را تغییر می‌دهد تا شکل ناگهان جابه‌جا نشود. برای پایان قلم را بردارید."],"tipEn":"Start a square at a bottom or right corner and compare the anchored resizing. Recognition is approximate.","tipFa":"تمرین: مربع را از گوشهٔ پایین یا راست شروع کنید و ثابت‌ماندن نقطهٔ شروع را امتحان کنید. تشخیص شکل تقریبی است."},{"id":"shapes","titleEn":"Ready-made shapes","titleFa":"شکل‌های آماده","stepsEn":["Tap Shapes and choose an outline. Drag on the board from the desired anchor towards the opposite edge.","Square and circle keep equal width and height. Other outlines can stretch. Select an existing shape to resize, rotate, change color, duplicate or delete.","If you need a precise diagram, use ready-made shapes rather than relying on handwriting recognition."],"stepsFa":["شکل‌ها را باز و یک شکل انتخاب کنید. روی تخته از نقطهٔ ثابت دلخواه به سمت گوشهٔ مقابل بکشید.","مربع و دایره عرض و ارتفاع برابر دارند. شکل‌های دیگر می‌توانند کشیده شوند. شکل قبلی را انتخاب کنید تا اندازه، چرخش یا رنگ آن را تغییر دهید، تکثیر کنید یا حذف کنید.","برای نمودار دقیق‌تر، از شکل‌های آماده استفاده کنید."],"tipEn":"Try the same shape dragging in four different directions.","tipFa":"تمرین: یک شکل را با کشیدن در چهار جهت مختلف رسم کنید."},{"id":"select","titleEn":"Select and edit","titleFa":"انتخاب و ویرایش","stepsEn":["Tap Select. Tap an item or drag an enclosing selection region. The selection bar appears above the canvas.","Drag a selected item to move it. Use its handles to resize or rotate. Use the selection bar for color, copying, duplicate, delete and further edits.","Copy stores a local clipboard; Duplicate immediately creates another copy. Undo reverses edits. For a mind-map node, related child content is handled with the node."],"stepsFa":["انتخاب را بزنید. روی یک شیء بزنید یا محدودهٔ انتخاب را دور محتوا بکشید. نوار انتخاب بالای تخته ظاهر می‌شود.","برای جابه‌جایی، شیء انتخاب‌شده را بکشید. از دستگیره‌ها برای تغییر اندازه و چرخش استفاده کنید. نوار انتخاب، رنگ، کپی، تکثیر، حذف و ویرایش‌های بیشتر را دارد.","کپی در کلیپ‌بورد داخلی قرار می‌گیرد؛ تکثیر بلافاصله نسخهٔ دوم می‌سازد. بازگردانی ویرایش را برمی‌گرداند. محتوای مرتبط با گرهٔ مایندمپ همراه گره مدیریت می‌شود."],"tipEn":"Keep locked objects on a separate layer while editing annotations above them.","tipFa":"هنگام نوشتن توضیح روی محتوا، اشیای ثابت را در لایهٔ جدا قفل کنید."},{"id":"navigation","titleEn":"Pan and zoom","titleFa":"جابه‌جایی و بزرگ‌نمایی","stepsEn":["The Pan tool navigates the canvas instead of drawing. Drag to move the view and use supported two-contact gestures to zoom.","In Pen + touch mode, a broad contact can select while the fine tip writes. Two broad contacts navigate. Accurate separation requires contact-size reporting and calibration.","Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view."],"stepsFa":["ابزار جابه‌جایی، نمای تخته را حرکت می‌دهد و چیزی رسم نمی‌کند. برای حرکت نما بکشید و برای بزرگ‌نمایی از حرکت دو تماس پشتیبانی‌شده استفاده کنید.","در حالت قلم و لمس، تماس پهن می‌تواند انتخاب کند و سر باریک بنویسد. دو تماس پهن برای جابه‌جایی و بزرگ‌نمایی‌اند. تفکیک درست به گزارش اندازهٔ تماس و کالیبراسیون وابسته است.","جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید."],"tipEn":"If a finger writes instead of navigating, check the input mode and contact thresholds.","tipFa":"اگر انگشت به‌جای جابه‌جایی می‌نویسد، حالت ورودی و آستانهٔ اندازهٔ تماس را بررسی کنید."},{"id":"text","titleEn":"Text and sticky notes","titleFa":"متن و یادداشت چسبان","stepsEn":["Tap Text to insert typed text. Use the insert menu for a sticky note. Enter text, then select the object to edit its appearance or size.","Sticky notes have their own background color. Text supports editable formatting available in its editor.","Typed Persian and English text is editable. Handwritten text remains ink until you explicitly run text recognition."],"stepsFa":["برای افزودن متن تایپی، متن را بزنید. برای یادداشت چسبان از منوی درج استفاده کنید. متن را وارد و سپس شیء را برای تغییر ظاهر یا اندازه انتخاب کنید.","یادداشت چسبان رنگ پس‌زمینهٔ خودش را دارد. گزینه‌های قالب‌بندی متن در ویرایشگر آن در دسترس‌اند.","متن تایپی فارسی و انگلیسی قابل ویرایش است. دست‌نویس تا وقتی تشخیص متن را اجرا نکنید، به‌صورت خط باقی می‌ماند."],"tipEn":"Use a sticky for a short instruction and ink to annotate around it.","tipFa":"یک دستور کوتاه را در یادداشت چسبان بنویسید و اطرافش با قلم توضیح اضافه کنید."},{"id":"mindmap","titleEn":"Mind maps","titleFa":"مایندمپ","stepsEn":["Open Classroom tools and choose Mind map. The starting diagram contains three empty nodes; typing is optional.","Write from inside a node. On lifting the pen, attached writing can expand the node. Move the node to carry its attached writing with it.","Select a node. The side plus adds a child; the lower plus adds a sibling. Change the box color from the selection bar. Connectors stay behind boxes."],"stepsFa":["ابزارهای کلاس را باز و مایندمپ را انتخاب کنید. نمودار اولیه سه گرهٔ خالی دارد و تایپ‌کردن اجباری نیست.","نوشتن را از داخل گره شروع کنید. بعد از برداشتن قلم، نوشتهٔ متصل می‌تواند کادر را بزرگ کند. با جابه‌جایی گره، نوشتهٔ متصل همراهش حرکت می‌کند.","گره را انتخاب کنید. به‌علاوهٔ کنار، فرزند و به‌علاوهٔ پایین، هم‌سطح می‌سازد. رنگ باکس را از نوار انتخاب تغییر دهید. اتصال‌ها زیر باکس‌ها قرار می‌گیرند."],"tipEn":"Try a central topic and two handwritten branches; move the parent after writing.","tipFa":"تمرین: یک موضوع اصلی و دو شاخهٔ دست‌نویس بسازید؛ سپس گرهٔ والد را جابه‌جا کنید."},{"id":"layers","titleEn":"Layers","titleFa":"لایه‌ها","stepsEn":["Open Layers in the dock. Add a layer and select it before drawing. New content belongs to the active layer.","Use eye, lock and opacity controls to hide, protect or fade content. Hold the layer name to rename it; drag its handle to change the order.","Select objects before using Move selection here. Layer changes are undoable. Keep a visible, unlocked layer selected when drawing."],"stepsFa":["لایه‌ها را از نوار کناری باز کنید. لایهٔ تازه بسازید و قبل از رسم انتخابش کنید. محتوای تازه در لایهٔ فعال قرار می‌گیرد.","با کنترل نمایش، قفل و کدری، محتوا را پنهان، محافظت یا کم‌رنگ کنید. برای تغییر نام، نام لایه را نگه دارید؛ دستگیره را برای تغییر ترتیب بکشید.","قبل از انتقال انتخاب به این لایه، اشیاء را انتخاب کنید. تغییرات لایه قابل بازگردانی‌اند. هنگام رسم، لایهٔ نمایان و باز انتخاب کنید."],"tipEn":"Example: lock a worksheet layer, then draw answers in a second layer.","tipFa":"نمونه: لایهٔ برگهٔ تمرین را قفل و پاسخ‌ها را در لایهٔ دوم بنویسید."},{"id":"pages","titleEn":"Pages and backgrounds","titleFa":"صفحه‌ها و پس‌زمینه","stepsEn":["Use the page strip to add and switch pages. A lesson contains multiple pages; switching does not create a new lesson.","Open the page background panel. Pick a preset or custom color and combine it with plain, dots, grid, ruled or hatch.","Each page retains its background. Background changes are included in lesson saves and PDF/image exports."],"stepsFa":["از نوار صفحه‌ها برای افزودن و تغییر صفحه استفاده کنید. یک درس می‌تواند چند صفحه داشته باشد؛ تغییر صفحه، درس تازه نمی‌سازد.","پنل پس‌زمینهٔ صفحه را باز کنید. رنگ آماده یا دلخواه را با الگوی ساده، نقطه‌ای، شطرنجی، خط‌دار یا هاشور ترکیب کنید.","هر صفحه پس‌زمینهٔ خودش را حفظ می‌کند. تغییر پس‌زمینه در ذخیرهٔ درس و خروجی تصویر یا سند هم حفظ می‌شود."],"tipEn":"Try a dark page with light ink, then a light grid page for geometry.","tipFa":"تمرین: یک صفحهٔ تیره با قلم روشن و یک صفحهٔ روشن شطرنجی برای هندسه بسازید."},{"id":"split","titleEn":"Split the board","titleFa":"تقسیم تخته","stepsEn":["Tap Split board and choose one, two, three or four panels. Each panel has an independent view and its own pen and background controls.","Tap the desired panel and draw there. The active panel has a highlighted border. Use the pen/background buttons at that panel’s edge.","When returning to fewer panels, content from removed panels is retained in the first panel rather than discarded."],"stepsFa":["تقسیم تخته را بزنید و یک، دو، سه یا چهار بخش انتخاب کنید. هر بخش نمای مستقل و کنترل قلم و پس‌زمینهٔ خودش را دارد.","روی بخش دلخواه بزنید و همان‌جا رسم کنید. بخش فعال حاشیهٔ مشخص دارد. از دکمه‌های قلم و پس‌زمینه کنار همان بخش استفاده کنید.","وقتی تعداد بخش‌ها را کم کنید، محتوای بخش‌های حذف‌شده در بخش اول حفظ می‌شود و دور ریخته نمی‌شود."],"tipEn":"Try two students writing in differently colored panels. Multi-touch depends on the hardware.","tipFa":"تمرین: دو نفر در دو بخش با رنگ متفاوت بنویسند. تعداد تماس هم‌زمان به سخت‌افزار بستگی دارد."},{"id":"geometry","titleEn":"Ruler, protractor and compass","titleFa":"خط‌کش، نقاله و پرگار","stepsEn":["Open Classroom tools and insert a ruler, set square, protractor or compass. Select the tool to move, rotate or resize it with handles.","Start a pen stroke near a guide edge. While staying near the edge, the stroke snaps to it. The compass offers a circular guide.","Tools remain editable objects. Delete them after drawing if you want a clean diagram."],"stepsFa":["از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را درج کنید. ابزار را انتخاب و با دستگیره‌ها جابه‌جا، بچرخانید یا اندازه‌اش را تغییر دهید.","خط قلم را نزدیک لبهٔ راهنما آغاز کنید. تا زمانی که نزدیک لبه بمانید، خط به آن متصل می‌شود. پرگار راهنمای دایره‌ای دارد.","ابزارها اشیای قابل ویرایش‌اند. اگر نمودار تمیز می‌خواهید، بعد از رسم آن‌ها را حذف کنید."],"tipEn":"Rotate the ruler first, then begin the stroke close to its long edge.","tipFa":"ابتدا خط‌کش را بچرخانید و بعد خط را نزدیک لبهٔ بلند آن آغاز کنید."},{"id":"widgets","titleEn":"Classroom widgets","titleFa":"ابزارهای شناور کلاس","stepsEn":["Open Classroom tools for timer, stopwatch, dice and scoreboard. These are floating tools inside this application.","Move a widget to keep the writing area clear. Use its own controls to start, pause, reset or change values.","Close widgets when finished. They are not Android home-screen widgets and do not draw over other apps."],"stepsFa":["ابزارهای کلاس را برای تایمر، کرنومتر، تاس و امتیازشمار باز کنید. این ابزارها داخل همین برنامه شناورند.","ابزار را جابه‌جا کنید تا فضای نوشتن باز بماند. با کنترل‌های خودش شروع، مکث، بازنشانی یا تغییر مقدار را انجام دهید.","بعد از استفاده آن‌ها را ببندید. این ابزارها ویجت صفحهٔ اصلی اندروید نیستند و روی برنامه‌های دیگر نمایش داده نمی‌شوند."],"tipEn":"Try a countdown beside a two-panel exercise and a scoreboard below it.","tipFa":"تمرین: کنار یک تمرین دوبخشی تایمر و پایین آن امتیازشمار بگذارید."},{"id":"smart","titleEn":"Recognition and language models","titleFa":"تشخیص نوشته و مدل‌های زبان","stepsEn":["The Smart icon opens recognition settings. Choose automatic detection, a handwriting language model or bundled offline Latin OCR.","Select existing writing and use Convert to text in the selection bar. Review and edit the recognized result before using it.","Persian handwriting recognition needs the downloaded language model. Model downloads require access to Google’s model service; basic writing and geometric recognition do not."],"stepsFa":["آیکون هوشمند، تنظیمات تشخیص را باز می‌کند. تشخیص خودکار، مدل دست‌نویس زبان یا تشخیص لاتین آفلاین همراه برنامه را انتخاب کنید.","نوشتهٔ قبلی را انتخاب و از نوار انتخاب، تبدیل به متن را بزنید. نتیجه را قبل از استفاده بررسی و ویرایش کنید.","تشخیص دست‌نویس فارسی به مدل زبان دانلودشده نیاز دارد. دانلود مدل نیازمند دسترسی به سرویس مدل گوگل است؛ نوشتن معمولی و تشخیص هندسی چنین نیازی ندارند."],"tipEn":"If download fails, try another network and use offline Latin OCR where suitable.","tipFa":"اگر دانلود ناموفق بود، شبکهٔ دیگر را امتحان کنید و در موارد مناسب از تشخیص لاتین آفلاین استفاده کنید."},{"id":"math","titleEn":"Calculate, solve and plot","titleFa":"محاسبه، حل و رسم تابع","stepsEn":["Select suitable writing or typed text. In the selection bar choose Calculate / solve, Plot function or Convert units.","Supported maths include arithmetic and simple equations up to degree two in x; plotting uses a numeric function expression. Check recognized text before applying.","For units, use expressions such as 12 inch to cm, 2 kg to g or 32 F to C. The original writing remains when a conversion result is added."],"stepsFa":["نوشتهٔ مناسب یا متن تایپی را انتخاب کنید. از نوار انتخاب، محاسبه و حل، رسم تابع یا تبدیل واحد را بزنید.","عملیات شامل محاسبات عددی و معادله‌های ساده تا درجهٔ دو در متغیر ایکس است؛ نمودار از عبارت تابع عددی استفاده می‌کند. قبل از اعمال، متن تشخیص‌داده‌شده را بررسی کنید.","برای تبدیل واحد، عبارت‌هایی مثل تبدیل ۱۲ اینچ به سانتی‌متر یا ۲ کیلوگرم به گرم بنویسید. عبارت ورودی انگلیسی هم پذیرفته می‌شود. هنگام افزودن نتیجه، نوشتهٔ اصلی حفظ می‌شود."],"tipEn":"This is not a general symbolic maths system; fractions or complex handwriting may need manual correction.","tipFa":"این ابزار سامانهٔ عمومی ریاضی نمادین نیست؛ کسرها یا دست‌نویس پیچیده ممکن است به اصلاح دستی نیاز داشته باشند."},{"id":"import","titleEn":"Images and PDF documents","titleFa":"تصویر و سند","stepsEn":["Open Insert and choose a supported image or PDF through the Android file picker. Select the inserted object to position and resize it.","For a selected PDF, use Previous, Next or its page picker in the selection bar. This changes the page shown inside the object.","Importing a PDF does not automatically unpack every PDF page into separate whiteboard pages. Annotate with a pen layer above the document."],"stepsFa":["درج را باز و تصویر یا سند پشتیبانی‌شده را از انتخابگر فایل اندروید انتخاب کنید. شیء درج‌شده را برای جابه‌جایی و تغییر اندازه انتخاب کنید.","سند را انتخاب و از قبلی، بعدی یا انتخاب شمارهٔ صفحه در نوار انتخاب استفاده کنید. این کار صفحهٔ نمایش‌داده‌شده داخل شیء را عوض می‌کند.","درج سند، همهٔ صفحه‌های آن را خودکار به صفحه‌های جداگانهٔ تخته تبدیل نمی‌کند. برای توضیح، در لایهٔ بالای سند با قلم بنویسید."],"tipEn":"Lock the document or its layer before annotating so it does not move accidentally.","tipFa":"قبل از نوشتن توضیح، سند یا لایه‌اش را قفل کنید تا ناخواسته جابه‌جا نشود."},{"id":"files","titleEn":"Lessons, save and reopen","titleFa":"درس، ذخیره و بازکردن","stepsEn":["Open Lesson files in the top bar. Use New, Open, Save, Recent or Rename. A .vura lesson includes editable pages and attached assets.","Changes are saved locally after a short idle period. Use Save to create your own transferable lesson file in the location you choose.","Before uninstalling, clearing app data or factory-resetting a panel, export important .vura lessons to storage outside the app."],"stepsFa":["فایل درس را از نوار بالا باز کنید. درس تازه، بازکردن، ذخیره، اخیر یا تغییر نام را انتخاب کنید. فایل درس شامل صفحه‌های قابل ویرایش و دارایی‌های پیوست است.","تغییرات بعد از مکث کوتاه، محلی ذخیره می‌شوند. برای ساخت نسخهٔ قابل انتقال در محل دلخواه، ذخیره را بزنید.","قبل از حذف برنامه، پاک‌کردن داده‌ها یا ریست کارخانه، درس‌های مهم را در فضایی بیرون از برنامه ذخیره کنید."],"tipEn":"Export a lesson, reopen it and check that handwriting, colors, layers and backgrounds remain editable.","tipFa":"تمرین: درس را ذخیره و دوباره باز کنید؛ بررسی کنید نوشته، رنگ، لایه و پس‌زمینه قابل ویرایش مانده‌اند."},{"id":"export","titleEn":"Export and local sharing","titleFa":"خروجی و اشتراک محلی","stepsEn":["Open Lesson files for PDF, PNG or JPG export. A .vura file preserves editing; image and PDF exports are for viewing and sharing.","Tap Share in the top bar for local PDF sharing and a QR code. Both devices must be able to reach each other on the same local network.","Keep the sharing window open during download. For people elsewhere, send the exported PDF using a sharing app; a public HTTPS link can be turned into a QR code."],"stepsFa":["فایل درس را برای خروجی سند یا تصویر باز کنید. فایل درس قابلیت ویرایش را حفظ می‌کند؛ خروجی تصویر و سند برای دیدن و اشتراک است.","اشتراک را در نوار بالا بزنید تا سند را در شبکهٔ محلی با کد تصویری به اشتراک بگذارید. دو دستگاه باید در همان شبکه به یکدیگر دسترسی داشته باشند.","هنگام دانلود، پنجرهٔ اشتراک را باز نگه دارید. برای افراد بیرون شبکه، سند خروجی را با برنامهٔ اشتراک بفرستید؛ لینک عمومی امن هم می‌تواند به کد تصویری تبدیل شود."],"tipEn":"A QR image is a link, not the PDF itself. A local address will not work from another network.","tipFa":"کد تصویری یک لینک است، نه خود سند. آدرس محلی از شبکهٔ دیگر باز نمی‌شود."},{"id":"labs","titleEn":"Science labs","titleFa":"آزمایش‌های علمی","stepsEn":["Open the main menu and choose Labs. Search or browse the catalogue, then open a simulation.","Change its sliders and controls. Some simulations have start, pause or restart controls; scroll inside the control area if more settings are below.","Where available, insert a snapshot into the board. The snapshot is an image, not an editable live simulation."],"stepsFa":["از منوی اصلی، آزمایش‌ها را انتخاب کنید. در فهرست جست‌وجو یا مرور و یک شبیه‌سازی باز کنید.","اسلایدرها و کنترل‌ها را تغییر دهید. بعضی آزمایش‌ها شروع، مکث یا شروع دوباره دارند؛ برای تنظیمات بیشتر، بخش کنترل‌ها را اسکرول کنید.","در موارد پشتیبانی‌شده، تصویر لحظه‌ای را به تخته اضافه کنید. این تصویر، شبیه‌سازی زنده و قابل ویرایش نیست."],"tipEn":"These are educational, simplified models; use their visible units and assumptions in class.","tipFa":"این‌ها مدل‌های آموزشی و ساده‌شده‌اند؛ واحدها و فرض‌های نمایش‌داده‌شده را در کلاس توضیح دهید."},{"id":"games","titleEn":"Games and activities","titleFa":"بازی‌ها و فعالیت‌ها","stepsEn":["Open Games from the main menu. Search or filter to choose an activity. Read its instructions before starting.","For two-player activities, choose the available layout and use each player’s side. Touch each player’s area independently where the hardware supports simultaneous contacts.","Use the activity’s restart and round controls. Close the game to return to the lesson without replacing its pages."],"stepsFa":["بازی‌ها را از منوی اصلی باز کنید. با جست‌وجو یا فیلتر، فعالیت را انتخاب و قبل از شروع دستور آن را بخوانید.","در فعالیت دونفره، چیدمان موجود را انتخاب و از سمت هر بازیکن استفاده کنید. اگر سخت‌افزار لمس هم‌زمان را پشتیبانی کند، دو نفر مستقل لمس می‌کنند.","از کنترل شروع دوباره و دورهای بازی استفاده کنید. با بستن بازی، به درس برمی‌گردید و صفحه‌های آن عوض نمی‌شوند."],"tipEn":"Try a short reaction or arithmetic activity between classroom exercises.","tipFa":"بین تمرین‌های کلاس، یک فعالیت کوتاه واکنش یا حساب اجرا کنید."},{"id":"settings","titleEn":"Settings and troubleshooting","titleFa":"تنظیمات و رفع مشکل","stepsEn":["Open Settings to choose Persian or English, interface size, recognition models and input controls. The guide has its own language switch.","If palm erasing is unreliable, use Eraser → calibration and inspect reported contact size. If drawing is blocked, select a visible unlocked layer.","If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling."],"stepsFa":["تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.","اگر پاک‌کردن کف دست قابل اعتماد نیست، از پاک‌کن وارد کالیبراسیون و اندازهٔ گزارش‌شده را بررسی کنید. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.","اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید."],"tipEn":"This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.","tipFa":"این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."}]
+[
+  {
+    "id": "workspace",
+    "titleEn": "Meet your board",
+    "titleFa": "آشنایی با تخته",
+    "stepsEn": [
+      "The top floating bar contains the main menu, lesson files, Undo, Redo and sharing. The left dock contains drawing and classroom tools. Hold an icon to see its name.",
+      "Tap Pen and write in the canvas. Tap the selected Pen icon again to open its settings; the same second-tap gesture opens Eraser settings.",
+      "The bottom page strip manages lesson pages. The corner full-screen button hides or restores the floating toolbars."
+    ],
+    "stepsFa": [
+      "نوار شناور بالا شامل منوی اصلی، فایل درس، بازگردانی، انجام دوباره و اشتراک است. نوار کناری ابزارهای رسم و کلاس را دارد. برای دیدن نام ابزار، آیکون را نگه دارید.",
+      "قلم را انتخاب کنید و روی تخته بنویسید. برای تنظیمات قلم، دوباره روی آیکون قلم انتخاب‌شده بزنید؛ تنظیمات پاک‌کن هم با همین روش باز می‌شود.",
+      "نوار پایین برای مدیریت صفحه‌های درس است. دکمهٔ تمام‌صفحه در گوشه، نوارهای ابزار را پنهان یا دوباره نمایش می‌دهد."
+    ],
+    "tipEn": "Try: draw one line, Undo, Redo, then hide and restore the toolbars.",
+    "tipFa": "تمرین: یک خط بکشید، بازگردانی و انجام دوباره را بزنید و نوار ابزار را پنهان و دوباره نمایان کنید."
+  },
+  {
+    "id": "pen",
+    "titleEn": "Pen, color and highlighter",
+    "titleFa": "قلم، رنگ و هایلایتر",
+    "stepsEn": [
+      "Select Pen, then tap it again. Pick a preset color or open Custom color for the HSV selector and HEX field. Set thickness and stroke style.",
+      "Choose ink, marker, dashed or highlighter in the pen panel. Highlighter is translucent. Thin and broad contacts can have separate appearances.",
+      "Draw a short sample after changing settings. In a split board, each panel has its own pen control near its upper edge."
+    ],
+    "stepsFa": [
+      "قلم را انتخاب و دوباره روی آن بزنید. یک رنگ آماده انتخاب کنید یا برای انتخابگر رنگ و کد رنگ، رنگ دلخواه را باز کنید. ضخامت و سبک خط را تنظیم کنید.",
+      "از پنل قلم، حالت جوهری، ماژیک، خط‌چین یا هایلایتر را انتخاب کنید. هایلایتر نیمه‌شفاف است. تماس باریک و پهن می‌توانند ظاهر جداگانه داشته باشند.",
+      "بعد از تغییر تنظیمات، یک نمونهٔ کوتاه بکشید. در تختهٔ تقسیم‌شده، هر بخش کنترل قلم خودش را نزدیک لبهٔ بالا دارد."
+    ],
+    "tipEn": "Use a broad translucent highlighter over writing, then a thin dark pen for details.",
+    "tipFa": "روی نوشته هایلایتر پهن بکشید و برای جزئیات از قلم باریک و تیره استفاده کنید."
+  },
+  {
+    "id": "dashes",
+    "titleEn": "Dashed strokes",
+    "titleFa": "خط‌چین",
+    "stepsEn": [
+      "Open Pen settings and select Dashed. Set dash length and gap separately; longer gaps create more widely spaced marks.",
+      "Choose color and thickness, draw your line and check its appearance. Dash settings travel with the stroke when you save or export.",
+      "For one panel of a split board, use that panel’s pen settings rather than the general pen panel."
+    ],
+    "stepsFa": [
+      "تنظیمات قلم را باز و خط‌چین را انتخاب کنید. طول خط و فاصله را جدا تنظیم کنید؛ فاصلهٔ بیشتر، خط‌های دورتر از هم می‌سازد.",
+      "رنگ و ضخامت را انتخاب و خطی رسم کنید. تنظیمات خط‌چین همراه خط ذخیره و در خروجی حفظ می‌شوند.",
+      "برای تغییر خط‌چین در یک بخش از تختهٔ تقسیم‌شده، از تنظیمات قلم همان بخش استفاده کنید."
+    ],
+    "tipEn": "Try two lines with the same thickness but different gaps.",
+    "tipFa": "تمرین: دو خط با ضخامت یکسان و فاصله‌های متفاوت بکشید."
+  },
+  {
+    "id": "eraser",
+    "titleEn": "Eraser modes",
+    "titleFa": "حالت‌های پاک‌کن",
+    "stepsEn": [
+      "Select Eraser, then tap it again. Whole stroke / object removes an entire item when touched. Area eraser removes only the region along the eraser path.",
+      "Set the eraser radius. Enable Include objects to also erase text, shapes, images and PDF regions; turn it off to erase handwriting only.",
+      "Undo restores erased content. Locked items and locked or hidden layers are protected from normal editing."
+    ],
+    "stepsFa": [
+      "پاک‌کن را انتخاب و دوباره روی آن بزنید. حالت کل خط یا شیء، تمام مورد لمس‌شده را حذف می‌کند. پاک‌کن ناحیه‌ای فقط قسمت زیر مسیر پاک‌کن را پاک می‌کند.",
+      "شعاع پاک‌کن را تنظیم کنید. گزینهٔ اعمال روی اشیاء، پاک‌کردن متن، شکل، تصویر و بخش‌های سند را هم فعال می‌کند؛ با خاموش‌بودن آن فقط دست‌نویس پاک می‌شود.",
+      "با بازگردانی، محتوا برمی‌گردد. اشیای قفل‌شده و لایه‌های قفل یا پنهان در برابر ویرایش معمولی محافظت می‌شوند."
+    ],
+    "tipEn": "Try Area mode on a long line; only the crossed section should disappear.",
+    "tipFa": "تمرین: در حالت ناحیه‌ای روی وسط یک خط بلند بکشید؛ فقط همان بخش باید پاک شود."
+  },
+  {
+    "id": "palm",
+    "titleEn": "Erase with your palm",
+    "titleFa": "پاک‌کردن با کف دست",
+    "stepsEn": [
+      "Open Eraser settings and enable Use palm as a temporary eraser. You can keep Pen selected and use the palm to erase.",
+      "Open Calibrate palm / test touch. Touch with the pen, a finger and the palm; compare the reported major widths. Set the palm threshold above pen/finger contact and at or below a reliable palm width.",
+      "Apply calibration and test in an empty area. Palm erasing uses the chosen eraser mode and radius. When disabled, recognized palm contacts are rejected."
+    ],
+    "stepsFa": [
+      "تنظیمات پاک‌کن را باز و گزینهٔ کف دست، پاک‌کن موقت باشد را روشن کنید. می‌توانید قلم را انتخاب‌شده نگه دارید و با کف دست پاک کنید.",
+      "تنظیم کف دست یا تست لمس را باز کنید. با قلم، انگشت و کف دست لمس کنید و اندازهٔ گزارش‌شده را مقایسه کنید. آستانهٔ کف دست باید از اندازهٔ قلم و انگشت بیشتر و در محدودهٔ اندازهٔ قابل اعتماد کف دست باشد.",
+      "تنظیم را اعمال و در فضای خالی امتحان کنید. کف دست از حالت و شعاع پاک‌کن استفاده می‌کند. با خاموش‌بودن گزینه، تماس تشخیص‌داده‌شده به‌عنوان کف دست نادیده گرفته می‌شود."
+    ],
+    "tipEn": "If the controller reports zero or identical sizes, this recognition cannot distinguish palm and pen reliably.",
+    "tipFa": "اگر کنترلر اندازهٔ صفر یا یکسان گزارش کند، تشخیص قابل اعتماد کف دست از قلم با این روش ممکن نیست."
+  },
+  {
+    "id": "hold",
+    "titleEn": "Draw, hold, adjust",
+    "titleFa": "رسم، مکث، تنظیم شکل",
+    "stepsEn": [
+      "Draw a reasonably clear line, rectangle, square, triangle, circle or ellipse with Pen. Close polygon outlines near the point where you started.",
+      "Keep the pen down and hold still for about one second. A recognized stroke becomes an adjustable geometric shape.",
+      "Without lifting, move the pen to resize. The first drawing point stays anchored. For a closed outline, movement adjusts the opposite handle relative to the resting endpoint, so the shape does not jump. Lift to finish."
+    ],
+    "stepsFa": [
+      "با قلم، خط، مستطیل، مربع، مثلث، دایره یا بیضی نسبتاً واضح بکشید. خط محیط چندضلعی را نزدیک نقطهٔ شروع ببندید.",
+      "بدون برداشتن قلم، حدود یک ثانیه ثابت نگه دارید. اگر تشخیص موفق باشد، دست‌نویس به شکل هندسی قابل تنظیم تبدیل می‌شود.",
+      "قبل از برداشتن قلم آن را حرکت دهید تا اندازه عوض شود. نقطهٔ شروع ثابت می‌ماند. در شکل بسته، حرکت نسبت به محل مکث، دستگیرهٔ مقابل را تغییر می‌دهد تا شکل ناگهان جابه‌جا نشود. برای پایان قلم را بردارید."
+    ],
+    "tipEn": "Start a square at a bottom or right corner and compare the anchored resizing. Recognition is approximate.",
+    "tipFa": "تمرین: مربع را از گوشهٔ پایین یا راست شروع کنید و ثابت‌ماندن نقطهٔ شروع را امتحان کنید. تشخیص شکل تقریبی است."
+  },
+  {
+    "id": "shapes",
+    "titleEn": "Ready-made shapes",
+    "titleFa": "شکل‌های آماده",
+    "stepsEn": [
+      "Tap Shapes and choose an outline. Drag on the board from the desired anchor towards the opposite edge.",
+      "Square and circle keep equal width and height. Other outlines can stretch. Select an existing shape to resize, rotate, change color, duplicate or delete.",
+      "If you need a precise diagram, use ready-made shapes rather than relying on handwriting recognition."
+    ],
+    "stepsFa": [
+      "شکل‌ها را باز و یک شکل انتخاب کنید. روی تخته از نقطهٔ ثابت دلخواه به سمت گوشهٔ مقابل بکشید.",
+      "مربع و دایره عرض و ارتفاع برابر دارند. شکل‌های دیگر می‌توانند کشیده شوند. شکل قبلی را انتخاب کنید تا اندازه، چرخش یا رنگ آن را تغییر دهید، تکثیر کنید یا حذف کنید.",
+      "برای نمودار دقیق‌تر، از شکل‌های آماده استفاده کنید."
+    ],
+    "tipEn": "Try the same shape dragging in four different directions.",
+    "tipFa": "تمرین: یک شکل را با کشیدن در چهار جهت مختلف رسم کنید."
+  },
+  {
+    "id": "select",
+    "titleEn": "Select and edit",
+    "titleFa": "انتخاب و ویرایش",
+    "stepsEn": [
+      "Tap Select. Tap an item or drag an enclosing selection region. The selection bar appears above the canvas.",
+      "Drag a selected item to move it. Use its handles to resize or rotate. Use the selection bar for color, copying, duplicate, delete and further edits.",
+      "Copy stores a local clipboard; Duplicate immediately creates another copy. Undo reverses edits. For a mind-map node, related child content is handled with the node."
+    ],
+    "stepsFa": [
+      "انتخاب را بزنید. روی یک شیء بزنید یا محدودهٔ انتخاب را دور محتوا بکشید. نوار انتخاب بالای تخته ظاهر می‌شود.",
+      "برای جابه‌جایی، شیء انتخاب‌شده را بکشید. از دستگیره‌ها برای تغییر اندازه و چرخش استفاده کنید. نوار انتخاب، رنگ، کپی، تکثیر، حذف و ویرایش‌های بیشتر را دارد.",
+      "کپی در کلیپ‌بورد داخلی قرار می‌گیرد؛ تکثیر بلافاصله نسخهٔ دوم می‌سازد. بازگردانی ویرایش را برمی‌گرداند. محتوای مرتبط با گرهٔ مایندمپ همراه گره مدیریت می‌شود."
+    ],
+    "tipEn": "Keep locked objects on a separate layer while editing annotations above them.",
+    "tipFa": "هنگام نوشتن توضیح روی محتوا، اشیای ثابت را در لایهٔ جدا قفل کنید."
+  },
+  {
+    "id": "navigation",
+    "titleEn": "Pan and zoom",
+    "titleFa": "جابه‌جایی و بزرگ‌نمایی",
+    "stepsEn": [
+      "The Pan tool navigates the canvas instead of drawing. Drag to move the view and use supported two-contact gestures to zoom.",
+      "In Pen + touch mode, a broad contact can select while the fine tip writes. Two broad contacts navigate. Accurate separation requires contact-size reporting and calibration.",
+      "Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view."
+    ],
+    "stepsFa": [
+      "ابزار جابه‌جایی، نمای تخته را حرکت می‌دهد و چیزی رسم نمی‌کند. برای حرکت نما بکشید و برای بزرگ‌نمایی از حرکت دو تماس پشتیبانی‌شده استفاده کنید.",
+      "در حالت قلم و لمس، تماس پهن می‌تواند انتخاب کند و سر باریک بنویسد. دو تماس پهن برای جابه‌جایی و بزرگ‌نمایی‌اند. تفکیک درست به گزارش اندازهٔ تماس و کالیبراسیون وابسته است.",
+      "جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید."
+    ],
+    "tipEn": "If a finger writes instead of navigating, check the input mode and contact thresholds.",
+    "tipFa": "اگر انگشت به‌جای جابه‌جایی می‌نویسد، حالت ورودی و آستانهٔ اندازهٔ تماس را بررسی کنید."
+  },
+  {
+    "id": "text",
+    "titleEn": "Text and sticky notes",
+    "titleFa": "متن و یادداشت چسبان",
+    "stepsEn": [
+      "Tap Text to insert typed text. Use the insert menu for a sticky note. Enter text, then select the object to edit its appearance or size.",
+      "Sticky notes have their own background color. Text supports editable formatting available in its editor.",
+      "Typed Persian and English text is editable. Handwritten text remains ink until you explicitly run text recognition."
+    ],
+    "stepsFa": [
+      "برای افزودن متن تایپی، متن را بزنید. برای یادداشت چسبان از منوی درج استفاده کنید. متن را وارد و سپس شیء را برای تغییر ظاهر یا اندازه انتخاب کنید.",
+      "یادداشت چسبان رنگ پس‌زمینهٔ خودش را دارد. گزینه‌های قالب‌بندی متن در ویرایشگر آن در دسترس‌اند.",
+      "متن تایپی فارسی و انگلیسی قابل ویرایش است. دست‌نویس تا وقتی تشخیص متن را اجرا نکنید، به‌صورت خط باقی می‌ماند."
+    ],
+    "tipEn": "Use a sticky for a short instruction and ink to annotate around it.",
+    "tipFa": "یک دستور کوتاه را در یادداشت چسبان بنویسید و اطرافش با قلم توضیح اضافه کنید."
+  },
+  {
+    "id": "mindmap",
+    "titleEn": "Mind maps",
+    "titleFa": "مایندمپ",
+    "stepsEn": [
+      "Open Classroom tools and choose Mind map. The starting diagram contains three empty nodes; typing is optional.",
+      "Write from inside a node. On lifting the pen, attached writing can expand the node. Move the node to carry its attached writing with it.",
+      "Select a node. The side plus adds a child; the lower plus adds a sibling. Change the box color from the selection bar. Connectors stay behind boxes."
+    ],
+    "stepsFa": [
+      "ابزارهای کلاس را باز و مایندمپ را انتخاب کنید. نمودار اولیه سه گرهٔ خالی دارد و تایپ‌کردن اجباری نیست.",
+      "نوشتن را از داخل گره شروع کنید. بعد از برداشتن قلم، نوشتهٔ متصل می‌تواند کادر را بزرگ کند. با جابه‌جایی گره، نوشتهٔ متصل همراهش حرکت می‌کند.",
+      "گره را انتخاب کنید. به‌علاوهٔ کنار، فرزند و به‌علاوهٔ پایین، هم‌سطح می‌سازد. رنگ باکس را از نوار انتخاب تغییر دهید. اتصال‌ها زیر باکس‌ها قرار می‌گیرند."
+    ],
+    "tipEn": "Try a central topic and two handwritten branches; move the parent after writing.",
+    "tipFa": "تمرین: یک موضوع اصلی و دو شاخهٔ دست‌نویس بسازید؛ سپس گرهٔ والد را جابه‌جا کنید."
+  },
+  {
+    "id": "layers",
+    "titleEn": "Layers",
+    "titleFa": "لایه‌ها",
+    "stepsEn": [
+      "Open Layers in the dock. Add a layer and select it before drawing. New content belongs to the active layer.",
+      "Use eye, lock and opacity controls to hide, protect or fade content. Hold the layer name to rename it; drag its handle to change the order.",
+      "Select objects before using Move selection here. Layer changes are undoable. Keep a visible, unlocked layer selected when drawing."
+    ],
+    "stepsFa": [
+      "لایه‌ها را از نوار کناری باز کنید. لایهٔ تازه بسازید و قبل از رسم انتخابش کنید. محتوای تازه در لایهٔ فعال قرار می‌گیرد.",
+      "با کنترل نمایش، قفل و کدری، محتوا را پنهان، محافظت یا کم‌رنگ کنید. برای تغییر نام، نام لایه را نگه دارید؛ دستگیره را برای تغییر ترتیب بکشید.",
+      "قبل از انتقال انتخاب به این لایه، اشیاء را انتخاب کنید. تغییرات لایه قابل بازگردانی‌اند. هنگام رسم، لایهٔ نمایان و باز انتخاب کنید."
+    ],
+    "tipEn": "Example: lock a worksheet layer, then draw answers in a second layer.",
+    "tipFa": "نمونه: لایهٔ برگهٔ تمرین را قفل و پاسخ‌ها را در لایهٔ دوم بنویسید."
+  },
+  {
+    "id": "pages",
+    "titleEn": "Pages and backgrounds",
+    "titleFa": "صفحه‌ها و پس‌زمینه",
+    "stepsEn": [
+      "Use the page strip to add and switch pages. A lesson contains multiple pages; switching does not create a new lesson.",
+      "Open the page background panel. Pick a preset or custom color and combine it with plain, dots, grid, ruled or hatch.",
+      "Each page retains its background. Background changes are included in lesson saves and PDF/image exports."
+    ],
+    "stepsFa": [
+      "از نوار صفحه‌ها برای افزودن و تغییر صفحه استفاده کنید. یک درس می‌تواند چند صفحه داشته باشد؛ تغییر صفحه، درس تازه نمی‌سازد.",
+      "پنل پس‌زمینهٔ صفحه را باز کنید. رنگ آماده یا دلخواه را با الگوی ساده، نقطه‌ای، شطرنجی، خط‌دار یا هاشور ترکیب کنید.",
+      "هر صفحه پس‌زمینهٔ خودش را حفظ می‌کند. تغییر پس‌زمینه در ذخیرهٔ درس و خروجی تصویر یا سند هم حفظ می‌شود."
+    ],
+    "tipEn": "Try a dark page with light ink, then a light grid page for geometry.",
+    "tipFa": "تمرین: یک صفحهٔ تیره با قلم روشن و یک صفحهٔ روشن شطرنجی برای هندسه بسازید."
+  },
+  {
+    "id": "split",
+    "titleEn": "Split the board",
+    "titleFa": "تقسیم تخته",
+    "stepsEn": [
+      "Tap Split board and choose one, two, three or four panels. Each panel has an independent view and its own pen and background controls.",
+      "Tap the desired panel and draw there. The active panel has a highlighted border. Use the pen/background buttons at that panel’s edge.",
+      "When returning to fewer panels, content from removed panels is retained in the first panel rather than discarded."
+    ],
+    "stepsFa": [
+      "تقسیم تخته را بزنید و یک، دو، سه یا چهار بخش انتخاب کنید. هر بخش نمای مستقل و کنترل قلم و پس‌زمینهٔ خودش را دارد.",
+      "روی بخش دلخواه بزنید و همان‌جا رسم کنید. بخش فعال حاشیهٔ مشخص دارد. از دکمه‌های قلم و پس‌زمینه کنار همان بخش استفاده کنید.",
+      "وقتی تعداد بخش‌ها را کم کنید، محتوای بخش‌های حذف‌شده در بخش اول حفظ می‌شود و دور ریخته نمی‌شود."
+    ],
+    "tipEn": "Try two students writing in differently colored panels. Multi-touch depends on the hardware.",
+    "tipFa": "تمرین: دو نفر در دو بخش با رنگ متفاوت بنویسند. تعداد تماس هم‌زمان به سخت‌افزار بستگی دارد."
+  },
+  {
+    "id": "geometry",
+    "titleEn": "Ruler, protractor and compass",
+    "titleFa": "خط‌کش، نقاله و پرگار",
+    "stepsEn": [
+      "Open Classroom tools and insert a ruler, set square, protractor or compass. Select the tool to move, rotate or resize it with handles.",
+      "Start a pen stroke near a guide edge. While staying near the edge, the stroke snaps to it. The compass offers a circular guide.",
+      "Tools remain editable objects. Delete them after drawing if you want a clean diagram."
+    ],
+    "stepsFa": [
+      "از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را درج کنید. ابزار را انتخاب و با دستگیره‌ها جابه‌جا، بچرخانید یا اندازه‌اش را تغییر دهید.",
+      "خط قلم را نزدیک لبهٔ راهنما آغاز کنید. تا زمانی که نزدیک لبه بمانید، خط به آن متصل می‌شود. پرگار راهنمای دایره‌ای دارد.",
+      "ابزارها اشیای قابل ویرایش‌اند. اگر نمودار تمیز می‌خواهید، بعد از رسم آن‌ها را حذف کنید."
+    ],
+    "tipEn": "Rotate the ruler first, then begin the stroke close to its long edge.",
+    "tipFa": "ابتدا خط‌کش را بچرخانید و بعد خط را نزدیک لبهٔ بلند آن آغاز کنید."
+  },
+  {
+    "id": "widgets",
+    "titleEn": "Classroom widgets",
+    "titleFa": "ابزارهای شناور کلاس",
+    "stepsEn": [
+      "Open Classroom tools for timer, stopwatch, dice and scoreboard. These are floating tools inside this application.",
+      "Move a widget to keep the writing area clear. Use its own controls to start, pause, reset or change values.",
+      "Close widgets when finished. They are not Android home-screen widgets and do not draw over other apps."
+    ],
+    "stepsFa": [
+      "ابزارهای کلاس را برای تایمر، کرنومتر، تاس و امتیازشمار باز کنید. این ابزارها داخل همین برنامه شناورند.",
+      "ابزار را جابه‌جا کنید تا فضای نوشتن باز بماند. با کنترل‌های خودش شروع، مکث، بازنشانی یا تغییر مقدار را انجام دهید.",
+      "بعد از استفاده آن‌ها را ببندید. این ابزارها ویجت صفحهٔ اصلی اندروید نیستند و روی برنامه‌های دیگر نمایش داده نمی‌شوند."
+    ],
+    "tipEn": "Try a countdown beside a two-panel exercise and a scoreboard below it.",
+    "tipFa": "تمرین: کنار یک تمرین دوبخشی تایمر و پایین آن امتیازشمار بگذارید."
+  },
+  {
+    "id": "smart",
+    "titleEn": "Recognition and language models",
+    "titleFa": "تشخیص نوشته و مدل‌های زبان",
+    "stepsEn": [
+      "The Smart icon opens recognition settings. Choose automatic detection, a handwriting language model or bundled offline Latin OCR.",
+      "Select existing writing and use Convert to text in the selection bar. Review and edit the recognized result before using it.",
+      "Persian handwriting recognition needs the downloaded language model. Model downloads require access to Google’s model service; basic writing and geometric recognition do not."
+    ],
+    "stepsFa": [
+      "آیکون هوشمند، تنظیمات تشخیص را باز می‌کند. تشخیص خودکار، مدل دست‌نویس زبان یا تشخیص لاتین آفلاین همراه برنامه را انتخاب کنید.",
+      "نوشتهٔ قبلی را انتخاب و از نوار انتخاب، تبدیل به متن را بزنید. نتیجه را قبل از استفاده بررسی و ویرایش کنید.",
+      "تشخیص دست‌نویس فارسی به مدل زبان دانلودشده نیاز دارد. دانلود مدل نیازمند دسترسی به سرویس مدل گوگل است؛ نوشتن معمولی و تشخیص هندسی چنین نیازی ندارند."
+    ],
+    "tipEn": "If download fails, try another network and use offline Latin OCR where suitable.",
+    "tipFa": "اگر دانلود ناموفق بود، شبکهٔ دیگر را امتحان کنید و در موارد مناسب از تشخیص لاتین آفلاین استفاده کنید."
+  },
+  {
+    "id": "math",
+    "titleEn": "Calculate, solve and plot",
+    "titleFa": "محاسبه، حل و رسم تابع",
+    "stepsEn": [
+      "Select suitable writing or typed text. In the selection bar choose Calculate / solve, Plot function or Convert units.",
+      "Supported maths include arithmetic and simple equations up to degree two in x; plotting uses a numeric function expression. Check recognized text before applying.",
+      "For units, use expressions such as 12 inch to cm, 2 kg to g or 32 F to C. The original writing remains when a conversion result is added."
+    ],
+    "stepsFa": [
+      "نوشتهٔ مناسب یا متن تایپی را انتخاب کنید. از نوار انتخاب، محاسبه و حل، رسم تابع یا تبدیل واحد را بزنید.",
+      "عملیات شامل محاسبات عددی و معادله‌های ساده تا درجهٔ دو در متغیر ایکس است؛ نمودار از عبارت تابع عددی استفاده می‌کند. قبل از اعمال، متن تشخیص‌داده‌شده را بررسی کنید.",
+      "برای تبدیل واحد، عبارت‌هایی مثل تبدیل ۱۲ اینچ به سانتی‌متر یا ۲ کیلوگرم به گرم بنویسید. عبارت ورودی انگلیسی هم پذیرفته می‌شود. هنگام افزودن نتیجه، نوشتهٔ اصلی حفظ می‌شود."
+    ],
+    "tipEn": "This is not a general symbolic maths system; fractions or complex handwriting may need manual correction.",
+    "tipFa": "این ابزار سامانهٔ عمومی ریاضی نمادین نیست؛ کسرها یا دست‌نویس پیچیده ممکن است به اصلاح دستی نیاز داشته باشند."
+  },
+  {
+    "id": "import",
+    "titleEn": "Images and PDF documents",
+    "titleFa": "تصویر و سند",
+    "stepsEn": [
+      "Open Insert and choose a supported image or PDF through the Android file picker. Select the inserted object to position and resize it.",
+      "For a selected PDF, use Previous, Next or its page picker in the selection bar. This changes the page shown inside the object.",
+      "Importing a PDF does not automatically unpack every PDF page into separate whiteboard pages. Annotate with a pen layer above the document."
+    ],
+    "stepsFa": [
+      "درج را باز و تصویر یا سند پشتیبانی‌شده را از انتخابگر فایل اندروید انتخاب کنید. شیء درج‌شده را برای جابه‌جایی و تغییر اندازه انتخاب کنید.",
+      "سند را انتخاب و از قبلی، بعدی یا انتخاب شمارهٔ صفحه در نوار انتخاب استفاده کنید. این کار صفحهٔ نمایش‌داده‌شده داخل شیء را عوض می‌کند.",
+      "درج سند، همهٔ صفحه‌های آن را خودکار به صفحه‌های جداگانهٔ تخته تبدیل نمی‌کند. برای توضیح، در لایهٔ بالای سند با قلم بنویسید."
+    ],
+    "tipEn": "Lock the document or its layer before annotating so it does not move accidentally.",
+    "tipFa": "قبل از نوشتن توضیح، سند یا لایه‌اش را قفل کنید تا ناخواسته جابه‌جا نشود."
+  },
+  {
+    "id": "pdf-reader",
+    "titleEn": "PDF beside the board",
+    "titleFa": "PDF کنار تخته",
+    "stepsEn": [
+      "In Insert → PDF, choose PDF beside board. Pages scroll vertically and the document cannot be dragged as an object.",
+      "Drag the divider to resize the two sections. The PDF menu also swaps sides, fits width and opens PDF fullscreen.",
+      "Use the Hand button to scroll with one contact. With two tips off (Pen + touch), broad contact scrolls and fine contact writes. With two tips on, both tips use their configured tools. Two contacts navigate and zoom when multitouch is enabled.",
+      "Annotations stay attached to their own page. Use the page number to jump directly to another page. Undo and Redo apply to the active PDF page or board independently."
+    ],
+    "stepsFa": [
+      "از افزودن و سپس PDF، حالت کنار تخته را انتخاب کنید. صفحه‌ها عمودی اسکرول می‌شوند و سند مثل یک شیء جابه‌جا نمی‌شود.",
+      "مرز را بکشید تا اندازهٔ دو بخش عوض شود. از منوی PDF می‌توانید سمت‌ها را عوض کنید، نمایش را متناسب با عرض کنید یا PDF را تمام‌صفحه باز کنید.",
+      "دکمهٔ دست برای اسکرول با یک تماس است. با دو سر قلم خاموش (قلم + لمس)، تماس پهن اسکرول و تماس باریک رسم می‌کند. با دو سر قلم روشن، هر سر طبق تنظیمش کار می‌کند. در صورت فعال‌بودن چندلمسی، دو تماس برای جابه‌جایی و زوم هستند.",
+      "یادداشت‌ها به صفحهٔ خودشان متصل می‌مانند. شمارهٔ صفحه را برای رفتن مستقیم بزنید. بازگردانی و انجام دوباره برای صفحهٔ فعال PDF یا تخته مستقل هستند."
+    ],
+    "tipEn": "The touch controller must report contact width. Calibrate fine/broad thresholds when needed. Unknown widths use the writing tool.",
+    "tipFa": "کنترلر لمس باید عرض تماس را گزارش کند. در صورت نیاز آستانهٔ باریک و پهن را کالیبره کنید. اندازهٔ نامشخص با ابزار نوشتن کار می‌کند."
+  },
+  {
+    "id": "pdf-save",
+    "titleEn": "Save annotations inside PDF",
+    "titleFa": "ذخیرهٔ یادداشت‌ها در PDF",
+    "stepsEn": [
+      "Open the PDF menu and choose Save to original or Save as new PDF. The saved PDF includes your notes and can be opened in other PDF viewers.",
+      "Original replacement needs write permission from the Android file provider. If it cannot be replaced, save a new PDF. If the original changed externally, replacement is blocked to preserve both versions.",
+      "Keep the .vura project for separate editing of ink, shapes, text and masks. In the exported PDF, annotations are a fixed overlay. Original text and page content are retained.",
+      "Eraser defaults to annotations only. Include original PDF content adds reversible white covering; it is not secure redaction. Copy the current page or a selected rectangle to the board from the PDF menu."
+    ],
+    "stepsFa": [
+      "منوی PDF را باز و ذخیره روی همان فایل یا ذخیرهٔ PDF جدید را انتخاب کنید. PDF ذخیره‌شده یادداشت‌ها را دارد و در نمایشگرهای دیگر PDF هم باز می‌شود.",
+      "جایگزینی فایل اصلی به مجوز نوشتن سرویس فایل اندروید نیاز دارد. اگر نشد، PDF جدید ذخیره کنید. اگر فایل اصلی بیرون از برنامه تغییر کرده باشد، جایگزینی متوقف می‌شود تا هر دو نسخه حفظ شوند.",
+      "پروژهٔ برنامه را برای ویرایش جداگانهٔ قلم، شکل، متن و پوشاندن‌ها نگه دارید. یادداشت‌ها در PDF خروجی یک لایهٔ ثابت هستند. متن و صفحات اصلی حفظ می‌شوند.",
+      "پیش‌فرض پاک‌کن فقط یادداشت‌هاست. گزینهٔ محتوای PDF پوشاندن سفید قابل‌بازگشت اضافه می‌کند و حذف محرمانه نیست. از منوی PDF صفحهٔ فعلی یا یک مستطیل از آن را به تخته کپی کنید."
+    ],
+    "tipEn": "Leaving or replacing a PDF with unsaved notes offers Save, Leave without PDF save, and Continue editing. The project still autosaves editable notes.",
+    "tipFa": "هنگام خروج یا تعویض PDF با یادداشت ذخیره‌نشده، ذخیره، خروج بدون ذخیره در PDF و ادامهٔ کار پیشنهاد می‌شوند. پروژه یادداشت‌های قابل‌ویرایش را خودکار ذخیره می‌کند."
+  },
+  {
+    "id": "performance",
+    "titleEn": "Smooth navigation and large lessons",
+    "titleFa": "حرکت روان و پروژه‌های بزرگ",
+    "stepsEn": [
+      "Image dragging uses a separate moving layer. Existing ink is not copied merely to change object properties.",
+      "At distant zoom, the background becomes coarser and ink display uses fewer samples. Full original strokes are retained for editing and export.",
+      "During navigation, a cached preview keeps movement responsive and the full scene refreshes periodically and after release.",
+      "PDF pages render in the background, with visible pages prioritized and nearby pages prepared. Only nearby pages allocate drawing surfaces."
+    ],
+    "stepsFa": [
+      "هنگام حرکت عکس، شیء در لایهٔ متحرک جدا رسم می‌شود. تغییر مشخصات یک شیء باعث کپی نمونه‌های قلم قبلی نمی‌شود.",
+      "در زوم دور، شبکهٔ پس‌زمینه درشت‌تر و نمایش قلم با نمونه‌های کمتر انجام می‌شود. خط‌های اصلی برای ویرایش و خروجی کامل حفظ می‌شوند.",
+      "هنگام جابه‌جایی، پیش‌نمایش آماده به حرکت روان کمک می‌کند و تصویر کامل دوره‌ای و بعد از رهاکردن تازه می‌شود.",
+      "PDF در پس‌زمینه آماده می‌شود؛ صفحه‌های نمایان اولویت دارند و صفحه‌های نزدیک از قبل آماده می‌شوند. فقط صفحه‌های نزدیک، سطح رسم در حافظه دارند."
+    ],
+    "tipEn": "Actual speed depends on the panel, PDF complexity and lesson size. Use touch diagnostics and test with your real teaching files.",
+    "tipFa": "سرعت واقعی به نمایشگر، پیچیدگی PDF و اندازهٔ پروژه بستگی دارد. با فایل‌های واقعی تدریس و ابزار تست لمس بررسی کنید."
+  },
+  {
+    "id": "files",
+    "titleEn": "Lessons, save and reopen",
+    "titleFa": "درس، ذخیره و بازکردن",
+    "stepsEn": [
+      "Open Lesson files in the top bar. Use New, Open, Save, Recent or Rename. A .vura lesson includes editable pages and attached assets.",
+      "Changes are saved locally after a short idle period. Use Save to create your own transferable lesson file in the location you choose.",
+      "Before uninstalling, clearing app data or factory-resetting a panel, export important .vura lessons to storage outside the app."
+    ],
+    "stepsFa": [
+      "فایل درس را از نوار بالا باز کنید. درس تازه، بازکردن، ذخیره، اخیر یا تغییر نام را انتخاب کنید. فایل درس شامل صفحه‌های قابل ویرایش و دارایی‌های پیوست است.",
+      "تغییرات بعد از مکث کوتاه، محلی ذخیره می‌شوند. برای ساخت نسخهٔ قابل انتقال در محل دلخواه، ذخیره را بزنید.",
+      "قبل از حذف برنامه، پاک‌کردن داده‌ها یا ریست کارخانه، درس‌های مهم را در فضایی بیرون از برنامه ذخیره کنید."
+    ],
+    "tipEn": "Export a lesson, reopen it and check that handwriting, colors, layers and backgrounds remain editable.",
+    "tipFa": "تمرین: درس را ذخیره و دوباره باز کنید؛ بررسی کنید نوشته، رنگ، لایه و پس‌زمینه قابل ویرایش مانده‌اند."
+  },
+  {
+    "id": "export",
+    "titleEn": "Export and local sharing",
+    "titleFa": "خروجی و اشتراک محلی",
+    "stepsEn": [
+      "Open Lesson files for PDF, PNG or JPG export. A .vura file preserves editing; image and PDF exports are for viewing and sharing.",
+      "Tap Share in the top bar for local PDF sharing and a QR code. Both devices must be able to reach each other on the same local network.",
+      "Keep the sharing window open during download. For people elsewhere, send the exported PDF using a sharing app; a public HTTPS link can be turned into a QR code."
+    ],
+    "stepsFa": [
+      "فایل درس را برای خروجی سند یا تصویر باز کنید. فایل درس قابلیت ویرایش را حفظ می‌کند؛ خروجی تصویر و سند برای دیدن و اشتراک است.",
+      "اشتراک را در نوار بالا بزنید تا سند را در شبکهٔ محلی با کد تصویری به اشتراک بگذارید. دو دستگاه باید در همان شبکه به یکدیگر دسترسی داشته باشند.",
+      "هنگام دانلود، پنجرهٔ اشتراک را باز نگه دارید. برای افراد بیرون شبکه، سند خروجی را با برنامهٔ اشتراک بفرستید؛ لینک عمومی امن هم می‌تواند به کد تصویری تبدیل شود."
+    ],
+    "tipEn": "A QR image is a link, not the PDF itself. A local address will not work from another network.",
+    "tipFa": "کد تصویری یک لینک است، نه خود سند. آدرس محلی از شبکهٔ دیگر باز نمی‌شود."
+  },
+  {
+    "id": "labs",
+    "titleEn": "Science labs",
+    "titleFa": "آزمایش‌های علمی",
+    "stepsEn": [
+      "Open Discovery lab. The catalog groups experiments by Physics, Chemistry, Mathematics and Statistics; filter by subject or lesson topic and search by name.",
+      "Change its sliders and controls. Some simulations have start, pause or restart controls; scroll inside the control area if more settings are below.",
+      "Where available, insert a snapshot into the board. The snapshot is an image, not an editable live simulation."
+    ],
+    "stepsFa": [
+      "آزمایشگاه را باز کنید. فهرست کارت‌ها بر اساس فیزیک، شیمی، ریاضی و آمار دسته‌بندی شده؛ با موضوع درس فیلتر یا نام آزمایش را جست‌وجو کنید.",
+      "اسلایدرها و کنترل‌ها را تغییر دهید. بعضی آزمایش‌ها شروع، مکث یا شروع دوباره دارند؛ برای تنظیمات بیشتر، بخش کنترل‌ها را اسکرول کنید.",
+      "در موارد پشتیبانی‌شده، تصویر لحظه‌ای را به تخته اضافه کنید. این تصویر، شبیه‌سازی زنده و قابل ویرایش نیست."
+    ],
+    "tipEn": "These are educational, simplified models; use their visible units and assumptions in class.",
+    "tipFa": "این‌ها مدل‌های آموزشی و ساده‌شده‌اند؛ واحدها و فرض‌های نمایش‌داده‌شده را در کلاس توضیح دهید."
+  },
+  {
+    "id": "games",
+    "titleEn": "Games and activities",
+    "titleFa": "بازی‌ها و فعالیت‌ها",
+    "stepsEn": [
+      "Open Games from the main menu. Search or filter to choose an activity. Read its instructions before starting.",
+      "For two-player activities, choose the available layout and use each player’s side. Touch each player’s area independently where the hardware supports simultaneous contacts.",
+      "Use the activity’s restart and round controls. Close the game to return to the lesson without replacing its pages."
+    ],
+    "stepsFa": [
+      "بازی‌ها را از منوی اصلی باز کنید. با جست‌وجو یا فیلتر، فعالیت را انتخاب و قبل از شروع دستور آن را بخوانید.",
+      "در فعالیت دونفره، چیدمان موجود را انتخاب و از سمت هر بازیکن استفاده کنید. اگر سخت‌افزار لمس هم‌زمان را پشتیبانی کند، دو نفر مستقل لمس می‌کنند.",
+      "از کنترل شروع دوباره و دورهای بازی استفاده کنید. با بستن بازی، به درس برمی‌گردید و صفحه‌های آن عوض نمی‌شوند."
+    ],
+    "tipEn": "Try a short reaction or arithmetic activity between classroom exercises.",
+    "tipFa": "بین تمرین‌های کلاس، یک فعالیت کوتاه واکنش یا حساب اجرا کنید."
+  },
+  {
+    "id": "settings",
+    "titleEn": "Settings and troubleshooting",
+    "titleFa": "تنظیمات و رفع مشکل",
+    "stepsEn": [
+      "Open Settings to choose Persian or English, interface size, recognition models and input controls. The guide has its own language switch.",
+      "If palm erasing is unreliable, use Eraser → calibration and inspect reported contact size. If drawing is blocked, select a visible unlocked layer.",
+      "If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling."
+    ],
+    "stepsFa": [
+      "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
+      "اگر پاک‌کردن کف دست قابل اعتماد نیست، از پاک‌کن وارد کالیبراسیون و اندازهٔ گزارش‌شده را بررسی کنید. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.",
+      "اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید."
+    ],
+    "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
+    "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."
+  }
+]

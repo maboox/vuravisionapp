@@ -6,6 +6,8 @@ import android.graphics.*
 import android.os.SystemClock
 import android.view.*
 import android.widget.*
+import android.text.Editable
+import android.text.TextWatcher
 import kotlin.math.*
 
 object Physics {
@@ -45,6 +47,32 @@ object Labs {
         header.addView(context.button(context.s("close")) { d.dismiss() })
         root.addView(header)
         root.addView(context.label(context.s("lab_intro"), 15f, MUTED))
+        val search=context.field(hintValue=context.tr("Search experiments","جست‌وجوی آزمایش‌ها")).apply{setSingleLine(true)}
+        root.addView(search)
+        val filters=context.row();root.addView(context.scrollRow(filters))
+        val topicPicker=Spinner(context)
+        val topicNames=listOf(context.tr("All lesson topics","همهٔ موضوع‌های درس"))+LabCatalog.topics.map{LabCatalog.topicName(context,it)}
+        topicPicker.adapter=ArrayAdapter(context,android.R.layout.simple_spinner_dropdown_item,topicNames)
+        topicPicker.contentDescription=context.tr("Lesson topic","موضوع درس");root.addView(topicPicker)
+        val count=context.label("",13f,MUTED);root.addView(count)
+        val cards=mutableListOf<Pair<String,View>>()
+        var subject="all"
+        fun applyFilter(){
+            val query=search.text.toString().trim()
+            val chosen=topicPicker.selectedItemPosition-1
+            var found=0
+            cards.forEach{(key,card)->
+                val topic=LabCatalog.topic(key)
+                val matches=(subject=="all" || topic.subject==subject) && (chosen<0 || topic===LabCatalog.topics[chosen]) &&
+                    (query.isEmpty() || listOf(context.s(key),context.s("ex_$key"),key,topic.en,topic.fa,LabCatalog.name(context,topic.subject)).any{it.contains(query,true)})
+                card.visibility=if(matches)View.VISIBLE else View.GONE;if(matches)found++
+            }
+            count.text=context.tr("$found experiments","$found آزمایش")
+            for(i in 0 until filters.childCount){val b=filters.getChildAt(i);b.alpha=if(b.tag==subject)1f else .55f}
+        }
+        (listOf("all")+LabCatalog.subjects).forEach{key->
+            filters.addView(context.button(if(key=="all")context.tr("All subjects","همهٔ درس‌ها")else LabCatalog.name(context,key)){subject=key;applyFilter()}.apply{tag=key})
+        }
         val list = context.column()
         val columns=when{context.resources.configuration.screenWidthDp<620->1;context.resources.configuration.screenWidthDp<1200->2;else->3}
         keys.chunked(columns).forEach { chunk ->
@@ -55,6 +83,8 @@ object Labs {
                         pad(18)
                         addView(context.label("${keys.indexOf(key)+1}".padStart(2,'0') + "  /  LAB", 11f, TEAL, true))
                         addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false},LinearLayout.LayoutParams(-1,context.dp(108)))
+                        val topic=LabCatalog.topic(key)
+                        addView(context.label(LabCatalog.name(context,topic.subject)+" · "+LabCatalog.topicName(context,topic),12f,TEAL))
                         addView(context.label(context.s(key), 21f, NAVY, true))
                         addView(context.label(context.s("ex_$key"), 13f, MUTED).apply{maxLines=3})
                     }
@@ -66,6 +96,7 @@ object Labs {
                         open(context, key, insert)
                     }
                 }
+                cards.add(key to card)
                 row.addView(
                     card,
                     LinearLayout.LayoutParams(0,-2,1f).apply {
@@ -79,6 +110,16 @@ object Labs {
             ScrollView(context).apply { addView(list) },
             LinearLayout.LayoutParams(-1, 0, 1f),
         )
+        search.addTextChangedListener(object:TextWatcher{
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){applyFilter()}
+            override fun afterTextChanged(s:Editable?){}
+        })
+        topicPicker.onItemSelectedListener=object:AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(parent:AdapterView<*>?,v:View?,position:Int,id:Long){applyFilter()}
+            override fun onNothingSelected(parent:AdapterView<*>?){}
+        }
+        applyFilter()
         d.setContentView(root)
         d.show()
     }

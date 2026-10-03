@@ -1,0 +1,43 @@
+# VuraVision 1.9.0
+
+## Changes
+
+- PDF import offers a movable board object or a fixed, scrollable PDF workspace beside the board.
+- Drag the divider, swap sides, use PDF fullscreen, jump to a page, fit width or zoom. Only nearby pages allocate board views.
+- Each PDF page uses the existing drawing tools and keeps independent editable annotations and undo history. Board undo does not revert PDF notes.
+- Hand mode scrolls with one contact. With two-tip mode off (Pen + touch on), a broad touch contact scrolls and a fine contact draws. Two contacts navigate and zoom when multitouch is enabled. Unknown contact width needs the explicit Hand button. A separately identified active stylus keeps writing; a hardware eraser keeps erasing.
+- PDF eraser defaults to annotations only. An explicit option also covers original page content with reversible white marks. These marks do not remove searchable confidential content.
+- Save notes into the original PDF (provider permission required), save a new PDF, or keep editable notes in the project. The original PDF page streams/text are retained; notes are appended as a fixed transparent overlay. Keep the .vura project for separate object editing.
+- Before replacing an original file, check whether it changed outside the app, retain a recovery copy, verify written bytes and attempt restoration after a write failure.
+- Closing/replacing a PDF with unsaved notes offers Save, Leave without PDF save and Continue editing. Projects still autosave.
+- Copy the current PDF page or a rectangle to the whiteboard.
+- Image/object transforms render a moving layer instead of rebuilding the full board at each motion. During navigation, cached preview frames refresh periodically and fully after release.
+- Background patterns become coarser at distant zoom. Display paths use fewer samples at distant zoom; source ink and full export paths are retained.
+- PDF rendering uses persistent sessions, a priority queue, bounded bitmap cache, independent image decoding and nearby-page prefetching.
+- Object metadata edits avoid copying all existing point samples. PDF snapshots keep immutable point lists; asset archives avoid redundant compression. Autosave waits for a pause in interaction.
+- Divider dragging uses hardware drawing rather than reallocating page-sized backing bitmaps for every movement.
+- The bilingual guide has 27 chapters and an explicit ordered chapter index, including PDF and performance instructions.
+- All 73 native experiments have a subject and lesson-topic classification, subject/topic filters, localized descriptions and search. The 68-experiment HTML fallback also has a searchable card catalog.
+- Package ID and release signing remain unchanged. No activation or serial-number feature was added.
+
+## Verification in this session
+
+Passed locally:
+
+- JavaScript simulations: 68 experiments at default/minimum/maximum settings (204 cases), 49 games, zero reported failures.
+- HTML catalog: 68 cards, complete lesson mappings, subject filter, lesson filter, search and opening experiments.
+- Offline source structure checks: balanced Kotlin delimiters, XML parsing, 27 matching bilingual guide chapters, 73 unique native experiment mappings.
+
+Added for GitHub Actions, NOT executed locally:
+
+- Nine Android unit tests for project round-trips, source URI isolation, independent undo, legacy import, snapshot stability, broad-touch routing, background density, protected PDF base and complete bilingual catalogs.
+- An Android device test for notes/covering on 0/90/180/270-degree rotated crop boxes, unchanged page count and preserved searchable original text.
+- Existing regression tests remain, with guide count updated from 24 to 27.
+
+Android compilation, lint and device checks could not run here: the Gradle distribution download failed because the configured network proxy was unavailable; this environment also has no Android SDK. Delimiter checks are not a Kotlin compiler. A successful GitHub Actions build and actual-panel testing are still required before distributing the APK. No performance percentage or frame-rate improvement is claimed.
+
+## Build and device verification
+
+Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9-<run number>. Run the workflow manually to also execute Android device PDF tests.
+
+On the panel, compare the same heavy .vura, large image and multi-page PDF against 1.8: drag/resize a large photo, zoom a dense page out/in, scroll a PDF with the broad tip, switch two-tip mode, draw and erase on two pages, resize the divider, undo on both sides, save original/new PDF and reopen both the PDF and .vura project. File providers that do not grant write permission require Save as new PDF.

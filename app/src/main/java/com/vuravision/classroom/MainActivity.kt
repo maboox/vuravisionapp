@@ -17,7 +17,16 @@ import java.util.concurrent.Executors
 import kotlin.math.*
 
 class MainActivity : Activity() {
-    val store = Store()
+    private val projectStore=Store()
+    val store:Store get()=if(::board.isInitialized)board.store else projectStore
+    private lateinit var whiteboard:Board
+    private lateinit var workspaceHost:FrameLayout
+    private var pdfPane:PdfPane?=null
+    private var shownPdf:PdfWorkspaceState?=null
+    private var pendingPdfMode=0
+    private var afterPdfSave:(()->Unit)?=null
+    private var pendingPdfRevision:Long?=null
+    private var pendingPdfAsset:String?=null
     lateinit var board: Board
     lateinit var media: Media
     private lateinit var files: LessonFiles
@@ -66,7 +75,8 @@ class MainActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         media = Media(this)
         files = LessonFiles(media)
-        board = Board(this, store, Renderer(media))
+        board = Board(this, projectStore, Renderer(media))
+        whiteboard=board
         board.profile =
             TouchProfile(
                 true,
@@ -80,6 +90,8 @@ class MainActivity : Activity() {
         board.eraserMode=prefs.getString("eraserMode","stroke")?:"stroke"
         board.eraserRadius=prefs.getFloat("eraserRadius",18f)
         board.eraseObjects=prefs.getBoolean("eraseObjects",true)
+        board.erasePdfContent=prefs.getBoolean("erasePdfContent",false)
+        board.pdfPalmErase=prefs.getBoolean("pdfPalmErase",false)
         board.penColor=prefs.getInt("penColor",NAVY)
         board.highlightColor=prefs.getInt("highlightColor",0xffffcf40.toInt())
         board.penWidth=prefs.getFloat("penWidth",4f)
@@ -96,20 +108,24 @@ class MainActivity : Activity() {
         board.holdTolerance=prefs.getFloat("holdTolerance",4f).coerceIn(2f,12f)
         board.guideSnapEnabled=prefs.getBoolean("guideSnap",true)
         buildUI()
-        media.ready = { handler.post { if(!destroyed)board.sceneChanged() } }
+        media.assetReady = { asset -> handler.post { if(!destroyed){
+            if(projectStore.page.items.any{it.asset==asset})whiteboard.sceneChanged()
+            pdfPane?.mediaReady(asset)
+        } } }
         media.error = { message -> handler.post { status.text = s("error") + ": " + message } }
+        whiteboard.onActivate={activateBoard(whiteboard)}
         board.onSelection = { refreshDock() }
         board.onObjectActions={editSelection()}
         board.onMindAdd={node,sibling->mindNode(node,sibling)}
         board.onSmart={processSmart(it)}
         store.changed = {
             dirty = true
-            if(!board.isCommitting)board.sceneChanged() else board.invalidate()
+            if(!whiteboard.isCommitting)whiteboard.sceneChanged() else whiteboard.invalidate()
             refreshDock()
             refreshTitle()
             status.text = s("saving")
             handler.removeCallbacks(autosave)
-            handler.postDelayed(autosave, 900)
+            handler.postDelayed(autosave, 1800)
         }
         documentId = prefs.getString("current", null) ?: newId()
         prefs.edit().putString("current", documentId).apply()
@@ -136,7 +152,9 @@ class MainActivity : Activity() {
         root=column().apply{fitsSystemWindows=true;setBackgroundColor(PAPER)}
         setContentView(root)
         canvasHost=FrameLayout(this)
-        canvasHost.addView(board,FrameLayout.LayoutParams(-1,-1))
+        workspaceHost=FrameLayout(this)
+        workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1))
+        canvasHost.addView(workspaceHost,FrameLayout.LayoutParams(-1,-1))
         root.addView(canvasHost,LinearLayout.LayoutParams(-1,-1))
         floatingTools=ClassroomWidgets(this,canvasHost)
         fun floating(v:View, gravity:Int, top:Int=12, bottom:Int=12, width:Int=-2, height:Int=-2){
@@ -184,28 +202,29 @@ class MainActivity : Activity() {
     }
 
     private fun refreshTitle() {
-        titleView.text = store.lesson.title.ifBlank { s("lesson") }
+        titleView.text = projectStore.lesson.title.ifBlank { s("lesson") }
         pageLabel.text =
-            "${store.lesson.current+1} / ${store.lesson.pages.size}   ·   ${s("pages")}"
+            "${projectStore.lesson.current+1} / ${projectStore.lesson.pages.size}   ·   ${s("pages")}"
         refreshPages()
     }
 
     private fun refreshDock() {
         if(!::dock.isInitialized)return
+        syncPdfWorkspace()
         if(sidePanelPage!=null && sidePanelPage!==store.page)closeSidePanel()
         if(splitControlsPage!==store.page)refreshSplitControls()
         refreshSelectionBar()
-        val signature="${board.tool}:${store.page.id}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
+        val signature="${board.tool}:${store.page.id}:${board.touchMode}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
         if(signature==dockSignature)return
         dockSignature=signature;dock.removeAllViews()
         listOf("select","pen","erase","pan","shape","text","smart","layers","split","touch","insert","tools").forEach { key ->
             val title=when(key){"layers"->tr("Layers","لایه‌ها");"split"->tr("Split board","تقسیم تخته");"touch"->if(board.touchMode)tr("Pen + touch","قلم + لمس")else tr("Two tips","دو سر قلم");else->s(key)}
             dock.addView(icon(key,title,board.tool==key || key=="touch"&&board.touchMode){
                 when(key){
-                    "layers"->layers();"split"->splitSettings();"text"->addText(false);"shape"->shapes();"smart"->smart()
+                    "layers"->layers();"split"->splitSettings();"text"->addText(false);"shape"->{pdfPane?.writingMode();shapes()};"smart"->{pdfPane?.writingMode();smart()}
                     "touch"->{if(!board.isDrawing){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}}
                     "insert"->insert();"tools"->classroomTools()
-                    else->{if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
+                    else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
                 }
             },LinearLayout.LayoutParams(dp(48),dp(48)))
         }
@@ -238,12 +257,13 @@ class MainActivity : Activity() {
         icon("copy"){clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()};toast(s("copy"))}
         icon("duplicate"){
             val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
-            store.edit{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
+            store.editMetadata{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
         }
         icon("delete"){board.delete()}
         icon("more",s("edit")){editSelection()}
     }
     private fun splitSettings(){
+        if(board!==whiteboard){pdfMenu();return}
         MaterialAlertDialogBuilder(this).setTitle(tr("Split board","تقسیم تخته"))
             .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.panes.size-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show()
     }
@@ -256,11 +276,11 @@ class MainActivity : Activity() {
         store.page.panes.forEachIndexed{i,pane->
             val actions=row().apply{pad(2)};surface(actions)
             actions.addView(icon("pen",tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")){
-                val c=column().apply{pad(12)};palette(c,pane.color){color->store.edit{pane.color=color}}
+                val c=column().apply{pad(12)};palette(c,pane.color){color->store.editMetadata{pane.color=color}}
                 slider(c,tr("Thickness","ضخامت"),pane.penWidth,undoable=true){width->pane.penWidth=width}
                 val styles=row();c.addView(scrollRow(styles))
                 listOf("round" to tr("Ink","جوهری"),"marker" to tr("Marker","ماژیک"),"dashed" to tr("Dashed","خط‌چین"),"highlight" to tr("Highlighter","هایلایتر")).forEach{(key,title)->
-                    styles.addView(button(title){store.edit{pane.penStyle=key};toast(title)})
+                    styles.addView(button(title){store.editMetadata{pane.penStyle=key};toast(title)})
                 }
                 slider(c,tr("Dash length","طول خط‌چین"),pane.dashLength,80,undoable=true){v->pane.dashLength=v}
                 slider(c,tr("Dash gap","فاصلهٔ خط‌چین"),pane.dashGap,80,undoable=true){v->pane.dashGap=v}
@@ -277,24 +297,24 @@ class MainActivity : Activity() {
     }
     private fun refreshPages() {
         if(!::pageStrip.isInitialized)return
-        val signature="${store.lesson.current}:${store.lesson.pages.joinToString{it.id}}:${store.page.panes.size}"
+        val signature="${projectStore.lesson.current}:${projectStore.lesson.pages.joinToString{it.id}}:${projectStore.page.panes.size}"
         if(signature==pageSignature)return
         pageSignature=signature;pageStrip.removeAllViews()
-        pageStrip.addView(icon("previous",s("previous")){switchPage(store.lesson.current-1)})
-        pageStrip.addView(icon("pages",s("pages")+" · ${store.lesson.current+1}/${store.lesson.pages.size}"){pages()})
-        pageStrip.addView(icon("next",s("next")){switchPage(store.lesson.current+1)})
+        pageStrip.addView(icon("previous",s("previous")){switchPage(projectStore.lesson.current-1)})
+        pageStrip.addView(icon("pages",s("pages")+" · ${projectStore.lesson.current+1}/${projectStore.lesson.pages.size}"){pages()})
+        pageStrip.addView(icon("next",s("next")){switchPage(projectStore.lesson.current+1)})
         pageStrip.addView(icon("insert",s("add_page")){addPage()})
-        pageStrip.addView(icon("fit",s("fit")){board.fit()})
+        pageStrip.addView(icon("fit",s("fit")){if(board===whiteboard)board.fit()else pdfPane?.fitWidth()})
         refreshSplitControls()
     }
     private fun switchPage(index:Int) {
-        if(index !in store.lesson.pages.indices || board.isDrawing)return
-        closeSidePanel();store.lesson.current=index;board.clearSelection();board.reset();store.changed()
+        if(index !in projectStore.lesson.pages.indices || board.isDrawing)return
+        activateBoard(whiteboard);closeSidePanel();projectStore.lesson.current=index;whiteboard.clearSelection();whiteboard.reset();projectStore.changed()
     }
     private fun addPage() {
-        if(store.lesson.pages.size>=200 || board.isDrawing)return
-        store.edit{store.lesson.pages.add(store.lesson.current+1,Page());store.lesson.current++}
-        board.clearSelection();board.reset()
+        if(projectStore.lesson.pages.size>=200 || board.isDrawing)return
+        activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,Page());projectStore.lesson.current++}
+        whiteboard.clearSelection();whiteboard.reset()
     }
     private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).apply()}
     private val backgroundSwatches get()=listOf(Color.WHITE,Color.BLACK,0xff172a36.toInt(),PAPER,0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt())
@@ -323,7 +343,7 @@ class MainActivity : Activity() {
         fun refreshPattern(){patternRows.removeAllViews();patterns.chunked(3).forEach{chunk->
             patternRows.addView(row().apply{chunk.forEach{(key,title)->
                 addView(button(title,if(page.background in listOf("white","dark"))key=="plain" else page.background==key){
-                    store.edit{
+                    store.editMetadata{
                         if(page.background=="dark")page.panes.forEach{if(it.background==Color.WHITE)it.background=0xff172a36.toInt()}
                         page.background=key
                     }
@@ -334,7 +354,7 @@ class MainActivity : Activity() {
         refreshPattern()
         c.addView(label(tr("Background color","رنگ پس‌زمینه"),17f,NAVY,true))
         val initial=if(page.background=="dark"&&pane.background==Color.WHITE)0xff172a36.toInt() else pane.background
-        palette(c,initial,background=true){color->store.edit{
+        palette(c,initial,background=true){color->store.editMetadata{
             if(page.background=="dark"){
                 page.panes.forEach{if(it.background==Color.WHITE)it.background=0xff172a36.toInt()}
                 page.background="plain"
@@ -398,14 +418,15 @@ class MainActivity : Activity() {
             if(store.page.id!=pageId){closeSidePanel();return}
             content.removeAllViews()
             content.addView(label(tr("Top layer is in front. Drag the handle to reorder.","لایهٔ بالایی در جلو است. برای جابه‌جایی، دستگیره را بکشید."),13f,MUTED))
-            content.addView(button(tr("Add layer","افزودن لایه")){if(store.page.layers.size<100){store.edit{val l=Layer(name=tr("Layer","لایه")+" ${store.page.layers.size+1}");store.page.layers.add(l);store.page.activeLayerId=l.id};board.clearSelection();refresh()}})
+            content.addView(button(tr("Add layer","افزودن لایه")){if(store.page.layers.size<100){store.editMetadata{val l=Layer(name=tr("Layer","لایه")+" ${store.page.layers.size+1}");store.page.layers.add(l);store.page.activeLayerId=l.id};board.clearSelection();refresh()}})
             store.page.layers.asReversed().forEach { layer ->
+                val isPdfBaseLayer=board.pdfBaseId!=null && store.page.items.any{it.id==board.pdfBaseId && it.layerId==layer.id}
                 val card=column().apply{pad(6);background=rounded(if(layer.id==store.page.activeLayerId)PRIMARY_CONTAINER else SURFACE,dp(10).toFloat(),OUTLINE)}
                 content.addView(card,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))})
                 val head=row();card.addView(head)
                 head.addView(label(layer.name,15f,NAVY,true).apply{
-                    maxLines=2;setOnClickListener{store.edit{store.page.activeLayerId=layer.id};board.clearSelection();refresh()}
-                    setOnLongClickListener{input(tr("Layer name","نام لایه"),layer.name){v->require(v.isNotBlank()&&v.length<=200);store.edit{layer.name=v};refresh()};true}
+                    maxLines=2;setOnClickListener{store.editMetadata{store.page.activeLayerId=layer.id};board.clearSelection();refresh()}
+                    setOnLongClickListener{input(tr("Layer name","نام لایه"),layer.name){v->require(v.isNotBlank()&&v.length<=200);store.editMetadata{layer.name=v};refresh()};true}
                 },LinearLayout.LayoutParams(0,dp(52),1f))
                 val handle=icon("drag",tr("Hold and drag to reorder","نگه دارید و برای جابه‌جایی بکشید")){}
                 handle.setOnLongClickListener{it.startDragAndDrop(ClipData.newPlainText("layer",layer.id),View.DragShadowBuilder(it),layer.id,0)}
@@ -416,27 +437,27 @@ class MainActivity : Activity() {
                         DragEvent.ACTION_DRAG_ENTERED->{v.alpha=.65f;true}
                         DragEvent.ACTION_DRAG_EXITED,DragEvent.ACTION_DRAG_ENDED->{v.alpha=1f;true}
                         DragEvent.ACTION_DROP->{v.alpha=1f;val from=store.page.layers.indexOfFirst{it.id==event.localState};val to=store.page.layers.indexOf(layer)
-                            if(from>=0&&to>=0&&from!=to){store.edit{store.page.layers.add(to,store.page.layers.removeAt(from))};refresh()};true}
+                            if(from>=0&&to>=0&&from!=to){store.editMetadata{store.page.layers.add(to,store.page.layers.removeAt(from))};refresh()};true}
                         else->true
                     }
                 }
                 val actions=row();card.addView(scrollRow(actions))
-                actions.addView(icon(if(layer.visible)"visible"else"hidden",tr("Show / hide","نمایان / پنهان"),!layer.visible){store.edit{layer.visible=!layer.visible};board.clearSelection();refresh()})
-                actions.addView(icon(if(layer.locked)"lock"else"unlock",tr("Lock / unlock","قفل / بازکردن"),layer.locked){store.edit{layer.locked=!layer.locked};board.clearSelection();refresh()})
-                actions.addView(icon("up",tr("Move up","بالاتر")){val i=store.page.layers.indexOf(layer);if(i<store.page.layers.lastIndex){store.edit{java.util.Collections.swap(store.page.layers,i,i+1)};refresh()}})
-                actions.addView(icon("down",tr("Move down","پایین‌تر")){val i=store.page.layers.indexOf(layer);if(i>0){store.edit{java.util.Collections.swap(store.page.layers,i,i-1)};refresh()}})
+                actions.addView(icon(if(layer.visible)"visible"else"hidden",tr("Show / hide","نمایان / پنهان"),!layer.visible){store.editMetadata{layer.visible=!layer.visible};board.clearSelection();refresh()})
+                actions.addView(icon(if(layer.locked)"lock"else"unlock",tr("Lock / unlock","قفل / بازکردن"),layer.locked){store.editMetadata{layer.locked=!layer.locked};board.clearSelection();refresh()})
+                actions.addView(icon("up",tr("Move up","بالاتر")){val i=store.page.layers.indexOf(layer);if(i<store.page.layers.lastIndex){store.editMetadata{java.util.Collections.swap(store.page.layers,i,i+1)};refresh()}})
+                actions.addView(icon("down",tr("Move down","پایین‌تر")){val i=store.page.layers.indexOf(layer);if(i>0){store.editMetadata{java.util.Collections.swap(store.page.layers,i,i-1)};refresh()}})
                 actions.addView(icon("delete",tr("Delete layer","حذف لایه")){
-                    if(store.page.layers.size>1)confirm(tr("Delete layer and its contents?","لایه و محتوایش حذف شود؟")){
-                        store.edit{store.page.items.removeAll{it.layerId==layer.id};store.page.layers.remove(layer);if(store.page.activeLayerId==layer.id)store.page.activeLayerId=store.page.layers.last().id};board.clearSelection();refresh()
+                    if(store.page.layers.size>1 && !isPdfBaseLayer)confirm(tr("Delete layer and its contents?","لایه و محتوایش حذف شود؟")){
+                        store.editMetadata{store.page.items.removeAll{it.layerId==layer.id};store.page.layers.remove(layer);if(store.page.activeLayerId==layer.id)store.page.activeLayerId=store.page.layers.last().id};board.clearSelection();refresh()
                     }
-                }.apply{isEnabled=store.page.layers.size>1;alpha=if(isEnabled)1f else .3f})
+                }.apply{isEnabled=store.page.layers.size>1 && !isPdfBaseLayer;alpha=if(isEnabled)1f else .3f})
                 val opacity=label(tr("Opacity","میزان کدری")+" ${(layer.opacity*100).toInt()}%",13f,MUTED);card.addView(opacity)
                 card.addView(SeekBar(this).apply{max=100;progress=(layer.opacity*100).toInt();contentDescription=tr("Layer opacity","میزان کدری لایه");setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
                     override fun onStartTrackingTouch(v:SeekBar?){store.checkpoint()}
                     override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){if(user){layer.opacity=n/100f;opacity.text=tr("Opacity","میزان کدری")+" $n%";board.sceneChanged()}}
                     override fun onStopTrackingTouch(v:SeekBar?){store.changed();board.clearSelection()}
                 })})
-                if(board.chosen().isNotEmpty()&&!layer.locked&&layer.visible)card.addView(button(tr("Move selection here","انتقال انتخاب به این لایه")){val chosen=board.chosen();store.edit{chosen.forEach{it.layerId=layer.id}};board.clearSelection();refresh()})
+                if(board.chosen().isNotEmpty()&&!layer.locked&&layer.visible)card.addView(button(tr("Move selection here","انتقال انتخاب به این لایه")){val chosen=board.chosen();store.editMetadata{chosen.forEach{it.layerId=layer.id}};board.clearSelection();refresh()})
             }
         }
         refresh();showSidePanel(tr("Layers","لایه‌ها"),content)
@@ -468,6 +489,9 @@ class MainActivity : Activity() {
     private fun eraserSettings(){
         val c=column().apply{pad(20)};palmControls(c);c.addView(label(tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."),14f,MUTED))
         val modes=RadioGroup(this);listOf("stroke" to tr("Whole stroke / object","کل خط / شیء"),"area" to tr("Area eraser","پاک‌کن ناحیه‌ای")).forEach{(key,title)->modes.addView(RadioButton(this).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString("eraserMode",key).apply()}})};c.addView(modes)
+        c.addView(CheckBox(this).apply{text=tr("On PDF: also cover original content","روی PDF: محتوای اصلی هم پوشانده شود");isChecked=board.erasePdfContent;setOnCheckedChangeListener{_,v->board.erasePdfContent=v;prefs.edit().putBoolean("erasePdfContent",v).apply()}})
+        c.addView(CheckBox(this).apply{text=tr("Allow palm erasing inside PDF","پاک‌کردن با کف دست در بخش PDF");isChecked=board.pdfPalmErase;setOnCheckedChangeListener{_,v->board.pdfPalmErase=v;prefs.edit().putBoolean("pdfPalmErase",v).apply()}})
+        c.addView(label(tr("Original PDF content is covered with white and can be restored with Undo. This is not permanent redaction. With two tips off, broad touch scrolls the PDF.","محتوای اصلی PDF با رنگ سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف محرمانه نیست. با دو سر قلم خاموش، تماس پهن PDF را اسکرول می‌کند."),14f,MUTED))
         slider(c,tr("Radius","شعاع"),board.eraserRadius,80){board.eraserRadius=it;prefs.edit().putFloat("eraserRadius",it).apply()}
         c.addView(CheckBox(this).apply{text=tr("Include objects (otherwise ink only)","روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)");isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean("eraseObjects",v).apply()}})
         dialog(s("erase"),ScrollView(this).apply{addView(c)})
@@ -485,7 +509,7 @@ class MainActivity : Activity() {
         val d=dialog(s(if(sticky)"sticky"else"text"),ScrollView(this).apply{addView(c)})
         c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;item.textAlign=listOf("start","center","end")[align.selectedItemPosition];val oldWidth=item.w;val oldHeight=item.h;TextLayout.fit(item)
             if(item.shape=="mindnode"){item.w=maxOf(oldWidth,item.w);item.h=maxOf(oldHeight,item.h)}
-            if(existing==null)board.insert(item)else store.edit{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
+            if(existing==null)board.insert(item)else store.editMetadata{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
     }
     private fun graph(initial:String="y=2x-5",existing:Item?=null){
         val c=column().apply{pad(20)};c.addView(label(tr("Enter y=f(x). Use x^2, sin(x), sqrt(x), abs(x); angles are radians. Separate up to 3 curves with ;. Both axes use the same scale.","تابع را به صورت y=f(x) وارد کنید. x^2، sin(x)، sqrt(x) و abs(x) مجازند؛ زاویه‌ها رادیانی‌اند. حداکثر ۳ تابع را با ; جدا کنید. مقیاس دو محور برابر است."),14f,MUTED))
@@ -493,7 +517,7 @@ class MainActivity : Activity() {
         val examples=row();listOf("y=2x-5","y=x^2","sin(x);cos(x)","sqrt(x)").forEach{v->examples.addView(button(v){field.setText(v)})};c.addView(scrollRow(examples))
         c.addView(label(tr("Half-range on the shorter axis","نیم‌بازهٔ محور کوتاه‌تر"),14f));val domain=field((existing?.domain?:10f).toString());c.addView(domain)
         val d=dialog(s("graph"),ScrollView(this).apply{addView(c)})
-        c.addView(button(tr("Plot","رسم نمودار"),true){try{val text=field.text.toString();require(text.split(';').size in 1..3);text.split(';').forEach{MathTools().compile(it)};val span=domain.text.toString().toFloat();require(span in .1f..1000f);if(existing==null)board.insert(Item(kind="graph",text=text,w=560f,h=400f,domain=span))else store.edit{existing.text=text;existing.domain=span};d.dismiss()}catch(e:Exception){field.error=e.message?:s("error")}})
+        c.addView(button(tr("Plot","رسم نمودار"),true){try{val text=field.text.toString();require(text.split(';').size in 1..3);text.split(';').forEach{MathTools().compile(it)};val span=domain.text.toString().toFloat();require(span in .1f..1000f);if(existing==null)board.insert(Item(kind="graph",text=text,w=560f,h=400f,domain=span))else store.editMetadata{existing.text=text;existing.domain=span};d.dismiss()}catch(e:Exception){field.error=e.message?:s("error")}})
     }
 
     private fun shapes() {
@@ -628,7 +652,7 @@ class MainActivity : Activity() {
         if(!dirty || destroyed)return
         if(board.isDrawing){handler.postDelayed(autosave,1000);return}
         dirty = false
-        val doc = store.lesson.copyForSave()
+        val doc = projectStore.lesson.copyForSave()
         val target = lessonFile()
         worker.execute {
             try {
@@ -652,33 +676,33 @@ class MainActivity : Activity() {
         persist()
         work({
             try {
-                files.read(f.inputStream()) to false
+                files.read(f.inputStream(),true) to false
             } catch (e: Exception) {
                 val backup = File(f.path + ".bak")
                 if (!backup.exists()) throw e
-                files.read(backup.inputStream()) to true
+                files.read(backup.inputStream(),true) to true
             }
         }) { (doc, backup) ->
             if (changeId || backup) {
                 documentId = if (backup) newId() else f.nameWithoutExtension
                 prefs.edit().putString("current", documentId).apply()
             }
-            store.replace(doc)
-            board.clearSelection()
-            board.reset()
+            projectStore.replace(doc)
+            whiteboard.clearSelection()
+            whiteboard.reset()
             if (backup) {status.text = s("restored_backup");toast(s("restored_backup"))}
         }
     }
 
     private fun rename() {
-        input(s("lesson"), store.lesson.title) { value ->
+        input(s("lesson"), projectStore.lesson.title) { value ->
             require(value.isNotBlank())
-            store.edit { store.lesson.title = value.take(100) }
+            projectStore.editMetadata { projectStore.lesson.title = value.take(100) }
         }
     }
 
     private fun menu() {
-        choices(store.lesson.title.ifBlank{"VuraVision"}+" · "+status.text, listOf("lab", "games", "settings", "help")) {
+        choices(projectStore.lesson.title.ifBlank{"VuraVision"}+" · "+status.text, listOf("lab", "games", "settings", "help")) {
             when (it) {
                 0 -> openExplorer(true)
                 1 -> openExplorer(false)
@@ -693,23 +717,30 @@ class MainActivity : Activity() {
     }
 
     private fun fileMenu() {
+        if(projectStore.lesson.pdf!=null){
+            MaterialAlertDialogBuilder(this).setTitle(s("files")).setItems(arrayOf(tr("PDF file and workspace","فایل PDF و فضای مطالعه"),tr("Board projects and exports","پروژه‌ها و خروجی تخته"))){_,i->if(i==0)pdfMenu()else projectFileMenu()}.show()
+        } else projectFileMenu()
+    }
+    private fun projectFileMenu() {
+        activateBoard(whiteboard)
         choices(
             s("files"),
             listOf("new", "open", "save", "recent", "export_pdf", "export_png", "export_jpg", "rename"),
         ) {
             when (it) {
                 0 ->
-                    confirm(s("new_confirm")) {
+                    withPdfExit{confirm(s("new_confirm")) {
                         persist()
                         documentId = newId()
                         prefs.edit().putString("current", documentId).apply()
-                        store.replace(Lesson(title = s("lesson")))
-                        board.clearSelection()
-                        board.reset()
+                        projectStore.replace(Lesson(title = s("lesson")))
+                        whiteboard.clearSelection()
+                        whiteboard.reset()
                     }
-                1 -> pick("application/octet-stream", 101)
+                    }
+                1 -> withPdfExit{pick("application/octet-stream", 101)}
                 2 -> export("vura", true) { createDocument(it, "application/octet-stream") }
-                3 -> recent()
+                3 -> withPdfExit{recent()}
                 4 -> exportChoice("pdf")
                 5 -> exportChoice("png")
                 6 -> exportChoice("jpg")
@@ -801,7 +832,7 @@ class MainActivity : Activity() {
 
     private fun insert() {
         choices(s("insert"), listOf("sticky", "graph", "image", "pdf", "math")) { when(it){
-            0->addText(true);1->graph();2->pick("image/*",102);3->pick("application/pdf",103);4->math()
+            0->addText(true);1->graph();2->pick("image/*",102);3->choosePdfImport();4->math()
         }}
     }
 
@@ -837,14 +868,14 @@ class MainActivity : Activity() {
             when (keys[i]) {
                 "smart" -> smartSettings()
                 "add_branch" -> mindNode(one)
-                "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.edit{store.page.items.add(result)}}}
+                "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.editMetadata{store.page.items.add(result)}}}
                 "delete" -> board.delete()
                 "copy" -> {
                     clipboard = MindMap.group(store.page,items).map { it.deepCopy() }
                     toast(s("copy"))
                 }
                 "duplicate" -> {
-                    store.edit {
+                    store.editMetadata {
                         duplicateItems(MindMap.group(store.page,items))
                             .onEach {
                                 it.apply {
@@ -858,16 +889,16 @@ class MainActivity : Activity() {
                 }
                 "paste" -> paste()
                 "lock" -> {
-                    store.edit { items.forEach { it.locked = !it.locked } }
+                    store.editMetadata { items.forEach { it.locked = !it.locked } }
                 }
                 "front" -> {
-                    store.edit {
+                    store.editMetadata {
                         store.page.items.removeAll(items.toSet())
                         store.page.items.addAll(items)
                     }
                 }
                 "back" -> {
-                    store.edit {
+                    store.editMetadata {
                         store.page.items.removeAll(items.toSet())
                         store.page.items.addAll(0, items)
                     }
@@ -906,7 +937,7 @@ class MainActivity : Activity() {
         if (clipboard.isEmpty()) return
         val c = board.center()
         val bounds = contentBounds(clipboard)
-        store.edit {
+        store.editMetadata {
             val pasted =
                 duplicateItems(clipboard).onEach {
                     it.apply {
@@ -955,23 +986,177 @@ class MainActivity : Activity() {
         val actions=row()
         actions.addView(button("＋ ${s("add_page")}",true){addPage();d.dismiss()})
         actions.addView(button(s("background")){backgroundSettings()})
-        actions.addView(button(s("clear")){confirm(s("clear_confirm")){store.edit{store.page.items.removeAll{!it.locked && store.page.editable(it)}};board.clearSelection();d.dismiss()}})
+        actions.addView(button(s("clear")){confirm(s("clear_confirm")){projectStore.editMetadata{projectStore.page.items.removeAll{!it.locked && projectStore.page.editable(it)}};whiteboard.clearSelection();d.dismiss()}})
         c.addView(scrollRow(actions))
-        store.lesson.pages.forEachIndexed{i,page->
-            val r=row().apply{pad(6);background=rounded(if(i==store.lesson.current)0xffeeebff.toInt()else PAPER,dp(12).toFloat())}
+        projectStore.lesson.pages.forEachIndexed{i,page->
+            val r=row().apply{pad(6);background=rounded(if(i==projectStore.lesson.current)0xffeeebff.toInt()else PAPER,dp(12).toFloat())}
             r.addView(object:View(this){override fun onDraw(canvas:Canvas){board.renderer.page(canvas,page,width,height,false)}}.apply{setOnClickListener{switchPage(i);d.dismiss()}},LinearLayout.LayoutParams(dp(108),dp(64)))
-            r.addView(button("${s("page_short")} ${i+1}",i==store.lesson.current){switchPage(i);d.dismiss()},LinearLayout.LayoutParams(0,dp(50),1f))
+            r.addView(button("${s("page_short")} ${i+1}",i==projectStore.lesson.current){switchPage(i);d.dismiss()},LinearLayout.LayoutParams(0,dp(50),1f))
             r.addView(button("⋯"){choices(s("pages"),listOf("duplicate","move_left","move_right","delete")){action->
-                fun perform(){store.edit{when(action){
-                    0->if(store.lesson.pages.size<200){store.lesson.pages.add(i+1,page.copy(id=newId(),layers=page.layers.map{it.copy()}.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList(),items=duplicateItems(page.items).toMutableList()));store.lesson.current=i+1}
-                    1,2->{val target=i+if(action==1)-1 else 1;if(target in store.lesson.pages.indices){java.util.Collections.swap(store.lesson.pages,i,target);store.lesson.current=target}}
-                    3->if(store.lesson.pages.size>1){store.lesson.pages.removeAt(i);store.lesson.current=store.lesson.current.coerceAtMost(store.lesson.pages.lastIndex)}
-                }};board.clearSelection();board.reset();d.dismiss();pages()}
+                fun perform(){projectStore.editMetadata{when(action){
+                    0->if(projectStore.lesson.pages.size<200){projectStore.lesson.pages.add(i+1,page.copy(id=newId(),layers=page.layers.map{it.copy()}.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList(),items=duplicateItems(page.items).toMutableList()));projectStore.lesson.current=i+1}
+                    1,2->{val target=i+if(action==1)-1 else 1;if(target in projectStore.lesson.pages.indices){java.util.Collections.swap(projectStore.lesson.pages,i,target);projectStore.lesson.current=target}}
+                    3->if(projectStore.lesson.pages.size>1){projectStore.lesson.pages.removeAt(i);projectStore.lesson.current=projectStore.lesson.current.coerceAtMost(projectStore.lesson.pages.lastIndex)}
+                }};whiteboard.clearSelection();whiteboard.reset();d.dismiss();pages()}
                 if(action==3)confirm(s("clear_confirm")){perform()}else perform()
             }})
             c.addView(r,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))})
         }
     }
+
+    private fun activateBoard(target:Board){
+        if(board!==target){target.copyToolsFrom(board);board=target;closeSidePanel()}
+        target.onObjectActions={editSelection()}
+        target.onSmart={processSmart(it)}
+        target.onMindAdd={node,sibling->mindNode(node,sibling)}
+        dockSignature="";refreshDock()
+    }
+    private fun projectChanged(){
+        dirty=true;status.text=s("saving")
+        handler.removeCallbacks(autosave);handler.postDelayed(autosave,1800)
+    }
+    private fun syncPdfWorkspace(){
+        if(!::workspaceHost.isInitialized)return
+        val state=projectStore.lesson.pdf
+        if(shownPdf===state)return
+        shownPdf=state
+        if(board!==whiteboard){whiteboard.copyToolsFrom(board);board=whiteboard}
+        pdfPane?.dispose();pdfPane=null
+        (whiteboard.parent as? ViewGroup)?.removeView(whiteboard)
+        workspaceHost.removeAllViews()
+        if(state==null){workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1));return}
+        val reader=PdfPane(this,state,media,{board},{activateBoard(it)},{projectChanged()},{projectChanged()},{pdfMenu()})
+        pdfPane=reader
+        val split=PdfSplitLayout(this,state,whiteboard,reader){projectChanged()}
+        workspaceHost.addView(split,FrameLayout.LayoutParams(-1,-1).apply{setMargins(dp(78),dp(76),dp(12),dp(76))})
+    }
+    private fun choosePdfImport(){
+        MaterialAlertDialogBuilder(this).setTitle(tr("Open PDF","بازکردن PDF"))
+            .setItems(arrayOf(tr("PDF object on board","PDF به‌صورت شیء روی تخته"),tr("Scrollable PDF beside board","PDF قابل اسکرول کنار تخته"))){_,i->
+                pendingPdfMode=i
+                if(i==1)withPdfExit{pick("application/pdf",103)}else pick("application/pdf",103)
+            }.show()
+    }
+    private fun openPdf(uri:android.net.Uri,flags:Int){
+        try{contentResolver.takePersistableUriPermission(uri,flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))}catch(_:SecurityException){}
+        val mode=pendingPdfMode
+        work({
+            val asset=media.import(requireNotNull(contentResolver.openInputStream(uri)),"pdf")
+            try{
+                if(mode==0){
+                    val item=Item(kind="pdf",asset=asset,pageCount=media.pdfCount(asset),w=560f)
+                    val image=requireNotNull(media.image(item,true));item.h=item.w*image.height/image.width
+                    item to null
+                }else{
+                    val sizes=media.pdfSizes(asset)
+                    val title=contentResolver.query(uri,arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),null,null,null)?.use{c->if(c.moveToFirst())c.getString(0)else "PDF"}?:"PDF"
+                    val state=PdfWorkspaceState(asset=asset,sourceUri=uri.toString(),title=title.take(250),originalHash=PdfExport.hash(media.file(asset).inputStream()))
+                    state.sheets=sizes.mapIndexed{i,(w,h)->
+                        PdfSheet(w,h,Page(background="plain",items=mutableListOf(Item(kind="pdf",asset=asset,pdfPage=i,pageCount=sizes.size,x=0f,y=0f,w=w,h=h,locked=true))))
+                    }.toMutableList()
+                    null to state
+                }
+            }catch(e:Exception){media.file(asset).delete();throw e}
+        }){(item,state)->
+            if(item!=null){activateBoard(whiteboard);whiteboard.insert(item)}
+            else if(state!=null){activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pdf=state};syncPdfWorkspace();projectChanged()}
+        }
+    }
+    private fun pdfMenu(){
+        val state=projectStore.lesson.pdf?:return
+        val choices=arrayOf(tr("Save annotations to the original PDF","ذخیرهٔ یادداشت‌ها روی همان PDF"),tr("Save as a new PDF","ذخیره به‌صورت PDF جدید"),
+            tr("Keep annotations in the project only","یادداشت‌ها فقط در پروژه بمانند"),tr("Hand / writing mode","حالت دست / نوشتن"),
+            tr("Swap PDF and board sides","تعویض سمت PDF و تخته"),tr("PDF fullscreen / split","PDF تمام‌صفحه / کنار تخته"),
+            tr("Fit PDF to width","نمایش PDF متناسب با عرض"),tr("Copy page or region to board","کپی صفحه یا بخشی از آن به تخته"),
+            tr("Export board pages as PDF","خروجی PDF از صفحات تخته"),tr("Close PDF workspace","بستن بخش PDF"))
+        MaterialAlertDialogBuilder(this).setTitle(state.title+if(state.unsaved)" •"else"").setItems(choices){_,i->when(i){
+            0->savePdf(true)
+            1->savePdf(false)
+            2->{persist();toast(tr("Editable annotations are saved in the project","یادداشت‌های قابل‌ویرایش در پروژه ذخیره می‌شوند"))}
+            3->{pdfPane?.toggleHand();toast(if(pdfPane?.hand==true)tr("Hand: drag to scroll","دست: برای اسکرول بکشید")else tr("Writing: use the selected tool","نوشتن: از ابزار انتخاب‌شده استفاده کنید"))}
+            4->{state.onRight=!state.onRight;workspaceHost.requestLayout();projectChanged()}
+            5->{state.fullscreen=!state.fullscreen;workspaceHost.requestLayout();projectChanged()}
+            6->pdfPane?.fitWidth()
+            7->copyPdfPage()
+            8->choices(s("export_pdf"),listOf("current_page","all_pages")){n->export("pdf",n==1){createDocument(it,"application/pdf")}}
+            9->withPdfExit{activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pdf=null}}
+        }}.setNegativeButton(s("close"),null).show()
+    }
+    private fun withPdfExit(action:()->Unit){
+        val state=projectStore.lesson.pdf
+        if(state==null || !state.unsaved){action();return}
+        MaterialAlertDialogBuilder(this).setTitle(tr("PDF has unsaved annotations","یادداشت‌های PDF ذخیره نشده‌اند"))
+            .setMessage(tr("The project keeps editable notes. Choose whether to also save them into a PDF before leaving.","پروژه یادداشت‌های قابل‌ویرایش را نگه می‌دارد. انتخاب کنید قبل از خروج در PDF هم ذخیره شوند یا نه."))
+            .setPositiveButton(tr("Save PDF","ذخیرهٔ PDF")){_,_->
+                MaterialAlertDialogBuilder(this).setTitle(tr("Save PDF","ذخیرهٔ PDF")).setItems(arrayOf(tr("Original file","همان فایل"),tr("New file","فایل جدید"))){_,i->savePdf(i==0,action)}.show()
+            }.setNegativeButton(tr("Leave without PDF save","خروج بدون ذخیره در PDF")){_,_->persist();action()}
+            .setNeutralButton(tr("Continue editing","ادامهٔ کار"),null).show()
+    }
+    private fun savePdf(overwrite:Boolean,then:(()->Unit)?=null){
+        val live=projectStore.lesson.pdf?:return
+        if(board.isDrawing)return
+        if(overwrite && live.sourceUri.isBlank()){
+            MaterialAlertDialogBuilder(this).setTitle(tr("Original file is unavailable","فایل اصلی در دسترس نیست"))
+                .setMessage(tr("This project was imported or its original file permission is unavailable. Save a new PDF.","این پروژه وارد شده یا دسترسی به فایل اصلی موجود نیست. یک PDF جدید ذخیره کنید."))
+                .setPositiveButton(tr("Save new PDF","ذخیرهٔ PDF جدید")){_,_->savePdf(false,then)}.setNegativeButton(s("cancel"),null).show();return
+        }
+        val snapshot=live.deepCopy()
+        work({
+            val output=File(cacheDir,"exports/PDF-${System.currentTimeMillis()}.pdf")
+            PdfExport.write(media,snapshot,output)
+            if(overwrite){
+                val uri=android.net.Uri.parse(snapshot.sourceUri)
+                val backup=File(cacheDir,"exports/Original-${System.currentTimeMillis()}.pdf")
+                requireNotNull(contentResolver.openInputStream(uri)).use{input->backup.outputStream().use{boundedCopy(input,it,128L*1024*1024)}}
+                check(PdfExport.hash(backup.inputStream())==snapshot.originalHash){tr("The original PDF changed outside the app. Save a new file to keep both versions.","فایل اصلی بیرون از برنامه تغییر کرده؛ برای حفظ هر دو نسخه، فایل جدید ذخیره کنید.")}
+                try{
+                    requireNotNull(contentResolver.openOutputStream(uri,"wt")).use{out->output.inputStream().use{it.copyTo(out)};out.flush()}
+                    check(PdfExport.hash(requireNotNull(contentResolver.openInputStream(uri)))==PdfExport.hash(output.inputStream())){"PDF write verification failed"}
+                }catch(e:Exception){
+                    try{requireNotNull(contentResolver.openOutputStream(uri,"wt")).use{out->backup.inputStream().use{it.copyTo(out)}}}catch(_:Exception){}
+                    throw java.io.IOException(tr("Could not replace the original PDF. Recovery copies remain in the app; save a new PDF.","جایگزینی PDF اصلی انجام نشد. نسخه‌های بازیابی داخل برنامه حفظ شده‌اند؛ PDF جدید ذخیره کنید."),e)
+                }
+                output to PdfExport.hash(output.inputStream())
+            }else output to ""
+        }){(output,hash)->
+            if(overwrite){live.savedRevision=snapshot.revision;live.originalHash=hash;projectChanged();toast(s("saved"));then?.invoke()}
+            else{pendingPdfAsset=live.asset;pendingPdfRevision=snapshot.revision;afterPdfSave=then;createDocument(output,"application/pdf")}
+        }
+    }
+    private fun copyPdfPage(){
+        val state=projectStore.lesson.pdf?:return
+        val sheet=state.sheets[state.current]
+        fun copy(region:android.graphics.RectF){
+            val page=sheet.page.copy(items=sheet.page.items.map{it.deepCopy()}.toMutableList())
+            work({
+                val scale=1920f/maxOf(sheet.width,sheet.height)
+                val full=Bitmap.createBitmap((sheet.width*scale).toInt().coerceAtLeast(1),(sheet.height*scale).toInt().coerceAtLeast(1),Bitmap.Config.ARGB_8888)
+                try{
+                    val canvas=Canvas(full);canvas.drawColor(Color.WHITE);canvas.scale(scale,scale);Renderer(media).scene(canvas,page,true)
+                    val left=(region.left*full.width).toInt().coerceIn(0,full.width-1);val top=(region.top*full.height).toInt().coerceIn(0,full.height-1)
+                    val w=((region.right-region.left)*full.width).toInt().coerceIn(1,full.width-left);val h=((region.bottom-region.top)*full.height).toInt().coerceIn(1,full.height-top)
+                    val crop=Bitmap.createBitmap(full,left,top,w,h)
+                    try{Item(kind="image",asset=media.save(crop),w=560f,h=560f*h/w)}finally{if(crop!==full)crop.recycle()}
+                }finally{full.recycle()}
+            }){item->activateBoard(whiteboard);state.fullscreen=false;workspaceHost.requestLayout();whiteboard.insert(item)}
+        }
+        MaterialAlertDialogBuilder(this).setTitle(tr("Copy PDF to board","کپی PDF به تخته"))
+            .setItems(arrayOf(tr("Whole current page","تمام صفحهٔ فعلی"),tr("Select a region","انتخاب بخشی از صفحه"))){_,i->
+                if(i==0)copy(RectF(0f,0f,1f,1f))
+                else work({
+                    val scale=1536f/maxOf(sheet.width,sheet.height)
+                    val bitmap=Bitmap.createBitmap((sheet.width*scale).toInt().coerceAtLeast(1),(sheet.height*scale).toInt().coerceAtLeast(1),Bitmap.Config.ARGB_8888)
+                    val canvas=Canvas(bitmap);canvas.drawColor(Color.WHITE);canvas.scale(scale,scale)
+                    Renderer(media).scene(canvas,sheet.page,true);bitmap
+                }){bitmap->
+                    val selector=PdfRegionSelector(this,bitmap)
+                    MaterialAlertDialogBuilder(this).setTitle(tr("Drag a rectangle","یک مستطیل بکشید")).setView(selector)
+                        .setPositiveButton(s("apply")){_,_->copy(RectF(selector.region))}.setNegativeButton(s("cancel"),null).show().setOnDismissListener{bitmap.recycle()}
+                }
+            }.show()
+    }
+    @Deprecated("Platform compatibility")
+    override fun onBackPressed(){withPdfExit{persist();super.onBackPressed()}}
 
     private fun pick(mime: String, code: Int) {
         try {
@@ -980,6 +1165,8 @@ class MainActivity : Activity() {
                     type = mime
                     if (code == 101) type = "*/*"
                     addCategory(Intent.CATEGORY_OPENABLE)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                    if(code==103)addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 },
                 code,
             )
@@ -991,7 +1178,7 @@ class MainActivity : Activity() {
     @Deprecated("Platform compatibility")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != RESULT_OK) return
+        if (resultCode != RESULT_OK) {afterPdfSave=null;return}
         if(requestCode==105){val f=File(cacheDir,"lab-snapshot.png");if(f.exists()){val bitmap=BitmapFactory.decodeFile(f.path);if(bitmap!=null)insertBitmap(bitmap);f.delete()};return}
         val uri = data?.data ?: return
         when (requestCode) {
@@ -1000,12 +1187,13 @@ class MainActivity : Activity() {
                     persist()
                     documentId = newId()
                     prefs.edit().putString("current", documentId).apply()
-                    store.replace(doc)
-                    board.clearSelection()
-                    board.fit()
+                    projectStore.replace(doc)
+                    activateBoard(whiteboard)
+                    whiteboard.clearSelection()
+                    whiteboard.fit()
                 }
-            102,
-            103 ->
+            103 -> openPdf(uri,data?.flags?:0)
+            102 ->
                 work({
                     val asset =
                         media.import(
@@ -1044,12 +1232,16 @@ class MainActivity : Activity() {
                     toast(s("saved"))
                     pendingExport = null
                     prefs.edit().remove("pendingExport").apply()
+                    projectStore.lesson.pdf?.let{state->if(state.asset==pendingPdfAsset && pendingPdfRevision!=null){state.savedRevision=pendingPdfRevision!!;projectChanged()}}
+                    pendingPdfAsset=null;pendingPdfRevision=null
+                    afterPdfSave?.let{afterPdfSave=null;it()}
                 }
             }
         }
     }
 
     private fun exportChoice(ext: String) {
+        if(ext=="pdf" && projectStore.lesson.pdf!=null){pdfMenu();return}
         if (ext == "pdf")
             choices(s("export_pdf"), listOf("current_page", "all_pages")) { i ->
                 export(ext, i == 1) { createDocument(it, "application/pdf") }
@@ -1058,7 +1250,7 @@ class MainActivity : Activity() {
     }
 
     private fun export(ext: String, all: Boolean, done: (File) -> Unit) {
-        val doc = store.lesson.copyForSave()
+        val doc = projectStore.lesson.copyForSave()
         work({
             val folder = File(cacheDir, "exports").apply { mkdirs() }
             val target = File(folder, "VuraVision-${System.currentTimeMillis()}.$ext")
@@ -1230,7 +1422,7 @@ class MainActivity : Activity() {
         o.color=first.color;o.layerId=first.layerId;o.pane=first.pane;if(o.kind=="text")TextLayout.fit(o)
         o.x=if(mode=="formula")b.right+16 else b.left;o.y=if(mode in listOf("graph","convert"))b.bottom+20 else b.top
         if(mode=="formula" && o.text.contains('\n')){o.x=b.left;o.y=b.bottom+20}
-        store.edit{if(mode=="text")store.page.items.removeAll(original.toSet());store.page.items.add(o)}
+        store.editMetadata{if(mode=="text")store.page.items.removeAll(original.toSet());store.page.items.add(o)}
         board.selected.clear();board.selected.add(o.id);refreshDock()
     }
     private fun smart(){smartSettings()}
@@ -1238,7 +1430,7 @@ class MainActivity : Activity() {
         val chosen=items.filter{store.page.editable(it)&&!it.locked&&it.kind in listOf("ink","text","sticky")};if(chosen.isEmpty())return
         val pageId=store.page.id;val mode=board.smartMode
         fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};if(values.isEmpty()||prefs.getBoolean("smartReview",false))reviewSmart(chosen,values,mode)else try{applySmart(chosen,values.first(),mode)}catch(e:Exception){toast(e.message?:s("error"));reviewSmart(chosen,values,mode)}}
-        if(mode=="shape"){store.edit{chosen.filter{it.kind=="ink"}.forEach{o->ShapeRecognition.convert(o)?.let{store.page.items.remove(o);it.layerId=o.layerId;it.pane=o.pane;store.page.items.add(it)}}};board.clearSelection();return}
+        if(mode=="shape"){store.editMetadata{chosen.filter{it.kind=="ink"}.forEach{o->ShapeRecognition.convert(o)?.let{store.page.items.remove(o);it.layerId=o.layerId;it.pane=o.pane;store.page.items.add(it)}}};board.clearSelection();return}
         if(chosen.all{it.kind!="ink"}){reviewResult(listOf(chosen.joinToString("\n"){it.text}));return}
         val strokes=chosen.filter{it.kind=="ink"};status.text=s("busy")
         fun fallback(e:Exception){lastError=android.util.Log.getStackTraceString(e);status.text=s("error");toast(recognition.failure(this,e));reviewResult(emptyList())}
@@ -1273,7 +1465,7 @@ class MainActivity : Activity() {
         c.addView(button(s("apply"),true){try{
             require(store.page.id==pageId){"Page changed"}
             if(mode!="text" || !keep.isChecked)applySmart(original,text.text.toString(),mode)
-            else {val item=prepared();val first=original.first();item.layerId=first.layerId;item.pane=first.pane;item.color=first.color;require(original.all{v->store.page.items.any{it===v}&&store.page.editable(v)&&!v.locked}){"Selection changed"};val bounds=contentBounds(original);item.x=bounds.left;item.y=bounds.bottom+20;store.edit{store.page.items.add(item)};board.selected.clear();board.selected.add(item.id);refreshDock()}
+            else {val item=prepared();val first=original.first();item.layerId=first.layerId;item.pane=first.pane;item.color=first.color;require(original.all{v->store.page.items.any{it===v}&&store.page.editable(v)&&!v.locked}){"Selection changed"};val bounds=contentBounds(original);item.x=bounds.left;item.y=bounds.bottom+20;store.editMetadata{store.page.items.add(item)};board.selected.clear();board.selected.add(item.id);refreshDock()}
             d.dismiss()
         }catch(e:Exception){text.error=e.message}})
     }
@@ -1359,7 +1551,7 @@ class MainActivity : Activity() {
                 3 -> {
                     if(board.isDrawing)return@choices
                     confirm(tr("Add 300 test strokes? Undo removes them.","۳۰۰ خط آزمایشی اضافه شود؟ با بازگردانی حذف می‌شوند.")) {
-                    store.edit {
+                    store.editMetadata {
                         repeat(300) { n ->
                             store.page.items.add(
                                 Item(
@@ -1437,7 +1629,7 @@ class MainActivity : Activity() {
             if(board.isDrawing)return@button
             d.dismiss();val page=Page(background="plain",panes=mutableListOf(Pane(background=0xff152538.toInt())))
             val points=listOf(90f to 220f,210f to 140f,325f to 235f,425f to 150f,510f to 265f,410f to 360f,250f to 380f)
-            store.edit{
+            store.editMetadata{
                 store.lesson.pages.add(page);store.lesson.current=store.lesson.pages.lastIndex
                 points.zipWithNext().forEach{(a,b)->page.items.add(Item(kind="ink",color=0xff97bdcc.toInt(),width=2f,w=600f,h=460f,inkW=600f,inkH=460f,points=mutableListOf(Point(a.first,a.second),Point(b.first,b.second))))}
                 points.forEach{(x,y)->page.items.add(Item(kind="shape",shape="star",x=x-12,y=y-12,w=24f,h=24f,color=0xffffcc80.toInt(),width=2f))}
@@ -1482,7 +1674,7 @@ class MainActivity : Activity() {
                   else maxOf(parent.y,peers.maxOfOrNull{it.y+it.h+24}?:parent.y)
             listOf(node(x,y,parentId,parent.layerId,parent.pane))
         }
-        store.edit{store.page.items.addAll(added)}
+        store.editMetadata{store.page.items.addAll(added)}
         board.selected.clear();board.selected.add(added.first().id);board.tool="select";board.sceneChanged();refreshDock()
     }
 
@@ -1523,6 +1715,7 @@ class MainActivity : Activity() {
         sharing?.stop()
         shareDialog?.dismiss()
         worker.shutdown()
+        pdfPane?.dispose()
         media.close()
         super.onDestroy()
     }

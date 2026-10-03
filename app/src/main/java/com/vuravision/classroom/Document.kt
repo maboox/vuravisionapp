@@ -111,11 +111,13 @@ data class Lesson(
     var title: String = "",
     var current: Int = 0,
     var pages: MutableList<Page> = mutableListOf(Page()),
+    var pdf: PdfWorkspaceState? = null,
 ) {
     // Committed point lists are immutable; Store.edit detaches them before edits.
-    fun copyForSave()=copy(pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
+    fun copyForSave()=copy(pdf=pdf?.copyForSave(),pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
     fun copyDeep() =
         copy(
+            pdf = pdf?.deepCopy(),
             pages =
                 pages
                     .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList(), layers = it.layers.map { l -> l.copy() }.toMutableList(),panes=it.panes.map{p->p.copy()}.toMutableList()) }
@@ -133,12 +135,13 @@ data class Lesson(
             schema = 3
         }
         require(pages.size in 1..200 && current in pages.indices)
+        pdf?.validate()
         require(pages.sumOf { it.items.size } <= 20000)
         var points = 0
         pages.forEach { page ->
             require(page.panes.size in 1..4)
             require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in listOf("round","dashed","marker","highlight") && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
-            require(page.panes.all{it.zoom.isFinite() && it.zoom in .15f..6f && it.tx.isFinite() && it.ty.isFinite()})
+            require(page.panes.all{it.zoom.isFinite() && it.zoom in .0001f..100000f && it.tx.isFinite() && it.ty.isFinite()})
             require(page.items.all{it.pane in page.panes.indices})
             require(page.layers.size in 1..100)
             require(page.layers.map { it.id }.distinct().size == page.layers.size)
@@ -195,6 +198,8 @@ class Store(var lesson: Lesson = Lesson()) {
         changed()
     }
 
+    /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
+    fun editMetadata(action:()->Unit){checkpoint();action();changed()}
     fun undo() {
         if (past.isNotEmpty()) {
             future.addLast(snapshot())

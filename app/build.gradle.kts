@@ -6,8 +6,8 @@ android {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "1.8.0"
+        versionCode = 12
+        versionName = "1.9.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -30,10 +30,12 @@ android {
     buildFeatures { buildConfig = true }
     testOptions { unitTests.isIncludeAndroidResources = true }
     lint { abortOnError = true }
+    packaging { resources.excludes += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/NOTICE") }
 }
 dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.code.gson:gson:2.12.1")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.zxing:core:3.5.3")

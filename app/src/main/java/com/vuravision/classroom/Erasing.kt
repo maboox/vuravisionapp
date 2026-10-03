@@ -24,13 +24,13 @@ object Erasing {
   val mask=if(old!=null && old.cuts===o.cuts && old.width==o.w && old.height==o.h && old.page==o.pdfPage) old else {
    val combined=Path()
    val stroke=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeCap=Paint.Cap.ROUND;strokeJoin=Paint.Join.ROUND}
-   val start=if(old!=null && old.width==o.w && old.height==o.h && old.page==o.pdfPage && o.cuts.size>=old.cuts.size && o.cuts.take(old.cuts.size)==old.cuts){combined.set(old.path);old.cuts.size}else 0
+   val start=if(old!=null && old.width==o.w && old.height==o.h && old.page==o.pdfPage && o.cuts.size>=old.cuts.size && (old.cuts.isEmpty() || (o.cuts.first()===old.cuts.first() && o.cuts[old.cuts.lastIndex]===old.cuts.last()))){combined.set(old.path);old.cuts.size}else 0
    for(i in start until o.cuts.size){val v=o.cuts[i];if(v.pdfPage>=0 && v.pdfPage!=o.pdfPage)continue
     val path=Path();val fill=Path();stroke.strokeWidth=v.radius*2
     if(hypot(v.bx-v.ax,v.by-v.ay)<.001f)fill.addCircle(v.ax,v.ay,v.radius,Path.Direction.CW)
     else{path.moveTo(v.ax,v.ay);path.lineTo(v.bx,v.by);stroke.getFillPath(path,fill)}
     fill.transform(Matrix().apply{setScale(o.w/v.basisW,o.h/v.basisH)})
-    combined.op(fill,Path.Op.UNION)
+    combined.addPath(fill)
    }
    Mask(o.cuts,o.w,o.h,o.pdfPage,combined).also{masks.put(o.id,it);maskBuilds++}
   }
