@@ -1,4 +1,8 @@
-# VuraVision 1.9.1
+# VuraVision 1.9.2
+
+## 1.9.2 unit-test compilation correction
+
+The second supplied Actions log confirms main debug/release Kotlin compilation proceeded successfully, then unit-test compilation failed because Release19Test imported AndroidX ApplicationProvider without a unit-test dependency on androidx.test:core. The test now obtains its Context lazily from Robolectric RuntimeEnvironment, matching existing tests and using the already-declared Robolectric dependency. All nine test cases remain enabled. versionCode is 14 and workflow artifacts identify 1.9.2. No complete local Android build was run; GitHub Actions must confirm this correction.
 
 ## 1.9.1 build correction
 
@@ -42,6 +46,6 @@ Android compilation, lint and device checks could not run here: the Gradle distr
 
 ## Build and device verification
 
-Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.1-<run number>. Run the workflow manually to also execute Android device PDF tests.
+Replace the repository root with this ZIP's contents, including .github. The four existing ANDROID signing secrets are still used. Push runs unit tests, release lint, signed APK assembly and APK verification; the artifact is VuraVision-1.9.2-<run number>. Run the workflow manually to also execute Android device PDF tests.
 
 On the panel, compare the same heavy .vura, large image and multi-page PDF against 1.8: drag/resize a large photo, zoom a dense page out/in, scroll a PDF with the broad tip, switch two-tip mode, draw and erase on two pages, resize the divider, undo on both sides, save original/new PDF and reopen both the PDF and .vura project. File providers that do not grant write permission require Save as new PDF.

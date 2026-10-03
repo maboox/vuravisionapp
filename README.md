@@ -1,4 +1,4 @@
-# VuraVision 1.9.1
+# VuraVision 1.9.2
 
 Offline-first Android interactive whiteboard, with Persian/English UI, editable lesson projects, native classroom experiments and games.
 
@@ -19,7 +19,7 @@ Extract this ZIP directly into the repository root, including `.github`. Do not 
 | ANDROID_KEY_ALIAS | Key alias |
 | ANDROID_KEY_PASSWORD | Key password |
 
-Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.9.1-<run>`; it contains `VuraVision-1.9.1.apk` and `SHA256SUMS.txt`. Pull-request builds are unsigned-for-production debug builds. Production builds fail if signing settings are absent. The package ID and signing mechanism are unchanged; there is no activation/serial-number feature.
+Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.9.2-<run>`; it contains `VuraVision-1.9.2.apk` and `SHA256SUMS.txt`. Pull-request builds are unsigned-for-production debug builds. Production builds fail if signing settings are absent. The package ID and signing mechanism are unchanged; there is no activation/serial-number feature.
 
 Manual workflow runs also execute Android device PDF checks on an emulator. Reports are separate artifacts. Android SDK 35 and JDK 17 are used. The Gradle Wrapper is included and invoked as `bash ./gradlew`.
 

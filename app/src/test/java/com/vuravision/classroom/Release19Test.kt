@@ -3,12 +3,12 @@ package com.vuravision.classroom
 import android.content.Context
 import android.graphics.*
 import android.view.MotionEvent
-import androidx.test.core.app.ApplicationProvider
 import com.google.gson.Gson
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -16,7 +16,7 @@ import java.io.ByteArrayOutputStream
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])
 class Release19Test {
-    private val context:Context=ApplicationProvider.getApplicationContext()
+    private val context: Context get() = RuntimeEnvironment.getApplication()
     private fun state():PdfWorkspaceState {
         val asset="source.pdf"
         val sheets=(0..1).map{i->PdfSheet(300f,400f,Page(background="plain",items=mutableListOf(Item(kind="pdf",asset=asset,pdfPage=i,pageCount=2,w=300f,h=400f,locked=true))))}.toMutableList()
