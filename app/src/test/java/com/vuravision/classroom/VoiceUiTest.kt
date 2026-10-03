@@ -25,6 +25,34 @@ class VoiceUiTest {
     }
     @Test fun englishVoiceControlsRenderAndRemainVisibleInFocusMode(){render("en")}
     @Test fun persianVoiceControlsRenderAndRemainVisibleInFocusMode(){render("fa")}
+    @Test fun keySettingsAcceptLongPastedCredentialsBeforeSchedulingEncryption(){
+        for(language in listOf("en","fa")){
+            context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
+            val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
+            try{
+                val a=controller.get();var scheduled=false;var changed=false
+                VoiceSettingsUi(a).connection(VoiceKeyStore(a,"voice_ui_accept_test"),java.util.concurrent.Executor{scheduled=true}){changed=true}
+                val dialog=ShadowDialog.getLatestDialog();val controls=views(dialog.window!!.decorView)
+                val input=controls.filterIsInstance<EditText>().single()
+                input.setText("\u200F\"new-format:"+"abc-_.+=/".repeat(40)+"\"\u200E")
+                controls.filterIsInstance<Button>().first{it.text.toString() in listOf("Save key","ذخیرهٔ کلید")}.performClick()
+                assertTrue("$language must schedule encryption",scheduled);assertTrue(changed)
+                assertNull(input.error);assertEquals(View.TEXT_DIRECTION_LTR,input.textDirection)
+                dialog.dismiss()
+            }finally{controller.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+        }
+    }
+    @Test fun keySettingsRejectLinksBeforeSchedulingEncryption(){
+        val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
+        try{
+            val a=controller.get();var scheduled=false
+            VoiceSettingsUi(a).connection(VoiceKeyStore(a,"voice_ui_reject_test"),java.util.concurrent.Executor{scheduled=true}){}
+            val dialog=ShadowDialog.getLatestDialog();val controls=views(dialog.window!!.decorView)
+            val input=controls.filterIsInstance<EditText>().single();input.setText("https://aistudio.google.com/apikey")
+            controls.filterIsInstance<Button>().first{it.text.toString() in listOf("Save key","ذخیرهٔ کلید")}.performClick()
+            assertFalse(scheduled);assertNotNull(input.error);dialog.dismiss()
+        }finally{controller.pause().stop().destroy()}
+    }
     private fun render(language:String){
         context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup()

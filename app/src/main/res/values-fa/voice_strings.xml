@@ -9,7 +9,7 @@
     <string name="voice_permission_needed">اجازهٔ میکروفن لازم است. اگر پنجرهٔ اجازه باز نمی‌شود، از تنظیمات برنامه در اندروید اجازه بدهید.</string>
     <string name="voice_key_saved">کلید API به‌صورت رمزگذاری‌شده روی این دستگاه ذخیره شده است.</string>
     <string name="voice_key_missing">ابتدا کلید API از Google AI Studio را وارد کنید.</string>
-    <string name="voice_key_invalid">خود کلید API را وارد کنید؛ لینک یا کد فعال‌سازی نباشد.</string>
+    <string name="voice_key_invalid">کلید API کامل را بدون لینک، فاصلهٔ داخلی یا شکست خط وارد کنید.</string>
     <string name="voice_key_storage_error">ذخیره یا خواندن امن کلید ممکن نشد. کلید را حذف و دوباره وارد کنید.</string>
     <string name="voice_key_or_quota">گوگل دسترسی را رد کرد یا سهمیه تمام شده است. کلید، دسترسی پروژه و سهمیهٔ Live API را در AI Studio بررسی کنید.</string>
     <string name="voice_model_error">مدل Live در دسترس نیست یا تنظیمات آن معتبر نیست. شناسهٔ مدل را در تنظیمات مخفی دستیار بررسی کنید.</string>

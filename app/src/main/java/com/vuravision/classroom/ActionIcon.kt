@@ -34,6 +34,7 @@ class ActionIcon(context:Context, val symbol:String, title:String, action:()->Un
    "shape"->{line(12f,3f,22f,20f);line(22f,20f,2f,20f);line(2f,20f,12f,3f)}
    "formula"->{line(5f,8f,19f,8f);line(5f,16f,19f,16f)}
    "graph"->{line(3f,3f,3f,21f);line(3f,21f,22f,21f);val path=Path();path.moveTo(5f,17f);path.cubicTo(11f,17f,11f,4f,20f,5f);c.drawPath(path,p)}
+   "search"->{c.drawCircle(10f,10f,6f,p);line(14.5f,14.5f,21f,21f)}
    "previous","next"->{val sign=if(symbol=="next")1 else -1;line(12f-sign*3,5f,12f+sign*4,12f);line(12f+sign*4,12f,12f-sign*3,19f)}
    else->{p.style=Paint.Style.FILL;for(i in 0..2)c.drawCircle(5f+i*7,12f,1.8f,p)}
   };c.restore()

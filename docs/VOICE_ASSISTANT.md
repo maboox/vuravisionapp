@@ -22,12 +22,16 @@ A PixelCopy surface capture is asynchronous, with at most one frame in flight an
 
 ## Key and data handling
 
+Version 1.10.1 treats a key as an opaque credential rather than requiring 20–200 characters from a fixed alphabet. Input is left-to-right in both interface languages. Boundary whitespace/direction marks and matching surrounding copy quotes are removed; interior bytes are never rewritten. Empty input retains an existing key in the connection UI. Obvious URLs, interior whitespace/control characters, non-ASCII header values and values above an 8192-character header budget are rejected locally. Safe credential syntax does not prove Google validity or model access. The UI and encrypted storage share the same normalizer/validator.
+
+
 The API key is encrypted with a per-device Android Keystore AES-GCM key in private preferences. The app has backup disabled. The key is never in source code, lesson files, PDFs, diagnostics or WebSocket URLs. The entry field does not reveal a previously saved key; leaving it empty preserves that key and Delete key removes it. Audio, frames and resume tokens are transient and not saved to disk. This direct-key approach is for user-supplied keys; fleet deployments using a centrally owned key should use a backend issuing short-lived credentials instead.
 
 Google free-tier model access and quotas are project-specific and can change. The normal connection page tells users that internet, available Live access and quota are required. Google documents different data-use terms for free and paid tiers; deployment owners should choose the suitable account/tier.
 
 ## Official protocol sources (checked 2026-10-03)
 
+- https://ai.google.dev/gemini-api/docs/api-key
 - https://ai.google.dev/api/live
 - https://ai.google.dev/gemini-api/docs/live-api
 - https://ai.google.dev/gemini-api/docs/live-api/capabilities

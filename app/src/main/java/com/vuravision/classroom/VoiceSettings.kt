@@ -32,11 +32,12 @@ class VoiceKeyStore(context:Context,scope:String="vura_voice_secret") {
         return String(cipher.doFinal(Base64.decode(data.getString("data"),Base64.NO_WRAP)),Charsets.UTF_8)
     }
     fun save(value:String){
-        if(value.isBlank()){clear();return}
-        require(value.length in 20..200 && value.matches(Regex("[A-Za-z0-9_-]+"))){"Invalid API key"}
+        val credential=VoiceApiKey.normalize(value)
+        if(credential.isEmpty()){clear();return}
+        require(VoiceApiKey.isAcceptable(credential)){"Invalid API key input"}
         val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key())
         val data=JSONObject().put("iv",Base64.encodeToString(cipher.iv,Base64.NO_WRAP))
-            .put("data",Base64.encodeToString(cipher.doFinal(value.toByteArray(Charsets.UTF_8)),Base64.NO_WRAP))
+            .put("data",Base64.encodeToString(cipher.doFinal(credential.toByteArray(Charsets.UTF_8)),Base64.NO_WRAP))
         check(prefs.edit().putString("key",data.toString()).commit())
     }
     fun hasKey()=prefs.contains("key")

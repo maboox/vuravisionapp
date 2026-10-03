@@ -9,7 +9,7 @@
     <string name="voice_permission_needed">Microphone permission is required. Allow it in Android app settings if the permission dialog no longer appears.</string>
     <string name="voice_key_saved">An encrypted API key is saved on this device.</string>
     <string name="voice_key_missing">Enter a Google AI Studio API key first.</string>
-    <string name="voice_key_invalid">Enter the API key itself, not a link or activation code.</string>
+    <string name="voice_key_invalid">Paste the complete API key without a URL, internal spaces or line breaks.</string>
     <string name="voice_key_storage_error">The key could not be securely saved or read. Delete it and enter it again.</string>
     <string name="voice_key_or_quota">Google rejected access or the quota was reached. Check your key, project access and Live API quota in AI Studio.</string>
     <string name="voice_model_error">The Live model is unavailable or its configuration is invalid. Check the model ID in hidden assistant settings.</string>

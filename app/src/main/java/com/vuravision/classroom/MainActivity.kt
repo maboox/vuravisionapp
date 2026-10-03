@@ -59,6 +59,7 @@ class MainActivity : Activity() {
     private var lastError = ""
     private var destroyed = false
     private var voiceAssistant:VoiceAssistant?=null
+    private var googleSearch:GoogleSearchWindow?=null
     private var voiceScreen:VoiceScreen?=null
     private lateinit var voiceButton:com.google.android.material.button.MaterialButton
     private var voiceStarting=false
@@ -264,6 +265,7 @@ class MainActivity : Activity() {
             icon("formula",tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
             selectionBar.addView(this.icon("convert",tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())})
             icon("graph",tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
+            icon("search",tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
         }
         if(items.singleOrNull()?.shape=="mindnode"){
             val node=items.single()
@@ -1429,7 +1431,7 @@ class MainActivity : Activity() {
     private var smartSource="auto"
     private fun smartSettings(){
         val c=column().apply{pad(20)}
-        c.addView(label(tr("Select ink, then use the actions above it to recognize text, solve, convert units, or recognize shapes. Drawing a loop is not needed.","دست‌نویس را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست."),14f,MUTED))
+        c.addView(label(tr("Select writing, then use the actions above it to recognize text, solve, convert units, search Google, or recognize shapes. Drawing a loop is not needed.","نوشته را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد، جستجو در گوگل یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست."),14f,MUTED))
         val keys=listOf("auto","offline","en-US","fa")
         val source=Spinner(this).apply{adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Auto · English / Persian","خودکار · انگلیسی / فارسی"),tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
         val review=Switch(this).apply{text=tr("Review before applying","بررسی نتیجه قبل از اعمال");isChecked=prefs.getBoolean("smartReview",false)};c.addView(review)
@@ -1458,7 +1460,7 @@ class MainActivity : Activity() {
     private fun processSmart(items:List<Item>){
         val chosen=items.filter{store.page.editable(it)&&!it.locked&&it.kind in listOf("ink","text","sticky")};if(chosen.isEmpty())return
         val pageId=store.page.id;val mode=board.smartMode
-        fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};if(values.isEmpty()||prefs.getBoolean("smartReview",false))reviewSmart(chosen,values,mode)else try{applySmart(chosen,values.first(),mode)}catch(e:Exception){toast(e.message?:s("error"));reviewSmart(chosen,values,mode)}}
+        fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};if(mode=="search"){reviewGoogleSearch(values);return};if(values.isEmpty()||prefs.getBoolean("smartReview",false))reviewSmart(chosen,values,mode)else try{applySmart(chosen,values.first(),mode)}catch(e:Exception){toast(e.message?:s("error"));reviewSmart(chosen,values,mode)}}
         if(mode=="shape"){store.editMetadata{chosen.filter{it.kind=="ink"}.forEach{o->ShapeRecognition.convert(o)?.let{store.page.items.remove(o);it.layerId=o.layerId;it.pane=o.pane;store.page.items.add(it)}}};board.clearSelection();return}
         if(chosen.all{it.kind!="ink"}){reviewResult(listOf(chosen.joinToString("\n"){it.text}));return}
         val strokes=chosen.filter{it.kind=="ink"};status.text=s("busy")
@@ -1497,6 +1499,12 @@ class MainActivity : Activity() {
             else {val item=prepared();val first=original.first();item.layerId=first.layerId;item.pane=first.pane;item.color=first.color;require(original.all{v->store.page.items.any{it===v}&&store.page.editable(v)&&!v.locked}){"Selection changed"};val bounds=contentBounds(original);item.x=bounds.left;item.y=bounds.bottom+20;store.editMetadata{store.page.items.add(item)};board.selected.clear();board.selected.add(item.id);refreshDock()}
             d.dismiss()
         }catch(e:Exception){text.error=e.message}})
+    }
+
+    private fun reviewGoogleSearch(candidates:List<String>){
+        GoogleSearchReview(this).show(candidates,{query->
+            googleSearch?.close();googleSearch=GoogleSearchWindow(this,canvasHost).also{it.open(query)}
+        },{query,adjacent->googleSearch?.close();googleSearch=null;GoogleSearchBrowser.open(this,query,adjacent)})
     }
 
     private fun models(){
@@ -1776,6 +1784,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         stopVoice()
+        googleSearch?.close();googleSearch=null
         super.onPause()
     }
 
@@ -1847,6 +1856,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        googleSearch?.close();googleSearch=null
         stopVoice()
         voiceWorker.shutdown()
         artPlayer?.stop()

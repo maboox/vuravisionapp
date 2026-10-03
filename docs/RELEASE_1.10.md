@@ -1,3 +1,11 @@
+# 1.10.1 Google search and API-key input fix
+
+The connection dialog and encrypted key store now share opaque-credential handling. Valid-looking input is no longer rejected by the old 20–200-character alphanumeric-only assumption. Copy boundaries (whitespace, directional marks, paired quotes) are normalized; interior bytes are preserved and unsafe header values/obvious URLs are rejected. The key field uses left-to-right text direction in Persian too. Google remains responsible for credential validity, permissions, model access and quota. Package identity and production signing are unchanged; versionCode is 18.
+
+A Search Google action now reuses the existing recognition pipeline for selected ink, text and sticky notes. It always requires review before sending a query and never replaces or annotates the source selection. The default in-app window supports dragging, resizing, back/reload, browser handoff and closing; one WebView is created on demand and destroyed on close/activity pause. A separate browser option can request Android adjacent launch. This does not force another app into manufacturer-specific floating/PiP mode. See GOOGLE_SEARCH.md for use and limitations.
+
+Regression coverage includes long/punctuated credentials, paste artifacts, internal whitespace/header injection, links, bounds and both-language dialog submission. Device Keystore coverage now includes normalized long credentials and rejection without replacing the saved key. Real authenticated Google access requires testing on the customer installation; no customer secret was used during development.
+
 # VuraVision 1.10.0
 
 The whiteboard gains a separate foreground voice assistant, with a Google AI Studio key entered in normal settings. It talks in Persian about the visible board/PDF, greets as VuraVision's educational assistant, defaults to brief, warm and polite answers, and guides before giving explicitly requested final answers. Administrator behavior settings are reached through the existing hidden guide/Engineering entry. They include tone, answer length, voice, supplementary instructions, known panel facts, Live model ID, screen refresh interval and local session duration.

@@ -22,6 +22,12 @@ class VoiceKeyStoreDeviceTest {
             assertFalse(prefs.all.values.any{it.toString().contains(fake)})
             val first=prefs.getString("key",null);vault.save(fake)
             assertNotEquals(first,prefs.getString("key",null)) // fresh GCM IV per save
+            val longCredential="new-format:"+"abc-_.+=/".repeat(40)
+            vault.save("\u200F\""+longCredential+"\"\u200E")
+            assertEquals(longCredential,vault.read())
+            assertFalse(prefs.all.values.any{it.toString().contains(longCredential)})
+            try{vault.save("part\r\nx-goog-api-key:other");fail("Unsafe input must be rejected")}catch(_:IllegalArgumentException){}
+            assertEquals(longCredential,vault.read()) // failed input preserves the saved key
             vault.clear();assertFalse(vault.hasKey());assertEquals("",vault.read())
         }finally{
             context.getSharedPreferences(scope,Context.MODE_PRIVATE).edit().clear().commit()

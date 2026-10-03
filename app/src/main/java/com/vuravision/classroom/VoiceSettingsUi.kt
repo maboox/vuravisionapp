@@ -25,6 +25,7 @@ class VoiceSettingsUi(private val activity:Activity) {
             imeOptions=imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
             importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
             setSingleLine(true)
+            textDirection=View.TEXT_DIRECTION_LTR
         }
         content.addView(input)
         content.addView(activity.label(tr("If a key is already saved, leave this field empty to keep it. Use Delete key to remove it.","اگر کلید ذخیره شده، برای حفظ آن کادر را خالی بگذارید. برای حذف از دکمهٔ حذف کلید استفاده کنید."),13f,MUTED))
@@ -33,15 +34,17 @@ class VoiceSettingsUi(private val activity:Activity) {
         val remove=activity.button(tr("Delete key","حذف کلید")){}
         content.addView(save);content.addView(remove)
         save.setOnClickListener{
-            val value=input.text?.toString().orEmpty().trim()
+            val pasted=input.text?.toString().orEmpty()
+            val value=VoiceApiKey.normalize(pasted)
             if(value.isEmpty()){
                 if(keys.hasKey()){dialog.dismiss();return@setOnClickListener}
                 input.error=activity.s("voice_key_missing");return@setOnClickListener
             }
-            if(value.length !in 20..200 || !value.matches(Regex("[A-Za-z0-9_-]+"))){input.error=activity.s("voice_key_invalid");return@setOnClickListener}
+            if(!VoiceApiKey.isAcceptable(value)){input.error=activity.s("voice_key_invalid");return@setOnClickListener}
+            input.error=null
             changed();save.isEnabled=false;remove.isEnabled=false
             worker.execute{
-                var success=true;try{keys.save(value)}catch(_:Exception){success=false}
+                var success=true;try{keys.save(pasted)}catch(_:Exception){success=false}
                 activity.runOnUiThread{
                     if(activity.isDestroyed || activity.isFinishing)return@runOnUiThread
                     if(success){input.setText("");dialog.dismiss();Toast.makeText(activity,activity.s("saved"),Toast.LENGTH_SHORT).show()}

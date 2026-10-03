@@ -282,12 +282,14 @@
     "stepsEn": [
       "The Smart icon opens recognition settings. Choose automatic detection, a handwriting language model or bundled offline Latin OCR.",
       "Select existing writing and use Convert to text in the selection bar. Review and edit the recognized result before using it.",
-      "Persian handwriting recognition needs the downloaded language model. Model downloads require access to Google’s model service; basic writing and geometric recognition do not."
+      "Persian handwriting recognition needs the downloaded language model. Model downloads require access to Google’s model service; basic writing and geometric recognition do not.",
+      "Select a word or handwritten question and choose Search Google in the selection bar. Review/edit the recognized text, then open a movable, resizable search window or your browser. Search leaves the original writing unchanged and needs internet, but no Gemini key. The adjacent-browser request depends on the panel; its own floating/PiP controls may be used separately."
     ],
     "stepsFa": [
       "آیکون هوشمند، تنظیمات تشخیص را باز می‌کند. تشخیص خودکار، مدل دست‌نویس زبان یا تشخیص لاتین آفلاین همراه برنامه را انتخاب کنید.",
       "نوشتهٔ قبلی را انتخاب و از نوار انتخاب، تبدیل به متن را بزنید. نتیجه را قبل از استفاده بررسی و ویرایش کنید.",
-      "تشخیص دست‌نویس فارسی به مدل زبان دانلودشده نیاز دارد. دانلود مدل نیازمند دسترسی به سرویس مدل گوگل است؛ نوشتن معمولی و تشخیص هندسی چنین نیازی ندارند."
+      "تشخیص دست‌نویس فارسی به مدل زبان دانلودشده نیاز دارد. دانلود مدل نیازمند دسترسی به سرویس مدل گوگل است؛ نوشتن معمولی و تشخیص هندسی چنین نیازی ندارند.",
+      "کلمه یا سؤال دست‌نویس را انتخاب و از نوار انتخاب، جستجو در گوگل را بزنید. متن تشخیص‌داده‌شده را بررسی/اصلاح و پنجرهٔ شناور قابل جابه‌جایی و تغییر اندازه یا مرورگر را باز کنید. دست‌نویس اصلی تغییر نمی‌کند؛ جستجو اینترنت می‌خواهد ولی کلید جمینای نمی‌خواهد. درخواست مرورگر کنار تخته به پنل بستگی دارد؛ کنترل شناور/PiP خود پنل را جدا می‌توان استفاده کرد."
     ],
     "tipEn": "If download fails, try another network and use offline Latin OCR where suitable.",
     "tipFa": "اگر دانلود ناموفق بود، شبکهٔ دیگر را امتحان کنید و در موارد مناسب از تشخیص لاتین آفلاین استفاده کنید."

@@ -1,0 +1,54 @@
+{
+  "version": "1.10.1",
+  "versionCode": 18,
+  "checked_on": "2026-10-03",
+  "android": {
+    "compile_debug_kotlin": "passed",
+    "compile_release_kotlin": "passed",
+    "assemble_debug": "passed",
+    "debug_apk_zipalign": "passed",
+    "debug_apk_signature": "passed (development certificate)",
+    "verification_dependencies": "cached artifacts used via temporary local-only repository; project repositories and workflow unchanged",
+    "lint_debug_release": "not completed: required dependency downloads blocked by network policy",
+    "assemble_debug_android_test": "blocked by unavailable cached androidx.core:core-ktx:1.2.0",
+    "production_signed_apk_built_locally": false
+  },
+  "tests": {
+    "standalone_jvm": {
+      "suites": 2,
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "result": "passed",
+      "classes": [
+        "VoiceApiKeyTest",
+        "GoogleSearchQueryTest"
+      ]
+    },
+    "complete_android_unit_suite": {
+      "declared_suites": 19,
+      "declared_tests": 149,
+      "executed": false,
+      "reason": "Robolectric and remaining dependencies could not be downloaded because network access to Maven was blocked"
+    },
+    "new_android_ui_regressions": "included; not executed locally",
+    "android_device_tests_executed": false
+  },
+  "source": {
+    "checks": "passed",
+    "font_faces_verified": 21,
+    "guide_chapters": 27,
+    "classified_native_labs": 73
+  },
+  "runtime": {
+    "authenticated_gemini_session": "not executed; no customer API key used",
+    "google_webview_on_target_panel": "not executed",
+    "physical_panel_audio_latency_and_window_performance": "not measured",
+    "oem_browser_floating_pip_mode": "not forced; external adjacent launch is a request to Android"
+  },
+  "limits": [
+    "Current complete Android unit suite, lint and device-test assembly remain for GitHub Actions validation.",
+    "Production APK requires the existing four signing secrets.",
+    "1.10.0 verification describes the historical version; its 130 passed tests must not be reported as executed for 1.10.1."
+  ]
+}
