@@ -1,0 +1,23 @@
+<resources>
+    <string name="voice_assistant">Voice assistant</string>
+    <string name="voice_behavior">Assistant behavior</string>
+    <string name="voice_stop">End conversation</string>
+    <string name="voice_connecting">Connecting…</string>
+    <string name="voice_reconnecting">Reconnecting…</string>
+    <string name="voice_listening">Assistant listening · Stop</string>
+    <string name="voice_speaking">Assistant speaking · Stop</string>
+    <string name="voice_permission_needed">Microphone permission is required. Allow it in Android app settings if the permission dialog no longer appears.</string>
+    <string name="voice_key_saved">An encrypted API key is saved on this device.</string>
+    <string name="voice_key_missing">Enter a Google AI Studio API key first.</string>
+    <string name="voice_key_invalid">Enter the API key itself, not a link or activation code.</string>
+    <string name="voice_key_storage_error">The key could not be securely saved or read. Delete it and enter it again.</string>
+    <string name="voice_key_or_quota">Google rejected access or the quota was reached. Check your key, project access and Live API quota in AI Studio.</string>
+    <string name="voice_model_error">The Live model is unavailable or its configuration is invalid. Check the model ID in hidden assistant settings.</string>
+    <string name="voice_service_error">The voice service ended the session. Check model access and quota, then try again.</string>
+    <string name="voice_protocol_error">The voice service returned an unsupported response. Check the Live model setting and try again.</string>
+    <string name="voice_network_error">Voice connection failed. Check the internet connection and try again.</string>
+    <string name="voice_network_slow">The connection is too slow for live audio. The conversation has stopped; try again with a stable connection.</string>
+    <string name="voice_audio_error">Microphone or speaker could not start or was interrupted. Check the microphone and audio route, then try again.</string>
+    <string name="voice_time_limit">The configured conversation time ended. Tap the assistant button to start again.</string>
+    <string name="voice_vision_error">Screen images are not currently available to the assistant. Stop and start the conversation again.</string>
+</resources>

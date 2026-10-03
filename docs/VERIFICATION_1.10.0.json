@@ -1,0 +1,60 @@
+{
+  "version": "1.10.0",
+  "versionCode": 17,
+  "checked_on": "2026-10-03",
+  "android": {
+    "build": "passed",
+    "tasks": [
+      "testDebugUnitTest",
+      "lintDebug",
+      "lintRelease",
+      "assembleDebug",
+      "assembleDebugAndroidTest"
+    ],
+    "unit_tests": {
+      "suites": 16,
+      "tests": 130,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "debug": {
+        "errors": 0,
+        "warnings": 700
+      },
+      "release": {
+        "errors": 0,
+        "warnings": 699
+      }
+    },
+    "debug_apk_zipalign": "passed",
+    "debug_apk_signature": "passed (development certificate)",
+    "device_tests_executed": false,
+    "production_signed_apk_built_locally": false
+  },
+  "ui": {
+    "voice_board_button_en_fa": "rendered and inspected",
+    "connection_settings_en_fa": "rendered and inspected",
+    "hidden_behavior_settings_en_fa": "rendered; Persian inspected",
+    "voice_button_drawing_toolbar_overlap": "regression checks passed"
+  },
+  "source": {
+    "checks": "passed",
+    "font_faces": 21,
+    "guide_chapters": 27,
+    "classified_native_labs": 73
+  },
+  "assistant": {
+    "transport_tests": "fake WebSocket transport",
+    "audio_tests": "fake audio ports",
+    "real_authenticated_gemini_session": "not executed (no API key supplied)",
+    "hardware_audio_echo_latency_and_screen_readability": "not measured",
+    "android_keystore_device_test": "compiled, not executed"
+  },
+  "limits": [
+    "Device/emulator tests and physical panel responsiveness are not verified locally.",
+    "Production APK is built with existing GitHub Actions signing secrets.",
+    "Google model access, quotas and voice quality depend on the customer project, connection and hardware."
+  ]
+}

@@ -58,6 +58,15 @@ class MainActivity : Activity() {
     private var loading = false
     private var lastError = ""
     private var destroyed = false
+    private var voiceAssistant:VoiceAssistant?=null
+    private var voiceScreen:VoiceScreen?=null
+    private lateinit var voiceButton:com.google.android.material.button.MaterialButton
+    private var voiceStarting=false
+    private var voiceStartGeneration=0
+    private var lastUserTouch=0L
+    private val voiceWorker=Executors.newSingleThreadExecutor()
+    private val voiceKeys by lazy{VoiceKeyStore(this)}
+    private val voicePermissionRequest=7410
 
     override fun attachBaseContext(base: Context) {
         val lang =
@@ -189,6 +198,14 @@ class MainActivity : Activity() {
         }
         surface(focus)
         canvasHost.addView(focus,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.END).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
+        voiceButton=button(s("voice_assistant")){toggleVoice()}.apply{
+            id=R.id.voice_assistant_button
+            setIconResource(R.drawable.feather_mic);iconSize=dp(20)
+            maxWidth=dp(300);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END
+            contentDescription=s("voice_assistant")
+        }
+        // Independent control remains reachable when the drawing toolbars are hidden.
+        canvasHost.addView(voiceButton,FrameLayout.LayoutParams(-2,dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(78),dp(12),dp(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)76 else 12),dp(72))})
         canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot)refreshSplitControls()}
         refreshDock();refreshPages()
     }
@@ -1515,11 +1532,12 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","fonts","ui_size","models","input_controls","help","cache","about")
+        val keys=mutableListOf("language","fonts","voice_assistant","ui_size","models","input_controls","help","cache","about")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "fonts"->fontSettings()
+            "voice_assistant"->voiceSettings()
             "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
                     listOf(.85f,1f,1.2f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
@@ -1577,11 +1595,12 @@ class MainActivity : Activity() {
     }
 
     private fun engineering() {
-        choices(s("engineering"), listOf("touch_test", "thresholds", "report", "stress", "advanced_board", "secret_studio", "maboox")) {
+        choices(s("engineering"), listOf("touch_test", "thresholds", "report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")) {
             when (it) {
                 4 -> advancedBoard()
                 5 -> secretStudio()
                 6 -> maboox()
+                7 -> VoiceSettingsUi(this).advanced{stopVoice()}
                 0 ->
                     dialog(
                         s("touch_test"),
@@ -1755,6 +1774,70 @@ class MainActivity : Activity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    override fun onPause() {
+        stopVoice()
+        super.onPause()
+    }
+
+    override fun dispatchTouchEvent(event:MotionEvent):Boolean {
+        lastUserTouch=SystemClock.uptimeMillis()
+        return super.dispatchTouchEvent(event)
+    }
+
+    override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults)
+        if(requestCode==voicePermissionRequest){
+            if(grantResults.firstOrNull()==android.content.pm.PackageManager.PERMISSION_GRANTED)toggleVoice()
+            else toast(s("voice_permission_needed"))
+        }
+    }
+
+    private fun voiceSettings(){
+        VoiceSettingsUi(this).connection(voiceKeys,voiceWorker){stopVoice()}
+    }
+    private fun toggleVoice(){
+        if(voiceStarting || voiceAssistant?.active==true){stopVoice();return}
+        if(!voiceKeys.hasKey()){voiceSettings();return}
+        if(checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO),voicePermissionRequest);return
+        }
+        val settings=VoiceSettings.load(this)
+        val generation=++voiceStartGeneration
+        voiceStarting=true;setVoiceState("voice_connecting")
+        voiceWorker.execute{
+            try{
+                val key=voiceKeys.read();val knowledge=VoiceKnowledge.load(this)
+                handler.post{
+                    if(destroyed || !voiceStarting || generation!=voiceStartGeneration)return@post
+                    voiceStarting=false
+                    val assistant=VoiceAssistant(settings,key,knowledge,VoiceAudio(this),{value->setVoiceState(value)},{reason->
+                        voiceScreen?.close();voiceScreen=null;voiceAssistant=null;setVoiceState("voice_assistant")
+                        if(reason!=null)toast(s(reason))
+                    },connected={voiceScreen?.refresh()})
+                    voiceAssistant=assistant
+                    voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},
+                        {board.isDrawing || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
+                    assistant.start();voiceScreen?.start()
+                }
+            }catch(_:Exception){handler.post{if(!destroyed && voiceStarting && generation==voiceStartGeneration){voiceStarting=false;setVoiceState("voice_assistant");toast(s("voice_key_storage_error"))}}}
+        }
+    }
+    private fun setVoiceState(value:String){
+        if(!::voiceButton.isInitialized)return
+        voiceButton.text=s(value)
+        val active=value!="voice_assistant"
+        voiceButton.setIconResource(if(active)R.drawable.feather_square else R.drawable.feather_mic)
+        voiceButton.contentDescription=if(active)s(value)+". "+s("voice_stop")else s("voice_assistant")
+        voiceButton.backgroundTintList=android.content.res.ColorStateList.valueOf(if(active)PRIMARY_CONTAINER else SURFACE)
+    }
+    private fun stopVoice(){
+        ++voiceStartGeneration
+        voiceStarting=false
+        voiceScreen?.close();voiceScreen=null
+        voiceAssistant?.stop();voiceAssistant=null
+        setVoiceState("voice_assistant")
+    }
+
     override fun onStop() {
         artPlayer?.pause()
         handler.removeCallbacks(autosave)
@@ -1764,6 +1847,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        stopVoice()
+        voiceWorker.shutdown()
         artPlayer?.stop()
         floatingTools.closeAll()
         handler.removeCallbacksAndMessages(null)

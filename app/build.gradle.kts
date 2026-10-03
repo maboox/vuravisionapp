@@ -6,8 +6,8 @@ android {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.9.4"
+        versionCode = 17
+        versionName = "1.10.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -35,6 +35,7 @@ android {
 dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.code.gson:gson:2.12.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
