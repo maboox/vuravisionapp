@@ -37,7 +37,16 @@ class VoiceUiTest {
                 input.setText("\u200F\"new-format:"+"abc-_.+=/".repeat(40)+"\"\u200E")
                 controls.filterIsInstance<Button>().first{it.text.toString() in listOf("Save key","ذخیرهٔ کلید")}.performClick()
                 assertTrue("$language must schedule encryption",scheduled);assertTrue(changed)
-                assertNull(input.error);assertEquals(View.TEXT_DIRECTION_LTR,input.textDirection)
+                assertNull(input.error)
+                // getTextDirection is a resolved view flag, not the displayed paragraph direction.
+                // Measure/render first, then check the actual masked text layout in both locales.
+                capture(input,"voice-key-direction-$language",640,80)
+                assertTrue(input.transformationMethod is android.text.method.PasswordTransformationMethod)
+                val displayed=input.transformationMethod.getTransformation(input.text,input).toString()
+                assertFalse(displayed.contains("new-format"));assertNotEquals(input.text.toString(),displayed)
+                assertNotNull(input.layout)
+                assertEquals(android.text.Layout.DIR_LEFT_TO_RIGHT,input.layout!!.getParagraphDirection(0))
+                assertEquals(Gravity.LEFT,Gravity.getAbsoluteGravity(input.gravity,input.layoutDirection) and Gravity.HORIZONTAL_GRAVITY_MASK)
                 dialog.dismiss()
             }finally{controller.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
         }

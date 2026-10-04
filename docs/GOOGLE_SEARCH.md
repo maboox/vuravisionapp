@@ -26,4 +26,4 @@ Official references checked 2026-10-03:
 
 ## Verification
 
-Pure JVM tests cover Persian/mixed-math URL encoding, query limits and window bounds. Android UI regressions cover explicit confirmation, correction, cancel/blank drafts, browser flags and retaining the source selection. Current execution status is recorded in VERIFICATION_1.10.1.json. Real Google loading, hardware touch/window performance and the OEM browser/PiP behavior need verification on the target display.
+Pure JVM tests cover Persian/mixed-math URL encoding, query limits and window bounds. Android UI regressions cover explicit confirmation, correction, cancel/blank drafts, browser flags and retaining the source selection. Current execution status is recorded in VERIFICATION_1.10.2.json. Real Google loading, hardware touch/window performance and the OEM browser/PiP behavior need verification on the target display.

@@ -22,6 +22,8 @@ A PixelCopy surface capture is asynchronous, with at most one frame in flight an
 
 ## Key and data handling
 
+Version 1.10.2 restores password masking after single-line configuration and fixes the key-field layout regression: the input is explicitly left-aligned in both locales, and the UI regression checks rendered paragraph direction and password masking after measuring the field. It does not rely on an unresolved view direction flag.
+
 Version 1.10.1 treats a key as an opaque credential rather than requiring 20–200 characters from a fixed alphabet. Input is left-to-right in both interface languages. Boundary whitespace/direction marks and matching surrounding copy quotes are removed; interior bytes are never rewritten. Empty input retains an existing key in the connection UI. Obvious URLs, interior whitespace/control characters, non-ASCII header values and values above an 8192-character header budget are rejected locally. Safe credential syntax does not prove Google validity or model access. The UI and encrypted storage share the same normalizer/validator.
 
 

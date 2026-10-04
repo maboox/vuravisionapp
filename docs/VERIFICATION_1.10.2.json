@@ -1,0 +1,56 @@
+{
+  "version": "1.10.2",
+  "versionCode": 19,
+  "checked_on": "2026-10-03",
+  "regression": {
+    "before_fix": "Reproduced expected-3/actual-1 failure in VoiceUiTest on Android 9 (Robolectric SDK 28).",
+    "fix": "Apply single-line configuration before explicit password masking; pin LTR layout/left alignment; render and verify actual paragraph direction and hidden text in both locales."
+  },
+  "android": {
+    "build": "passed",
+    "tasks": [
+      "testDebugUnitTest",
+      "lintDebug",
+      "lintRelease",
+      "assembleDebug",
+      "assembleDebugAndroidTest"
+    ],
+    "unit_tests": {
+      "suites": 19,
+      "tests": 149,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "debug": {
+        "errors": 0,
+        "warnings": 709
+      },
+      "release": {
+        "errors": 0,
+        "warnings": 709
+      }
+    },
+    "debug_apk_zipalign": "passed",
+    "debug_apk_signature": "passed (development certificate)",
+    "device_tests_executed": false,
+    "production_signed_apk_built_locally": false
+  },
+  "ui": {
+    "key_field_en_fa": "rendered and visually inspected; password masking, actual LTR paragraph and left alignment verified",
+    "voice_and_search_ui_regressions": "passed"
+  },
+  "source": {
+    "checks": "passed",
+    "font_faces_verified": 21,
+    "guide_chapters": 27,
+    "classified_native_labs": 73
+  },
+  "limits": [
+    "No authenticated Gemini session with a customer API key was run.",
+    "Hardware audio/echo, performance, real Google WebView loading and OEM floating/PiP behavior were not measured on the panel.",
+    "Android Keystore/PDF device tests compiled but were not executed.",
+    "Production signing is performed by the existing GitHub Actions secrets."
+  ]
+}

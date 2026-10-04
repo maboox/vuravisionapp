@@ -1,3 +1,11 @@
+# 1.10.2 Key-field layout regression
+
+Single-line configuration previously replaced the password transformation on Android 9. The field now applies single-line settings first, then restores password masking explicitly. This was detected by the stronger rendered-field regression and fixed in production UI code.
+
+The API-key field now explicitly uses left-to-right layout and left alignment in both interface languages. Its UI test measures/renders the field and verifies the real paragraph direction, left alignment and password transformation instead of inspecting an unresolved View direction flag before layout. The original expected-3/actual-1 failure was reproduced locally before applying the fix. Acceptance of long pasted credentials remains covered. Package identity, encrypted-key storage and signing settings are unchanged; versionCode is 19.
+
+Verification: all 149 tests passed; Debug/Release lint have zero errors (709 warnings each); Debug APK and device-test APK assembly passed. English/Persian key-field images were inspected. Device tests and real Google/hardware sessions were not executed. See VERIFICATION_1.10.2.json.
+
 # 1.10.1 Google search and API-key input fix
 
 The connection dialog and encrypted key store now share opaque-credential handling. Valid-looking input is no longer rejected by the old 20–200-character alphanumeric-only assumption. Copy boundaries (whitespace, directional marks, paired quotes) are normalized; interior bytes are preserved and unsafe header values/obvious URLs are rejected. The key field uses left-to-right text direction in Persian too. Google remains responsible for credential validity, permissions, model access and quota. Package identity and production signing are unchanged; versionCode is 18.

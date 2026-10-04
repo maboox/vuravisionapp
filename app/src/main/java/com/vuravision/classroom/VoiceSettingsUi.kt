@@ -21,11 +21,16 @@ class VoiceSettingsUi(private val activity:Activity) {
         content.addView(activity.label(tr("Google API key","کلید API گوگل"),14f,NAVY,true))
         val input=activity.field("").apply{
             hint=tr("Google AI Studio API key","کلید API از Google AI Studio")
+            // Single-line configuration replaces the transformation on older Android releases.
+            // Configure it first, then explicitly restore password masking.
+            setSingleLine(true)
             inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            transformationMethod=android.text.method.PasswordTransformationMethod.getInstance()
             imeOptions=imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
             importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-            setSingleLine(true)
+            layoutDirection=View.LAYOUT_DIRECTION_LTR
             textDirection=View.TEXT_DIRECTION_LTR
+            gravity=android.view.Gravity.LEFT or android.view.Gravity.CENTER_VERTICAL
         }
         content.addView(input)
         content.addView(activity.label(tr("If a key is already saved, leave this field empty to keep it. Use Delete key to remove it.","اگر کلید ذخیره شده، برای حفظ آن کادر را خالی بگذارید. برای حذف از دکمهٔ حذف کلید استفاده کنید."),13f,MUTED))

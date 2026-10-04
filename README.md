@@ -1,10 +1,12 @@
-# VuraVision 1.10.1
+# VuraVision 1.10.2
 
 Offline-first Android interactive whiteboard, with Persian/English UI, editable lesson projects, native classroom experiments and games.
 
-## Release 1.10.1
+## Release 1.10.2
 
 See [voice-assistant release notes](docs/RELEASE_1.10.md), [assistant operation and limits](docs/VOICE_ASSISTANT.md), [previous release notes](docs/RELEASE_1.9.md) and [Persian instructions](README.fa.md).
+
+Version 1.10.2 fixes the key-field UI regression: password masking is explicitly restored after single-line setup, the field is left-aligned in both languages, and its regression test measures/renders the field before checking actual paragraph direction and password masking. The previous test read the unresolved view direction and stopped CI despite accepting the pasted key.
 
 Version 1.10.1 fixes overly strict local API-key validation: opaque credentials are accepted without assuming a fixed prefix, token alphabet or 200-character limit. Boundary whitespace/direction marks and paired copy quotes are removed; interior credential bytes are preserved. Google still validates access and quota when connecting.
 
@@ -27,7 +29,7 @@ Extract this ZIP directly into the repository root, including `.github`. Do not 
 | ANDROID_KEY_ALIAS | Key alias |
 | ANDROID_KEY_PASSWORD | Key password |
 
-Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.10.1-<run>`; it contains `VuraVision-1.10.1.apk` and `SHA256SUMS.txt`. Pull-request builds are unsigned-for-production debug builds. Production builds fail if signing settings are absent. The package ID and signing mechanism are unchanged; there is no activation/serial-number feature.
+Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.10.2-<run>`; it contains `VuraVision-1.10.2.apk` and `SHA256SUMS.txt`. Pull-request builds are unsigned-for-production debug builds. Production builds fail if signing settings are absent. The package ID and signing mechanism are unchanged; there is no activation/serial-number feature.
 
 Manual workflow runs also execute Android device PDF and Keystore checks on an emulator. Reports are separate artifacts. Android SDK 35 and JDK 17 are used. The Gradle Wrapper is included and invoked as `bash ./gradlew`.
 
@@ -44,4 +46,4 @@ Release builds additionally require the production signing environment variables
 
 ## Verification status
 
-For 1.10.1, Debug APK assembly and Debug/Release Kotlin compilation passed locally; the development APK passed signature verification and ZIP alignment. All 13 standalone JVM regression tests across two suites passed. The complete Android suite now contains 149 tests across 19 suites, but it was not executed locally: remaining Robolectric/dependency downloads were blocked by network policy. Current lint and device-test assembly also remain incomplete. GitHub Actions retains the complete tests, lint and signed production build steps. No authenticated Gemini session or real Google window/OEM PiP behavior was tested on the target panel. See [VERIFICATION_1.10.1.json](docs/VERIFICATION_1.10.1.json). Earlier verification records describe their respective versions.
+For 1.10.2, all 149 Android unit tests across 19 suites passed. Debug/Release lint completed with zero errors and 709 warnings each. Debug APK and device-test APK assembly passed; the development APK signature and ZIP alignment were checked. Native key-field renderings in both languages were inspected, with regression checks for actual paragraph direction, left alignment and password masking. Device tests were compiled but not executed. No authenticated Gemini conversation or physical-panel Google/OEM PiP performance test was run. Production signing remains in GitHub Actions using the existing four secrets. See [VERIFICATION_1.10.2.json](docs/VERIFICATION_1.10.2.json). Earlier verification records describe their respective versions.
