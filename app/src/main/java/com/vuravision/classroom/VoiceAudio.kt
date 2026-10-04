@@ -14,10 +14,11 @@ interface VoiceAudioPort {
     fun enqueue(pcm:ByteArray)
     fun interrupt()
     fun close()
+    fun pendingOutputBytes():Int=0
 }
 
 /** Two dedicated threads; neither recording nor blocking playback runs on the UI/socket thread. */
-class VoiceAudio(private val context:Context):VoiceAudioPort {
+class VoiceAudio(private val context:Context,private val inputRate:Int=16000):VoiceAudioPort {
     private data class Chunk(val generation:Int,val bytes:ByteArray)
     private val queue=LinkedBlockingQueue<Chunk>(96)
     private val queuedBytes=AtomicInteger()
@@ -46,10 +47,11 @@ class VoiceAudio(private val context:Context):VoiceAudioPort {
             check(manager.requestAudioFocus(focus!!)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
             manager.mode=AudioManager.MODE_IN_COMMUNICATION
             manager.isSpeakerphoneOn=true
-            val minIn=AudioRecord.getMinBufferSize(16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
+            require(inputRate==16000 || inputRate==24000)
+            val minIn=AudioRecord.getMinBufferSize(inputRate,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
             check(minIn>0)
             recorder=AudioRecord.Builder().setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                .setAudioFormat(AudioFormat.Builder().setSampleRate(16000).setChannelMask(AudioFormat.CHANNEL_IN_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
+                .setAudioFormat(AudioFormat.Builder().setSampleRate(inputRate).setChannelMask(AudioFormat.CHANNEL_IN_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
                 .setBufferSizeInBytes(maxOf(minIn*2,5120)).build()
             check(recorder!!.state==AudioRecord.STATE_INITIALIZED)
             val minOut=AudioTrack.getMinBufferSize(24000,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT);check(minOut>0)
@@ -63,7 +65,7 @@ class VoiceAudio(private val context:Context):VoiceAudioPort {
             running=true;mic.startRecording();speaker.play()
             recordThread=Thread({
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO)
-                val buffer=ByteArray(1280) // 40 ms, PCM16 mono / 16 kHz.
+                val buffer=ByteArray(inputRate*2*40/1000) // 40 ms, PCM16 mono.
                 try{while(running){val n=mic.read(buffer,0,buffer.size,AudioRecord.READ_BLOCKING);if(n>0)input(buffer,n)else if(running)throw IllegalStateException("Audio input unavailable")}}
                 catch(_:Exception){if(running)failure()}
             },"vura-voice-mic").apply{start()}
@@ -84,6 +86,7 @@ class VoiceAudio(private val context:Context):VoiceAudioPort {
         if(!running || pcm.isEmpty())return
         if(queuedBytes.addAndGet(pcm.size)>2_000_000 || !queue.offer(Chunk(generation.get(),pcm))){queuedBytes.addAndGet(-pcm.size);failed?.invoke()}
     }
+    override fun pendingOutputBytes()=queuedBytes.get().coerceAtLeast(0)
     @Synchronized override fun interrupt(){
         generation.incrementAndGet()
         // Drain rather than resetting the counter: a playback thread may already own a chunk.

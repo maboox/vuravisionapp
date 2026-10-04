@@ -15,6 +15,42 @@ import org.robolectric.shadows.ShadowDialog
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 class GoogleSearchUiTest {
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
+    @Test fun destinationPersistsAndAmbiguityKeepsReview(){
+        val context=RuntimeEnvironment.getApplication()
+        val prefs=context.getSharedPreferences("vura",0);prefs.edit().clear().commit()
+        assertEquals("ask",GoogleSearchSettings.load(context).destination)
+        val target=GoogleSearchSettings("browser",true);target.save(context);assertEquals(target,GoogleSearchSettings.load(context))
+        assertFalse(target.needsReview(listOf("water"),false))
+        assertTrue(target.needsReview(listOf("water","weather"),false))
+        assertTrue(target.needsReview(listOf("water"),true));assertTrue(target.needsReview(emptyList(),false))
+        assertTrue(GoogleSearchSettings().needsReview(listOf("water"),false));prefs.edit().clear().commit()
+    }
+    @Test fun fixedDestinationReviewUsesOnlySearchAndPreservesBrowserFlags(){
+        val controller=Robolectric.buildActivity(Activity::class.java).setup()
+        try{
+            val a=controller.get();a.setTheme(R.style.AppTheme);var query="";var adjacent=false
+            GoogleSearchReview(a).show(listOf("wrong","another"),{fail("Wrong route")},{q,v->query=q;adjacent=v},GoogleSearchSettings("browser",true))
+            val dialog=ShadowDialog.getLatestDialog();val all=views(dialog.window!!.decorView)
+            assertFalse(all.filterIsInstance<Button>().any{it.text.toString()=="Search in floating window"})
+            all.filterIsInstance<EditText>().single().setText("correct")
+            all.filterIsInstance<Button>().first{it.text.toString()=="Search"}.performClick()
+            assertEquals("correct",query);assertTrue(adjacent)
+        }finally{controller.pause().stop().destroy()}
+    }
+    @Test fun fixedBrowserSearchSkipsChooserAndRetainsOriginalWriting(){
+        val prefs=RuntimeEnvironment.getApplication().getSharedPreferences("vura",0);prefs.edit().clear().putString("language","en").commit()
+        val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
+        try{
+            val a=controller.get();GoogleSearchSettings("browser",false).save(a)
+            val item=Item(kind="text",text="آب چیست؟")
+            a.store.editMetadata{a.store.page.items.clear();a.store.page.items.add(item)}
+            a.board.selected.add(item.id);a.board.onSelection()
+            views(a.window.decorView).filterIsInstance<ActionIcon>().first{it.symbol=="search"}.performClick()
+            val intent=Shadows.shadowOf(a).nextStartedActivity
+            assertNotNull(intent);assertEquals(item.text,intent.data!!.getQueryParameter("q"))
+            assertSame(item,a.store.page.items.single())
+        }finally{controller.pause().stop().destroy();prefs.edit().clear().commit()}
+    }
     @Test fun reviewWaitsForConfirmationAndUsesEditedQuestion(){
         val controller=Robolectric.buildActivity(Activity::class.java).setup()
         try{

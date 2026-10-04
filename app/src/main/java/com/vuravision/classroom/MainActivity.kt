@@ -58,7 +58,7 @@ class MainActivity : Activity() {
     private var loading = false
     private var lastError = ""
     private var destroyed = false
-    private var voiceAssistant:VoiceAssistant?=null
+    private var voiceAssistant:VoiceConversation?=null
     private var googleSearch:GoogleSearchWindow?=null
     private var voiceScreen:VoiceScreen?=null
     private lateinit var voiceButton:com.google.android.material.button.MaterialButton
@@ -66,8 +66,11 @@ class MainActivity : Activity() {
     private var voiceStartGeneration=0
     private var lastUserTouch=0L
     private val voiceWorker=Executors.newSingleThreadExecutor()
-    private val voiceKeys by lazy{VoiceKeyStore(this)}
+    private val voiceKeys by lazy{VoiceKeys(this)}
     private val voicePermissionRequest=7410
+    private val voicePreferenceListener=SharedPreferences.OnSharedPreferenceChangeListener{_,key->
+        if(key=="voiceEnabled"){if(!VoiceSettings.enabled(this))stopVoice()else setVoiceState("voice_assistant")}
+    }
 
     override fun attachBaseContext(base: Context) {
         val lang =
@@ -204,9 +207,11 @@ class MainActivity : Activity() {
             setIconResource(R.drawable.feather_mic);iconSize=dp(20)
             maxWidth=dp(300);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END
             contentDescription=s("voice_assistant")
+            visibility=if(VoiceSettings.enabled(this@MainActivity))View.VISIBLE else View.GONE
         }
         // Independent control remains reachable when the drawing toolbars are hidden.
         canvasHost.addView(voiceButton,FrameLayout.LayoutParams(-2,dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(78),dp(12),dp(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)76 else 12),dp(72))})
+        prefs.registerOnSharedPreferenceChangeListener(voicePreferenceListener)
         canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot)refreshSplitControls()}
         refreshDock();refreshPages()
     }
@@ -1502,9 +1507,17 @@ class MainActivity : Activity() {
     }
 
     private fun reviewGoogleSearch(candidates:List<String>){
-        GoogleSearchReview(this).show(candidates,{query->
+        val target=GoogleSearchSettings.load(this)
+        val floating:(String)->Unit={query->
             googleSearch?.close();googleSearch=GoogleSearchWindow(this,canvasHost).also{it.open(query)}
-        },{query,adjacent->googleSearch?.close();googleSearch=null;GoogleSearchBrowser.open(this,query,adjacent)})
+        }
+        val browser:(String,Boolean)->Unit={query,adjacent->googleSearch?.close();googleSearch=null;GoogleSearchBrowser.open(this,query,adjacent)}
+        val query=candidates.firstOrNull().orEmpty().trim()
+        // Search was explicitly requested by the selection action. A stable target avoids the chooser.
+        // Ambiguous/empty recognition still gets an editable review, honoring the existing smart-review preference.
+        if(!target.needsReview(candidates,prefs.getBoolean("smartReview",false))){
+            if(target.destination=="floating")floating(query)else browser(query,target.adjacent)
+        }else GoogleSearchReview(this).show(candidates,floating,browser,target)
     }
 
     private fun models(){
@@ -1540,12 +1553,14 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","fonts","voice_assistant","ui_size","models","input_controls","help","cache","about")
+        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","help","cache","about")
+        if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "fonts"->fontSettings()
             "voice_assistant"->voiceSettings()
+            "google_search_settings"->GoogleSearchSettingsUi(this).show()
             "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
                     listOf(.85f,1f,1.2f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
@@ -1802,27 +1817,33 @@ class MainActivity : Activity() {
     }
 
     private fun voiceSettings(){
+        if(!VoiceSettings.enabled(this))return
         VoiceSettingsUi(this).connection(voiceKeys,voiceWorker){stopVoice()}
     }
     private fun toggleVoice(){
+        if(!VoiceSettings.enabled(this)){stopVoice();return}
         if(voiceStarting || voiceAssistant?.active==true){stopVoice();return}
-        if(!voiceKeys.hasKey()){voiceSettings();return}
+        val settings=VoiceSettings.load(this)
+        val keys=voiceKeys.forProvider(settings.provider)
+        if(!keys.hasKey()){voiceSettings();return}
         if(checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
             requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO),voicePermissionRequest);return
         }
-        val settings=VoiceSettings.load(this)
         val generation=++voiceStartGeneration
         voiceStarting=true;setVoiceState("voice_connecting")
         voiceWorker.execute{
             try{
-                val key=voiceKeys.read();val knowledge=VoiceKnowledge.load(this)
+                val key=keys.read();val knowledge=VoiceKnowledge.load(this)
                 handler.post{
-                    if(destroyed || !voiceStarting || generation!=voiceStartGeneration)return@post
+                    if(destroyed || !VoiceSettings.enabled(this) || !voiceStarting || generation!=voiceStartGeneration)return@post
                     voiceStarting=false
-                    val assistant=VoiceAssistant(settings,key,knowledge,VoiceAudio(this),{value->setVoiceState(value)},{reason->
+                    val ended:(String?)->Unit={reason->
                         voiceScreen?.close();voiceScreen=null;voiceAssistant=null;setVoiceState("voice_assistant")
                         if(reason!=null)toast(s(reason))
-                    },connected={voiceScreen?.refresh()})
+                    }
+                    val audio=VoiceAudio(this,if(settings.provider=="openai")24000 else 16000)
+                    val assistant:VoiceConversation=if(settings.provider=="openrouter")RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
+                        else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
                     voiceAssistant=assistant
                     voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},
                         {board.isDrawing || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
@@ -1833,6 +1854,7 @@ class MainActivity : Activity() {
     }
     private fun setVoiceState(value:String){
         if(!::voiceButton.isInitialized)return
+        voiceButton.visibility=if(VoiceSettings.enabled(this))View.VISIBLE else View.GONE
         voiceButton.text=s(value)
         val active=value!="voice_assistant"
         voiceButton.setIconResource(if(active)R.drawable.feather_square else R.drawable.feather_mic)
@@ -1856,6 +1878,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        prefs.unregisterOnSharedPreferenceChangeListener(voicePreferenceListener)
         googleSearch?.close();googleSearch=null
         stopVoice()
         voiceWorker.shutdown()

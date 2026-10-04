@@ -8,11 +8,11 @@
     <string name="voice_speaking">Assistant speaking · Stop</string>
     <string name="voice_permission_needed">Microphone permission is required. Allow it in Android app settings if the permission dialog no longer appears.</string>
     <string name="voice_key_saved">An encrypted API key is saved on this device.</string>
-    <string name="voice_key_missing">Enter a Google AI Studio API key first.</string>
+    <string name="voice_key_missing">Enter an API key for the selected service first.</string>
     <string name="voice_key_invalid">Paste the complete API key without a URL, internal spaces or line breaks.</string>
     <string name="voice_key_storage_error">The key could not be securely saved or read. Delete it and enter it again.</string>
-    <string name="voice_key_or_quota">Google rejected access or the quota was reached. Check your key, project access and Live API quota in AI Studio.</string>
-    <string name="voice_model_error">The Live model is unavailable or its configuration is invalid. Check the model ID in hidden assistant settings.</string>
+    <string name="voice_key_or_quota">Access was rejected or credit/quota was exhausted. Check the selected service key, billing and model access.</string>
+    <string name="voice_model_error">The model is unavailable or its configuration is invalid. Check the model ID in assistant settings.</string>
     <string name="voice_service_error">The voice service ended the session. Check model access and quota, then try again.</string>
     <string name="voice_protocol_error">The voice service returned an unsupported response. Check the Live model setting and try again.</string>
     <string name="voice_network_error">Voice connection failed. Check the internet connection and try again.</string>
@@ -20,4 +20,8 @@
     <string name="voice_audio_error">Microphone or speaker could not start or was interrupted. Check the microphone and audio route, then try again.</string>
     <string name="voice_time_limit">The configured conversation time ended. Tap the assistant button to start again.</string>
     <string name="voice_vision_error">Screen images are not currently available to the assistant. Stop and start the conversation again.</string>
+    <string name="voice_router_model_error">Choose an OpenRouter model that accepts both audio and images and returns text.</string>
+    <string name="voice_router_speech_error">The selected OpenRouter speech model is unavailable. Choose another speech model in assistant settings.</string>
+    <string name="voice_thinking">Assistant preparing answer · Stop</string>
+    <string name="google_search_settings">Google search settings</string>
 </resources>

@@ -1,48 +1,45 @@
-# VuraVision 1.10.0 voice assistant
+# VuraVision 1.11 voice assistant
 
-## Operation
+## Enable only for evaluation
 
-The independent microphone button near the physical lower-right corner starts a foreground conversation. It remains available in board focus mode. Tap again to end. Settings → Voice assistant accepts a Google AI Studio API key. Android asks for microphone permission at first use. The service receives microphone audio and images of the visible workspace only while active. The first server response is requested to greet in Persian as VuraVision's educational assistant. No transcript is inserted into the board and no tools/document-mutating callbacks are registered with the service.
+The assistant is **disabled and hidden by default**, including after upgrading from 1.10.x. There is no microphone or service connection at startup. Tap the guide title three times to open the hidden Engineering menu, then open Assistant behavior and turn on Enable educational assistant. This reveals the lower-right button and Settings → Voice assistant. Switching off immediately cancels pending startup and stops microphone, playback, image capture and network work; it hides the button and normal connection entry. Enabling never starts a conversation automatically. Saved encrypted keys remain until explicitly deleted.
 
-Closing the app, opening another activity or losing foreground activity ends the conversation and releases audio resources. Reopening does not start the microphone automatically. Network, access, quota, unsupported model, capture and audio errors have localized messages. The configured local duration limit ends a session; tapping again creates another. A saved key is personal to this installation.
+When enabled, tap the microphone button to start and tap again to end. The button remains visible with drawing toolbars hidden. Leaving the activity ends the conversation; returning does not resume it automatically. Only the app's visible board/PDF workspace is captured, not other apps or dialog windows. The assistant has no editing or system-control tools. It cannot insert text into the lesson.
 
-## Administrator controls
+## Three services and independent keys
 
-The existing hidden guide entry (three taps on the guide title) opens Engineering. The last entry, Assistant behavior, has tone, response length, voice, extra behavior instructions, panel facts, model ID, screen interval and local conversation duration. The normal Settings menu exposes only connection/key management.
+Settings → Voice assistant selects Google Gemini, OpenAI or OpenRouter, conversation model and voice. Each service has a separate Android Keystore AES-GCM encrypted credential. Changing services preserves the other keys. The existing Gemini credential location is retained for upgrades. Empty key input preserves the selected service's saved key; Delete key only affects that service. Keys are never in source, lesson files, PDFs, diagnostics or connection URLs. Backup is disabled. Enter your own key in the app; GitHub signing secrets have a different purpose.
 
-Defaults: Persian audio responses; warm, polite and patient tone; short answers; VuraVision educational-assistant identity; hints before final answers for learning exercises, with final answers when explicitly requested. Software/panel-use questions receive direct practical instructions. Default model: `gemini-3.8-live`; voice: `Kore`; screen interval: 2 seconds; local conversation limit: 15 minutes. Administrators can update the Live model ID as Google model availability changes. Behavior instructions steer the model and are not a guarantee of perfect compliance. The absence of editing tools and the local time/lifecycle limits are enforced by app code.
+- Gemini: direct Live API WebSocket, default `gemini-3.8-live`, `Kore`; PCM16 mono input 16 kHz, output 24 kHz. Existing bounded resumption/reconnect behavior is retained.
+- OpenAI: GA Realtime WebSocket, default `gpt-realtime`, `marin`; PCM16 mono input/output 24 kHz. Images are conversation context items and do not trigger unsolicited responses. Server speech detection interrupts queued playback. A dropped established connection ends the session, because this path does not pretend to resume a lost conversation. Customers supply their own keys; the APK contains no shared key. For a future centrally billed fleet, use a backend issuing short-lived credentials. OpenAI API billing is separate from ChatGPT subscriptions.
+- OpenRouter: **turn-based/half-duplex** HTTP pipeline, not a Gemini/OpenAI full-duplex Live session. Local endpoint detection submits a bounded spoken question plus the newest workspace JPEG to a model accepting **audio + image + text**, receives a Persian reply, then streams a separate speech model's PCM audio. Wait for Listening before speaking again. Audio/image understanding default: `google/gemini-3.5-flash-lite`; alternate preset: `qwen/qwen3.8-omni-flash`. Speech default: `google/gemini-3.8-flash-lite-tts`, voice `Kore`; other supported speech presets are `google/gemini-3.8-flash-tts` and `google/gemini-3.1-flash-tts-preview`. Both requests use the **OpenRouter key**; the default route uses Google models behind OpenRouter and may consume paid credit. `openai/gpt-audio` alone cannot see the board, because its OpenRouter input modalities do not include images. The current catalog is checked on startup and incompatible models are rejected with a clear message.
 
-The Persian in-app guide supplies actual software tool instructions. Runtime Android version, manufacturer/model and reported display dimensions supplement that reference. Administrator panel notes supply known hardware details; the assistant is explicitly instructed not to infer physical size, touch-point count, OPS, camera or other unreported features.
+## Behavior
 
-## Runtime and performance
+All paths use the same Persian instruction: introduce only as “دستیار آموزشی هستم”; keep provider/model/company details out of spoken answers, including direct identity questions; avoid fabricated identities; remain warm, polite and patient; answer briefly; guide on exercises before providing a final answer when explicitly requested. If audio or intent is unclear, say only “متوجه نشدم، لطفاً دوباره بگید.” Do not echo a guessed interpretation. In OpenRouter, the `understood=false` response is additionally enforced locally: an uncertain model's guessed transcript/reply is replaced with that clarification phrase.
 
-OkHttp 4.12.0 connects directly over TLS WebSocket to the Gemini Developer API v1beta BidiGenerateContent endpoint, authenticated with an `x-goog-api-key` header. Settings and initial context are sent once per connection, and no media is sent before setupComplete. Microphone PCM16 mono is captured at 16 kHz in 40 ms chunks. Server PCM16 mono audio at 24 kHz is played on a separate thread. Available hardware echo cancellation/noise suppression is enabled; real panel microphone/speaker behavior still needs testing.
+Hidden administrator controls retain tone, length, extra instructions, known panel facts, screen interval and session duration. Reset behavior preserves service/model/key/enable selections. Actual guide content and reported Android device facts provide software context; unknown hardware features must not be invented. Instructions steer model behavior; they cannot guarantee compliance for every model response. Lack of editing tools, disabled gating and lifecycle limits are enforced by app code.
 
-A PixelCopy surface capture is asynchronous, with at most one frame in flight and a reusable bitmap buffer. Captures wait until writing/touch input has been idle for 500 ms; JPEG encoding/hash checking runs on its own worker. The captured rectangle is the board/PDF workspace in the activity window, not other apps or separate dialog windows. Images start at a maximum edge of 1280 pixels and are adaptively reduced to a 60 KB JPEG budget; detailed text may require zooming in. Unchanged image bytes are not resent. Audio backlog is bounded; when a connection cannot keep up, the session ends instead of accumulating unlimited delayed audio. Playback is bounded too. Server interruption discards queued speech. Session resumption and context compression are configured to survive server connection limits, with bounded reconnect attempts. Resuming does not repeat the greeting or create another microphone.
+## Performance and lifetime
 
-## Key and data handling
+Network processing, JPEG encoding and blocking audio run on dedicated workers. There is no local language model on the panel. PixelCopy uses one reusable capture and at most one frame in flight. Captures wait for 500 ms of idle touch/drawing, have a 1280-pixel maximum edge and adaptive 60 KB JPEG budget. Detailed writing may require zooming in. Unchanged frames are not sent repeatedly. For OpenRouter, only the newest frame is retained; silence or image changes alone do not trigger paid question requests. Speech is capped at approximately 20 seconds per turn, text-only history at six turns, network response size and audio backlog are bounded. Speech output is backpressured rather than buffering indefinitely. The configured session duration defaults to 15 minutes.
 
-Version 1.10.2 restores password masking after single-line configuration and fixes the key-field layout regression: the input is explicitly left-aligned in both locales, and the UI regression checks rendered paragraph direction and password masking after measuring the field. It does not rely on an unresolved view direction flag.
+Hardware echo cancellation/noise suppression is used when available. Half-duplex input is ignored during OpenRouter processing/playback to avoid responding to the assistant's own voice. Physical microphone sensitivity, room noise, Persian pronunciation, network latency and screen readability need target-panel validation.
 
-Version 1.10.1 treats a key as an opaque credential rather than requiring 20–200 characters from a fixed alphabet. Input is left-to-right in both interface languages. Boundary whitespace/direction marks and matching surrounding copy quotes are removed; interior bytes are never rewritten. Empty input retains an existing key in the connection UI. Obvious URLs, interior whitespace/control characters, non-ASCII header values and values above an 8192-character header budget are rejected locally. Safe credential syntax does not prove Google validity or model access. The UI and encrypted storage share the same normalizer/validator.
+## Sources checked 2026-10-04
 
-
-The API key is encrypted with a per-device Android Keystore AES-GCM key in private preferences. The app has backup disabled. The key is never in source code, lesson files, PDFs, diagnostics or WebSocket URLs. The entry field does not reveal a previously saved key; leaving it empty preserves that key and Delete key removes it. Audio, frames and resume tokens are transient and not saved to disk. This direct-key approach is for user-supplied keys; fleet deployments using a centrally owned key should use a backend issuing short-lived credentials instead.
-
-Google free-tier model access and quotas are project-specific and can change. The normal connection page tells users that internet, available Live access and quota are required. Google documents different data-use terms for free and paid tiers; deployment owners should choose the suitable account/tier.
-
-## Official protocol sources (checked 2026-10-03)
-
-- https://ai.google.dev/gemini-api/docs/api-key
-- https://ai.google.dev/api/live
+- https://developers.openai.com/api/docs/guides/realtime-conversations
+- https://developers.openai.com/api/docs/guides/voice-websockets
+- https://openrouter.ai/docs/guides/overview/multimodal/audio
+- https://openrouter.ai/docs/guides/overview/multimodal/tts
+- https://openrouter.ai/api/v1/models
+- https://openrouter.ai/api/v1/models?output_modalities=speech
+- https://openrouter.ai/google/gemini-3.5-flash-lite
+- https://openrouter.ai/qwen/qwen3.8-omni-flash
+- https://openrouter.ai/google/gemini-3.8-flash-lite-tts
+- https://ai.google.dev/gemini-api/docs/speech-generation
 - https://ai.google.dev/gemini-api/docs/live-api
-- https://ai.google.dev/gemini-api/docs/live-api/capabilities
-- https://ai.google.dev/gemini-api/docs/live-api/best-practices
-- https://ai.google.dev/gemini-api/docs/live-api/session-management
-- https://ai.google.dev/gemini-api/docs/pricing
-- https://ai.google.dev/gemini-api/docs/rate-limits
-- https://github.com/googleapis/python-genai/blob/main/google/genai/live.py
 
-## Verification
+## Verification limits
 
-A device test for Android Keystore encryption/round-trips is included and compiled; it has not been executed locally. Protocol/controller tests use a fake transport and fake audio ports, covering wire schema, setup ordering, greeting, media forwarding, interruption, resumption, stale socket events, backlog failure, quota rejection, local timeout and stopping reconnect. Native offscreen UI tests render the board button, normal key settings and hidden administrator settings in Persian and English. These checks do not substitute for a real authenticated Gemini conversation. A valid customer key and physical panel are required for end-to-end audio quality, latency, echo and screen-readability verification. No actual API call with a customer key has been made during development.
+Protocol and controller tests use fake transports/audio/services, including hidden-default gating, late permission callbacks, provider separation, OpenAI GA events, half-duplex endpointing, uncertain-response suppression and resource cancellation. UI render checks cover English/Persian. Android Keystore device tests are included. See the current release verification record for executed checks. No authenticated customer API conversation or physical-panel audio/latency test is claimed from unit tests.

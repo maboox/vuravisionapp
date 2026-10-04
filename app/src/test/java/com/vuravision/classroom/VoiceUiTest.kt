@@ -25,15 +25,35 @@ class VoiceUiTest {
     }
     @Test fun englishVoiceControlsRenderAndRemainVisibleInFocusMode(){render("en")}
     @Test fun persianVoiceControlsRenderAndRemainVisibleInFocusMode(){render("fa")}
+    @Test fun newProviderControlsRenderWithoutExposingBehavior(){
+        for(language in listOf("en","fa"))for(provider in listOf("openai","openrouter")){
+            context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
+            VoiceSettings(provider=provider).save(context)
+            val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
+            try{
+                val a=controller.get()
+                assertFalse(a.findViewById<Button>(R.id.voice_assistant_button).isShown)
+                VoiceSettingsUi(a).connection(VoiceKeys(a),java.util.concurrent.Executor{}){}
+                val dialog=ShadowDialog.getLatestDialog()
+                capture(dialog.window!!.decorView,"voice-$provider-$language",1000,1000)
+                val all=views(dialog.window!!.decorView)
+                assertFalse(all.filterIsInstance<TextView>().any{it.text.toString()==a.s("voice_behavior")})
+                val model=all.filterIsInstance<EditText>().first{it.hint==null || !it.hint.toString().contains("API")}
+                assertEquals(if(provider=="openai")"gpt-realtime"else"google/gemini-3.5-flash-lite",model.text.toString())
+                assertEquals(if(provider=="openai")2 else 3,all.filterIsInstance<Spinner>().count{it.isShown})
+                dialog.dismiss()
+            }finally{controller.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+        }
+    }
     @Test fun keySettingsAcceptLongPastedCredentialsBeforeSchedulingEncryption(){
         for(language in listOf("en","fa")){
-            context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
+            context.getSharedPreferences("vura",0).edit().clear().putString("language",language).putBoolean("voiceEnabled",true).commit()
             val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
             try{
                 val a=controller.get();var scheduled=false;var changed=false
                 VoiceSettingsUi(a).connection(VoiceKeyStore(a,"voice_ui_accept_test"),java.util.concurrent.Executor{scheduled=true}){changed=true}
                 val dialog=ShadowDialog.getLatestDialog();val controls=views(dialog.window!!.decorView)
-                val input=controls.filterIsInstance<EditText>().single()
+                val input=controls.filterIsInstance<EditText>().first{it.hint?.toString()?.contains("API")==true}
                 input.setText("\u200F\"new-format:"+"abc-_.+=/".repeat(40)+"\"\u200E")
                 controls.filterIsInstance<Button>().first{it.text.toString() in listOf("Save key","ذخیرهٔ کلید")}.performClick()
                 assertTrue("$language must schedule encryption",scheduled);assertTrue(changed)
@@ -57,13 +77,13 @@ class VoiceUiTest {
             val a=controller.get();var scheduled=false
             VoiceSettingsUi(a).connection(VoiceKeyStore(a,"voice_ui_reject_test"),java.util.concurrent.Executor{scheduled=true}){}
             val dialog=ShadowDialog.getLatestDialog();val controls=views(dialog.window!!.decorView)
-            val input=controls.filterIsInstance<EditText>().single();input.setText("https://aistudio.google.com/apikey")
+            val input=controls.filterIsInstance<EditText>().first{it.hint?.toString()?.contains("API")==true};input.setText("https://aistudio.google.com/apikey")
             controls.filterIsInstance<Button>().first{it.text.toString() in listOf("Save key","ذخیرهٔ کلید")}.performClick()
             assertFalse(scheduled);assertNotNull(input.error);dialog.dismiss()
         }finally{controller.pause().stop().destroy()}
     }
     private fun render(language:String){
-        context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
+        context.getSharedPreferences("vura",0).edit().clear().putString("language",language).putBoolean("voiceEnabled",true).commit()
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
         try{
             val a=controller.get();val decor=a.window.decorView
@@ -83,7 +103,7 @@ class VoiceUiTest {
             VoiceSettingsUi(a).advanced{}
             val admin=ShadowDialog.getLatestDialog()
             capture(admin.window!!.decorView,"voice-admin-$language",1000,1000)
-            assertEquals(5,views(admin.window!!.decorView).filterIsInstance<Spinner>().size)
+            assertEquals(4,views(admin.window!!.decorView).filterIsInstance<Spinner>().size)
             admin.dismiss()
         }finally{controller.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }

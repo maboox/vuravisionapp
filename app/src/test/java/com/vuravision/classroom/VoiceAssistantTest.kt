@@ -46,7 +46,7 @@ class VoiceAssistantTest {
         val defaults=VoiceSettings.load(context)
         assertEquals("warm",defaults.tone);assertEquals("short",defaults.length)
         val prompt=defaults.instruction("guide test")
-        listOf("دستیار آموزشی ویوراویژن","همیشه به فارسی","هرگز عصبانی","جواب نهایی","هیچ ابزار تغییر","guide test").forEach{assertTrue(it,prompt.contains(it))}
+        listOf("دستیار آموزشی هستم","متوجه نشدم، لطفاً دوباره بگید.","همیشه به فارسی","هرگز عصبانی","جواب نهایی","هیچ ابزار تغییر","guide test").forEach{assertTrue(it,prompt.contains(it))}
         val updated=defaults.copy(tone="formal",length="detailed",extra="برای پایهٔ پنجم توضیح بده",panelNotes="پنل ۷۵ اینچ",frameSeconds=5,sessionMinutes=30)
         updated.save(context);assertEquals(updated,VoiceSettings.load(context))
         assertFalse(VoiceSettings.validModel("gemini-live?key=secret"))
@@ -129,7 +129,7 @@ class VoiceAssistantTest {
     @Test fun independentButtonAndConnectionSettingsDoNotExposeHiddenBehavior(){
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
         try{
-            val a=controller.get();val button=a.findViewById<Button>(R.id.voice_assistant_button)
+            val a=controller.get();VoiceSettings.setEnabled(a,true);idle();val button=a.findViewById<Button>(R.id.voice_assistant_button)
             assertNotNull(button);assertEquals(a.s("voice_assistant"),button.text.toString())
             button.performClick();val dialog=ShadowDialog.getLatestDialog()
             val text=views(dialog.window!!.decorView).filterIsInstance<TextView>().joinToString("\n"){it.text.toString()}

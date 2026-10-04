@@ -19,12 +19,12 @@ interface VoiceWire {
     fun queuedBytes():Long
     fun close()
 }
-class GoogleVoiceWire:VoiceWire {
-    private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(0,TimeUnit.SECONDS).pingInterval(20,TimeUnit.SECONDS).build()
+class SocketVoiceWire(private val endpoint:String,private val authHeader:String):VoiceWire {
+    private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(0,TimeUnit.SECONDS).pingInterval(20,TimeUnit.SECONDS).followRedirects(false).followSslRedirects(false).build()
     private var socket:WebSocket?=null
     override fun connect(key:String,events:VoiceWire.Events){
         // Native clients can send the API key in a header; it never appears in a URL/log.
-        val request=Request.Builder().url(VoiceProtocol.ENDPOINT).header("x-goog-api-key",key).build()
+        val request=Request.Builder().url(endpoint).header(authHeader,if(authHeader=="Authorization")"Bearer $key"else key).build()
         socket=client.newWebSocket(request,object:WebSocketListener(){
             override fun onOpen(webSocket:WebSocket,response:Response){events.opened()}
             override fun onMessage(webSocket:WebSocket,text:String){events.message(text)}
@@ -38,18 +38,21 @@ class GoogleVoiceWire:VoiceWire {
     override fun queuedBytes()=socket?.queueSize()?:0
     override fun close(){socket?.cancel();socket=null;client.dispatcher.executorService.shutdown();client.connectionPool.evictAll()}
 }
+class GoogleVoiceWire:VoiceWire by SocketVoiceWire(VoiceProtocol.ENDPOINT,"x-goog-api-key")
+class OpenaiVoiceWire(settings:VoiceSettings):VoiceWire by SocketVoiceWire("wss://api.openai.com/v1/realtime?model=${settings.openaiModel}","Authorization")
 
 /** Owns a single foreground conversation. No Store/document mutator is exposed. */
 class VoiceAssistant(
     private val settings:VoiceSettings,private val key:String,private val knowledge:String,
     private val audio:VoiceAudioPort,
     private val state:(String)->Unit,private val stopped:(String?)->Unit,
-    private val wireFactory:()->VoiceWire={GoogleVoiceWire()},
+    private val wireFactory:()->VoiceWire={if(settings.provider=="openai")OpenaiVoiceWire(settings)else GoogleVoiceWire()},
     private val handler:Handler=Handler(Looper.getMainLooper()),
     private val connected:()->Unit={},
-) {
-    @Volatile var active=false;private set
-    @Volatile var ready=false;private set
+) :VoiceConversation {
+    private val codec=if(settings.provider=="openai")OpenaiVoiceCodec else GeminiVoiceCodec
+    @Volatile override var active=false;private set
+    @Volatile override var ready=false;private set
     @Volatile private var wire:VoiceWire?=null
     @Volatile private var connection=0
     private var handle:String?=null
@@ -61,7 +64,7 @@ class VoiceAssistant(
     private var lastState=""
     private val timeout=Runnable{stop("voice_time_limit")}
     private var connectTimeout:Runnable?=null
-    fun start(){
+    override fun start(){
         check(Looper.myLooper()==handler.looper);check(!active)
         active=true
         handler.postDelayed(timeout,settings.sessionMinutes.coerceIn(1,60)*60_000L)
@@ -79,18 +82,18 @@ class VoiceAssistant(
         connectTimeout?.let{handler.removeCallbacks(it)}
         connectTimeout=Runnable{if(current() && !ready)stop("voice_network_error")}.also{handler.postDelayed(it,25_000)}
         try{next.connect(key,object:VoiceWire.Events{
-            override fun opened(){ui{if(!next.send(VoiceProtocol.setup(settings,knowledge,handle)))stop("voice_network_error")}}
+            override fun opened(){ui{if(!next.send(codec.setup(settings,knowledge,handle)))stop("voice_network_error")}}
             override fun message(text:String){
                 if(!current())return
                 if(text.length>4_000_000){ui{stop("voice_protocol_error")};return}
                 try{
-                    val packet=VoiceProtocol.parse(text)
+                    val packet=codec.parse(text)
                     // Interrupt playback immediately, before additional audio from this message.
                     if(!current())return
                     if(packet.interrupted)audio.interrupt()
                     if(!packet.interrupted && micStarted)packet.audio.forEach{if(current())audio.enqueue(it)}
                     ui{
-                        if(packet.error){stop("voice_service_error");return@ui}
+                        if(packet.error){stop(when(packet.errorCode){"invalid_api_key","insufficient_quota","rate_limit_exceeded"->"voice_key_or_quota";"model_not_found"->"voice_model_error";else->"voice_service_error"});return@ui}
                         packet.resumable?.let{if(!it)handle=null else packet.resumeHandle?.let{h->handle=h}}
                         if(packet.ready){
                             ready=true;failures=0;connectTimeout?.let{handler.removeCallbacks(it)}
@@ -101,13 +104,13 @@ class VoiceAssistant(
                                     audio.start({bytes,count->
                                         if(active && ready){
                                             val socket=wire
-                                            if(socket==null || socket.queuedBytes()>128_000 || !socket.send(VoiceProtocol.audio(bytes,count)))handler.post{if(active)stop("voice_network_slow")}
+                                            if(socket==null || socket.queuedBytes()>128_000 || !socket.send(codec.audio(bytes,count)))handler.post{if(active)stop("voice_network_slow")}
                                         }
                                     },{handler.post{if(active)stop("voice_audio_error")}})
                                 }catch(_:Exception){stop("voice_audio_error");return@ui}
                             }
                             notifyState("voice_listening")
-                            if(!greeted){greeted=true;if(!next.send(VoiceProtocol.greeting()))stop("voice_network_error")}
+                            if(!greeted){greeted=true;if(!next.send(codec.greeting()))stop("voice_network_error")}
                         }
                         if(packet.interrupted || packet.complete)notifyState("voice_listening")
                         else if(packet.audio.isNotEmpty())notifyState("voice_speaking")
@@ -126,18 +129,20 @@ class VoiceAssistant(
     }
     private fun reconnect(){
         if(!active || reconnecting)return
+        // OpenAI does not resume a dropped WebSocket session; do not silently lose lesson context.
+        if(settings.provider=="openai" && greeted){stop("voice_network_error");return}
         if(failures++>=2){stop("voice_network_error");return}
         reconnecting=true;ready=false;++connection
         wire?.close();wire=null;audio.interrupt();notifyState("voice_reconnecting")
         handler.postDelayed({if(active)connect()},1500)
     }
-    fun sendImage(jpeg:ByteArray):Boolean {
+    override fun sendImage(jpeg:ByteArray):Boolean {
         if(!active || !ready || jpeg.size>600_000)return false
         val socket=wire?:return false
         if(socket.queuedBytes()+jpeg.size*4L/3+256>110_000)return false
-        return socket.send(VoiceProtocol.image(jpeg))
+        return socket.send(codec.image(jpeg))
     }
-    fun stop(reason:String?=null){
+    override fun stop(reason:String?){
         if(!active)return
         active=false;ready=false;++connection
         handler.removeCallbacks(timeout);connectTimeout?.let{handler.removeCallbacks(it)}

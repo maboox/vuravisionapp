@@ -7,13 +7,13 @@
       "The top floating bar contains the main menu, lesson files, Undo, Redo and sharing. The left dock contains drawing and classroom tools. Hold an icon to see its name.",
       "Tap Pen and write in the canvas. Tap the selected Pen icon again to open its settings; the same second-tap gesture opens Eraser settings.",
       "The bottom page strip manages lesson pages. The corner full-screen button hides or restores the floating toolbars.",
-      "The separate Voice assistant button near the lower-right corner starts or ends a Persian conversation about the visible board/PDF. It remains available when drawing toolbars are hidden. The assistant only observes and speaks."
+      "The optional voice assistant is hidden and off by default. The administrator enables it in hidden Engineering → Assistant behavior. Then the separate lower-right button starts/ends a Persian conversation about the visible board/PDF, even when drawing toolbars are hidden."
     ],
     "stepsFa": [
       "نوار شناور بالا شامل منوی اصلی، فایل درس، بازگردانی، انجام دوباره و اشتراک است. نوار کناری ابزارهای رسم و کلاس را دارد. برای دیدن نام ابزار، آیکون را نگه دارید.",
       "قلم را انتخاب کنید و روی تخته بنویسید. برای تنظیمات قلم، دوباره روی آیکون قلم انتخاب‌شده بزنید؛ تنظیمات پاک‌کن هم با همین روش باز می‌شود.",
       "نوار پایین برای مدیریت صفحه‌های درس است. دکمهٔ تمام‌صفحه در گوشه، نوارهای ابزار را پنهان یا دوباره نمایش می‌دهد.",
-      "دکمهٔ مستقل دستیار صوتی نزدیک گوشهٔ پایین راست، مکالمهٔ فارسی دربارهٔ تخته و PDF نمایان را شروع یا پایان می‌دهد. با پنهان‌کردن نوارهای رسم نیز در دسترس است. دستیار فقط می‌بیند و صحبت می‌کند."
+      "دستیار صوتی اختیاری پیش‌فرض خاموش و پنهان است. مدیر از تنظیمات مخفی ← رفتار دستیار صوتی فعالش می‌کند. سپس دکمهٔ مستقل پایین راست، مکالمهٔ فارسی دربارهٔ تخته و PDF نمایان را شروع یا پایان می‌دهد؛ حتی با پنهان کردن نوارهای رسم."
     ],
     "tipEn": "Try: draw one line, Undo, Redo, then hide and restore the toolbars.",
     "tipFa": "تمرین: یک خط بکشید، بازگردانی و انجام دوباره را بزنید و نوار ابزار را پنهان و دوباره نمایان کنید."
@@ -462,14 +462,14 @@
       "If palm erasing is unreliable, use Eraser → calibration and inspect reported contact size. If drawing is blocked, select a visible unlocked layer.",
       "If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling.",
       "Settings → Fonts chooses Persian and English independently, with previews. New text and smart conversion keep the font pair in the project. Optionally apply the pair to editable text on the active page; Undo restores the previous fonts.",
-      "Settings → Voice assistant accepts a Google AI Studio API key. Microphone audio and visible workspace images are sent to Gemini while the conversation is active. Internet, an available Live model and quota are required. Leaving the app ends the conversation."
+      "The voice assistant is off and hidden by default. Once enabled by the administrator, Settings → Voice assistant selects Gemini, OpenAI or OpenRouter and stores each key separately. Active conversations send audio and workspace images to the selected service. OpenRouter is turn-based. Leaving the app ends the conversation. Settings → Google search settings chooses Ask each time, Internal floating browser or Default device browser."
     ],
     "stepsFa": [
       "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
       "اگر پاک‌کردن کف دست قابل اعتماد نیست، از پاک‌کن وارد کالیبراسیون و اندازهٔ گزارش‌شده را بررسی کنید. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.",
       "اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید.",
       "تنظیمات → فونت‌ها، انتخاب مستقل فارسی و انگلیسی و پیش‌نمایش دارد. متن تازه و تبدیل هوشمند فونت‌ها را در پروژه نگه می‌دارند. می‌توانید روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال کنید؛ بازگردانی فونت قبلی را برمی‌گرداند.",
-      "تنظیمات ← دستیار صوتی، کلید API از Google AI Studio را می‌گیرد. هنگام مکالمهٔ فعال، صدای میکروفن و تصویر فضای کار نمایان به جمینای ارسال می‌شود. اینترنت، مدل Live در دسترس و سهمیهٔ کافی لازم است. خروج از برنامه مکالمه را پایان می‌دهد."
+      "دستیار صوتی پیش‌فرض خاموش و پنهان است. پس از فعال‌سازی مدیر، تنظیمات ← دستیار صوتی انتخاب Gemini، OpenAI یا OpenRouter و کلید جداگانه دارد. مکالمهٔ فعال صدا و تصویر فضای کار را به سرویس انتخابی می‌فرستد. OpenRouter نوبتی است. خروج از برنامه مکالمه را پایان می‌دهد. تنظیمات ← جستجوی گوگل، انتخاب هر بار بپرس، مرورگر داخلی شناور یا مرورگر پیش‌فرض دستگاه دارد."
     ],
     "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
     "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."

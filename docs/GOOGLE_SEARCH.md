@@ -2,7 +2,7 @@
 
 Select a word, handwritten question, existing text or sticky note using the selection tool, then tap the magnifying glass (Search Google) in the selection toolbar. This uses the existing Persian/English recognition configuration. Persian handwriting needs its installed language model; bundled offline OCR supports Latin. If recognition fails, the review dialog remains available for manual input.
 
-Search always opens a review dialog, independent of the Smart review preference. Choose a candidate or edit the question, then explicitly submit it. Cancel or an empty draft sends no request. The original ink/text is retained and the board's undo history is not changed by searching. Search works without a Gemini key; recognition-model downloads and Google results have their own internet requirements.
+Normal Settings → Google search settings provides Ask each time (default), Internal floating browser and Default device browser. With a fixed destination and a single nonempty recognition candidate, the explicitly requested search opens directly without another chooser. Multiple/empty candidates still show editable review using the chosen destination; Smart review forces query review every time. Cancel or an empty draft sends no request. The original ink/text is retained and the board's undo history is not changed by searching. Search works without a Gemini key; recognition-model downloads and Google results have their own internet requirements.
 
 ## In-app floating window
 
@@ -26,4 +26,4 @@ Official references checked 2026-10-03:
 
 ## Verification
 
-Pure JVM tests cover Persian/mixed-math URL encoding, query limits and window bounds. Android UI regressions cover explicit confirmation, correction, cancel/blank drafts, browser flags and retaining the source selection. Current execution status is recorded in VERIFICATION_1.10.2.json. Real Google loading, hardware touch/window performance and the OEM browser/PiP behavior need verification on the target display.
+Pure JVM tests cover Persian/mixed-math URL encoding, query limits and window bounds. Android UI regressions cover explicit confirmation, correction, cancel/blank drafts, browser flags and retaining the source selection. Current execution status is recorded in VERIFICATION_1.11.0.json. Real Google loading, hardware touch/window performance and the OEM browser/PiP behavior need verification on the target display.

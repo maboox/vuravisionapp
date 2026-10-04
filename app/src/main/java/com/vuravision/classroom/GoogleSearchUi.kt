@@ -8,17 +8,18 @@ import android.webkit.*
 import android.widget.*
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** Review is mandatory: no search request is sent by recognition alone. */
+/** Ask-each-time and ambiguous recognition use an editable review. */
 class GoogleSearchReview(private val activity:Activity) {
     private fun tr(en:String,fa:String)=if(activity.resources.configuration.locales[0].language=="fa")fa else en
-    fun show(candidates:List<String>,floating:(String)->Unit,browser:(String,Boolean)->Unit){
+    fun show(candidates:List<String>,floating:(String)->Unit,browser:(String,Boolean)->Unit,target:GoogleSearchSettings=GoogleSearchSettings()){
         val content=activity.column().apply{pad(16)}
         content.addView(activity.label(tr("Review the word or question before sending it to Google. Your writing stays on the board. Search needs internet; it does not need a Gemini API key.","کلمه یا سؤال را قبل از ارسال به گوگل بررسی کنید. دست‌نویس روی تخته می‌ماند. جستجو اینترنت می‌خواهد و نیازی به کلید جمینای ندارد."),14f,MUTED))
         val input=activity.field(candidates.firstOrNull().orEmpty()).apply{inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE;minLines=2;maxLines=5;hint=tr("Word or question","کلمه یا سؤال")};content.addView(input)
         val choices=activity.row()
         candidates.distinct().take(3).forEach{v->choices.addView(activity.button(v.take(40)){input.setText(v)})}
         content.addView(activity.scrollRow(choices))
-        val adjacent=CheckBox(activity).apply{text=tr("Request browser beside the board (if supported)","درخواست مرورگر کنار تخته (اگر نمایشگر پشتیبانی کند)")};content.addView(adjacent)
+        val adjacent=CheckBox(activity).apply{text=tr("Request browser beside the board (if supported)","درخواست مرورگر کنار تخته (اگر نمایشگر پشتیبانی کند)");isChecked=target.adjacent}
+        if(target.destination=="ask")content.addView(adjacent)
         val dialog=MaterialAlertDialogBuilder(activity).setTitle(tr("Search Google","جستجو در گوگل"))
             .setView(ScrollView(activity).apply{addView(content)}).setNegativeButton(activity.s("cancel"),null).show().also{Fonts.onShown(it)}
         fun submit(action:(String)->Unit){
@@ -26,8 +27,10 @@ class GoogleSearchReview(private val activity:Activity) {
             if(query.isEmpty()||query.length>GoogleSearchQuery.MAX_LENGTH){input.error=tr("Enter 1–4096 characters","متن جستجو باید بین ۱ تا ۴۰۹۶ کاراکتر باشد");return}
             input.error=null;dialog.dismiss();action(query)
         }
-        content.addView(activity.button(tr("Search in floating window","جستجو در پنجرهٔ شناور"),true){submit(floating)})
-        content.addView(activity.button(tr("Open in browser","بازکردن در مرورگر")){submit{browser(it,adjacent.isChecked)}})
+        if(target.destination=="ask"){
+            content.addView(activity.button(tr("Search in floating window","جستجو در پنجرهٔ شناور"),true){submit(floating)})
+            content.addView(activity.button(tr("Open in browser","بازکردن در مرورگر")){submit{browser(it,adjacent.isChecked)}})
+        }else content.addView(activity.button(tr("Search","جستجو"),true){submit{if(target.destination=="floating")floating(it)else browser(it,target.adjacent)}})
     }
 }
 

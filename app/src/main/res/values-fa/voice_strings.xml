@@ -8,11 +8,11 @@
     <string name="voice_speaking">دستیار صحبت می‌کند · پایان</string>
     <string name="voice_permission_needed">اجازهٔ میکروفن لازم است. اگر پنجرهٔ اجازه باز نمی‌شود، از تنظیمات برنامه در اندروید اجازه بدهید.</string>
     <string name="voice_key_saved">کلید API به‌صورت رمزگذاری‌شده روی این دستگاه ذخیره شده است.</string>
-    <string name="voice_key_missing">ابتدا کلید API از Google AI Studio را وارد کنید.</string>
+    <string name="voice_key_missing">ابتدا کلید API سرویس انتخابی را وارد کنید.</string>
     <string name="voice_key_invalid">کلید API کامل را بدون لینک، فاصلهٔ داخلی یا شکست خط وارد کنید.</string>
     <string name="voice_key_storage_error">ذخیره یا خواندن امن کلید ممکن نشد. کلید را حذف و دوباره وارد کنید.</string>
-    <string name="voice_key_or_quota">گوگل دسترسی را رد کرد یا سهمیه تمام شده است. کلید، دسترسی پروژه و سهمیهٔ Live API را در AI Studio بررسی کنید.</string>
-    <string name="voice_model_error">مدل Live در دسترس نیست یا تنظیمات آن معتبر نیست. شناسهٔ مدل را در تنظیمات مخفی دستیار بررسی کنید.</string>
+    <string name="voice_key_or_quota">دسترسی رد شد یا اعتبار و سهمیه تمام شده است. کلید سرویس انتخابی، پرداخت و دسترسی مدل را بررسی کنید.</string>
+    <string name="voice_model_error">مدل در دسترس نیست یا تنظیمات آن معتبر نیست. شناسهٔ مدل را در تنظیمات دستیار بررسی کنید.</string>
     <string name="voice_service_error">سرویس صوتی مکالمه را پایان داد. دسترسی مدل و سهمیه را بررسی و دوباره تلاش کنید.</string>
     <string name="voice_protocol_error">پاسخ سرویس صوتی پشتیبانی نمی‌شود. تنظیم مدل Live را بررسی و دوباره تلاش کنید.</string>
     <string name="voice_network_error">اتصال صوتی برقرار نشد. اینترنت را بررسی و دوباره تلاش کنید.</string>
@@ -20,4 +20,8 @@
     <string name="voice_audio_error">میکروفن یا بلندگو آماده نشد یا قطع شد. میکروفن و مسیر صدا را بررسی و دوباره تلاش کنید.</string>
     <string name="voice_time_limit">زمان تعیین‌شدهٔ مکالمه پایان یافت. برای شروع دوباره دکمهٔ دستیار را بزنید.</string>
     <string name="voice_vision_error">تصویر صفحه فعلاً به دستیار نمی‌رسد. مکالمه را پایان دهید و دوباره شروع کنید.</string>
+    <string name="voice_router_model_error">مدل OpenRouter باید صدا و تصویر را دریافت کند و متن پاسخ بدهد؛ یک مدل سازگار انتخاب کنید.</string>
+    <string name="voice_router_speech_error">مدل تولید صدای OpenRouter در دسترس نیست. در تنظیمات دستیار مدل صدای دیگری انتخاب کنید.</string>
+    <string name="voice_thinking">دستیار پاسخ را آماده می‌کند · پایان</string>
+    <string name="google_search_settings">تنظیمات جستجوی گوگل</string>
 </resources>

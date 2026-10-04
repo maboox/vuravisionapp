@@ -1,0 +1,68 @@
+{
+  "versionName": "1.11.0",
+  "versionCode": 20,
+  "checkedAtUtc": "2026-10-04T05:47:27.677028+00:00",
+  "sourceCheck": "passed",
+  "unitTests": {
+    "tests": 161,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 20
+  },
+  "lint": {
+    "debug": {
+      "error": 0,
+      "warning": 715
+    },
+    "release": {
+      "error": 0,
+      "warning": 715
+    }
+  },
+  "tasks": {
+    "testDebugUnitTest": "passed",
+    "lintDebug": "passed",
+    "lintRelease": "passed",
+    "assembleDebug": "passed",
+    "assembleDebugAndroidTest": "passed"
+  },
+  "webChecks": {
+    "catalog": {
+      "cards": 68,
+      "subjectFilter": true,
+      "topicFilter": true,
+      "search": true,
+      "navigation": true
+    },
+    "catalogFa": {
+      "direction": "rtl",
+      "search": true
+    },
+    "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+    "labs": 204,
+    "labFailures": [],
+    "games": 49,
+    "gameFailures": [],
+    "errors": []
+  },
+  "debugApk": {
+    "bytes": 92025450,
+    "sha256": "0b702b5bc007723e8206e043b684c6d575299a7df898c97547b89a0bdbe745c4",
+    "signatureVerification": "passed, Android debug certificate v2",
+    "zipAlignment16KB": "passed"
+  },
+  "visualChecks": [
+    "Gemini connection Persian/English",
+    "hidden behavior Persian/English",
+    "OpenAI connection Persian/English",
+    "OpenRouter connection Persian/English"
+  ],
+  "limitations": [
+    "Provider protocols, controller and audio are tested with fake transports/services; no authenticated Gemini/OpenAI/OpenRouter session was executed.",
+    "Device tests compiled; no Android emulator or physical panel tests executed in this workspace.",
+    "No physical-panel microphone, speaker, echo cancellation, rendering performance or latency measurement.",
+    "Production APK signing requires the existing GitHub Actions production secrets; the local APK is debug-signed.",
+    "Lint warnings remain: 715 in each variant."
+  ]
+}
