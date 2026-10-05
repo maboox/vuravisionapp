@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layers">Layers</string>
+    <string name="rename">Rename</string>
+    <string name="ui_size">Interface size</string>
+    <string name="unlock_all">Unlock all on this page</string>
+    <string name="bold">Bold</string>
+    <string name="italic">Italic</string>
+    <string name="periodic">Periodic table</string>
+    <string name="periodic_table">Interactive periodic table</string>
+    <string name="ex_periodic_table">Explore elements, compare properties and add an interactive table or element card to the board.</string>
+    <string name="fill">Bucket fill</string>
+    <string name="measure">Measure shape</string>
+    <string name="coordinates">Coordinate plane</string>
+    <string name="add_point">Add point</string>
+    <string name="page_background">New-page background</string>
+    <string name="calibration">Calibration</string>
+    <string name="pie_settings">Pie menu</string>
+    <string name="clear_shortcut">Clear shortcut</string>
+    <string name="new_page">New page</string>
+    <string name="new_layer">New layer</string>
+    <string name="thicker">Increase thickness</string>
+    <string name="thinner">Decrease thickness</string>
+    <string name="draw_parallel">Draw parallel line</string>
+    <string name="draw_perpendicular">Draw perpendicular line</string>
+    <string name="small">Small</string>
+    <string name="medium">Medium</string>
+    <string name="large">Large</string>
+    <string name="plain">Plain</string>
+    <string name="hatch">Hatched</string>
+</resources>

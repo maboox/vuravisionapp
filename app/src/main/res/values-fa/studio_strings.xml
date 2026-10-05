@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layers">لایه‌ها</string>
+    <string name="rename">تغییر نام</string>
+    <string name="ui_size">اندازهٔ رابط کاربری</string>
+    <string name="unlock_all">بازکردن همهٔ قفل‌های این صفحه</string>
+    <string name="bold">پررنگ</string>
+    <string name="italic">مورب</string>
+    <string name="periodic">جدول مندلیف</string>
+    <string name="periodic_table">جدول مندلیف تعاملی</string>
+    <string name="ex_periodic_table">عناصر و ویژگی‌هایشان را بررسی و مقایسه کنید و جدول یا کارت عنصر را به تخته بیاورید.</string>
+    <string name="fill">سطل رنگ</string>
+    <string name="measure">اندازه‌گیری شکل</string>
+    <string name="coordinates">محور مختصات</string>
+    <string name="add_point">افزودن نقطه</string>
+    <string name="page_background">پس‌زمینهٔ صفحهٔ جدید</string>
+    <string name="calibration">کالیبراسیون</string>
+    <string name="pie_settings">منوی شعاعی</string>
+    <string name="clear_shortcut">حذف میان‌بر</string>
+    <string name="new_page">صفحهٔ جدید</string>
+    <string name="new_layer">لایهٔ جدید</string>
+    <string name="thicker">ضخامت بیشتر</string>
+    <string name="thinner">ضخامت کمتر</string>
+    <string name="draw_parallel">رسم خط موازی</string>
+    <string name="draw_perpendicular">رسم خط عمود</string>
+    <string name="small">کوچک</string>
+    <string name="medium">متوسط</string>
+    <string name="large">بزرگ</string>
+    <string name="plain">ساده</string>
+    <string name="hatch">هاشور</string>
+</resources>

@@ -14,6 +14,7 @@
         <item name="colorOnTertiaryContainer">@color/vura_on_tertiary_container</item>
         <item name="android:colorBackground">@color/vura_background</item>
         <item name="colorSurface">@color/vura_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/vura_surface</item>
         <item name="colorSurfaceVariant">@color/vura_surface_variant</item>
         <item name="colorOnSurface">@color/vura_on_surface</item>
         <item name="colorOnSurfaceVariant">@color/vura_on_surface_variant</item>
@@ -32,9 +33,11 @@
     </style>
 
     <style name="VuraAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="elevationOverlayEnabled">false</item>
         <item name="colorPrimary">@color/vura_primary</item>
         <item name="colorSecondary">@color/vura_secondary</item>
         <item name="colorSurface">@color/vura_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/vura_surface</item>
         <item name="shapeAppearanceMediumComponent">@style/VuraShape.Dialog</item>
     </style>
 

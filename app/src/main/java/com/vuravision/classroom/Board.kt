@@ -18,14 +18,19 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun copyToolsFrom(b:Board){
         tool=b.tool;shape=b.shape;touchMode=b.touchMode;profile=b.profile.copy()
         penColor=b.penColor;highlightColor=b.highlightColor;penWidth=b.penWidth;highlightWidth=b.highlightWidth
-        penStyle=b.penStyle;dashLength=b.dashLength;dashGap=b.dashGap
+        penStyle=b.penStyle;penOpacity=b.penOpacity;dashLength=b.dashLength;dashGap=b.dashGap
         eraserMode=b.eraserMode;eraserRadius=b.eraserRadius;eraseObjects=b.eraseObjects
         erasePdfContent=b.erasePdfContent;pdfPalmErase=b.pdfPalmErase
         holdRecognitionEnabled=b.holdRecognitionEnabled;holdDelayMillis=b.holdDelayMillis
-        holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode
+        holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode;fillColor=b.fillColor;fillAlpha=b.fillAlpha;gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled
     }
     fun releaseBacking(){backing?.recycle();backing=null;backingCanvas=null;backingDirty=true}
     private fun fitFixed(){fixedPageWidth?.let{if(width>0 && height>0)zoom=min(width/density/it,height/density/(fixedPageHeight?:1f));tx=0f;ty=0f}}
+    val gestures=BoardGestures(this)
+    private val geometry=GeometryInteraction(this)
+    var onEducationalTap:(Item,PointF)->Unit={_,_->}
+    var fillColor:Int?=TEAL
+    var fillAlpha=255
     var tool = "pen"
     var touchMode=false
     var activePane=0
@@ -71,6 +76,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var penWidth=4f
     var highlightWidth=6f
     var penStyle="round"
+    var penOpacity=255
     var dashLength=12f
     var dashGap=8f
     var inkColor:Int
@@ -79,7 +85,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var inkWidth:Float
         get()=if(tool=="highlight")highlightWidth else penWidth
         set(v) { if(tool=="highlight")highlightWidth=v else penWidth=v }
-    val isDrawing get()=live.isNotEmpty()
+    val isDrawing get()=live.isNotEmpty() || geometry.active
     var isCommitting=false
         private set
     private var backing:Bitmap?=null
@@ -178,12 +184,29 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     fun world(x: Float, y: Float,index:Int=activePane):PointF{val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val p=store.page.panes[n];return PointF(((x-r.left)/density-p.tx)/p.zoom,((y-r.top)/density-p.ty)/p.zoom)}
 
+    fun measureScale():Float {
+        val pixels=context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)
+        return if(pixels>0)pixels/(density*zoom) else 1f
+    }
+    fun abortPendingGesture(){
+        holdCallbacks.keys.toList().forEach(::cancelHold)
+        live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
+        geometry.cancel()
+        if(changed){store.cancelCheckpoint();changed=false}
+        actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";sceneChanged()
+    }
+    fun navigateGesture(e:MotionEvent){
+        for(i in 0 until e.pointerCount)pointerPanes[e.getPointerId(i)]=activePane
+        navigate(e)
+    }
+    fun beginGestureNavigation(x:Float,y:Float,initialSpan:Float){navigationActive=true;lastFocus=PointF(x,y);span=initialSpan}
     fun center():PointF {
         if(fixedPageWidth!=null){val visible=Rect();if(getLocalVisibleRect(visible))return world(visible.exactCenterX(),visible.exactCenterY())}
         return paneRect(activePane.coerceIn(store.page.panes.indices)).let{world(it.centerX(),it.centerY())}
     }
 
     fun reset() {
+        gestures.reset();geometry.cancel()
         holdCallbacks.keys.toList().forEach(::cancelHold)
         live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
         activePane=activePane.coerceIn(store.page.panes.indices)
@@ -310,8 +333,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             val b = contentBounds(items)
             c.drawRect(b, p)
             p.style = Paint.Style.FILL
-            c.drawCircle(b.right, b.bottom, 10f / zoom, p)
-            c.drawCircle(b.centerX(), b.top - 28 / zoom, 10f / zoom, p)
+            if(items.singleOrNull()?.shape !in GeometryTools.keys){
+                c.drawCircle(b.right, b.bottom, 10f / zoom, p)
+                c.drawCircle(b.centerX(), b.top - 28 / zoom, 10f / zoom, p)
+            }
             items.singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->
                 p.color=TEAL;p.strokeWidth=2f/zoom
                 val radius=15f/zoom
@@ -330,6 +355,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             c.drawRect(it, p)
         }
         if(lasso.size>1){val path=Path();path.moveTo(lasso[0].x,lasso[0].y);lasso.drop(1).forEach{path.lineTo(it.x,it.y)};p.style=Paint.Style.STROKE;c.drawPath(path,p)}
+        geometry.draw(c,zoom)
         c.restore()
         if(store.page.panes.size>1){
             p.style=Paint.Style.STROKE;p.strokeWidth=density
@@ -339,9 +365,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if(!isEnabled)return true
+        if(gestures.event(e))return true
         if(e.actionMasked==MotionEvent.ACTION_DOWN)onActivate()
         val id = e.getPointerId(e.actionIndex)
         if(e.actionMasked==MotionEvent.ACTION_CANCEL){
+            if(geometry.active){geometry.cancel();navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true}
             if(pdfBaseId!=null && changed && (tool=="erase" || actions.values.any{it=="erase"}))store.undo()
             holdCallbacks.keys.toList().forEach(::cancelHold)
             live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
@@ -354,6 +382,16 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             if(e.actionMasked==MotionEvent.ACTION_DOWN && activePane!=n){activePane=n;clearSelection()}
         }
         val at = world(e.getX(e.actionIndex), e.getY(e.actionIndex),pointerPanes[id]?:activePane)
+        if(geometry.active){geometry.event(e,at);if(!geometry.active){transforming=emptySet();backingDirty=true;pointerPanes.clear()};invalidate();return true}
+        if(e.actionMasked==MotionEvent.ACTION_DOWN && tool!="erase" && tool!="fill" && geometry.start(at,22f/zoom)){
+            transforming=chosen().map{it.id}.toSet();backingDirty=true;onSelection();invalidate();return true
+        }
+        if(tool=="fill"){
+            if(e.actionMasked==MotionEvent.ACTION_UP){val target=store.page.visibleItems().asReversed().firstOrNull{it.pane==activePane&&(ShapeFill.contains(it,at.x,at.y)||it.hit(at.x,at.y,0f))}
+                if(target!=null&&!target.locked&&store.page.editable(target)&&ShapeFill.contains(target,at.x,at.y))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
+            }
+            return true
+        }
         if(tool=="pan"){navigate(e);return true}
         if(e.actionMasked==MotionEvent.ACTION_DOWN){broadPointers.clear();touchSpan=0f;touchFocus=null}
         if(touchMode && pdfBaseId==null && e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN) && e.getToolType(e.actionIndex)!=MotionEvent.TOOL_TYPE_ERASER && e.getTouchMajor(e.actionIndex)>profile.thin && e.getTouchMajor(e.actionIndex)<profile.palm){
@@ -480,10 +518,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             h = 1f,
                             color = if(store.page.panes.size>1)store.page.panes[pointerPanes[id]?:activePane].color else if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
                             width = (if(splitInk)drawingPane.penWidth else if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
-                            shape = if(style=="highlight") "marker" else style,
+                            shape = style,
                             dashLength=if(splitInk)drawingPane.dashLength else dashLength,
                             dashGap=if(splitInk)drawingPane.dashGap else dashGap,
-                            alpha = if (style == "highlight") 75 else 255,
+                            alpha = if (style == "highlight") 75*penOpacity/255 else penOpacity,
                             points =
                                 mutableListOf(
                                     Point(start.x, start.y, e.eventTime, e.getPressure(e.actionIndex))
@@ -598,7 +636,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     box = null
                     lasso.clear()
                     if(wasSelection){
-                        if(mode=="move" && tappedSelected && hypot(at.x-anchor.x,at.y-anchor.y)<4/zoom)post{onObjectActions()}
+                        if(mode=="move" && hypot(at.x-anchor.x,at.y-anchor.y)<4/zoom){val education=chosen().singleOrNull()?.takeIf{it.kind in listOf("periodic","graph")}
+                            if(education!=null)post{onEducationalTap(education,at)}else if(tappedSelected)post{onObjectActions()}
+                        }
                         onSelection()
                     }
                 }

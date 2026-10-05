@@ -35,7 +35,7 @@ fun Context.s(key: String): String {
     return if (id == 0) key.replace('_', ' ') else getString(id)
 }
 
-fun Context.uiScale()=getSharedPreferences("vura",Context.MODE_PRIVATE).getFloat("uiScale",1f).coerceIn(.8f,1.25f)
+fun Context.uiScale()=getSharedPreferences("vura",Context.MODE_PRIVATE).getFloat("uiScale",1f).coerceIn(.75f,1.5f)
 fun Context.dp(n: Int) = (n * resources.displayMetrics.density * uiScale() + .5f).toInt()
 
 fun rounded(color: Int, radius: Float = 16f, stroke: Int = Color.TRANSPARENT) =
@@ -128,7 +128,7 @@ fun Context.field(value: String = "", hintValue: String = "") =
     TextInputEditText(materialContext()).apply {
         setText(value)
         hint = hintValue
-        textSize = 17f
+        textSize = 17f * uiScale()
         setTextColor(NAVY)
         setHintTextColor(MUTED)
         minHeight = dp(56)

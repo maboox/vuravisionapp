@@ -37,7 +37,7 @@ class BackgroundMindMapTest {
             val buttons=views(background.window!!.decorView).filterIsInstance<MaterialButton>()
             buttons.single{it.text=="Hatched"}.performClick()
             assertEquals("hatch",activity.store.page.background)
-            buttons.single{it.text=="Custom color…"}.performClick()
+            views(background.window!!.decorView).single{it.contentDescription=="Add color to this lesson"}.performClick()
             val picker=ShadowDialog.getLatestDialog() as AlertDialog
             val hex=views(picker.window!!.decorView).filterIsInstance<TextInputEditText>().single()
             hex.setText("#123ABC")
@@ -53,7 +53,7 @@ class BackgroundMindMapTest {
             activity.store.page.items.add(node);activity.board.selected.add(node.id)
             MainActivity::class.java.getDeclaredMethod("colors").apply{isAccessible=true}.invoke(activity)
             val colors=ShadowDialog.getLatestDialog()
-            views(colors.window!!.decorView).filterIsInstance<MaterialButton>()
+            views(colors.window!!.decorView)
                 .single{it.contentDescription=="#000000"}.performClick()
             assertEquals(Color.BLACK,node.noteColor)
             assertEquals(Color.WHITE,node.color)

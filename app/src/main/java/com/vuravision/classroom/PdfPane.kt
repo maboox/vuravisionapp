@@ -40,6 +40,18 @@ class PdfPane(
         })
         override fun dispatchTouchEvent(e:MotionEvent):Boolean {
             val b=currentBoard()
+            // Stationary undo/pie gestures belong to the active PDF sheet;
+            // moving fingers return to the native scroll/scale path below.
+            if(b.pdfBaseId!=null){
+                val local=MotionEvent.obtain(e);val from=IntArray(2);val to=IntArray(2)
+                getLocationInWindow(from);b.getLocationInWindow(to);local.offsetLocation((from[0]-to[0]).toFloat(),(from[1]-to[1]).toFloat())
+                val taken=b.gestures.event(local,false);local.recycle()
+                if(taken){
+                    if(e.actionMasked==MotionEvent.ACTION_POINTER_DOWN){val cancel=MotionEvent.obtain(e);cancel.action=MotionEvent.ACTION_CANCEL;scroll.onTouchEvent(cancel);scale.onTouchEvent(cancel);cancel.recycle();singleScroll=false;navigating=false}
+                    if(e.actionMasked==MotionEvent.ACTION_UP||e.actionMasked==MotionEvent.ACTION_CANCEL)parent?.requestDisallowInterceptTouchEvent(false)
+                    return true
+                }
+            }
             if(e.actionMasked==MotionEvent.ACTION_DOWN){
                 navigating=false
                 // Touch mode means two-tip drawing is off. Broad contact scrolls, including palm-size contact.
@@ -177,7 +189,7 @@ class PdfPane(
                 val b=Board(context,store,Renderer(media)).apply{interactiveResize=this@PdfPane.interactiveResize;fixedPageWidth=sheet.width;fixedPageHeight=sheet.height;pdfBaseId=sheet.page.items.first().id;copyToolsFrom(currentBoard())}
                 b.onActivate={b.copyToolsFrom(currentBoard());activate(b)}
                 b.onSelection={if(b===currentBoard())activate(b)}
-                store.changed={sheet.page=store.page;state.revision++;if(b.isCommitting)b.invalidate()else b.sceneChanged();edited();if(b===currentBoard())activate(b)}
+                store.changed={sheet.page=store.page;if(!store.isCanceling){state.revision++;edited()};if(b.isCommitting)b.invalidate()else b.sceneChanged();if(b===currentBoard())activate(b)}
                 boards[i]=b;frames[i].addView(b,FrameLayout.LayoutParams(-1,-1))
             }
         }

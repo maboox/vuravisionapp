@@ -53,9 +53,9 @@ class Version14Test {
         try{
             call(a,"penSettings");val d=ShadowDialog.getLatestDialog();val all=views(d.window!!.decorView)
             assertFalse(all.filterIsInstance<Switch>().any{it.text=="Two pen tips"})
-            val colors=all.filterIsInstance<com.google.android.material.button.MaterialButton>().filter{it.contentDescription?.startsWith("#")==true}
+            val colors=all.filter{it.contentDescription?.startsWith("#")==true}
             assertEquals(10,colors.size)
-            colors.forEach{assertEquals(Color.parseColor(it.contentDescription.toString()),it.backgroundTintList!!.defaultColor)}
+            colors.forEach{cell->val w=a.dp(46);val h=a.dp(48);cell.layout(0,0,w,h);val bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);cell.draw(Canvas(bitmap));assertEquals(Color.parseColor(cell.contentDescription.toString()),bitmap.getPixel(w/2,h/2));bitmap.recycle()}
             d.dismiss()
         }finally{c.pause().stop().destroy()}
     }

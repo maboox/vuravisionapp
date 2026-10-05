@@ -1,0 +1,82 @@
+{
+  "versionName": "1.12.0",
+  "versionCode": 21,
+  "checkedAtUtc": "2026-10-05T07:03:50.944456+00:00",
+  "sourceCheck": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 27,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118
+  },
+  "unitTests": {
+    "tests": 185,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 23
+  },
+  "lint": {
+    "debug": {
+      "error": 0,
+      "warning": 761
+    },
+    "release": {
+      "error": 0,
+      "warning": 760
+    }
+  },
+  "tasks": {
+    "testDebugUnitTest": "passed",
+    "lintDebug": "passed",
+    "lintRelease": "passed",
+    "assembleDebug": "passed",
+    "assembleDebugAndroidTest": "passed"
+  },
+  "webChecks": {
+    "catalog": {
+      "cards": 68,
+      "subjectFilter": true,
+      "topicFilter": true,
+      "search": true,
+      "navigation": true
+    },
+    "catalogFa": {
+      "direction": "rtl",
+      "search": true
+    },
+    "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+    "labs": 204,
+    "labFailures": [],
+    "games": 49,
+    "gameFailures": [],
+    "errors": []
+  },
+  "debugApk": {
+    "bytes": 93619659,
+    "sha256": "cdbb8e5e81c8ec8b3f58a8b61455689f6fcc3621b0a25444ac73e49af8c13f6f",
+    "signatureVerification": "passed, Android debug certificate",
+    "zipAlignment16KB": "passed"
+  },
+  "periodicData": {
+    "elements": 118,
+    "source": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/periodictable/JSON",
+    "retrieved": "2026-10-05",
+    "sha256": "d5fc86cbf1eed2bae7f863dc79fa511dd145056d72301b0f0e1a2224ba23109c"
+  },
+  "visualChecks": [
+    "Pen, eraser, text, calibration and new-page settings in Persian/English",
+    "Periodic table canvas and element properties in Persian/English",
+    "Six-slot radial menu bounds in Persian/English",
+    "Circular palette and icon menus"
+  ],
+  "limitations": [
+    "Provider protocols/controllers/audio use fake transports; no authenticated Gemini/OpenAI/OpenRouter session was executed.",
+    "Android device tests compiled; no emulator or physical-panel test was executed in this workspace.",
+    "No physical-panel pressure, contact classification, microphone, echo cancellation, rendering latency or performance measurement.",
+    "Production APK signing uses the existing four GitHub Actions secrets; the locally verified APK is debug-signed.",
+    "Lint warnings remain; see variant counts.",
+    "Coordinate intersections use a numerical scan and can miss tangencies or narrow features. Bucket fill is a closed-object fill, not pixel flooding or multi-stroke contour joining."
+  ]
+}

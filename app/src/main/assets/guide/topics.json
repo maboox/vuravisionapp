@@ -23,14 +23,14 @@
     "titleEn": "Pen, color and highlighter",
     "titleFa": "قلم، رنگ و هایلایتر",
     "stepsEn": [
-      "Select Pen, then tap it again. Pick a preset color or open Custom color for the HSV selector and HEX field. Set thickness and stroke style.",
-      "Choose ink, marker, dashed or highlighter in the pen panel. Highlighter is translucent. Thin and broad contacts can have separate appearances.",
-      "Draw a short sample after changing settings. In a split board, each panel has its own pen control near its upper edge."
+      "Tap Pen again to open its compact settings. Circular swatches are in one row; the + circle opens the color picker and saves a custom color in this lesson.",
+      "Choose ink, marker, pencil, fineliner, chalk, dashed or highlighter. All styles have fixed width and work without pressure sensing. Fine and broad tips can be configured independently.",
+      "The preview is compact. Change thickness and opacity, then draw a sample. In split mode each panel retains its own pen appearance."
     ],
     "stepsFa": [
-      "قلم را انتخاب و دوباره روی آن بزنید. یک رنگ آماده انتخاب کنید یا برای انتخابگر رنگ و کد رنگ، رنگ دلخواه را باز کنید. ضخامت و سبک خط را تنظیم کنید.",
-      "از پنل قلم، حالت جوهری، ماژیک، خط‌چین یا هایلایتر را انتخاب کنید. هایلایتر نیمه‌شفاف است. تماس باریک و پهن می‌توانند ظاهر جداگانه داشته باشند.",
-      "بعد از تغییر تنظیمات، یک نمونهٔ کوتاه بکشید. در تختهٔ تقسیم‌شده، هر بخش کنترل قلم خودش را نزدیک لبهٔ بالا دارد."
+      "روی قلم دوباره بزنید تا تنظیمات جمع‌وجور باز شود. رنگ‌های دایره‌ای در یک ردیف‌اند؛ دایرهٔ + انتخابگر رنگ را باز و رنگ دلخواه را در همین درس ذخیره می‌کند.",
+      "جوهری، ماژیک، مداد، راپید، گچ، خط‌چین یا هایلایتر را انتخاب کنید. همهٔ حالت‌ها عرض ثابت دارند و به حساسیت فشار نیاز ندارند. سر باریک و پهن مستقل تنظیم می‌شوند.",
+      "پیش‌نمایش کوچک است. ضخامت و کدری را تغییر دهید و یک نمونه بکشید. هر بخش تختهٔ تقسیم‌شده ظاهر قلم خودش را نگه می‌دارد."
     ],
     "tipEn": "Use a broad translucent highlighter over writing, then a thin dark pen for details.",
     "tipFa": "روی نوشته هایلایتر پهن بکشید و برای جزئیات از قلم باریک و تیره استفاده کنید."
@@ -110,12 +110,14 @@
     "stepsEn": [
       "Tap Shapes and choose an outline. Drag on the board from the desired anchor towards the opposite edge.",
       "Square and circle keep equal width and height. Other outlines can stretch. Select an existing shape to resize, rotate, change color, duplicate or delete.",
-      "If you need a precise diagram, use ready-made shapes rather than relying on handwriting recognition."
+      "If you need a precise diagram, use ready-made shapes rather than relying on handwriting recognition.",
+      "Bucket fill colors the inside of a closed shape or nearly closed single ink loop, preserving the outline. Open objects and the page background cannot be filled. Choose opacity or No fill; Undo restores the previous fill. Measure shape reports the supported shape’s dimensions, perimeter, area and angles."
     ],
     "stepsFa": [
       "شکل‌ها را باز و یک شکل انتخاب کنید. روی تخته از نقطهٔ ثابت دلخواه به سمت گوشهٔ مقابل بکشید.",
       "مربع و دایره عرض و ارتفاع برابر دارند. شکل‌های دیگر می‌توانند کشیده شوند. شکل قبلی را انتخاب کنید تا اندازه، چرخش یا رنگ آن را تغییر دهید، تکثیر کنید یا حذف کنید.",
-      "برای نمودار دقیق‌تر، از شکل‌های آماده استفاده کنید."
+      "برای نمودار دقیق‌تر، از شکل‌های آماده استفاده کنید.",
+      "باکت داخل شکل بسته یا یک خط دست‌کشیدهٔ تقریباً بسته را با حفظ دورخط رنگ می‌کند. جسم باز و زمینهٔ صفحه رنگ نمی‌شوند. کدری یا بدون رنگ داخل را انتخاب کنید؛ بازگردانی رنگ قبلی را برمی‌گرداند. اندازه‌گیری شکل، ابعاد، محیط، مساحت و زاویه‌های شکل‌های پشتیبانی‌شده را نشان می‌دهد."
     ],
     "tipEn": "Try the same shape dragging in four different directions.",
     "tipFa": "تمرین: یک شکل را با کشیدن در چهار جهت مختلف رسم کنید."
@@ -144,12 +146,14 @@
     "stepsEn": [
       "The Pan tool navigates the canvas instead of drawing. Drag to move the view and use supported two-contact gestures to zoom.",
       "In Pen + touch mode, a broad contact can select while the fine tip writes. Two broad contacts navigate. Accurate separation requires contact-size reporting and calibration.",
-      "Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view."
+      "Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view.",
+      "Two quick stationary taps with two nearby fingers undo one edit. Moving contacts navigate instead. This gesture can be disabled in Input controls. The experimental five-finger menu is off by default; enable it in hidden settings, hold five fingers still for one second, lift your hand, then assign or use six shortcuts."
     ],
     "stepsFa": [
       "ابزار جابه‌جایی، نمای تخته را حرکت می‌دهد و چیزی رسم نمی‌کند. برای حرکت نما بکشید و برای بزرگ‌نمایی از حرکت دو تماس پشتیبانی‌شده استفاده کنید.",
       "در حالت قلم و لمس، تماس پهن می‌تواند انتخاب کند و سر باریک بنویسد. دو تماس پهن برای جابه‌جایی و بزرگ‌نمایی‌اند. تفکیک درست به گزارش اندازهٔ تماس و کالیبراسیون وابسته است.",
-      "جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید."
+      "جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید.",
+      "دو بار ضربهٔ سریع و ثابت با دو انگشت نزدیک، یک تغییر را بازمی‌گرداند. تماس متحرک برای جابه‌جایی است. این ژست از کنترل ورودی خاموش می‌شود. منوی آزمایشی پنج‌انگشتی پیش‌فرض خاموش است؛ در تنظیمات مخفی فعال کنید، پنج انگشت را یک ثانیه ثابت نگه دارید، دست را بردارید و شش میان‌بر را تعیین یا استفاده کنید."
     ],
     "tipEn": "If a finger writes instead of navigating, check the input mode and contact thresholds.",
     "tipFa": "اگر انگشت به‌جای جابه‌جایی می‌نویسد، حالت ورودی و آستانهٔ اندازهٔ تماس را بررسی کنید."
@@ -214,12 +218,14 @@
     "stepsEn": [
       "Use the page strip to add and switch pages. A lesson contains multiple pages; switching does not create a new lesson.",
       "Open the page background panel. Pick a preset or custom color and combine it with plain, dots, grid, ruled or hatch.",
-      "Each page retains its background. Background changes are included in lesson saves and PDF/image exports."
+      "Each page retains its background. Background changes are included in lesson saves and PDF/image exports.",
+      "Settings → New-page background chooses the default color and pattern. Enable inheritance to copy only the current page’s background style to the next page; a new lesson starts with the configured defaults."
     ],
     "stepsFa": [
       "از نوار صفحه‌ها برای افزودن و تغییر صفحه استفاده کنید. یک درس می‌تواند چند صفحه داشته باشد؛ تغییر صفحه، درس تازه نمی‌سازد.",
       "پنل پس‌زمینهٔ صفحه را باز کنید. رنگ آماده یا دلخواه را با الگوی ساده، نقطه‌ای، شطرنجی، خط‌دار یا هاشور ترکیب کنید.",
-      "هر صفحه پس‌زمینهٔ خودش را حفظ می‌کند. تغییر پس‌زمینه در ذخیرهٔ درس و خروجی تصویر یا سند هم حفظ می‌شود."
+      "هر صفحه پس‌زمینهٔ خودش را حفظ می‌کند. تغییر پس‌زمینه در ذخیرهٔ درس و خروجی تصویر یا سند هم حفظ می‌شود.",
+      "تنظیمات ← پس‌زمینهٔ صفحهٔ جدید، رنگ و طرح پیش‌فرض را انتخاب می‌کند. با روشن کردن ارث‌بری فقط سبک زمینهٔ صفحهٔ فعلی به صفحهٔ بعد می‌رود؛ درس جدید با پیش‌فرض‌های تنظیم‌شده شروع می‌شود."
     ],
     "tipEn": "Try a dark page with light ink, then a light grid page for geometry.",
     "tipFa": "تمرین: یک صفحهٔ تیره با قلم روشن و یک صفحهٔ روشن شطرنجی برای هندسه بسازید."
@@ -246,14 +252,14 @@
     "titleEn": "Ruler, protractor and compass",
     "titleFa": "خط‌کش، نقاله و پرگار",
     "stepsEn": [
-      "Open Classroom tools and insert a ruler, set square, protractor or compass. Select the tool to move, rotate or resize it with handles.",
-      "Start a pen stroke near a guide edge. While staying near the edge, the stroke snaps to it. The compass offers a circular guide.",
-      "Tools remain editable objects. Delete them after drawing if you want a clean diagram."
+      "Open Classroom tools and add a ruler, set square, protractor or compass. Select a guide to reveal its center, size and rotation handles.",
+      "The compass has separate center, radius and turning handles. Move the center, set the radius, then turn the orange handle to draw an arc automatically. One Undo removes the arc and restores the guide. Draw with tool creates a full circle.",
+      "Use the protractor angle handle to choose a ray and read its angle. Ruler and set-square actions construct parallel or perpendicular lines. Settings → Calibration contains pen/palm calibration and physical ruler calibration; uncalibrated dimensions use u, not centimetres."
     ],
     "stepsFa": [
-      "از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را درج کنید. ابزار را انتخاب و با دستگیره‌ها جابه‌جا، بچرخانید یا اندازه‌اش را تغییر دهید.",
-      "خط قلم را نزدیک لبهٔ راهنما آغاز کنید. تا زمانی که نزدیک لبه بمانید، خط به آن متصل می‌شود. پرگار راهنمای دایره‌ای دارد.",
-      "ابزارها اشیای قابل ویرایش‌اند. اگر نمودار تمیز می‌خواهید، بعد از رسم آن‌ها را حذف کنید."
+      "از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را اضافه کنید. ابزار را انتخاب کنید تا دستگیره‌های مرکز، اندازه و چرخش دیده شوند.",
+      "پرگار سه دستگیرهٔ جدا برای مرکز، شعاع و چرخش دارد. مرکز و شعاع را تنظیم کنید، سپس دستگیرهٔ نارنجی را بچرخانید تا کمان خودکار رسم شود. یک بازگردانی کمان را حذف و ابزار را برمی‌گرداند. رسم با ابزار، دایرهٔ کامل می‌سازد.",
+      "دستگیرهٔ زاویهٔ نقاله جهت نیم‌خط و عدد زاویه را تنظیم می‌کند. خط‌کش و گونیا فرمان رسم موازی و عمود دارند. تنظیمات ← کالیبراسیون، کالیبراسیون قلم/کف دست و خط‌کش فیزیکی را دارد؛ قبل از کالیبراسیون ابعاد با u نمایش داده می‌شوند، نه سانتی‌متر."
     ],
     "tipEn": "Rotate the ruler first, then begin the stroke close to its long edge.",
     "tipFa": "ابتدا خط‌کش را بچرخانید و بعد خط را نزدیک لبهٔ بلند آن آغاز کنید."
@@ -301,12 +307,14 @@
     "stepsEn": [
       "Select suitable writing or typed text. In the selection bar choose Calculate / solve, Plot function or Convert units.",
       "Supported maths include arithmetic and simple equations up to degree two in x; plotting uses a numeric function expression. Check recognized text before applying.",
-      "For units, use expressions such as 12 inch to cm, 2 kg to g or 32 F to C. The original writing remains when a conversion result is added."
+      "For units, use expressions such as 12 inch to cm, 2 kg to g or 32 F to C. The original writing remains when a conversion result is added.",
+      "Coordinate plane supports up to three functions, tapping to add a point, numeric point entry and numerical intersections. Tangencies or very narrow features may be missed; supported offline equations still have one unknown only."
     ],
     "stepsFa": [
       "نوشتهٔ مناسب یا متن تایپی را انتخاب کنید. از نوار انتخاب، محاسبه و حل، رسم تابع یا تبدیل واحد را بزنید.",
       "عملیات شامل محاسبات عددی و معادله‌های ساده تا درجهٔ دو در متغیر ایکس است؛ نمودار از عبارت تابع عددی استفاده می‌کند. قبل از اعمال، متن تشخیص‌داده‌شده را بررسی کنید.",
-      "برای تبدیل واحد، عبارت‌هایی مثل تبدیل ۱۲ اینچ به سانتی‌متر یا ۲ کیلوگرم به گرم بنویسید. عبارت ورودی انگلیسی هم پذیرفته می‌شود. هنگام افزودن نتیجه، نوشتهٔ اصلی حفظ می‌شود."
+      "برای تبدیل واحد، عبارت‌هایی مثل تبدیل ۱۲ اینچ به سانتی‌متر یا ۲ کیلوگرم به گرم بنویسید. عبارت ورودی انگلیسی هم پذیرفته می‌شود. هنگام افزودن نتیجه، نوشتهٔ اصلی حفظ می‌شود.",
+      "محور مختصات تا سه تابع، نقطه‌گذاری با لمس، ورود عددی نقطه و تقاطع عددی دارد. تماس مماسی یا جزئیات بسیار باریک ممکن است پیدا نشوند؛ حل‌گر آفلاین هنوز فقط یک مجهول دارد."
     ],
     "tipEn": "This is not a general symbolic maths system; fractions or complex handwriting may need manual correction.",
     "tipFa": "این ابزار سامانهٔ عمومی ریاضی نمادین نیست؛ کسرها یا دست‌نویس پیچیده ممکن است به اصلاح دستی نیاز داشته باشند."
@@ -426,12 +434,14 @@
     "stepsEn": [
       "Open Discovery lab. The catalog groups experiments by Physics, Chemistry, Mathematics and Statistics; filter by subject or lesson topic and search by name.",
       "Change its sliders and controls. Some simulations have start, pause or restart controls; scroll inside the control area if more settings are below.",
-      "Where available, insert a snapshot into the board. The snapshot is an image, not an editable live simulation."
+      "Where available, insert a snapshot into the board. The snapshot is an image, not an editable live simulation.",
+      "Chemistry → Atom → Interactive periodic table contains 118 elements offline. Tap or search an element, compare two elements, or add its card or the interactive table to the board. Hidden or background native lab animations pause automatically."
     ],
     "stepsFa": [
       "آزمایشگاه را باز کنید. فهرست کارت‌ها بر اساس فیزیک، شیمی، ریاضی و آمار دسته‌بندی شده؛ با موضوع درس فیلتر یا نام آزمایش را جست‌وجو کنید.",
       "اسلایدرها و کنترل‌ها را تغییر دهید. بعضی آزمایش‌ها شروع، مکث یا شروع دوباره دارند؛ برای تنظیمات بیشتر، بخش کنترل‌ها را اسکرول کنید.",
-      "در موارد پشتیبانی‌شده، تصویر لحظه‌ای را به تخته اضافه کنید. این تصویر، شبیه‌سازی زنده و قابل ویرایش نیست."
+      "در موارد پشتیبانی‌شده، تصویر لحظه‌ای را به تخته اضافه کنید. این تصویر، شبیه‌سازی زنده و قابل ویرایش نیست.",
+      "شیمی ← اتم ← جدول تناوبی تعاملی، ۱۱۸ عنصر را آفلاین دارد. عنصر را لمس یا جست‌وجو کنید، دو عنصر را مقایسه کنید، یا کارت و جدول تعاملی را به تخته بیاورید. پویانمایی آزمایش‌های بومی پنهان یا پس‌زمینه خودکار متوقف می‌شود."
     ],
     "tipEn": "These are educational, simplified models; use their visible units and assumptions in class.",
     "tipFa": "این‌ها مدل‌های آموزشی و ساده‌شده‌اند؛ واحدها و فرض‌های نمایش‌داده‌شده را در کلاس توضیح دهید."
@@ -459,17 +469,19 @@
     "titleFa": "تنظیمات و رفع مشکل",
     "stepsEn": [
       "Open Settings to choose Persian or English, interface size, recognition models and input controls. The guide has its own language switch.",
-      "If palm erasing is unreliable, use Eraser → calibration and inspect reported contact size. If drawing is blocked, select a visible unlocked layer.",
+      "If palm erasing is unreliable, use Settings → Calibration to inspect contact size. Information icons show explanations on tap. If drawing is blocked, select a visible unlocked layer.",
       "If content seems missing, check page, panel, hidden layers and canvas navigation. If QR download fails, check local connectivity. Export important lessons before reinstalling.",
       "Settings → Fonts chooses Persian and English independently, with previews. New text and smart conversion keep the font pair in the project. Optionally apply the pair to editable text on the active page; Undo restores the previous fonts.",
-      "The voice assistant is off and hidden by default. Once enabled by the administrator, Settings → Voice assistant selects Gemini, OpenAI or OpenRouter and stores each key separately. Active conversations send audio and workspace images to the selected service. OpenRouter is turn-based. Leaving the app ends the conversation. Settings → Google search settings chooses Ask each time, Internal floating browser or Default device browser."
+      "The voice assistant is off and hidden by default. Once enabled by the administrator, Settings → Voice assistant selects Gemini, OpenAI or OpenRouter and stores each key separately. Active conversations send audio and workspace images to the selected service. OpenRouter is turn-based. Leaving the app ends the conversation. Settings → Google search settings chooses Ask each time, Internal floating browser or Default device browser.",
+      "During a voice conversation, the microphone mute button stops recording and sending your voice while assistant playback continues. Google search settings separates browser destination from Review text before search; disabling review opens the first nonempty recognition result directly."
     ],
     "stepsFa": [
       "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
-      "اگر پاک‌کردن کف دست قابل اعتماد نیست، از پاک‌کن وارد کالیبراسیون و اندازهٔ گزارش‌شده را بررسی کنید. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.",
+      "اگر پاک‌کردن کف دست قابل اعتماد نیست، از تنظیمات ← کالیبراسیون اندازهٔ تماس را بررسی کنید. آیکون اطلاعات، توضیح را با لمس نشان می‌دهد. اگر رسم مسدود است، لایهٔ نمایان و باز انتخاب کنید.",
       "اگر محتوا دیده نمی‌شود، صفحه، بخش، لایهٔ پنهان و جابه‌جایی نما را بررسی کنید. برای مشکل دانلود اشتراک، شبکهٔ محلی را بررسی کنید. قبل از نصب مجدد، درس‌های مهم را خروجی بگیرید.",
       "تنظیمات → فونت‌ها، انتخاب مستقل فارسی و انگلیسی و پیش‌نمایش دارد. متن تازه و تبدیل هوشمند فونت‌ها را در پروژه نگه می‌دارند. می‌توانید روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال کنید؛ بازگردانی فونت قبلی را برمی‌گرداند.",
-      "دستیار صوتی پیش‌فرض خاموش و پنهان است. پس از فعال‌سازی مدیر، تنظیمات ← دستیار صوتی انتخاب Gemini، OpenAI یا OpenRouter و کلید جداگانه دارد. مکالمهٔ فعال صدا و تصویر فضای کار را به سرویس انتخابی می‌فرستد. OpenRouter نوبتی است. خروج از برنامه مکالمه را پایان می‌دهد. تنظیمات ← جستجوی گوگل، انتخاب هر بار بپرس، مرورگر داخلی شناور یا مرورگر پیش‌فرض دستگاه دارد."
+      "دستیار صوتی پیش‌فرض خاموش و پنهان است. پس از فعال‌سازی مدیر، تنظیمات ← دستیار صوتی انتخاب Gemini، OpenAI یا OpenRouter و کلید جداگانه دارد. مکالمهٔ فعال صدا و تصویر فضای کار را به سرویس انتخابی می‌فرستد. OpenRouter نوبتی است. خروج از برنامه مکالمه را پایان می‌دهد. تنظیمات ← جستجوی گوگل، انتخاب هر بار بپرس، مرورگر داخلی شناور یا مرورگر پیش‌فرض دستگاه دارد.",
+      "در مکالمهٔ صوتی، دکمهٔ میوت میکروفن ضبط و ارسال صدای شما را متوقف می‌کند و صدای دستیار ادامه دارد. تنظیمات جستجوی گوگل، مقصد مرورگر را از بررسی متن قبل از جستجو جدا می‌کند؛ با خاموش کردن بررسی، اولین نتیجهٔ غیرخالی مستقیم جست‌وجو می‌شود."
     ],
     "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
     "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."

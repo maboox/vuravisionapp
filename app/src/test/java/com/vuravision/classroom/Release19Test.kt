@@ -94,7 +94,7 @@ class Release19Test {
         }finally{media.close()}
     }
     @Test fun allNativeExperimentsHaveBilingualSubjectAndLessonTopic(){
-        assertEquals(73,Labs.keys.size)
+        assertEquals(74,Labs.keys.size)
         Labs.keys.forEach{key->val topic=LabCatalog.topic(key);assertTrue(topic.subject in LabCatalog.subjects);assertTrue(topic.en.isNotBlank() && topic.fa.isNotBlank())}
         assertEquals("electricity",LabCatalog.topic("native_circuit").id)
         assertEquals("chem",LabCatalog.topic("dilution").subject)

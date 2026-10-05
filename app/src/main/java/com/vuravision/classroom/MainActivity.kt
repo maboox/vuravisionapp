@@ -62,6 +62,8 @@ class MainActivity : Activity() {
     private var googleSearch:GoogleSearchWindow?=null
     private var voiceScreen:VoiceScreen?=null
     private lateinit var voiceButton:com.google.android.material.button.MaterialButton
+    private var voiceMuted=false
+    private lateinit var voiceMuteButton:WorkspaceIcon
     private var voiceStarting=false
     private var voiceStartGeneration=0
     private var lastUserTouch=0L
@@ -114,6 +116,9 @@ class MainActivity : Activity() {
         board.dashLength=prefs.getFloat("dashLength",12f)
         board.dashGap=prefs.getFloat("dashGap",8f)
         board.penStyle=prefs.getString("penStyle","round")?:"round"
+        board.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true)
+        board.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
+        board.penOpacity=prefs.getInt("penOpacity",255)
         board.touchMode=prefs.getBoolean("touchMode",false)
         smartSource=prefs.getString("smartSource","auto")?:"auto"
         board.smartMode=prefs.getString("smartMode","text")?:"text"
@@ -133,6 +138,7 @@ class MainActivity : Activity() {
         board.onObjectActions={editSelection()}
         board.onMindAdd={node,sibling->mindNode(node,sibling)}
         board.onSmart={processSmart(it)}
+        bindBoardExtras(board)
         store.changed = {
             dirty = true
             if(!whiteboard.isCommitting)whiteboard.sceneChanged() else whiteboard.invalidate()
@@ -148,6 +154,7 @@ class MainActivity : Activity() {
         if (f.exists() || File(f.path + ".bak").exists()) loadFile(f, false)
         else {
             store.lesson.title = s("lesson")
+            store.lesson.pages[0]=newBoardPage(null)
             refreshTitle()
         }
     }
@@ -211,6 +218,9 @@ class MainActivity : Activity() {
         }
         // Independent control remains reachable when the drawing toolbars are hidden.
         canvasHost.addView(voiceButton,FrameLayout.LayoutParams(-2,dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(78),dp(12),dp(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)76 else 12),dp(72))})
+        voiceMuteButton=icon("mute",tr("Mute microphone","بی‌صدا کردن میکروفن")){voiceMuted=!voiceMuted;voiceAssistant?.setMuted(voiceMuted);refreshMute()}
+        voiceMuteButton.visibility=View.GONE
+        canvasHost.addView(voiceMuteButton,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),0,dp(12),dp(132))})
         prefs.registerOnSharedPreferenceChangeListener(voicePreferenceListener)
         canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot)refreshSplitControls()}
         refreshDock();refreshPages()
@@ -279,6 +289,7 @@ class MainActivity : Activity() {
             icon("text",tr("Add text","افزودن متن")){textEditor(node)}
         }
         if(items.any{it.kind=="ink"})icon("shape",tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
+        items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)selectionBar.addView(this.icon("measure",s("measure")){measureShape(o)})}
         icon("color"){colors()}
         icon("copy"){clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()};toast(s("copy"))}
         icon("duplicate"){
@@ -339,31 +350,32 @@ class MainActivity : Activity() {
     }
     private fun addPage() {
         if(projectStore.lesson.pages.size>=200 || board.isDrawing)return
-        activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,Page());projectStore.lesson.current++}
+        activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,newBoardPage(projectStore.page));projectStore.lesson.current++}
         whiteboard.clearSelection();whiteboard.reset()
     }
-    private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).apply()}
+    private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).putInt("penOpacity",board.penOpacity).apply()}
     private val backgroundSwatches get()=listOf(Color.WHITE,Color.BLACK,0xff172a36.toInt(),PAPER,0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt())
     private fun palette(c:LinearLayout,initial:Int,background:Boolean=false,changed:(Int)->Unit){
-        val colors=if(background)backgroundSwatches else listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
-        val buttons=mutableListOf<Button>()
-        var current=initial
-        colors.chunked(5).forEach{chunk->c.addView(row().apply{chunk.forEach{color->
-            val b=button(if(color==initial)"✓" else "●"){}.apply{setTextColor(if(Color.red(color)*.299+Color.green(color)*.587+Color.blue(color)*.114>160)NAVY else Color.WHITE);backgroundTintList=android.content.res.ColorStateList.valueOf(color);strokeColor=android.content.res.ColorStateList.valueOf(OUTLINE_STRONG);strokeWidth=dp(1);setPadding(0,0,0,0);minWidth=0;minimumWidth=0;textSize=22f;contentDescription=String.format(Locale.US,"#%06X",color and 0xffffff)}
-            b.setOnClickListener{buttons.forEach{it.text="●"};b.text="✓";current=color;changed(color)};buttons.add(b)
-            addView(b,LinearLayout.LayoutParams(0,dp(48),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
-        }})}
-        val custom=button(tr("Custom color…","رنگ دلخواه…")){
-            ColorPickerDialog.show(this,current){color->current=color;buttons.forEach{it.text=if(it.contentDescription==String.format(Locale.US,"#%06X",color and 0xffffff))"✓" else "●"};changed(color)}
+        val holder=column();c.addView(holder);var current=initial
+        fun refresh(){
+            holder.removeAllViews()
+            val base=if(background)backgroundSwatches else listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
+            holder.addView(colorPalette(current,base+projectStore.lesson.customColors.orEmpty()+current,{
+                ColorPickerDialog.show(this,current){color->
+                    current=color
+                    if(color !in projectStore.lesson.customColors.orEmpty())projectStore.editMetadata{val colors=projectStore.lesson.customColors?:mutableListOf<Int>().also{projectStore.lesson.customColors=it};if(colors.size<40)colors.add(color)}
+                    changed(color);refresh()
+                }
+            }){current=it;changed(it)})
         }
-        c.addView(custom)
+        refresh()
     }
 
     private fun backgroundSettings(paneIndex:Int=board.activePane){
         val page=store.page;val pane=page.panes[paneIndex.coerceIn(page.panes.indices)]
         val c=column().apply{pad(16)}
         c.addView(label(tr("Page pattern","الگوی صفحه"),17f,NAVY,true))
-        c.addView(label(tr("The pattern applies to this page; color applies to the selected panel.","الگو برای این صفحه و رنگ برای بخش انتخابی اعمال می‌شود."),13f,MUTED))
+        c.addView(infoTitle(tr("Background scope","محدودهٔ پس‌زمینه"),tr("The pattern applies to this page; color applies to the selected panel.","الگو برای این صفحه و رنگ برای بخش انتخابی اعمال می‌شود.")))
         val patterns=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"))
         val patternRows=column();c.addView(patternRows)
         fun refreshPattern(){patternRows.removeAllViews();patterns.chunked(3).forEach{chunk->
@@ -396,43 +408,175 @@ class MainActivity : Activity() {
             override fun onStartTrackingTouch(v:SeekBar?){if(undoable)store.checkpoint()};override fun onStopTrackingTouch(v:SeekBar?){if(undoable)store.changed()}
         })})
     }
+    private fun bindBoardExtras(target:Board){
+        target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
+        target.gestures.onPie={x,y->val a=IntArray(2);val b=IntArray(2);target.getLocationInWindow(a);canvasHost.getLocationInWindow(b);pieMenu(x+a[0]-b[0],y+a[1]-b[1])}
+        target.onEducationalTap={o,point->when(o.kind){
+            "periodic"->PeriodicTable.hit(this,o,point.x,point.y)?.let{e->if(!o.locked&&store.page.editable(o))store.editMetadata{o.selectedElement=e.number};PeriodicTable.elementDialog(this,e){board.insert(it)}}
+            "graph"->coordinateTap(o,point)
+        }}
+    }
+    private fun fillSettings(){
+        val c=column().apply{pad(16)}
+        c.addView(infoTitle(s("fill"),tr("Tap inside a closed shape. Empty board space and open strokes stay unchanged. The outline is preserved.","داخل شکل بسته بزنید؛ فضای تخته و خط باز رنگ نمی‌شوند. خط دور شکل حفظ می‌شود.")))
+        palette(c,board.fillColor?:board.penColor){board.fillColor=it;board.tool="fill";board.clearSelection();refreshDock()}
+        slider(c,tr("Fill opacity","کدری رنگ داخل"),board.fillAlpha/255f*100,100){board.fillAlpha=(it/100*255).toInt()}
+        c.addView(button(tr("No fill","بدون رنگ داخل")){board.fillColor=null;board.tool="fill";board.clearSelection();refreshDock()})
+        val d=dialog(s("fill"),c)
+        c.addView(button(tr("Use bucket","استفاده از سطل رنگ"),true){board.tool="fill";board.clearSelection();refreshDock();d.dismiss()})
+    }
+    private fun newBoardPage(previous:Page?):Page {
+        val inherit=previous!=null && prefs.getBoolean("inheritBackground",false)
+        val pattern=if(inherit)previous!!.background else prefs.getString("defaultPattern","dots")?:"dots"
+        val old=previous?.panes?.getOrNull(whiteboard.activePane)?:previous?.panes?.firstOrNull()
+        var color=if(inherit)old?.background?:Color.WHITE else prefs.getInt("defaultBackground",Color.WHITE)
+        if(pattern=="dark"&&color==Color.WHITE)color=0xff172a36.toInt()
+        return Page(background=if(pattern in listOf("white","dark"))"plain"else pattern,panes=mutableListOf(Pane(background=color)))
+    }
+    private fun defaultBackgroundSettings(){
+        val c=column().apply{pad(16)}
+        val patterns=listOf("plain","dots","grid","ruled","hatch")
+        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,patterns.map{s(it)});setSelection(patterns.indexOf(prefs.getString("defaultPattern","dots")).coerceAtLeast(0))};c.addView(pick)
+        var color=prefs.getInt("defaultBackground",Color.WHITE);palette(c,color,true){color=it}
+        val inherit=Switch(this).apply{text=tr("New page uses current page background","صفحهٔ جدید از پس‌زمینهٔ صفحهٔ فعلی استفاده کند");isChecked=prefs.getBoolean("inheritBackground",false)};c.addView(inherit)
+        c.addView(infoTitle(tr("New pages","صفحات جدید"),tr("Only the color and pattern are copied. Existing pages are unchanged. The first page of a new lesson uses these defaults.","فقط رنگ و طرح کپی می‌شوند. صفحات موجود تغییر نمی‌کنند. صفحهٔ اول فایل جدید از پیش‌فرض استفاده می‌کند.")))
+        val d=dialog(s("page_background"),c);c.addView(button(s("apply"),true){prefs.edit().putString("defaultPattern",patterns[pick.selectedItemPosition]).putInt("defaultBackground",color).putBoolean("inheritBackground",inherit.isChecked).apply();d.dismiss()})
+    }
+    private fun calibrationSettings(){
+        val c=column().apply{pad(16)}
+        c.addView(button(tr("Pen tips and palm","سر قلم و کف دست")){calibrateTips()})
+        c.addView(button(s("touch_test")){dialog(s("touch_test"),TouchDiagnostics(this,board.profile).apply{minimumHeight=dp(320)})})
+        c.addView(infoTitle(tr("Real centimetres","سانتی‌متر واقعی"),tr("Measure the line below with a physical ruler, then enter its length in cm. Calibration belongs to this display. Without calibration, geometry uses board units (u).", "خط زیر را با خطکش واقعی اندازه بگیرید و طولش را به سانتی‌متر وارد کنید. کالیبراسیون مخصوص همین نمایشگر است. بدون آن، واحد هندسی u است.")))
+        val line=object:View(this){override fun onDraw(c:Canvas){val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=NAVY;strokeWidth=3f};c.drawLine(dp(16).toFloat(),height/2f,width-dp(16).toFloat(),height/2f,p);listOf(dp(16).toFloat(),width-dp(16).toFloat()).forEach{x->c.drawLine(x,8f,x,height-8f,p)}}};c.addView(line,LinearLayout.LayoutParams(-1,dp(40)))
+        val length=field(hintValue=tr("Measured line length (cm)","طول واقعی خط (سانتی‌متر)"));length.inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;c.addView(length)
+        val d=dialog(s("calibration"),c)
+        c.addView(button(s("apply"),true){val n=length.text.toString().toFloatOrNull();val px=line.width-dp(32);if(n==null||!n.isFinite()||n<=0||px<=0||px/n !in 5f..1000f){length.error=tr("Enter a valid measured length","طول واقعی معتبر وارد کنید");return@button};prefs.edit().putFloat("pixelsPerCm",px/n).apply();board.sceneChanged();d.dismiss()})
+        c.addView(button(tr("Use board units","استفاده از واحد تخته")){prefs.edit().remove("pixelsPerCm").apply();board.sceneChanged();d.dismiss()})
+    }
+    private fun measureShape(o:Item){
+        val m=Measurements.of(o)?:return;val scale=board.measureScale().toDouble();val unit=if(prefs.getFloat("pixelsPerCm",0f)>0)"cm"else"u"
+        val text=buildString{
+            append(tr("Length / perimeter","طول / محیط")).append(": ").append(MathTools.format(m.perimeter/scale)).append(" $unit\n")
+            m.area?.let{append(tr("Area","مساحت")).append(": ").append(MathTools.format(it/(scale*scale))).append(" $unit²\n")}
+            append(tr("Sides / dimensions","ضلع‌ها / ابعاد")).append(": ").append(m.lengths.joinToString{MathTools.format(it/scale)}).append(" $unit\n")
+            if(m.angles.isNotEmpty())append(tr("Interior angles","زاویه‌های داخلی")).append(": ").append(m.angles.joinToString{MathTools.format(it)+"°"})
+        }
+        val c=column().apply{pad(16)};c.addView(label(text,17f).apply{setTextIsSelectable(true)})
+        c.addView(infoTitle(tr("Units","واحدها"),tr("Centimetres describe the displayed shape at the current zoom using your display calibration. Without calibration, values use board units. Ellipse perimeter is approximate.","سانتی‌متر، اندازهٔ شکل روی نمایشگر در زوم فعلی و مطابق کالیبراسیون است. بدون کالیبراسیون واحد تخته استفاده می‌شود. محیط بیضی تقریبی است.")))
+        dialog(s("measure"),c)
+    }
+    private fun coordinateTap(o:Item,point:PointF){
+        val (x,y)=o.local(point.x,point.y);val step=min(o.w,o.h)/(2*o.domain)
+        val coordinate=PlotPoint(((x-o.w/2)/step).toDouble(),((o.h/2-y)/step).toDouble())
+        choices("(${MathTools.format(coordinate.x)}, ${MathTools.format(coordinate.y)})",listOf("add_point","coordinates")){i->if(i==0 && !o.locked && store.page.editable(o)){store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+coordinate).takeLast(200)}}else coordinateSettings(o)}
+    }
+    private fun coordinateSettings(o:Item){
+        val c=column().apply{pad(16)}
+        c.addView(button(tr("Functions and axis range","توابع و بازهٔ محور")){graph(existing=o)})
+        val r=row();val x=field(hintValue="x");val y=field(hintValue="y");r.addView(x,LinearLayout.LayoutParams(0,-2,1f));r.addView(y,LinearLayout.LayoutParams(0,-2,1f));c.addView(r)
+        val list=column();c.addView(list)
+        fun refresh(){list.removeAllViews();o.plotPoints.orEmpty().takeLast(40).forEach{point->val r=row();r.addView(label("(${MathTools.format(point.x)}, ${MathTools.format(point.y)})"),LinearLayout.LayoutParams(0,-2,1f));r.addView(icon("delete",s("delete")){if(!o.locked&&store.page.editable(o)){store.editMetadata{o.plotPoints=o.plotPoints.orEmpty()-point};refresh()}});list.addView(r)}}
+        c.addView(button(s("add_point")){try{val a=x.text.toString().toDouble();val b=y.text.toString().toDouble();require(a.isFinite()&&b.isFinite()&&abs(a)<=100000&&abs(b)<=100000);if(!o.locked&&store.page.editable(o))store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+PlotPoint(a,b)).takeLast(200)};refresh()}catch(_:Exception){x.error=tr("Enter finite coordinates","مختصات معتبر وارد کنید")}})
+        c.addView(button(tr("Find intersections","یافتن تقاطع‌ها")){work({CoordinateTools.intersections(o.text.split(';'),o.domain.toDouble())}){points->if(store.page.items.any{it.id==o.id}&&!o.locked&&store.page.editable(o)){store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+points).distinct().takeLast(200)};refresh()}}})
+        c.addView(infoTitle(tr("Intersections","تقاطع‌ها"),tr("Numerical approximations within the axis range. Tangencies or very narrow features may be missed. Up to 3 functions are supported; points can also be placed by tapping the graph.","تقاطع‌ها به‌صورت عددی در بازهٔ محور پیدا می‌شوند. تماس مماسی یا جزئیات بسیار باریک ممکن است پیدا نشوند. حداکثر ۳ تابع؛ نقطه‌گذاری با لمس نمودار هم ممکن است.")))
+        refresh();dialog(s("coordinates"),ScrollView(this).apply{addView(c)})
+    }
+    private var pieOverlay:View?=null
+    private fun pieSlots():List<String> = try{val a=org.json.JSONArray(prefs.getString("pieSlots","[]"));(0..5).map{a.optString(it).takeIf{key->key in ShortcutCatalog.keys}.orEmpty()}}catch(_:Exception){List(6){""}}
+    private fun assignPie(index:Int){
+        choices(tr("Choose shortcut","انتخاب میان‌بر"),listOf("clear_shortcut")+ShortcutCatalog.keys){n->val slots=pieSlots().toMutableList();slots[index]=if(n==0)""else ShortcutCatalog.keys[n-1];prefs.edit().putString("pieSlots",org.json.JSONArray(slots).toString()).apply();pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null}
+    }
+    private fun pieSettings(){
+        val c=column().apply{pad(16)}
+        c.addView(Switch(this).apply{text=tr("Enable five-finger pie menu (experimental)","فعال‌سازی منوی پنج‌انگشتی (آزمایشی)");isChecked=prefs.getBoolean("pieEnabled",false);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v}})
+        c.addView(infoTitle(tr("Gesture","ژست"),tr("Hold five fingers still for one second. Lift your hand, then tap a shortcut. Long-press a slot to replace it. Movement and palm contact do not trigger the menu.","پنج انگشت را یک ثانیه ثابت نگه دارید، دست را بردارید و میان‌بر را بزنید. نگه‌داشتن یک خانه آن را عوض می‌کند. حرکت و تماس کف دست منو را باز نمی‌کنند.")))
+        pieSlots().forEachIndexed{i,key->c.addView(button("${i+1} · "+if(key.isBlank())"+"else s(key)){assignPie(i)})}
+        dialog(s("pie_settings"),ScrollView(this).apply{addView(c)})
+    }
+    private fun pieMenu(x:Float,y:Float){
+        if(!prefs.getBoolean("pieEnabled",false)||destroyed)return
+        pieOverlay?.let{canvasHost.removeView(it)}
+        val overlay=FrameLayout(this).apply{layoutDirection=View.LAYOUT_DIRECTION_LTR;setBackgroundColor(0x12000000);isClickable=true};pieOverlay=overlay
+        val radius=dp(100).toFloat();val margin=dp(150).toFloat();val cx=x.coerceIn(min(margin,canvasHost.width/2f),max(canvasHost.width-margin,canvasHost.width/2f));val cy=y.coerceIn(min(margin,canvasHost.height/2f),max(canvasHost.height-margin,canvasHost.height/2f))
+        fun dismiss(){canvasHost.removeView(overlay);pieOverlay=null}
+        overlay.setOnClickListener{dismiss()}
+        pieSlots().forEachIndexed{i,key->val angle=(-90+i*60)*PI/180;val cell=column().apply{gravity=Gravity.CENTER;background=rounded(SURFACE,dp(16).toFloat(),OUTLINE);pad(4)}
+            val b=icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){dismiss();if(key.isBlank())assignPie(i)else runShortcut(key)}
+            b.setOnLongClickListener{dismiss();assignPie(i);true};cell.addView(b)
+            if(key.isNotBlank())cell.addView(label(s(key),11f).apply{maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END;gravity=Gravity.CENTER})
+            overlay.addView(cell,FrameLayout.LayoutParams(dp(84),dp(80),Gravity.TOP or Gravity.LEFT).apply{leftMargin=(cx+radius*cos(angle)-dp(42)).toInt();topMargin=(cy+radius*sin(angle)-dp(40)).toInt()})
+        }
+        canvasHost.addView(overlay,FrameLayout.LayoutParams(-1,-1))
+    }
+    private fun runShortcut(key:String){
+        when(key){
+            "undo"->store.undo();"redo"->store.redo()
+            "pen","erase","select","pan"->{board.tool=key;board.clearSelection();refreshDock()}
+            "shape"->shapes();"fill"->fillSettings()
+            "color"->{val c=column().apply{pad(12)};val d=dialog(s("color"),c);val pane=store.page.panes[board.activePane];palette(c,if(store.page.panes.size>1)pane.color else board.inkColor){color->if(store.page.panes.size>1)store.editMetadata{pane.color=color}else board.inkColor=color;savePens();d.dismiss()}}
+            "thicker","thinner"->{val delta=if(key=="thicker")2 else -2;if(store.page.panes.size>1){val pane=store.page.panes[board.activePane];store.editMetadata{pane.penWidth=(pane.penWidth+delta).coerceIn(1f,80f)}}else board.inkWidth=(board.inkWidth+delta).coerceIn(1f,80f);savePens()}
+            "new_page"->addPage();"new_layer"->{if(store.page.layers.size<100)store.editMetadata{val layer=Layer(name=tr("Layer ","لایهٔ ")+(store.page.layers.size+1));store.page.layers.add(layer);store.page.activeLayerId=layer.id}}
+            "layers"->layers();"pages"->pages();"background"->backgroundSettings();"fit"->board.fit()
+            "coordinates"->board.insert(Item(kind="graph",text="",w=560f,h=400f));"graph"->graph();"measure"->board.chosen().singleOrNull()?.let{measureShape(it)}
+            "periodic"->PeriodicTable.show(this){board.insert(it)}
+            "text"->addText(false);"sticky"->addText(true);"mind_map"->mindNode(null)
+            "ruler","set_square","protractor","compass"->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")300f else 360f,h=when(key){"compass"->300f;"ruler"->64f;else->180f},geometryVersion=1,geometryAngle=if(key=="compass")-60f else 45f))
+            "smart"->smartSettings();"math"->math();"insert"->insert();"image"->pick("image/*",102);"pdf"->choosePdfImport()
+            "timer","stopwatch","dice","scoreboard"->floatingTools.open(key)
+            "files"->projectFileMenu()
+            "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
+            "open"->withPdfExit{pick("application/octet-stream",101)}
+            "save"->export("vura",true){createDocument(it,"application/octet-stream")}
+            "recent"->withPdfExit{recent()}
+            "export_pdf","export_png","export_jpg"->exportChoice(key.substringAfter('_'))
+            "rename"->rename();"lab"->openExplorer(true);"games"->openExplorer(false);"share"->shareOptions();"help"->quickGuide()
+            "google_search_settings"->GoogleSearchSettingsUi(this).show();"fonts"->fontSettings();"models"->models();"input_controls"->inputSettings();"page_background"->defaultBackgroundSettings();"calibration"->calibrationSettings()
+            "settings"->settings()
+            "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
+            "ui_size"->choices(s("ui_size"),listOf("small","medium","large")){i->persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
+            "copy"->{clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()}}
+            "paste"->paste();"delete"->board.delete()
+            "duplicate"->{val copies=duplicateItems(board.chosen());store.editMetadata{copies.forEach{it.x+=24;it.y+=24;store.page.items.add(it)}}}
+            "lock"->board.edit{it.locked=true}
+            "unlock_all"->board.unlockAll()
+            "front","back"->{val chosen=board.chosen();store.editMetadata{store.page.items.removeAll(chosen.toSet());if(key=="front")store.page.items.addAll(chosen)else store.page.items.addAll(0,chosen)}}
+        }
+    }
+    private fun refreshMute(){
+        if(!::voiceMuteButton.isInitialized)return
+        voiceMuteButton.visibility=if(VoiceSettings.enabled(this)&&(voiceStarting||voiceAssistant?.active==true))View.VISIBLE else View.GONE
+        voiceMuteButton.isSelected=voiceMuted;voiceMuteButton.alpha=if(voiceMuted)1f else .6f
+        voiceMuteButton.setImageResource(IconCatalog.resource(if(voiceMuted)"mute"else"voice_assistant"))
+        voiceMuteButton.contentDescription=if(voiceMuted)tr("Microphone muted · tap to unmute","میکروفن بی‌صدا · برای فعال کردن بزنید")else tr("Microphone active · tap to mute","میکروفن فعال · برای بی‌صدا کردن بزنید")
+        voiceMuteButton.tooltipText=voiceMuteButton.contentDescription
+    }
+
     private fun penSettings(){
-        val c=column().apply{pad(20)};val body=column();var broad=false
+        val c=column().apply{pad(16)};val body=column();var broad=false
         fun tipStyle()=if(broad)board.profile.thickStyle else board.penStyle
         val preview=object:View(this){override fun onDraw(canvas:Canvas){
-            val style=tipStyle();val color=if(broad)board.profile.thickColor else board.penColor
-            val width=if(broad)board.profile.thickWidth else board.penWidth
-            val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{
-                this.color=color;strokeWidth=width*resources.displayMetrics.density*(if(style=="highlight")4f else if(style=="marker")1.8f else 1f)
-                alpha=if(style=="highlight")75 else 255;this.style=Paint.Style.STROKE
-                strokeCap=if(style in listOf("marker","highlight"))Paint.Cap.SQUARE else Paint.Cap.ROUND
-                if(style=="dashed")pathEffect=DashPathEffect(floatArrayOf(board.dashLength*resources.displayMetrics.density,board.dashGap*resources.displayMetrics.density),0f)
-            }
-            val path=Path();path.moveTo(30f,height*.7f);path.cubicTo(this.width*.3f,0f,this.width*.55f,height.toFloat(),this.width-30f,height*.3f);canvas.drawPath(path,paint)
-        }}.apply{background=rounded(PAPER,dp(16).toFloat())}
-        c.addView(label(tr("Pen studio","تنظیم قلم"),24f,NAVY,true))
-        c.addView(label(tr("Set color, thickness and style independently for each tip.","رنگ، ضخامت و نوع هر سر قلم را جداگانه تنظیم کنید."),14f,MUTED))
-        c.addView(preview,LinearLayout.LayoutParams(-1,dp(90)))
+            val style=tipStyle();val color=if(broad)board.profile.thickColor else board.penColor;val width=if(broad)board.profile.thickWidth else board.penWidth
+            val o=Item(shape=style,color=color,width=width*resources.displayMetrics.density,alpha=board.penOpacity,dashLength=board.dashLength,dashGap=board.dashGap)
+            val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{this.color=color;strokeWidth=width*resources.displayMetrics.density*(if(style=="highlight")4f else if(style=="marker")1.8f else 1f);alpha=if(style=="highlight")75*board.penOpacity/255 else board.penOpacity;this.style=Paint.Style.STROKE;strokeCap=if(style in listOf("marker","highlight"))Paint.Cap.SQUARE else Paint.Cap.ROUND;if(style=="dashed")pathEffect=DashPathEffect(floatArrayOf(board.dashLength,board.dashGap),0f)}
+            PenStyles.apply(paint,o)
+            val path=Path();path.moveTo(20f,height*.7f);path.cubicTo(this.width*.3f,0f,this.width*.55f,height.toFloat(),this.width-20f,height*.3f);canvas.drawPath(path,paint)
+        }}.apply{background=rounded(PAPER,dp(10).toFloat())}
+        c.addView(infoTitle(tr("Pen","قلم"),tr("Styles use fixed width and do not need pressure sensing. Set each tip independently.","حالت‌ها با عرض ثابت کار می‌کنند و به فشار قلم وابسته نیستند. هر سر قلم را جدا تنظیم کنید.")))
+        c.addView(preview,LinearLayout.LayoutParams(-1,dp(44)))
         fun refresh(){
-            body.removeAllViews()
-            body.addView(label(if(broad)tr("Broad tip","سر پهن")else tr("Fine tip","سر باریک"),18f,TEAL,true))
-            body.addView(label(tr("Color","رنگ"),16f,NAVY,true))
-            palette(body,if(broad)board.profile.thickColor else board.penColor){if(broad)board.profile.thickColor=it else board.penColor=it;savePens();preview.invalidate()}
-            slider(body,tr("Thickness","ضخامت"),if(broad)board.profile.thickWidth else board.penWidth){if(broad)board.profile.thickWidth=it else board.penWidth=it;savePens();preview.invalidate()}
-            body.addView(label(tr("Pen style","نوع قلم"),16f,NAVY,true))
+            body.removeAllViews();palette(body,if(broad)board.profile.thickColor else board.penColor){if(broad)board.profile.thickColor=it else board.penColor=it;savePens();preview.invalidate()}
+            slider(body,tr("Thickness","ضخامت"),if(broad)board.profile.thickWidth else board.penWidth,80){if(broad)board.profile.thickWidth=it else board.penWidth=it;savePens();preview.invalidate()}
             val styles=row();body.addView(scrollRow(styles))
-            listOf("round" to tr("Ink","جوهری"),"marker" to tr("Marker","ماژیک"),"dashed" to tr("Dashed","خط‌چین"),"highlight" to tr("Highlighter","هایلایتر")).forEach{(key,title)->
-                styles.addView(button(title,tipStyle()==key){if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})
-            }
+            PenStyles.keys.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
+            slider(body,tr("Opacity","کدری"),board.penOpacity/255f*100,100){board.penOpacity=(it/100*255).toInt();savePens();preview.invalidate()}
             if(tipStyle()=="dashed"){
                 slider(body,tr("Dash length","طول خط‌چین"),board.dashLength,80){board.dashLength=it;savePens();preview.invalidate()}
                 slider(body,tr("Dash gap","فاصلهٔ خط‌چین"),board.dashGap,80){board.dashGap=it;savePens();preview.invalidate()}
             }
-            body.addView(label(tr("Ink: round, opaque. Marker: square, opaque. Highlighter: wide and translucent. Dashed: a broken line.","جوهری: گرد و پررنگ. ماژیک: تخت و پررنگ. هایلایتر: پهن و نیمه‌شفاف. خط‌چین: خط منقطع."),14f,MUTED))
         }
-        c.addView(row().apply{
-            addView(button(tr("Fine tip","سر باریک")){broad=false;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(52),1f))
-            addView(button(tr("Broad tip","سر پهن")){broad=true;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(52),1f))
+        if(!board.touchMode)c.addView(row().apply{
+            addView(button(tr("Fine tip","سر باریک")){broad=false;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
+            addView(button(tr("Broad tip","سر پهن")){broad=true;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
         })
         c.addView(body);refresh();dialog(s("pen"),ScrollView(this).apply{addView(c)})
     }
@@ -494,7 +638,7 @@ class MainActivity : Activity() {
     }
     private fun calibrateTips(){
         val c=column().apply{pad(20)}
-        c.addView(label(tr("Contact width comes from the touch controller. Calibrate in raw pixels, not screen centimetres. Unknown/zero contact sizes use the fine tip.","اندازهٔ تماس را کنترلر لمس گزارش می‌کند. آستانه‌ها با پیکسل خام تنظیم می‌شوند، نه سانتی‌متر صفحه. اندازهٔ صفر یا نامشخص، سر باریک محسوب می‌شود."),14f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Contact width comes from the touch controller. Calibrate in raw pixels, not screen centimetres. Unknown/zero contact sizes use the fine tip.","اندازهٔ تماس را کنترلر لمس گزارش می‌کند. آستانه‌ها با پیکسل خام تنظیم می‌شوند، نه سانتی‌متر صفحه. اندازهٔ صفر یا نامشخص، سر باریک محسوب می‌شود.")))
         c.addView(label(tr("Fine tip maximum contact width (px)","بیشترین عرض تماس سر باریک (پیکسل)"),14f));val thin=field(board.profile.thin.toString());c.addView(thin)
         c.addView(label(tr("Palm rejection starts at (px)","شروع تشخیص کف دست (پیکسل)"),14f));val palm=field(board.profile.palm.toString());c.addView(palm)
         val palmErase=CheckBox(this).apply{text=s("palm_erase");isChecked=board.profile.palmErase};c.addView(palmErase)
@@ -504,7 +648,7 @@ class MainActivity : Activity() {
         c.addView(button(s("apply"),true){val a=thin.text.toString().toFloatOrNull();val b=palm.text.toString().toFloatOrNull();if(a==null||b==null||!a.isFinite()||!b.isFinite()||a<=0||b<=a){thin.error=tr("Use 0 < fine < palm","باید ۰ < سر باریک < کف دست باشد");return@button};board.profile.calibrated=true;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;prefs.edit().putBoolean("calibrated",true).putFloat("thin",a).putFloat("palm",b).putBoolean("palmErase",palmErase.isChecked).apply();savePens();d.dismiss()})
     }
     private fun palmControls(c:LinearLayout){
-        c.addView(label(tr("Palm erasing","پاک‌کردن با کف دست"),18f,NAVY,true))
+        c.addView(infoTitle(tr("Palm erasing","پاک‌کردن با کف دست"),tr("Requires contact-size reporting. Calibrate the threshold in Settings → Calibration. The selected eraser mode and size apply to the palm.","نیازمند گزارش اندازهٔ تماس است. آستانه را از تنظیمات ← کالیبراسیون تنظیم کنید. حالت و اندازهٔ پاک‌کن برای کف دست هم اعمال می‌شوند.")))
         c.addView(Switch(this).apply{
             text=tr("Use palm as a temporary eraser","کف دست، پاک‌کن موقت باشد")
             isChecked=board.profile.palmErase
@@ -513,15 +657,14 @@ class MainActivity : Activity() {
                 prefs.edit().putBoolean("palmErase",enabled).apply()
             }
         })
-        c.addView(label(tr("Requires a touch controller that reports contact width. If the palm is ignored or mistaken for a pen, calibrate its threshold. Eraser size and mode below also apply to the palm.","نیازمند گزارش اندازهٔ تماس توسط کنترلر لمس است. اگر کف دست تشخیص داده نشد یا مثل قلم عمل کرد، آستانه را تنظیم کنید. اندازه و حالت پاک‌کن برای کف دست هم اعمال می‌شود."),14f,MUTED))
-        c.addView(button(tr("Calibrate palm / test touch","تنظیم کف دست / تست لمس")){calibrateTips()})
+
     }
     private fun eraserSettings(){
-        val c=column().apply{pad(20)};palmControls(c);c.addView(label(tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است."),14f,MUTED))
+        val c=column().apply{pad(20)};palmControls(c);c.addView(infoTitle(tr("Eraser modes","حالت‌های پاک‌کن"),tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است.")))
         val modes=RadioGroup(this);listOf("stroke" to tr("Whole stroke / object","کل خط / شیء"),"area" to tr("Area eraser","پاک‌کن ناحیه‌ای")).forEach{(key,title)->modes.addView(RadioButton(this).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString("eraserMode",key).apply()}})};c.addView(modes)
         c.addView(CheckBox(this).apply{text=tr("On PDF: also cover original content","روی PDF: محتوای اصلی هم پوشانده شود");isChecked=board.erasePdfContent;setOnCheckedChangeListener{_,v->board.erasePdfContent=v;prefs.edit().putBoolean("erasePdfContent",v).apply()}})
         c.addView(CheckBox(this).apply{text=tr("Allow palm erasing inside PDF","پاک‌کردن با کف دست در بخش PDF");isChecked=board.pdfPalmErase;setOnCheckedChangeListener{_,v->board.pdfPalmErase=v;prefs.edit().putBoolean("pdfPalmErase",v).apply()}})
-        c.addView(label(tr("Original PDF content is covered with white and can be restored with Undo. This is not permanent redaction. With two tips off, broad touch scrolls the PDF.","محتوای اصلی PDF با رنگ سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف محرمانه نیست. با دو سر قلم خاموش، تماس پهن PDF را اسکرول می‌کند."),14f,MUTED))
+        c.addView(infoTitle(tr("PDF erasing","پاک‌کن PDF"),tr("Original PDF content is covered with white and can be restored with Undo. This is not permanent redaction. With two tips off, broad touch scrolls the PDF.","محتوای اصلی PDF با رنگ سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف محرمانه نیست. با دو سر قلم خاموش، تماس پهن PDF را اسکرول می‌کند.")))
         slider(c,tr("Radius","شعاع"),board.eraserRadius,80){board.eraserRadius=it;prefs.edit().putFloat("eraserRadius",it).apply()}
         c.addView(CheckBox(this).apply{text=tr("Include objects (otherwise ink only)","روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)");isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean("eraseObjects",v).apply()}})
         dialog(s("erase"),ScrollView(this).apply{addView(c)})
@@ -533,19 +676,22 @@ class MainActivity : Activity() {
         Fonts.stamp(item)
         val c=column().apply{pad(20)};val value=field(item.text,tr("Write your text…","متن را بنویسید…"));value.minLines=2;c.addView(value)
         Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))
-        c.addView(CheckBox(this).apply{text=tr("Bold","پررنگ");isChecked=item.bold;setOnCheckedChangeListener{_,v->item.bold=v;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))}})
-        c.addView(CheckBox(this).apply{text=tr("Italic","مورب");isChecked=item.italic;setOnCheckedChangeListener{_,v->item.italic=v;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item))}})
-        c.addView(label(tr("Alignment","تراز متن"),16f,NAVY,true));val align=Spinner(this);align.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Start","ابتدای سطر"),tr("Center","وسط"),tr("End","انتهای سطر")));align.setSelection(listOf("start","center","end").indexOf(item.textAlign).coerceAtLeast(0));c.addView(align)
+        val format=row();c.addView(format)
+        fun refreshFormat(){format.removeAllViews()
+            format.addView(icon("bold",tr("Bold","پررنگ"),item.bold){item.bold=!item.bold;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item));refreshFormat()})
+            format.addView(icon("italic",tr("Italic","مورب"),item.italic){item.italic=!item.italic;Fonts.bind(value,item.bold,item.italic,Fonts.fa(item),Fonts.en(item));refreshFormat()})
+            listOf("start","center","end").forEach{key->format.addView(icon("align_$key",tr("Alignment: $key","تراز: ")+when(key){"start"->tr("Start","ابتدا");"center"->tr("Center","وسط");else->tr("End","انتها")},item.textAlign==key){item.textAlign=key;refreshFormat()})}
+        };refreshFormat()
         c.addView(label(tr("Text color","رنگ متن"),16f,NAVY,true));palette(c,item.color){item.color=it;value.setTextColor(it)}
         slider(c,tr("Text size","اندازهٔ متن"),item.width,120){item.width=it}
         if(sticky){c.addView(label(tr("Note background","رنگ یادداشت"),16f,NAVY,true));palette(c,item.noteColor){item.noteColor=it;value.background=rounded(it,dp(8).toFloat())}}
         val d=dialog(s(if(sticky)"sticky"else"text"),ScrollView(this).apply{addView(c)})
-        c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;item.textAlign=listOf("start","center","end")[align.selectedItemPosition];val oldWidth=item.w;val oldHeight=item.h;TextLayout.fit(item)
+        c.addView(button(s("apply"),true){val entered=value.text?.toString().orEmpty();if(entered.isBlank()){value.error=s("empty");return@button};item.text=entered;val oldWidth=item.w;val oldHeight=item.h;TextLayout.fit(item)
             if(item.shape=="mindnode"){item.w=maxOf(oldWidth,item.w);item.h=maxOf(oldHeight,item.h)}
             if(existing==null)board.insert(item)else store.editMetadata{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
     }
     private fun graph(initial:String="y=2x-5",existing:Item?=null){
-        val c=column().apply{pad(20)};c.addView(label(tr("Enter y=f(x). Use x^2, sin(x), sqrt(x), abs(x); angles are radians. Separate up to 3 curves with ;. Both axes use the same scale.","تابع را به صورت y=f(x) وارد کنید. x^2، sin(x)، sqrt(x) و abs(x) مجازند؛ زاویه‌ها رادیانی‌اند. حداکثر ۳ تابع را با ; جدا کنید. مقیاس دو محور برابر است."),14f,MUTED))
+        val c=column().apply{pad(20)};c.addView(infoTitle(tr("Information","اطلاعات"),tr("Enter y=f(x). Use x^2, sin(x), sqrt(x), abs(x); angles are radians. Separate up to 3 curves with ;. Both axes use the same scale.","تابع را به صورت y=f(x) وارد کنید. x^2، sin(x)، sqrt(x) و abs(x) مجازند؛ زاویه‌ها رادیانی‌اند. حداکثر ۳ تابع را با ; جدا کنید. مقیاس دو محور برابر است.")))
         val field=field(existing?.text?:initial).apply{layoutDirection=View.LAYOUT_DIRECTION_LTR;textDirection=View.TEXT_DIRECTION_LTR};c.addView(field)
         val examples=row();listOf("y=2x-5","y=x^2","sin(x);cos(x)","sqrt(x)").forEach{v->examples.addView(button(v){field.setText(v)})};c.addView(scrollRow(examples))
         c.addView(label(tr("Half-range on the shorter axis","نیم‌بازهٔ محور کوتاه‌تر"),14f));val domain=field((existing?.domain?:10f).toString());c.addView(domain)
@@ -584,7 +730,7 @@ class MainActivity : Activity() {
     private fun choices(title: String, keys: List<String>, action: (Int) -> Unit) {
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
-            .setItems(keys.map { s(it) }.toTypedArray()) { _, i -> action(i) }
+            .setAdapter(MenuRows(this,keys)) { _, i -> action(i) }
             .setNegativeButton(s("cancel"), null)
             .show().also{Fonts.onShown(it)}
     }
@@ -766,7 +912,7 @@ class MainActivity : Activity() {
                         persist()
                         documentId = newId()
                         prefs.edit().putString("current", documentId).apply()
-                        projectStore.replace(Lesson(title = s("lesson")))
+                        projectStore.replace(Lesson(title = s("lesson"),pages=mutableListOf(newBoardPage(null))))
                         whiteboard.clearSelection()
                         whiteboard.reset()
                     }
@@ -888,19 +1034,29 @@ class MainActivity : Activity() {
         if (items.isEmpty()) return
         val one = items.singleOrNull()
         val keys = mutableListOf("delete", "duplicate", "copy", "lock", "front", "back", "color", "smart")
+        if(one!=null&&Measurements.of(one)!=null)keys.add("measure")
+        if(one!=null&&ShapeFill.path(one)!=null)keys.add("fill")
+        if(one?.kind=="periodic")keys.add("periodic")
+        if(one?.kind=="graph")keys.add("coordinates")
         if (one?.kind in listOf("text", "sticky", "graph")) keys.add("text")
         if(one?.shape=="mindnode")keys.add("add_branch")
         if(one?.shape in GeometryTools.keys)keys.add("draw_with_tool")
         if(one!=null && one.cuts.isNotEmpty())keys.add("restore_erased")
         if (one?.kind in listOf("text", "sticky")) keys.add("text_size")
         if (one?.kind == "graph") keys.add("domain")
+        if(one?.shape in listOf("ruler","set_square"))keys.addAll(listOf("draw_parallel","draw_perpendicular"))
         if (one?.kind == "pdf") keys.addAll(listOf("previous", "next", "page_picker"))
         if (one?.kind in listOf("image", "pdf")) keys.add("crop")
         keys.add("paste")
         choices(s("edit"), keys) { i ->
             when (keys[i]) {
+                "measure" -> one?.let{measureShape(it)}
+                "fill" -> fillSettings()
+                "periodic" -> one?.let{PeriodicTable.show(this){board.insert(it)}}
+                "coordinates" -> one?.let{coordinateSettings(it)}
                 "smart" -> smartSettings()
                 "add_branch" -> mindNode(one)
+                "draw_parallel","draw_perpendicular" -> if(one!=null&&!one.locked&&store.page.editable(one)){val line=GeometryTools.construction(one,keys[i]=="draw_perpendicular");store.editMetadata{store.page.items.add(line)}}
                 "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.editMetadata{store.page.items.add(result)}}}
                 "delete" -> board.delete()
                 "copy" -> {
@@ -1038,6 +1194,7 @@ class MainActivity : Activity() {
     }
 
     private fun activateBoard(target:Board){
+        bindBoardExtras(target)
         if(board!==target){target.copyToolsFrom(board);board=target;closeSidePanel()}
         target.onObjectActions={editSelection()}
         target.onSmart={processSmart(it)}
@@ -1436,14 +1593,14 @@ class MainActivity : Activity() {
     private var smartSource="auto"
     private fun smartSettings(){
         val c=column().apply{pad(20)}
-        c.addView(label(tr("Select writing, then use the actions above it to recognize text, solve, convert units, search Google, or recognize shapes. Drawing a loop is not needed.","نوشته را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد، جستجو در گوگل یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست."),14f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Select writing, then use the actions above it to recognize text, solve, convert units, search Google, or recognize shapes. Drawing a loop is not needed.","نوشته را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد، جستجو در گوگل یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست.")))
         val keys=listOf("auto","offline","en-US","fa")
-        val source=Spinner(this).apply{adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,listOf(tr("Auto · English / Persian","خودکار · انگلیسی / فارسی"),tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
+        val source=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,listOf(tr("Auto · English / Persian","خودکار · انگلیسی / فارسی"),tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
         val review=Switch(this).apply{text=tr("Review before applying","بررسی نتیجه قبل از اعمال");isChecked=prefs.getBoolean("smartReview",false)};c.addView(review)
         val d=dialog(s("smart"),c)
         d.setOnDismissListener{smartSource=keys[source.selectedItemPosition];prefs.edit().putString("smartSource",smartSource).putBoolean("smartReview",review.isChecked).apply()}
         c.addView(button(s("models")){d.dismiss();models()})
-        c.addView(label(tr("Auto uses installed handwriting models and falls back to bundled Latin OCR. Install Persian and English models below when needed.","حالت خودکار از مدل‌های دست‌نویس نصب‌شده استفاده می‌کند و در غیر این صورت سراغ تشخیص لاتین همراه برنامه می‌رود. مدل‌های فارسی و انگلیسی را در صورت نیاز نصب کنید."),13f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Auto uses installed handwriting models and falls back to bundled Latin OCR. Install Persian and English models below when needed.","حالت خودکار از مدل‌های دست‌نویس نصب‌شده استفاده می‌کند و در غیر این صورت سراغ تشخیص لاتین همراه برنامه می‌رود. مدل‌های فارسی و انگلیسی را در صورت نیاز نصب کنید.")))
     }
     private fun applySmart(original:List<Item>,value:String,mode:String){
         require(value.isNotBlank()){"No recognition result"}
@@ -1513,8 +1670,7 @@ class MainActivity : Activity() {
         }
         val browser:(String,Boolean)->Unit={query,adjacent->googleSearch?.close();googleSearch=null;GoogleSearchBrowser.open(this,query,adjacent)}
         val query=candidates.firstOrNull().orEmpty().trim()
-        // Search was explicitly requested by the selection action. A stable target avoids the chooser.
-        // Ambiguous/empty recognition still gets an editable review, honoring the existing smart-review preference.
+        if(query.isEmpty()){toast(tr("No text was recognized","متنی تشخیص داده نشد"));return}
         if(!target.needsReview(candidates,prefs.getBoolean("smartReview",false))){
             if(target.destination=="floating")floating(query)else browser(query,target.adjacent)
         }else GoogleSearchReview(this).show(candidates,floating,browser,target)
@@ -1523,8 +1679,8 @@ class MainActivity : Activity() {
     private fun models(){
         val c=column().apply{pad(20)}
         c.addView(label(tr("Offline Latin OCR is already included","تشخیص لاتین آفلاین همراه برنامه نصب است"),18f,TEAL,true))
-        c.addView(label(tr("No model download is needed for clear Latin characters and simple arithmetic. Google digital-ink models below are optional for handwriting; Persian still needs its language model.","برای حروف واضح لاتین و محاسبات ساده نیازی به دانلود نیست. مدل‌های زیر برای دست‌نویس گوگل‌اند؛ تشخیص دست‌نویس فارسی همچنان به مدل زبان نیاز دارد."),14f,MUTED))
-        c.addView(label(tr("Model downloads need access to dl.google.com over HTTPS. If the connection is refused, try another network and check VPN, proxy or firewall settings, then Retry. Offline Latin OCR remains available.","دانلود مدل به دسترسی HTTPS به dl.google.com نیاز دارد. اگر اتصال رد شد، شبکهٔ دیگری را امتحان و تنظیمات VPN، پراکسی یا فایروال را بررسی کنید؛ سپس دوباره تلاش کنید. تشخیص لاتین آفلاین در دسترس است."),14f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("No model download is needed for clear Latin characters and simple arithmetic. Google digital-ink models below are optional for handwriting; Persian still needs its language model.","برای حروف واضح لاتین و محاسبات ساده نیازی به دانلود نیست. مدل‌های زیر برای دست‌نویس گوگل‌اند؛ تشخیص دست‌نویس فارسی همچنان به مدل زبان نیاز دارد.")))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Model downloads need access to dl.google.com over HTTPS. If the connection is refused, try another network and check VPN, proxy or firewall settings, then Retry. Offline Latin OCR remains available.","دانلود مدل به دسترسی HTTPS به dl.google.com نیاز دارد. اگر اتصال رد شد، شبکهٔ دیگری را امتحان و تنظیمات VPN، پراکسی یا فایروال را بررسی کنید؛ سپس دوباره تلاش کنید. تشخیص لاتین آفلاین در دسترس است.")))
         c.addView(button(tr("Network settings","تنظیمات شبکه")){try{startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))}catch(e:Exception){error(e)}})
         c.addView(button(tr("Use offline Latin OCR","استفاده از تشخیص لاتین آفلاین")){smartSource="offline";prefs.edit().putString("smartSource",smartSource).apply();toast(s("done"))})
         listOf("en-US" to "english","fa" to "persian").forEach{(lang,key)->
@@ -1549,11 +1705,12 @@ class MainActivity : Activity() {
         val c=column().apply{pad(16)}
         c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();dockSignature="";refreshDock()}}})
         c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
+        c.addView(Switch(this).apply{text=tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی");isChecked=prefs.getBoolean("twoFingerUndo",true);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()}})
         dialog(s("input_controls"),c)
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","help","cache","about")
+        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","page_background","calibration","cache","about")
         if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
         // Engineering is intentionally only reachable through the hidden guide gesture.
         choices(s("settings"),keys){index->when(keys[index]){
@@ -1563,12 +1720,13 @@ class MainActivity : Activity() {
             "google_search_settings"->GoogleSearchSettingsUi(this).show()
             "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
-                    listOf(.85f,1f,1.2f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
-                    persist();prefs.edit().putFloat("uiScale",listOf(.85f,1f,1.2f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
+                    listOf(.8f,1f,1.4f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
+                    persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
                 }.show()
             "models"->models()
             "input_controls"->inputSettings()
-            "help"->quickGuide()
+            "page_background"->defaultBackgroundSettings()
+            "calibration"->calibrationSettings()
             "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
             "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
             "engineering"->engineering()
@@ -1577,7 +1735,7 @@ class MainActivity : Activity() {
 
     private fun fontSettings(){
         val content=column().apply{pad(16)}
-        content.addView(label(tr("Choose independent fonts for Persian and English. New text, sticky notes and smart conversion keep these fonts in the project and PDF exports.","فونت فارسی و انگلیسی را جدا انتخاب کنید. متن تازه، یادداشت و تبدیل هوشمند این فونت‌ها را در پروژه و خروجی PDF حفظ می‌کنند."),14f,MUTED))
+        content.addView(infoTitle(tr("Information","اطلاعات"),tr("Choose independent fonts for Persian and English. New text, sticky notes and smart conversion keep these fonts in the project and PDF exports.","فونت فارسی و انگلیسی را جدا انتخاب کنید. متن تازه، یادداشت و تبدیل هوشمند این فونت‌ها را در پروژه و خروجی PDF حفظ می‌کنند.")))
         var fa=Fonts.persianId;var en=Fonts.englishId
         val faChoice=button(""){};val enChoice=button(""){}
         val preview=label("نمونهٔ فارسی: یادگیری با ویوراویژن\nEnglish: Learning with VuraVision\n۱۲۳۴۵۶۷۸۹۰ · 1234567890",21f)
@@ -1618,19 +1776,15 @@ class MainActivity : Activity() {
     }
 
     private fun engineering() {
-        choices(s("engineering"), listOf("touch_test", "thresholds", "report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")) {
-            when (it) {
-                4 -> advancedBoard()
-                5 -> secretStudio()
-                6 -> maboox()
-                7 -> VoiceSettingsUi(this).advanced{stopVoice()}
-                0 ->
-                    dialog(
-                        s("touch_test"),
-                        TouchDiagnostics(this, board.profile).apply { minimumHeight = dp(400) },
-                    )
-                1 -> calibrateTips()
-                2 -> {
+        val keys=listOf("report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior", "pie_settings")
+        choices(s("engineering"),keys) {
+            when (keys[it]) {
+                "advanced_board" -> advancedBoard()
+                "secret_studio" -> secretStudio()
+                "maboox" -> maboox()
+                "voice_behavior" -> VoiceSettingsUi(this).advanced{stopVoice()}
+                "pie_settings" -> pieSettings()
+                "report" -> {
                     val report =
                         "VuraVision ${BuildConfig.VERSION_NAME}\n${Build.MANUFACTURER} ${Build.MODEL}\nAndroid ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}\n${resources.displayMetrics}\nPointers: device-reported only\nObjects: ${store.page.items.size}\nLast error: $lastError\n" +
                             InputDevice.getDeviceIds().joinToString("\n") { id ->
@@ -1645,7 +1799,7 @@ class MainActivity : Activity() {
                         }
                     dialog(s("report"), ScrollView(this).apply { addView(text) })
                 }
-                3 -> {
+                "stress" -> {
                     if(board.isDrawing)return@choices
                     confirm(tr("Add 300 test strokes? Undo removes them.","۳۰۰ خط آزمایشی اضافه شود؟ با بازگردانی حذف می‌شوند.")) {
                     store.editMetadata {
@@ -1703,7 +1857,7 @@ class MainActivity : Activity() {
         })})
         toggle("Snap pen to ruler / compass","اتصال قلم به خط‌کش و پرگار",board.guideSnapEnabled){v->board.guideSnapEnabled=v;prefs.edit().putBoolean("guideSnap",v).apply()}
         toggle("Reject palm instead of erasing","نادیده‌گرفتن کف دست به‌جای پاک‌کردن",!board.profile.palmErase){v->board.profile.palmErase=!v;prefs.edit().putBoolean("palmErase",!v).apply()}
-        c.addView(label(tr("Lower hold time responds faster. A larger tolerance accepts more small hand movements. These settings are saved on this device.","زمان مکث کمتر، تشخیص سریع‌تر می‌دهد. مقدار حساسیت بزرگ‌تر، لرزش بیشتری را می‌پذیرد. تنظیمات روی همین دستگاه ذخیره می‌شوند."),14f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Lower hold time responds faster. A larger tolerance accepts more small hand movements. These settings are saved on this device.","زمان مکث کمتر، تشخیص سریع‌تر می‌دهد. مقدار حساسیت بزرگ‌تر، لرزش بیشتری را می‌پذیرد. تنظیمات روی همین دستگاه ذخیره می‌شوند.")))
         c.addView(button(tr("Reset advanced settings","بازنشانی تنظیمات پیشرفته")){
             board.holdRecognitionEnabled=true;board.holdDelayMillis=1000L;board.holdTolerance=4f;board.guideSnapEnabled=true
             prefs.edit().remove("holdRecognition").remove("holdDelay").remove("holdTolerance").remove("guideSnap").apply()
@@ -1714,7 +1868,7 @@ class MainActivity : Activity() {
     private fun secretStudio(){
         val c=column().apply{pad(20)}
         c.addView(label(tr("The secret studio","آتلیهٔ مخفی"),24f,NAVY,true))
-        c.addView(label(tr("Watch portraits drawn stroke by stroke with the board's own pens. Each drawing opens on a new page and can be edited, erased, saved or exported. Undo removes the new page. These are original stylized illustrations.","پرتره‌ها با قلم خود تخته، خط‌به‌خط رسم می‌شوند. هر نقاشی در صفحهٔ تازه باز می‌شود و قابل ویرایش، پاک‌کردن، ذخیره و خروجی است. بازگردانی، صفحهٔ نقاشی را حذف می‌کند. این‌ها تصویرسازی‌های گرافیکی اختصاصی‌اند."),15f,MUTED))
+        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Watch portraits drawn stroke by stroke with the board's own pens. Each drawing opens on a new page and can be edited, erased, saved or exported. Undo removes the new page. These are original stylized illustrations.","پرتره‌ها با قلم خود تخته، خط‌به‌خط رسم می‌شوند. هر نقاشی در صفحهٔ تازه باز می‌شود و قابل ویرایش، پاک‌کردن، ذخیره و خروجی است. بازگردانی، صفحهٔ نقاشی را حذف می‌کند. این‌ها تصویرسازی‌های گرافیکی اختصاصی‌اند.")))
         val d=dialog(tr("The secret studio","آتلیهٔ مخفی"),ScrollView(this).apply{addView(c)})
         listOf("mona-vura" to tr("Mona × Vura · Renaissance remix","مونا × ویورا · برداشت رنسانسی"),"aurora" to tr("Aurora · anime portrait","آرورا · پرترهٔ انیمه")).forEach{(key,title)->
             c.addView(button(title){
@@ -1747,10 +1901,13 @@ class MainActivity : Activity() {
     }
 
     private fun classroomTools() {
-        val keys=listOf("timer","stopwatch","dice","scoreboard")+GeometryTools.keys+"mind_map"
+        val keys=listOf("timer","stopwatch","dice","scoreboard")+GeometryTools.keys+listOf("mind_map","coordinates","periodic","fill")
         choices(s("tools"),keys){i->val key=keys[i];when{
             key=="mind_map"->mindNode(null)
-            key in GeometryTools.keys->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")120f else 360f,h=when(key){"ruler"->64f;"set_square","protractor"->180f;else->180f},color=board.penColor))
+            key=="coordinates"->board.insert(Item(kind="graph",text="",w=560f,h=400f))
+            key=="periodic"->PeriodicTable.show(this){board.insert(it)}
+            key=="fill"->fillSettings()
+            key in GeometryTools.keys->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")300f else 360f,h=when(key){"ruler"->64f;"set_square","protractor"->180f;else->300f},color=board.penColor,geometryVersion=1,geometryAngle=if(key=="compass")-60f else 45f))
             else->floatingTools.open(key)
         }}
     }
@@ -1776,7 +1933,7 @@ class MainActivity : Activity() {
     }
 
     private fun openExplorer(lab:Boolean){
-        if(lab)Labs.show(this){insertBitmap(it)}else Games.show(this)
+        if(lab)Labs.show(this,{insertBitmap(it)},{board.insert(it)})else Games.show(this)
     }
 
     private fun insertBitmap(bitmap: Bitmap) {
@@ -1799,6 +1956,8 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         stopVoice()
+        pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null
+        if(::board.isInitialized)board.gestures.reset()
         googleSearch?.close();googleSearch=null
         super.onPause()
     }
@@ -1845,6 +2004,7 @@ class MainActivity : Activity() {
                     val assistant:VoiceConversation=if(settings.provider=="openrouter")RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
                         else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
                     voiceAssistant=assistant
+                    assistant.setMuted(voiceMuted)
                     voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},
                         {board.isDrawing || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
                     assistant.start();voiceScreen?.start()
@@ -1856,12 +2016,14 @@ class MainActivity : Activity() {
         if(!::voiceButton.isInitialized)return
         voiceButton.visibility=if(VoiceSettings.enabled(this))View.VISIBLE else View.GONE
         voiceButton.text=s(value)
+        refreshMute()
         val active=value!="voice_assistant"
         voiceButton.setIconResource(if(active)R.drawable.feather_square else R.drawable.feather_mic)
         voiceButton.contentDescription=if(active)s(value)+". "+s("voice_stop")else s("voice_assistant")
         voiceButton.backgroundTintList=android.content.res.ColorStateList.valueOf(if(active)PRIMARY_CONTAINER else SURFACE)
     }
     private fun stopVoice(){
+        voiceMuted=false
         ++voiceStartGeneration
         voiceStarting=false
         voiceScreen?.close();voiceScreen=null
@@ -1870,6 +2032,7 @@ class MainActivity : Activity() {
     }
 
     override fun onStop() {
+        board.gestures.reset()
         artPlayer?.pause()
         handler.removeCallbacks(autosave)
         persist()

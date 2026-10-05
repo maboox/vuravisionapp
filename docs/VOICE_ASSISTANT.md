@@ -43,3 +43,7 @@ Hardware echo cancellation/noise suppression is used when available. Half-duplex
 ## Verification limits
 
 Protocol and controller tests use fake transports/audio/services, including hidden-default gating, late permission callbacks, provider separation, OpenAI GA events, half-duplex endpointing, uncertain-response suppression and resource cancellation. UI render checks cover English/Persian. Android Keystore device tests are included. See the current release verification record for executed checks. No authenticated customer API conversation or physical-panel audio/latency test is claimed from unit tests.
+
+## Microphone mute (1.12)
+
+While the conversation is starting or active, a separate microphone button toggles capture. Muting stops recording and real microphone upload without stopping response audio; unmute explicitly resumes capture. A zero-audio packet ends pending live-provider voice detection. OpenRouter discards partial input on mute. Muting is a session control and is reset when the conversation ends. The master assistant enablement remains off/hidden by default.

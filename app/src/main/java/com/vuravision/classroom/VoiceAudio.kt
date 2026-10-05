@@ -15,6 +15,7 @@ interface VoiceAudioPort {
     fun interrupt()
     fun close()
     fun pendingOutputBytes():Int=0
+    fun setMuted(value:Boolean){}
 }
 
 /** Two dedicated threads; neither recording nor blocking playback runs on the UI/socket thread. */
@@ -24,6 +25,7 @@ class VoiceAudio(private val context:Context,private val inputRate:Int=16000):Vo
     private val queuedBytes=AtomicInteger()
     private val generation=AtomicInteger()
     @Volatile private var running=false
+    @Volatile private var inputMuted=false
     private var recorder:AudioRecord?=null
     private var player:AudioTrack?=null
     private var echo:AcousticEchoCanceler?=null
@@ -62,11 +64,15 @@ class VoiceAudio(private val context:Context,private val inputRate:Int=16000):Vo
             if(AcousticEchoCanceler.isAvailable())echo=AcousticEchoCanceler.create(recorder!!.audioSessionId)?.apply{enabled=true}
             if(NoiseSuppressor.isAvailable())noise=NoiseSuppressor.create(recorder!!.audioSessionId)?.apply{enabled=true}
             val mic=recorder!!;val speaker=player!!
-            running=true;mic.startRecording();speaker.play()
+            running=true;if(!inputMuted)mic.startRecording();speaker.play()
             recordThread=Thread({
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO)
                 val buffer=ByteArray(inputRate*2*40/1000) // 40 ms, PCM16 mono.
-                try{while(running){val n=mic.read(buffer,0,buffer.size,AudioRecord.READ_BLOCKING);if(n>0)input(buffer,n)else if(running)throw IllegalStateException("Audio input unavailable")}}
+                try{while(running){
+                    if(inputMuted){Thread.sleep(40);continue}
+                    val n=try{mic.read(buffer,0,buffer.size,AudioRecord.READ_BLOCKING)}catch(e:Exception){if(inputMuted || !running)continue else throw e}
+                    if(n>0 && !inputMuted)input(buffer,n)else if(n<=0 && running && !inputMuted)throw IllegalStateException("Audio input unavailable")
+                }}
                 catch(_:Exception){if(running)failure()}
             },"vura-voice-mic").apply{start()}
             playThread=Thread({
@@ -81,6 +87,11 @@ class VoiceAudio(private val context:Context,private val inputRate:Int=16000):Vo
                 }}catch(_:InterruptedException){}catch(_:Exception){if(running)failure()}
             },"vura-voice-speaker").apply{start()}
         }catch(e:Exception){close();throw e}
+    }
+    @Synchronized override fun setMuted(value:Boolean){
+        if(inputMuted==value)return
+        inputMuted=value
+        recorder?.let{try{if(value)it.stop()else if(running)it.startRecording()}catch(_:Exception){if(running)failed?.invoke()}}
     }
     override fun enqueue(pcm:ByteArray){
         if(!running || pcm.isEmpty())return

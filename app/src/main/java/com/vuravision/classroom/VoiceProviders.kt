@@ -19,6 +19,7 @@ interface VoiceConversation {
     fun start()
     fun sendImage(jpeg:ByteArray):Boolean
     fun stop(reason:String?=null)
+    fun setMuted(value:Boolean){}
 }
 
 interface LiveVoiceCodec {

@@ -24,13 +24,14 @@ class VoiceAssistantTest {
     @Before fun clean(){context.getSharedPreferences("vura",0).edit().clear().commit();Fonts.initialize(context)}
     private fun idle(){Shadows.shadowOf(Looper.getMainLooper()).idle()}
     private class Audio:VoiceAudioPort {
-        var starts=0;var closes=0;var interrupts=0
+        var starts=0;var closes=0;var interrupts=0;var microphoneMuted=false
         var input:((ByteArray,Int)->Unit)?=null
         val played=mutableListOf<ByteArray>()
         override fun start(input:(ByteArray,Int)->Unit,failure:()->Unit){starts++;this.input=input}
         override fun enqueue(pcm:ByteArray){played.add(pcm)}
         override fun interrupt(){interrupts++;played.clear()}
         override fun close(){closes++}
+        override fun setMuted(value:Boolean){microphoneMuted=value}
     }
     private class Wire:VoiceWire {
         lateinit var events:VoiceWire.Events
@@ -91,6 +92,15 @@ class VoiceAssistantTest {
         wire.events.message("""{"serverContent":{"interrupted":true,"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=24000","data":"AQI="}}]}}}""");idle();assertTrue(audio.played.isEmpty())
         session.stop();assertFalse(session.active);assertTrue(wire.closed);assertEquals(1,audio.closes);assertNull(ended)
         val sent=wire.sent.size;audio.input!!(byteArrayOf(1,2),2);wire.events.message("""{"setupComplete":{}}""");idle();assertEquals(sent,wire.sent.size)
+    }
+    @Test fun mutingStopsInputUploadsAndKeepsAssistantPlayback(){
+        val audio=Audio();val wire=Wire();val session=VoiceAssistant(VoiceSettings(),"fake","guide",audio,{}, {},{wire})
+        try{session.start();wire.events.opened();idle();wire.events.message("""{"setupComplete":{}}""");idle()
+            session.setMuted(true);assertTrue(audio.microphoneMuted);val sent=wire.sent.size
+            audio.input!!(byteArrayOf(1,2),2);assertEquals(sent,wire.sent.size)
+            wire.events.message("""{"serverContent":{"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=24000","data":"AQI="}}]}}}""");idle();assertEquals(1,audio.played.size);assertEquals(0,audio.interrupts)
+            session.setMuted(false);audio.input!!(byteArrayOf(1,2),2);assertEquals(sent+1,wire.sent.size);assertFalse(audio.microphoneMuted)
+        }finally{session.stop()}
     }
     @Test fun sessionResumesWithoutRepeatedGreetingOrMicrophoneAndIgnoresOldSocket(){
         val audio=Audio();val wires=mutableListOf<Wire>();var screenRefreshes=0

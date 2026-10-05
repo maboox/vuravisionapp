@@ -86,10 +86,12 @@ class Renderer(private val media: Media) {
         p.color = o.color
         p.alpha = o.alpha
         p.strokeWidth = o.width
-        p.strokeCap = if(o.shape=="marker") Paint.Cap.SQUARE else Paint.Cap.ROUND
-        if(o.kind=="ink" && o.shape=="marker" && o.alpha==255)p.strokeWidth=o.width*1.8f
+        p.strokeCap = if(o.shape in listOf("marker","highlight")) Paint.Cap.SQUARE else Paint.Cap.ROUND
+        if(o.kind=="ink" && o.shape=="marker")p.strokeWidth=o.width*1.8f
         if(o.shape=="dashed") p.pathEffect=DashPathEffect(floatArrayOf(if(o.dashLength>0)o.dashLength else o.width*3,if(o.dashGap>0)o.dashGap else o.width*2),0f)
         p.strokeJoin = Paint.Join.ROUND
+        if(o.kind=="ink")PenStyles.apply(p,o)
+        o.fillColor?.let{color->ShapeFill.path(o)?.let{path->val fill=Paint(Paint.ANTI_ALIAS_FLAG).apply{this.color=color;alpha=o.fillAlpha*o.alpha/255;style=Paint.Style.FILL};c.drawPath(path,fill)}}
         when (o.kind) {
             "ink" -> {
                 c.save()
@@ -120,7 +122,7 @@ class Renderer(private val media: Media) {
                 c.restore()
             }
             "shape" -> {
-                if(o.shape in GeometryTools.keys){GeometryTools.draw(c,o);c.restore();return}
+                if(o.shape in GeometryTools.keys){GeometryTools.draw(c,o,media.context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f));c.restore();return}
                 p.style = Paint.Style.STROKE
                 if(o.flipX && o.shape in listOf("line","arrow","double_arrow")) { c.translate(o.w,0f);c.scale(-1f,1f) }
                 if(o.flipY && o.shape in listOf("line","arrow","double_arrow")) { c.translate(0f,o.h);c.scale(1f,-1f) }
@@ -150,6 +152,7 @@ class Renderer(private val media: Media) {
                 }
             }
             "graph" -> graph(c, o)
+            "periodic" -> PeriodicTable.draw(c,o,media.context)
         }
         c.restore()
     }
@@ -209,6 +212,9 @@ class Renderer(private val media: Media) {
                 p.textSize = 14f
                 c.drawText(s, 12f, 20f + index * 18, p)
             } catch (_: IllegalArgumentException) {}
+        }
+        o.plotPoints.orEmpty().forEach{point->val x=o.w/2+point.x*sx;val y=o.h/2-point.y*sy
+            if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${MathTools.format(point.x)}, ${MathTools.format(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
         }
         c.restore()
     }

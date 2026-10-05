@@ -181,6 +181,8 @@ class RouterVoiceAssistant(
     private fun work(action:()->Unit){
         worker.execute{try{if(active)action()}catch(e:RouterVoiceException){ui{stop(e.reason)}}catch(_:InterruptedException){}catch(_:Exception){ui{stop("voice_service_error")}}}
     }
+    @Volatile private var muted=false
+    @Synchronized override fun setMuted(value:Boolean){muted=value;turns.reset();audio.setMuted(value)}
     override fun start(){
         check(Looper.myLooper()==handler.looper);check(!active);active=true;state("voice_connecting")
         handler.postDelayed(timeout,settings.sessionMinutes.coerceIn(1,60)*60_000L)
@@ -193,8 +195,8 @@ class RouterVoiceAssistant(
             }
         }
     }
-    private fun input(bytes:ByteArray,count:Int){
-        if(!active || !accepting)return
+    @Synchronized private fun input(bytes:ByteArray,count:Int){
+        if(!active || !accepting || muted)return
         val turn=turns.push(bytes,count)?:return
         accepting=false
         ui{state("voice_thinking")}

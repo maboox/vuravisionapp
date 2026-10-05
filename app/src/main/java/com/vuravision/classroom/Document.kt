@@ -11,6 +11,8 @@ fun duplicateItems(items: List<Item>): List<Item> {
     return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty()}}
 }
 
+data class PlotPoint(val x:Double=0.0,val y:Double=0.0)
+
 data class Point(var x: Float = 0f, var y: Float = 0f, var t: Long = 0, var pressure: Float = 1f)
 
 data class Item(
@@ -48,9 +50,16 @@ data class Item(
     var italic: Boolean = false,
     var fontFa: String? = null,
     var fontEn: String? = null,
+    var fillColor: Int? = null,
+    var fillAlpha: Int = 255,
+    var geometryVersion: Int = 0,
+    var geometryAngle: Float = 0f,
+    var geometrySweep: Float = 0f,
+    var selectedElement: Int = 0,
+    var plotPoints: List<PlotPoint>? = emptyList(),
 
 ) {
-    fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() })
+    fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() }, plotPoints = plotPoints?.map { it.copy() })
 
     fun local(px: Float, py: Float): Pair<Float, Float> {
         val a = -rotation * PI / 180
@@ -115,12 +124,14 @@ data class Lesson(
     var current: Int = 0,
     var pages: MutableList<Page> = mutableListOf(Page()),
     var pdf: PdfWorkspaceState? = null,
+    var customColors: MutableList<Int>? = mutableListOf(),
 ) {
     // Committed point lists are immutable; Store.edit detaches them before edits.
-    fun copyForSave(): Lesson = copy(pdf=pdf?.copyForSave(),pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
+    fun copyForSave(): Lesson = copy(customColors=customColors?.toMutableList(),pdf=pdf?.copyForSave(),pages=pages.map{p->p.copy(items=p.items.map{it.copy()}.toMutableList(),layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{it.copy()}.toMutableList())}.toMutableList())
     fun copyDeep(): Lesson =
         copy(
             pdf = pdf?.deepCopy(),
+            customColors = customColors?.toMutableList(),
             pages =
                 pages
                     .map { it.copy(items = it.items.map { v -> v.deepCopy() }.toMutableList(), layers = it.layers.map { l -> l.copy() }.toMutableList(),panes=it.panes.map{p->p.copy()}.toMutableList()) }
@@ -138,12 +149,13 @@ data class Lesson(
             schema = 3
         }
         require(pages.size in 1..200 && current in pages.indices)
+        customColors = (customColors ?: mutableListOf()).distinct().take(40).toMutableList()
         pdf?.validate()
         require(pages.sumOf { it.items.size } <= 20000)
         var points = 0
         pages.forEach { page ->
             require(page.panes.size in 1..4)
-            require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in listOf("round","dashed","marker","highlight") && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
+            require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in PenStyles.keys && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
             require(page.panes.all{it.zoom.isFinite() && it.zoom in .0001f..100000f && it.tx.isFinite() && it.ty.isFinite()})
             require(page.items.all{it.pane in page.panes.indices})
             require(page.layers.size in 1..100)
@@ -153,7 +165,7 @@ data class Lesson(
             require(page.items.all { o -> page.layers.any { it.id == o.layerId } })
             require(page.items.map { it.id }.distinct().size == page.items.size)
             page.items.forEach { o ->
-                require(o.kind in setOf("ink", "text", "sticky", "shape", "image", "pdf", "graph"))
+                require(o.kind in setOf("ink", "text", "sticky", "shape", "image", "pdf", "graph", "periodic"))
                 require(
                     listOf(o.x, o.y, o.w, o.h, o.rotation, o.width, o.inkW, o.inkH, o.domain).all {
                         it.isFinite()
@@ -169,6 +181,8 @@ data class Lesson(
                 require(o.asset.isEmpty() || o.asset.matches(Regex("[a-zA-Z0-9._-]+")))
                 require(o.cuts.size <= 100000)
                 require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
+                require(o.fillAlpha in 0..255 && o.geometryAngle.isFinite() && o.geometrySweep.isFinite() && o.geometryVersion in 0..1 && o.selectedElement in 0..118)
+                require(o.plotPoints.orEmpty().size <= 1000 && o.plotPoints.orEmpty().all{it.x.isFinite() && it.y.isFinite() && abs(it.x)<=100000 && abs(it.y)<=100000})
                 require(o.textAlign in listOf("start","center","end"))
                 points += o.points.size
                 require(points <= 1000000)
@@ -186,10 +200,19 @@ class Store(var lesson: Lesson = Lesson()) {
         get() = lesson.pages[lesson.current]
 
     // Point samples are shared in history and detached before arbitrary edits.
-    private fun snapshot() = lesson.copy(pages = lesson.pages.map { page ->
+    private fun snapshot() = lesson.copy(customColors=lesson.customColors?.toMutableList(),pages = lesson.pages.map { page ->
         page.copy(items = page.items.map { it.copy() }.toMutableList(), layers = page.layers.map { it.copy() }.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList())
     }.toMutableList())
+    private var historyBefore:Pair<List<Lesson>,List<Lesson>>?=null
+    var isCanceling=false;private set
+    fun cancelCheckpoint(){
+        val before=historyBefore?:return
+        val saved=past.lastOrNull()?:return
+        lesson=saved;past.clear();past.addAll(before.first);future.clear();future.addAll(before.second);historyBefore=null
+        isCanceling=true;try{changed()}finally{isCanceling=false}
+    }
     fun checkpoint() {
+        historyBefore=past.toList() to future.toList()
         past.addLast(snapshot())
         while (past.size > 30) past.removeFirst()
         future.clear()
@@ -205,6 +228,7 @@ class Store(var lesson: Lesson = Lesson()) {
     /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
     fun editMetadata(action:()->Unit){checkpoint();action();changed()}
     fun undo() {
+        historyBefore=null
         if (past.isNotEmpty()) {
             future.addLast(snapshot())
             lesson = past.removeLast()
@@ -213,6 +237,7 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun redo() {
+        historyBefore=null
         if (future.isNotEmpty()) {
             past.addLast(snapshot())
             lesson = future.removeLast()
@@ -221,6 +246,7 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun replace(doc: Lesson) {
+        historyBefore=null
         doc.validate()
         lesson = doc
         past.clear()

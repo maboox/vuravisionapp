@@ -20,7 +20,7 @@ class VoiceSettingsUi(private val activity:Activity) {
         val content=activity.column().apply{setPadding(activity.dp(16),activity.dp(8),activity.dp(16),activity.dp(8))}
         content.addView(activity.label(tr("Talk in Persian about the visible board and PDF. The assistant only observes and speaks. While active, microphone audio and workspace images go to your selected service. Each service has its own encrypted key. Internet, model access and quota/credit are required.","دربارهٔ تخته و PDF نمایان فارسی صحبت کنید. دستیار فقط می‌بیند و صحبت می‌کند. هنگام فعال‌بودن، صدا و تصویر فضای کار به سرویس انتخابی ارسال می‌شود. کلید هر سرویس جدا و رمزگذاری‌شده ذخیره می‌شود. اینترنت، دسترسی مدل و سهمیه یا اعتبار کافی لازم است."),14f,MUTED))
         content.addView(activity.label(tr("Service","سرویس"),14f,NAVY,true))
-        val provider=Spinner(activity).apply{adapter=ArrayAdapter(activity,android.R.layout.simple_spinner_dropdown_item,listOf("Google Gemini","OpenAI","OpenRouter"));setSelection(VoiceSettings.providers.indexOf(initial.provider))};content.addView(provider)
+        val provider=Spinner(activity).apply{adapter=OptionAdapter(activity,listOf("Google Gemini","OpenAI","OpenRouter"));setSelection(VoiceSettings.providers.indexOf(initial.provider))};content.addView(provider)
         val status=activity.label("",14f);content.addView(status)
         val note=activity.label("",13f,MUTED);content.addView(note)
         content.addView(activity.label(tr("API key","کلید API"),14f,NAVY,true))
@@ -42,13 +42,13 @@ class VoiceSettingsUi(private val activity:Activity) {
         val voice=Spinner(activity);content.addView(voice)
         val speechGroup=activity.column()
         speechGroup.addView(activity.label(tr("Speech model (OpenRouter)","مدل تولید صدا (OpenRouter)"),14f,NAVY,true))
-        val speech=Spinner(activity).apply{adapter=ArrayAdapter(activity,android.R.layout.simple_spinner_dropdown_item,VoiceSettings.routerSpeechModels);setSelection(VoiceSettings.routerSpeechModels.indexOf(initial.routerSpeechModel).coerceAtLeast(0))};speechGroup.addView(speech);content.addView(speechGroup)
+        val speech=Spinner(activity).apply{adapter=OptionAdapter(activity,VoiceSettings.routerSpeechModels);setSelection(VoiceSettings.routerSpeechModels.indexOf(initial.routerSpeechModel).coerceAtLeast(0))};speechGroup.addView(speech);content.addView(speechGroup)
         fun selected()=VoiceSettings.providers[provider.selectedItemPosition]
         fun refresh(){
             val p=selected();input.setText("");input.error=null;model.error=null
             status.text=activity.s(if(keys(p).hasKey())"voice_key_saved"else"voice_key_missing")
             val voices=when(p){"openai"->VoiceSettings.openaiVoices;"openrouter"->VoiceSettings.routerVoices;else->VoiceSettings.voices}
-            voice.adapter=ArrayAdapter(activity,android.R.layout.simple_spinner_dropdown_item,voices)
+            voice.adapter=OptionAdapter(activity,voices)
             voice.setSelection(voices.indexOf(when(p){"openai"->initial.openaiVoice;"openrouter"->initial.routerVoice;else->initial.voice}).coerceAtLeast(0))
             model.setText(when(p){"openai"->initial.openaiModel;"openrouter"->initial.routerModel;else->initial.model})
             speechGroup.visibility=if(p=="openrouter")View.VISIBLE else View.GONE
@@ -105,7 +105,7 @@ class VoiceSettingsUi(private val activity:Activity) {
         content.addView(activity.label(tr("Off by default. Enabling reveals the assistant button and connection settings; disabling immediately stops microphone and screen sharing. Saved keys remain. The assistant introduces itself only as an educational assistant, stays patient and asks you to repeat unclear speech without echoing guesses.","پیش‌فرض خاموش است. فعال‌سازی دکمه و تنظیمات اتصال را نمایان می‌کند؛ خاموش کردن، میکروفن و ارسال تصویر را فوراً متوقف می‌کند. کلیدها حفظ می‌شوند. دستیار فقط خود را دستیار آموزشی معرفی می‌کند، صبور می‌ماند و برای صدای نامفهوم بدون تکرار حدس اشتباه درخواست تکرار می‌کند."),14f,MUTED))
         fun spinner(title:String,entries:List<String>,selected:Int):Spinner{
             content.addView(activity.label(title,14f,NAVY,true))
-            return Spinner(activity).apply{adapter=ArrayAdapter(activity,android.R.layout.simple_spinner_dropdown_item,entries);setSelection(selected.coerceAtLeast(0));content.addView(this)}
+            return Spinner(activity).apply{adapter=OptionAdapter(activity,entries);setSelection(selected.coerceAtLeast(0));content.addView(this)}
         }
         val tone=spinner(tr("Tone","لحن"),listOf(tr("Warm and respectful","گرم و محترمانه"),tr("Formal","رسمی"),tr("Calm and measured","آرام و شمرده")),VoiceSettings.tones.indexOf(initial.tone))
         val length=spinner(tr("Response length","طول پاسخ"),listOf(tr("Short","کوتاه"),tr("Medium","متوسط"),tr("Detailed","مفصل")),VoiceSettings.lengths.indexOf(initial.length))

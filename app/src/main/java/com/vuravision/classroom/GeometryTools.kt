@@ -25,38 +25,58 @@ object GeometryTools {
     val px=radius+radius*cos(angle);val py=tool.h-radius*sin(angle)
     val d=hypot(lx-px,ly-py);if(d<gap){gap=d;best=px to py}
    }
-   "compass"->{val cx=tool.w/2;val cy=0f;val radius=hypot(cx,tool.h)
-    val dist=hypot(lx-cx,ly-cy);if(dist>1f){gap=abs(dist-radius);best=(cx+(lx-cx)*radius/dist) to (cy+ly*radius/dist)}
+   "compass"->{val cx=tool.w/2;val cy=if(tool.geometryVersion==1)tool.h/2 else 0f;val radius=radius(tool)
+    val dist=hypot(lx-cx,ly-cy);if(dist>1f){gap=abs(dist-radius);best=(cx+(lx-cx)*radius/dist) to (cy+(ly-cy)*radius/dist)}
    }
   }
   if(gap>tolerance)return null
   val point=best?:return null;val (gx,gy)=tool.global(point.first,point.second)
   return PointF(gx,gy)
  }
- fun draw(c:Canvas,o:Item){
+ fun radius(o:Item)=if(o.geometryVersion==1)o.w/2 else hypot(o.w/2,o.h)
+ fun center(o:Item)=o.global(o.w/2,if(o.geometryVersion==1)o.h/2 else 0f)
+ fun prepare(o:Item){if(o.shape=="compass"&&o.geometryVersion==0){val center=center(o);val r=radius(o);o.x=center.first-r;o.y=center.second-r;o.w=r*2;o.h=r*2;o.rotation=0f;o.geometryVersion=1;o.geometryAngle=-60f}}
+ fun draw(c:Canvas,o:Item,pixelsPerCm:Float=0f){
   val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=0xddf0f7f7.toInt();style=Paint.Style.FILL}
   val w=o.w;val h=o.h
   when(o.shape){
    "ruler"->c.drawRoundRect(0f,0f,w,h,6f,6f,p)
    "set_square"->{val path=Path();path.moveTo(0f,0f);path.lineTo(w,h);path.lineTo(0f,h);path.close();c.drawPath(path,p)}
    "protractor"->c.drawArc(0f,0f,w,h*2,180f,180f,true,p)
-   "compass"->{p.color=TEAL;p.strokeWidth=5f;c.drawLine(w/2,0f,0f,h,p);c.drawLine(w/2,0f,w,h,p);c.drawCircle(w/2,0f,6f,p)
-    p.color=0x55666666;p.style=Paint.Style.STROKE;p.strokeWidth=1.5f;p.pathEffect=DashPathEffect(floatArrayOf(5f,7f),0f)
-    c.drawCircle(w/2,0f,hypot(w/2,h),p);p.pathEffect=null
+   "compass"->{val cx=w/2;val cy=if(o.geometryVersion==1)h/2 else 0f;val r=radius(o);val a=o.geometryAngle*PI/180
+    p.color=TEAL;p.strokeWidth=4f;p.style=Paint.Style.STROKE
+    p.pathEffect=DashPathEffect(floatArrayOf(5f,7f),0f);p.strokeWidth=1.2f;c.drawCircle(cx,cy,r,p);p.pathEffect=null
+    p.strokeWidth=4f;c.drawLine(cx,cy,cx+r*cos(a).toFloat(),cy+r*sin(a).toFloat(),p)
+    p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=15f;c.drawText("r = ${MathTools.format(r.toDouble())} u",cx+8,cy-12,p)
+    c.drawText("${MathTools.format(o.geometrySweep.toDouble())}°",cx+8,cy+20,p)
    }
   }
   p.color=TEAL;p.strokeWidth=1.5f;p.style=Paint.Style.STROKE
-  if(o.shape=="ruler"){c.drawRoundRect(0f,0f,w,h,6f,6f,p);p.textSize=11f;for(i in 0..(w/10).toInt()){val x=i*10f;c.drawLine(x,0f,x,if(i%5==0)18f else 9f,p);if(i%5==0){p.style=Paint.Style.FILL;c.drawText("${i/5}",x+2,32f,p);p.style=Paint.Style.STROKE}}}
-  if(o.shape=="set_square"){c.drawLine(0f,0f,w,h,p);c.drawLine(w,h,0f,h,p);c.drawLine(0f,h,0f,0f,p)}
+  if(o.shape=="ruler"){
+   c.drawRoundRect(0f,0f,w,h,6f,6f,p)
+   val matrix=Matrix();c.getMatrix(matrix);val values=FloatArray(9);matrix.getValues(values)
+   val pxPerUnit=hypot(values[0],values[3]).coerceAtLeast(.0001f)
+   val unit=if(pixelsPerCm>0)pixelsPerCm/pxPerUnit else 50f
+   val step=(unit/10).coerceAtLeast(w/2000)
+   p.textSize=12f
+   for(i in 0..(w/step).toInt().coerceAtMost(2000)){val x=i*step;c.drawLine(x,0f,x,if(i%10==0)18f else if(i%5==0)13f else 8f,p);if(i%10==0){p.style=Paint.Style.FILL;c.drawText("${i/10}",x+2,34f,p);p.style=Paint.Style.STROKE}}
+   p.style=Paint.Style.FILL;c.drawText(if(pixelsPerCm>0)"cm" else "u",w-26,h-10,p);c.drawText("${MathTools.format(o.rotation.toDouble())}°",8f,h-10,p)
+  }
+  if(o.shape=="set_square"){c.drawLine(0f,0f,w,h,p);c.drawLine(w,h,0f,h,p);c.drawLine(0f,h,0f,0f,p);p.style=Paint.Style.FILL;p.textSize=14f;c.drawText("90°",10f,h-12,p);c.drawText("${MathTools.format((atan2(h,w)*180/PI).toDouble())}°",w*.5f,h*.5f,p)}
   if(o.shape=="protractor"){
    c.drawArc(0f,0f,w,h*2,180f,180f,false,p);c.drawLine(0f,h,w,h,p);p.textSize=11f
+   val angle=o.geometryAngle.coerceIn(0f,180f)*PI/180
+   p.color=ORANGE;p.strokeWidth=2f;c.drawLine(w/2,h,w/2+w/2*cos(angle).toFloat(),h-h*sin(angle).toFloat(),p);p.color=TEAL;p.textSize=15f;p.style=Paint.Style.FILL;c.drawText("${MathTools.format(o.geometryAngle.toDouble())}°",w/2+8,h-16,p);p.style=Paint.Style.STROKE
    for(deg in 0..180 step 10){val a=deg*PI/180;val x=w/2+w/2*cos(a).toFloat();val y=h-h*sin(a).toFloat();val xx=w/2+(w/2-12)*cos(a).toFloat();val yy=h-(h-12)*sin(a).toFloat();c.drawLine(x,y,xx,yy,p);p.style=Paint.Style.FILL;c.drawText("$deg",w/2+(w/2-30)*cos(a).toFloat()-8,h-(h-30)*sin(a).toFloat(),p);p.style=Paint.Style.STROKE}
   }
  }
- fun construction(o:Item):Item {
+ fun construction(o:Item,perpendicular:Boolean=false):Item {
   val circle=o.shape=="compass";val result=Item(kind="shape",shape=if(circle)"circle" else "line",color=o.color,width=3f,layerId=o.layerId,pane=o.pane)
-  if(circle){val a=o.global(o.w/2,0f);val radius=hypot(o.w/2,o.h);result.x=a.first-radius;result.y=a.second-radius;result.w=radius*2;result.h=radius*2}
-  else {val edge=if(o.shape=="ruler")0f else o.h;val a=o.global(0f,edge);val b=o.global(o.w,edge);result.x=(a.first+b.first)/2-o.w/2;result.y=(a.second+b.second)/2-.5f;result.w=o.w;result.h=1f;result.rotation=o.rotation}
+  if(circle){val a=center(o);val radius=radius(o);result.x=a.first-radius;result.y=a.second-radius;result.w=radius*2;result.h=radius*2}
+  else {val edge=if(o.shape=="ruler")0f else o.h;val a=o.global(0f,edge);val b=o.global(o.w,edge);result.x=(a.first+b.first)/2-o.w/2;result.y=(a.second+b.second)/2-.5f;result.w=o.w;result.h=1f;result.rotation=o.rotation
+    if(o.shape=="protractor"){val a=o.global(o.w/2,o.h);val angle=(o.rotation-o.geometryAngle)*PI/180;val length=o.w/2;result.x=a.first+length*cos(angle).toFloat()/2-length/2;result.y=a.second+length*sin(angle).toFloat()/2-.5f;result.w=length;result.rotation=o.rotation-o.geometryAngle}
+    else if(perpendicular){val start=o.global(0f,edge);val angle=(o.rotation-90f)*PI/180;result.x=start.first+o.w*cos(angle).toFloat()/2-o.w/2;result.y=start.second+o.w*sin(angle).toFloat()/2-.5f;result.rotation=o.rotation-90f}
+   }
   return result
  }
 }

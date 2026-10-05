@@ -64,6 +64,12 @@ class VoiceAssistant(
     private var lastState=""
     private val timeout=Runnable{stop("voice_time_limit")}
     private var connectTimeout:Runnable?=null
+    @Volatile private var muted=false
+    override fun setMuted(value:Boolean){
+        if(muted==value)return
+        muted=value;audio.setMuted(value)
+        if(value && active && ready){val silence=ByteArray(if(settings.provider=="openai")38400 else 25600);wire?.send(codec.audio(silence,silence.size))}
+    }
     override fun start(){
         check(Looper.myLooper()==handler.looper);check(!active)
         active=true
@@ -102,7 +108,7 @@ class VoiceAssistant(
                                 try{
                                     micStarted=true
                                     audio.start({bytes,count->
-                                        if(active && ready){
+                                        if(active && ready && !muted){
                                             val socket=wire
                                             if(socket==null || socket.queuedBytes()>128_000 || !socket.send(codec.audio(bytes,count)))handler.post{if(active)stop("voice_network_slow")}
                                         }

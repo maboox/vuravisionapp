@@ -57,7 +57,7 @@ object UserGuide {
             val topic=topics[index]
             body.removeAllViews()
             body.addView(context.label(if(fa)topic.titleFa else topic.titleEn,25f,NAVY,true))
-            val imageKey=when(topic.id){"workspace"->"workspace";"eraser","palm"->"eraser";else->null}
+            val imageKey=when(topic.id){"workspace"->"workspace";else->null}
             val screenshot=imageKey?.let{key->try{
                 context.assets.open("guide/$key-${if(fa)"fa"else"en"}.png").use{BitmapFactory.decodeStream(it)}
             }catch(_:java.io.IOException){null}}

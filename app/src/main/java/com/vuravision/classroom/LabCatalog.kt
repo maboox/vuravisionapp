@@ -9,7 +9,7 @@ object LabCatalog {
         Topic("optics","physics","Light and relativity","نور و نسبیت","lens lightclock".split(" ").toSet()),
         Topic("matter","physics","Matter, heat and pressure","ماده، گرما و فشار","gas buoyancy heat pressure".split(" ").toSet()),
         Topic("electricity","physics","Electricity","الکتریسیته","circuit".split(" ").toSet()),
-        Topic("atomic","chem","Atoms and bonding","اتم و پیوند","molecule atom periodic bonding".split(" ").toSet()),
+        Topic("atomic","chem","Atoms and bonding","اتم و پیوند","molecule atom periodic periodic_table bonding".split(" ").toSet()),
         Topic("solutions","chem","Solutions and transport","محلول و انتقال","states ph solubility titration diffusion osmosis density dilution".split(" ").toSet()),
         Topic("reactions","chem","Reactions","واکنش‌ها","reaction halflife electrolysis flame equilibrium catalyst".split(" ").toSet()),
         Topic("geometry","math","Geometry","هندسه","circle fractal golden pythagoras polypi koch triangle_area trig".split(" ").toSet()),
