@@ -35,6 +35,11 @@ object GeometryTools {
  }
  fun radius(o:Item)=if(o.geometryVersion==1)o.w/2 else hypot(o.w/2,o.h)
  fun center(o:Item)=o.global(o.w/2,if(o.geometryVersion==1)o.h/2 else 0f)
+ fun rulerLabelStep(pixelsPerUnit:Float,spacing:Float=40f):Float {
+  val need=spacing/pixelsPerUnit.coerceAtLeast(.001f)
+  val power=10.0.pow(floor(log10(need.toDouble()))).toFloat()
+  return listOf(1f,2f,5f,10f).first{it*power>=need}*power
+ }
  fun prepare(o:Item){if(o.shape=="compass"&&o.geometryVersion==0){val center=center(o);val r=radius(o);o.x=center.first-r;o.y=center.second-r;o.w=r*2;o.h=r*2;o.rotation=0f;o.geometryVersion=1;o.geometryAngle=-60f}}
  fun draw(c:Canvas,o:Item,pixelsPerCm:Float=0f){
   val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=0xddf0f7f7.toInt();style=Paint.Style.FILL}
@@ -47,8 +52,8 @@ object GeometryTools {
     p.color=TEAL;p.strokeWidth=4f;p.style=Paint.Style.STROKE
     p.pathEffect=DashPathEffect(floatArrayOf(5f,7f),0f);p.strokeWidth=1.2f;c.drawCircle(cx,cy,r,p);p.pathEffect=null
     p.strokeWidth=4f;c.drawLine(cx,cy,cx+r*cos(a).toFloat(),cy+r*sin(a).toFloat(),p)
-    p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=15f;c.drawText("r = ${MathTools.format(r.toDouble())} u",cx+8,cy-12,p)
-    c.drawText("${MathTools.format(o.geometrySweep.toDouble())}°",cx+8,cy+20,p)
+    p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=15f;c.drawText("r = ${DisplayNumbers.one(r.toDouble())} u",cx+8,cy-12,p)
+    c.drawText("${DisplayNumbers.one(o.geometrySweep.toDouble())}°",cx+8,cy+20,p)
    }
   }
   p.color=TEAL;p.strokeWidth=1.5f;p.style=Paint.Style.STROKE
@@ -56,17 +61,28 @@ object GeometryTools {
    c.drawRoundRect(0f,0f,w,h,6f,6f,p)
    val matrix=Matrix();c.getMatrix(matrix);val values=FloatArray(9);matrix.getValues(values)
    val pxPerUnit=hypot(values[0],values[3]).coerceAtLeast(.0001f)
-   val unit=if(pixelsPerCm>0)pixelsPerCm/pxPerUnit else 50f
-   val step=(unit/10).coerceAtLeast(w/2000)
-   p.textSize=12f
-   for(i in 0..(w/step).toInt().coerceAtMost(2000)){val x=i*step;c.drawLine(x,0f,x,if(i%10==0)18f else if(i%5==0)13f else 8f,p);if(i%10==0){p.style=Paint.Style.FILL;c.drawText("${i/10}",x+2,34f,p);p.style=Paint.Style.STROKE}}
-   p.style=Paint.Style.FILL;c.drawText(if(pixelsPerCm>0)"cm" else "u",w-26,h-10,p);c.drawText("${MathTools.format(o.rotation.toDouble())}°",8f,h-10,p)
+   val unit=if(pixelsPerCm>0)pixelsPerCm/pxPerUnit else 1f
+   // Keep labels readable on the display, independent of calibration and zoom.
+   val text=14f/pxPerUnit;p.textSize=text
+   val labelUnits=rulerLabelStep(unit*pxPerUnit,max(40f,p.measureText(DisplayNumbers.one((w/unit).toDouble()))*pxPerUnit+12f))
+   val tickUnits=if(unit*pxPerUnit>=35).1f else if(unit*pxPerUnit>=14).5f else labelUnits/5
+   val tick=(unit*tickUnits).coerceAtLeast(3f/pxPerUnit)
+   for(i in 0..(w/tick).toInt().coerceAtMost(1000)){
+    val x=i*tick;val value=x/unit;val labelled=abs(value/labelUnits-round(value/labelUnits))<.01f
+    c.drawLine(x,0f,x,if(labelled)18f else 8f,p)
+   }
+   val labelStep=unit*labelUnits
+   for(i in 0..(w/labelStep).toInt().coerceAtMost(200)){
+    val x=i*labelStep;val label=DisplayNumbers.one((i*labelUnits).toDouble())
+    if(x+p.measureText(label)+3f/pxPerUnit<=w){p.style=Paint.Style.FILL;c.drawText(label,x+2f/pxPerUnit,34f,p);p.style=Paint.Style.STROKE}
+   }
+   p.style=Paint.Style.FILL;c.drawText(if(pixelsPerCm>0)"cm" else "u",w-26,h-10,p);c.drawText("${DisplayNumbers.one(o.rotation.toDouble())}°",8f,h-10,p)
   }
-  if(o.shape=="set_square"){c.drawLine(0f,0f,w,h,p);c.drawLine(w,h,0f,h,p);c.drawLine(0f,h,0f,0f,p);p.style=Paint.Style.FILL;p.textSize=14f;c.drawText("90°",10f,h-12,p);c.drawText("${MathTools.format((atan2(h,w)*180/PI).toDouble())}°",w*.5f,h*.5f,p)}
+  if(o.shape=="set_square"){c.drawLine(0f,0f,w,h,p);c.drawLine(w,h,0f,h,p);c.drawLine(0f,h,0f,0f,p);p.style=Paint.Style.FILL;p.textSize=14f;c.drawText("90°",10f,h-12,p);c.drawText("${DisplayNumbers.one((atan2(h,w)*180/PI).toDouble())}°",w*.5f,h*.5f,p)}
   if(o.shape=="protractor"){
    c.drawArc(0f,0f,w,h*2,180f,180f,false,p);c.drawLine(0f,h,w,h,p);p.textSize=11f
    val angle=o.geometryAngle.coerceIn(0f,180f)*PI/180
-   p.color=ORANGE;p.strokeWidth=2f;c.drawLine(w/2,h,w/2+w/2*cos(angle).toFloat(),h-h*sin(angle).toFloat(),p);p.color=TEAL;p.textSize=15f;p.style=Paint.Style.FILL;c.drawText("${MathTools.format(o.geometryAngle.toDouble())}°",w/2+8,h-16,p);p.style=Paint.Style.STROKE
+   p.color=ORANGE;p.strokeWidth=2f;c.drawLine(w/2,h,w/2+w/2*cos(angle).toFloat(),h-h*sin(angle).toFloat(),p);p.color=TEAL;p.textSize=15f;p.style=Paint.Style.FILL;c.drawText("${DisplayNumbers.one(o.geometryAngle.toDouble())}°",w/2+8,h-16,p);p.style=Paint.Style.STROKE
    for(deg in 0..180 step 10){val a=deg*PI/180;val x=w/2+w/2*cos(a).toFloat();val y=h-h*sin(a).toFloat();val xx=w/2+(w/2-12)*cos(a).toFloat();val yy=h-(h-12)*sin(a).toFloat();c.drawLine(x,y,xx,yy,p);p.style=Paint.Style.FILL;c.drawText("$deg",w/2+(w/2-30)*cos(a).toFloat()-8,h-(h-30)*sin(a).toFloat(),p);p.style=Paint.Style.STROKE}
   }
  }

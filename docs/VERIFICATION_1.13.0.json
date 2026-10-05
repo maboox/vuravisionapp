@@ -1,0 +1,76 @@
+{
+  "version": "1.13.0",
+  "version_code": 22,
+  "date_utc": "2026-10-05T09:19:01.814212+00:00",
+  "unit_tests": {
+    "tests": 201,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 24
+  },
+  "lint": {
+    "debug": {
+      "Error": 0,
+      "Warning": 766
+    },
+    "release": {
+      "Error": 0,
+      "Warning": 768
+    }
+  },
+  "gradle_tasks": {
+    "testDebugUnitTest": "pass",
+    "lintDebug": "pass",
+    "lintRelease": "pass",
+    "assembleDebug": "pass",
+    "assembleDebugAndroidTest": "pass (compiled, not run on a device)"
+  },
+  "source_checks": {
+    "guide_chapters": 27,
+    "font_faces": 21,
+    "periodic_elements": 118,
+    "native_labs": 74,
+    "status": "pass"
+  },
+  "web_scenarios": {
+    "catalog": {
+      "cards": 68,
+      "subjectFilter": true,
+      "topicFilter": true,
+      "search": true,
+      "navigation": true
+    },
+    "catalogFa": {
+      "direction": "rtl",
+      "search": true
+    },
+    "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+    "labs": 204,
+    "labFailures": [],
+    "games": 49,
+    "gameFailures": [],
+    "errors": []
+  },
+  "debug_apk": {
+    "sha256": "c9b4180d678d6abdd94354e3cf624a161aef53005cdbf2fc4e9d6cbdadaad5d0",
+    "signature": "verified (development certificate)",
+    "zipalign_16kb": "pass",
+    "package_version": "verified"
+  },
+  "visual_checks": [
+    "English and Persian compact dialogs",
+    "Two-slot pie menu",
+    "Temporary shape measurements",
+    "Element tile and sticky-note card",
+    "English and Persian page manager",
+    "Persian history HUD"
+  ],
+  "limits": [
+    "No physical display or emulator input/performance run. Gesture quality and perceived smoothing delay require target hardware verification.",
+    "Authenticated AI services were not exercised. Assistant and pie menu remain disabled by default.",
+    "Production signing runs only in GitHub Actions with the original four secrets. Local build uses the development certificate.",
+    "Raster contour detection is bounded to 640 pixels, 256 ink strokes and 100000 points on the active layer; very large or thin scenes are rejected.",
+    "History retains the existing 30-step limit."
+  ]
+}

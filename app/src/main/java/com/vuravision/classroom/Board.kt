@@ -24,10 +24,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         holdRecognitionEnabled=b.holdRecognitionEnabled;holdDelayMillis=b.holdDelayMillis
         holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode;fillColor=b.fillColor;fillAlpha=b.fillAlpha;gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled
     }
+    override fun onDetachedFromWindow(){
+        smoothers.clear();removeCallbacks(smoothFrame);measurements.clear();gestures.reset();super.onDetachedFromWindow()
+    }
     fun releaseBacking(){backing?.recycle();backing=null;backingCanvas=null;backingDirty=true}
     private fun fitFixed(){fixedPageWidth?.let{if(width>0 && height>0)zoom=min(width/density/it,height/density/(fixedPageHeight?:1f));tx=0f;ty=0f}}
     val gestures=BoardGestures(this)
     private val geometry=GeometryInteraction(this)
+    val measurements=MeasurementOverlay(this)
+    fun showMeasurements(o:Item){measurements.show(o)}
     var onEducationalTap:(Item,PointF)->Unit={_,_->}
     var fillColor:Int?=TEAL
     var fillAlpha=255
@@ -126,6 +131,18 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private var ty:Float get()=pane.ty;set(v){pane.ty=v}
     private val density = resources.displayMetrics.density
     private val live = mutableMapOf<Int, Item>()
+    private val smoothers=mutableMapOf<Int,StrokeSmoother>()
+    private val smoothFrame=object:Runnable{override fun run(){
+        val now=android.os.SystemClock.uptimeMillis()
+        var changed=false
+        smoothers.forEach{(id,filter)->filter.advance(now)?.let{live[id]?.points?.add(it);changed=true}}
+        if(changed)postInvalidateOnAnimation()
+        if(smoothers.values.any{it.pending})postOnAnimation(this)
+    }}
+    private fun sampleInk(id:Int,o:Item,point:Point){
+        val filter=smoothers[id]
+        if(filter==null)o.points.add(point)else{filter.target(point);filter.advance(point.t)?.let{o.points.add(it)};removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
+    }
     private val guides=mutableMapOf<Int,Item>()
     private val holdCallbacks=mutableMapOf<Int,Runnable>()
     private val holdAt=mutableMapOf<Int,PointF>()
@@ -190,7 +207,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
     fun abortPendingGesture(){
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
         geometry.cancel()
         if(changed){store.cancelCheckpoint();changed=false}
         actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";sceneChanged()
@@ -206,9 +223,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun reset() {
+        measurements.clear()
         gestures.reset();geometry.cancel()
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
         activePane=activePane.coerceIn(store.page.panes.indices)
         backingDirty=true
         zoom = 1f
@@ -356,6 +374,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         }
         if(lasso.size>1){val path=Path();path.moveTo(lasso[0].x,lasso[0].y);lasso.drop(1).forEach{path.lineTo(it.x,it.y)};p.style=Paint.Style.STROKE;c.drawPath(path,p)}
         geometry.draw(c,zoom)
+        measurements.draw(c,zoom)
         c.restore()
         if(store.page.panes.size>1){
             p.style=Paint.Style.STROKE;p.strokeWidth=density
@@ -372,7 +391,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             if(geometry.active){geometry.cancel();navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true}
             if(pdfBaseId!=null && changed && (tool=="erase" || actions.values.any{it=="erase"}))store.undo()
             holdCallbacks.keys.toList().forEach(::cancelHold)
-            live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
             if(transforming.isNotEmpty())original.forEach{base->store.page.items.firstOrNull{it.id==base.id}?.let{o->o.x=base.x;o.y=base.y;o.w=base.w;o.h=base.h;o.rotation=base.rotation;o.width=base.width}}
             navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true
         }
@@ -388,7 +407,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         }
         if(tool=="fill"){
             if(e.actionMasked==MotionEvent.ACTION_UP){val target=store.page.visibleItems().asReversed().firstOrNull{it.pane==activePane&&(ShapeFill.contains(it,at.x,at.y)||it.hit(at.x,at.y,0f))}
-                if(target!=null&&!target.locked&&store.page.editable(target)&&ShapeFill.contains(target,at.x,at.y))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
+                if(target!=null&&ShapeFill.contains(target,at.x,at.y)){
+                    if(!target.locked&&store.page.editable(target))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
+                }else if((target==null || target.id==pdfBaseId) && fillColor!=null)HandFill.create(store.page,activePane,at.x,at.y,fillColor!!,fillAlpha)?.let{result->
+                    store.editMetadata{store.page.items.add(result.index,result.item)}
+                }
             }
             return true
         }
@@ -527,7 +550,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     Point(start.x, start.y, e.eventTime, e.getPressure(e.actionIndex))
                                 ),
                         )
-                    if(tool=="pen")scheduleHold(id,start)
+                    if(style=="smooth"){smoothers[id]=StrokeSmoother(live.getValue(id).points.first());removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
+                    if(tool=="pen"&&style!="smooth")scheduleHold(id,start)
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -579,7 +603,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     val q=PointF((e.getHistoricalX(i,j)-rect.left-density*state.tx)/scale,
                                         (e.getHistoricalY(i,j)-rect.top-density*state.ty)/scale)
                                     val snapped=snap(pid,q)
-                                    o.points.add(
+                                    sampleInk(pid,o,
                                         Point(
                                             snapped.x,
                                             snapped.y,
@@ -589,8 +613,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     )
                                 }
                                 val snapped=snap(pid,point)
-                                o.points.add(Point(snapped.x, snapped.y, e.eventTime, e.getPressure(i)))
-                                if(tool=="pen")scheduleHold(pid,snapped)
+                                sampleInk(pid,o,Point(snapped.x, snapped.y, e.eventTime, e.getPressure(i)))
+                                if(tool=="pen"&&o.shape!="smooth")scheduleHold(pid,snapped)
                             }
                         }
                 }
@@ -600,7 +624,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 cancelHold(id)
                 live.remove(id)?.let { o ->
                     if (o.kind == "ink") {
-                        val end=snap(id,at);o.points.add(Point(end.x,end.y,e.eventTime))
+                        val end=snap(id,at);val endpoint=Point(end.x,end.y,e.eventTime)
+                        smoothers.remove(id)?.let{o.points.addAll(it.finish(endpoint))}?:o.points.add(endpoint)
+                        if(smoothers.isEmpty())removeCallbacks(smoothFrame)
                         val left = o.points.minOf { it.x }
                         val top = o.points.minOf { it.y }
                         o.w = (o.points.maxOf { it.x } - left).coerceAtLeast(1f)
@@ -651,7 +677,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 }
             }
             MotionEvent.ACTION_CANCEL -> {
-                live.clear()
+                smoothers.clear();removeCallbacks(smoothFrame);live.clear()
                 broadPointers.clear();pointerPanes.clear();lasso.clear();touchFocus=null
                 actions.clear()
                 box = null

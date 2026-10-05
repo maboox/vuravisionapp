@@ -6,22 +6,25 @@ import kotlin.math.*
 /** Object-local closed boundaries. Never flood the screen or page background. */
 object ShapeFill {
     val closedShapes=Shapes.keys.toSet()-setOf("line","arrow","double_arrow","axes","cube","cone","cylinder")
-    private data class Cached(val points:List<Point>,val cuts:List<EraseCut>,val kind:String,val shape:String,val w:Float,val h:Float,val inkW:Float,val inkH:Float,val path:Path)
+    private data class Cached(val points:List<Point>,val cuts:List<EraseCut>,val kind:String,val shape:String,val w:Float,val h:Float,val inkW:Float,val inkH:Float,val runs:List<FillRun>?,val path:Path)
     private val paths=object:android.util.LruCache<String,Cached>(16*1024*1024){
-        override fun sizeOf(key:String,value:Cached)=1000+value.points.size*16
+        override fun sizeOf(key:String,value:Cached)=1000+value.points.size*16+value.runs.orEmpty().size*32
     }
     fun path(o:Item):Path? {
-        paths.get(o.id)?.takeIf{it.points===o.points && it.cuts===o.cuts && it.kind==o.kind && it.shape==o.shape && it.w==o.w && it.h==o.h && it.inkW==o.inkW && it.inkH==o.inkH}?.let{return it.path}
+        paths.get(o.id)?.takeIf{it.points===o.points && it.cuts===o.cuts && it.kind==o.kind && it.shape==o.shape && it.w==o.w && it.h==o.h && it.inkW==o.inkW && it.inkH==o.inkH && it.runs===o.fillRuns}?.let{return it.path}
         val result=build(o)?:return null
-        paths.put(o.id,Cached(o.points,o.cuts,o.kind,o.shape,o.w,o.h,o.inkW,o.inkH,result));return result
+        paths.put(o.id,Cached(o.points,o.cuts,o.kind,o.shape,o.w,o.h,o.inkW,o.inkH,o.fillRuns,result));return result
     }
     private fun build(o:Item):Path? {
+        if(o.shape=="region_fill" && o.fillRuns.orEmpty().isNotEmpty())return Path().apply{
+            o.fillRuns.orEmpty().forEach{r->addRect(r.x*o.w/o.inkW,r.y*o.h/o.inkH,r.end*o.w/o.inkW,(r.y+r.height)*o.h/o.inkH,Path.Direction.CW)}
+        }
         if(o.kind=="ink") {
             if(o.cuts.isNotEmpty() || o.points.size<4)return null
             val a=o.points.first();val b=o.points.last()
             val diagonal=hypot(o.inkW,o.inkH)
             // A small endpoint gap is accepted, not a mostly-open loop.
-            if(diagonal<6f || hypot(a.x-b.x,a.y-b.y)>min(10f,max(2f,diagonal*.025f)))return null
+            if(diagonal<6f || hypot(a.x-b.x,a.y-b.y)>min(diagonal*.12f,max(o.width*2.5f,diagonal*.04f)))return null
             return Path().apply{o.points.forEachIndexed{i,p->val x=p.x*o.w/o.inkW;val y=p.y*o.h/o.inkH;if(i==0)moveTo(x,y)else lineTo(x,y)};close()}
         }
         if(o.kind!="shape" || o.shape !in closedShapes)return null
@@ -48,9 +51,9 @@ object ShapeFill {
         return p
     }
     fun contains(o:Item,x:Float,y:Float):Boolean {
-        val source=path(o)?:return false
         val (lx,ly)=o.local(x,y)
         if(lx<0 || ly<0 || lx>o.w || ly>o.h)return false
+        val source=path(o)?:return false
         if(o.cuts.any{it.contains(lx,ly,o.w,o.h)})return false
         // Scale a bounded integer region independently of item size and board zoom.
         val scale=1024f/max(o.w,o.h)

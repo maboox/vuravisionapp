@@ -250,7 +250,7 @@ class AndroidTest {
             .filterIsInstance<EditText>()
             .first()
             .setText("Beta classroom")
-        views(input.window!!.decorView).filterIsInstance<Button>().first{it.text==a.s("apply")}.performClick()
+        views(input.window!!.decorView).filterIsInstance<Button>().first{it.text.toString()==a.s("apply")}.performClick()
         assertEquals("Beta classroom", a.store.page.items.single().text)
         a.store.undo()
         assertTrue(a.store.page.items.isEmpty())
@@ -265,12 +265,12 @@ class AndroidTest {
         val d = org.robolectric.shadows.ShadowDialog.getLatestDialog()
         views(d.window!!.decorView)
             .filterIsInstance<Button>()
-            .first { it.text == a.s("start") }
+            .first { it.text.toString()== a.s("start") }
             .performClick()
         val options =
             views(d.window!!.decorView)
                 .filterIsInstance<Button>()
-                .filter { it.text == a.s("rock") }
+                .filter { it.text.toString()== a.s("rock") }
                 .toList()
         assertEquals(2, options.size)
         options[0].performClick()

@@ -35,7 +35,7 @@ class BackgroundMindMapTest {
                 .apply{isAccessible=true}.invoke(activity,0)
             val background=ShadowDialog.getLatestDialog()
             val buttons=views(background.window!!.decorView).filterIsInstance<MaterialButton>()
-            buttons.single{it.text=="Hatched"}.performClick()
+            buttons.single{it.text.toString()=="Hatched"}.performClick()
             assertEquals("hatch",activity.store.page.background)
             views(background.window!!.decorView).single{it.contentDescription=="Add color to this lesson"}.performClick()
             val picker=ShadowDialog.getLatestDialog() as AlertDialog

@@ -20,11 +20,11 @@ object IconCatalog {
         "tools"->R.drawable.vura_toolbox;"timer","stopwatch"->R.drawable.feather_clock;"split"->R.drawable.feather_columns
         "menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
         "undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
-        "share","share_pdf"->R.drawable.feather_share_2;"previous"->R.drawable.feather_chevron_left
-        "next"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
+        "share","share_pdf"->R.drawable.feather_share_2;"previous","move_left"->R.drawable.feather_chevron_left
+        "next","move_right"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
         "visible"->R.drawable.feather_eye;"hidden"->R.drawable.feather_eye_off
         "lock"->R.drawable.feather_lock;"unlock","unlock_all"->R.drawable.feather_unlock
-        "delete"->R.drawable.feather_trash_2;"background","page_background"->R.drawable.vura_background
+        "delete","clear"->R.drawable.feather_trash_2;"background","page_background"->R.drawable.vura_background
         "fullscreen","stress"->R.drawable.feather_maximize;"fit"->R.drawable.feather_minimize
         "files","open","recent"->R.drawable.feather_folder
         "pages","export_pdf","export_png","export_jpg","pdf","page_picker"->R.drawable.feather_file

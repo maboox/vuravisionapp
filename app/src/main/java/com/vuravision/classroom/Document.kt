@@ -11,6 +11,8 @@ fun duplicateItems(items: List<Item>): List<Item> {
     return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty()}}
 }
 
+data class FillRun(val y:Float=0f,val x:Float=0f,val end:Float=0f,val height:Float=1f)
+
 data class PlotPoint(val x:Double=0.0,val y:Double=0.0)
 
 data class Point(var x: Float = 0f, var y: Float = 0f, var t: Long = 0, var pressure: Float = 1f)
@@ -57,6 +59,7 @@ data class Item(
     var geometrySweep: Float = 0f,
     var selectedElement: Int = 0,
     var plotPoints: List<PlotPoint>? = emptyList(),
+    var fillRuns: List<FillRun>? = emptyList(),
 
 ) {
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() }, plotPoints = plotPoints?.map { it.copy() })
@@ -82,6 +85,7 @@ data class Item(
         if (a < -tolerance || b < -tolerance || a > w + tolerance || b > h + tolerance) return false
         if(cuts.any { (it.pdfPage<0||it.pdfPage==pdfPage) && it.contains(a,b,w,h) })return false
         if (kind != "ink") return true
+        if(shape=="region_fill")return ShapeFill.contains(this,px,py)
         val sx=w/inkW;val sy=h/inkH;val limit=tolerance+width/2
         var prev:Point?=null
         for(point in points) {
@@ -181,10 +185,11 @@ data class Lesson(
                 require(o.asset.isEmpty() || o.asset.matches(Regex("[a-zA-Z0-9._-]+")))
                 require(o.cuts.size <= 100000)
                 require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
+                require(o.fillRuns.orEmpty().size<=50000 && o.fillRuns.orEmpty().all{r->listOf(r.x,r.y,r.end,r.height).all{it.isFinite()} && r.x>=0 && r.y>=0 && r.end>=r.x && r.height>0})
                 require(o.fillAlpha in 0..255 && o.geometryAngle.isFinite() && o.geometrySweep.isFinite() && o.geometryVersion in 0..1 && o.selectedElement in 0..118)
                 require(o.plotPoints.orEmpty().size <= 1000 && o.plotPoints.orEmpty().all{it.x.isFinite() && it.y.isFinite() && abs(it.x)<=100000 && abs(it.y)<=100000})
                 require(o.textAlign in listOf("start","center","end"))
-                points += o.points.size
+                points += o.points.size+o.fillRuns.orEmpty().size
                 require(points <= 1000000)
                 require(o.points.all { it.x.isFinite() && it.y.isFinite() })
             }
@@ -227,6 +232,17 @@ class Store(var lesson: Lesson = Lesson()) {
 
     /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
     fun editMetadata(action:()->Unit){checkpoint();action();changed()}
+    val undoCount get()=past.size
+    val redoCount get()=future.size
+    /** Rebuild only once per scrub update, even when crossing many history steps. */
+    fun seekHistory(position:Int){
+        val target=position.coerceIn(0,past.size+future.size)
+        if(target==past.size)return
+        historyBefore=null
+        while(past.size>target){future.addLast(snapshot());lesson=past.removeLast()}
+        while(past.size<target){past.addLast(snapshot());lesson=future.removeLast()}
+        changed()
+    }
     fun undo() {
         historyBefore=null
         if (past.isNotEmpty()) {

@@ -41,8 +41,8 @@ class Version14Test {
         val c=Robolectric.buildActivity(MainActivity::class.java).setup();val a=c.get()
         try{
             call(a,"layers");capture(a,"layers-v14")
-            assertTrue(views(a.window.decorView).filterIsInstance<TextView>().any{it.text=="Layers"})
-            views(a.window.decorView).filterIsInstance<Button>().single{it.text=="Add layer"}.performClick()
+            assertTrue(views(a.window.decorView).filterIsInstance<TextView>().any{it.text.toString()=="Layers"})
+            views(a.window.decorView).filterIsInstance<Button>().single{it.text.toString()=="Add layer"}.performClick()
             assertEquals(2,a.store.page.layers.size)
             val selected=a.store.page.layers.last();a.store.edit{selected.opacity=.4f;selected.locked=true;selected.visible=false}
             a.store.undo();assertEquals(1f,a.store.page.layers.last().opacity,0f);assertFalse(a.store.page.layers.last().locked)
@@ -52,7 +52,7 @@ class Version14Test {
         val c=Robolectric.buildActivity(MainActivity::class.java).setup();val a=c.get()
         try{
             call(a,"penSettings");val d=ShadowDialog.getLatestDialog();val all=views(d.window!!.decorView)
-            assertFalse(all.filterIsInstance<Switch>().any{it.text=="Two pen tips"})
+            assertFalse(all.filterIsInstance<Switch>().any{it.text.toString()=="Two pen tips"})
             val colors=all.filter{it.contentDescription?.startsWith("#")==true}
             assertEquals(10,colors.size)
             colors.forEach{cell->val w=a.dp(46);val h=a.dp(48);cell.layout(0,0,w,h);val bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);cell.draw(Canvas(bitmap));assertEquals(Color.parseColor(cell.contentDescription.toString()),bitmap.getPixel(w/2,h/2));bitmap.recycle()}

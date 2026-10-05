@@ -48,6 +48,19 @@ object PeriodicTable {
         for(g in 1..18)canvas.drawText(g.toString(),(g-.6f)*cw,ch*.75f,p)
         canvas.drawText("57–71",2*cw,6.6f*ch,p);canvas.drawText("89–103",2*cw,7.6f*ch,p)
     }
+    fun cardHeader(o:Item)=minOf(o.w-24f,112f).coerceAtLeast(40f)+24f
+    fun drawCard(canvas:Canvas,o:Item,c:Context){
+        val e=elements(c).firstOrNull{it.number==o.selectedElement}?:return
+        val side=cardHeader(o)-24;val x=(o.w-side)/2;val y=12f
+        val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=colors[e.value("GroupBlock")]?:PAPER}
+        canvas.drawRoundRect(x,y,x+side,y+side,10f,10f,p)
+        p.style=Paint.Style.STROKE;p.color=TEAL;p.strokeWidth=1.5f;canvas.drawRoundRect(x,y,x+side,y+side,10f,10f,p)
+        p.style=Paint.Style.FILL;p.color=NAVY;p.typeface=Fonts.face(Fonts.en(o));p.textSize=side*.15f
+        canvas.drawText(e.number.toString(),x+side*.1f,y+side*.22f,p)
+        p.typeface=Fonts.face(Fonts.en(o),true);p.textSize=side*.42f;p.textAlign=Paint.Align.CENTER
+        canvas.drawText(e.symbol,x+side/2,y+side*.66f,p)
+        p.typeface=Fonts.face(Fonts.en(o));p.textSize=side*.13f;canvas.drawText(e.value("AtomicMass"),x+side/2,y+side*.9f,p)
+    }
     fun hit(c:Context,o:Item,x:Float,y:Float):Element? {
         val (lx,ly)=o.local(x,y);val col=(lx/(o.w/18)).toInt();val row=(ly/(o.h/11)).toInt()-1
         return elements(c).firstOrNull{it.col==col&&it.row==row && lx>=0&&ly>=0&&lx<o.w&&ly<o.h}
@@ -70,7 +83,7 @@ object PeriodicTable {
         val body=c.column().apply{pad(16)};body.addView(c.label(details(c,e),16f).apply{setTextIsSelectable(true)})
         val compare=Spinner(c);compare.adapter=OptionAdapter(c,elements(c).map{"${it.symbol} · ${c.tr(it.name,it.fa)}"});compare.setSelection((e.number%118));body.addView(compare)
         body.addView(c.button(c.tr("Compare","مقایسه")){val other=elements(c)[compare.selectedItemPosition];val r=c.row();listOf(e,other).forEach{r.addView(c.label(details(c,it),14f),LinearLayout.LayoutParams(0,-2,1f))};MaterialAlertDialogBuilder(c).setTitle(c.tr("Element comparison","مقایسهٔ عناصر")).setView(ScrollView(c).apply{addView(r)}).setPositiveButton(c.s("close"),null).show().also{Fonts.onShown(it)}})
-        body.addView(c.button(c.tr("Add element card to board","افزودن کارت عنصر به تخته")){insert(Item(kind="sticky",text=details(c,e),width=20f,w=370f,h=420f,noteColor=colors[e.value("GroupBlock")]?:PAPER));close()})
+        body.addView(c.button(c.tr("Add element card to board","افزودن کارت عنصر به تخته")){insert(Item(kind="sticky",shape="element_card",selectedElement=e.number,text=details(c,e),width=15f,w=300f,h=380f,noteColor=colors[e.value("GroupBlock")]?:PAPER));close()})
         MaterialAlertDialogBuilder(c).setTitle("${e.symbol} · ${c.tr(e.name,e.fa)}").setView(ScrollView(c).apply{addView(body)}).setNegativeButton(c.s("close"),null).show().also{close=it::dismiss;Fonts.onShown(it)}
     }
     fun show(c:Context,insert:(Item)->Unit){

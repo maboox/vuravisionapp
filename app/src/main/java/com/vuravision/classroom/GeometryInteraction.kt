@@ -14,7 +14,7 @@ class GeometryInteraction(private val board:Board){
     fun handles(o:Item):Map<String,Pair<Float,Float>> {
         if(o.shape=="compass"){
             val cy=if(o.geometryVersion==1)o.h/2 else 0f;val r=GeometryTools.radius(o);val a=o.geometryAngle*PI/180
-            return mapOf("center" to (o.w/2 to cy),"radius" to (o.w/2 to cy+r),"turn" to (o.w/2+r*cos(a).toFloat() to cy+r*sin(a).toFloat()))
+            return mapOf("center" to (o.w/2 to cy),"radius" to (o.w/2-r*sin(a).toFloat() to cy+r*cos(a).toFloat()),"turn" to (o.w/2+r*cos(a).toFloat() to cy+r*sin(a).toFloat()),"start_angle" to (o.w/2+r*.55f*cos(a).toFloat() to cy+r*.55f*sin(a).toFloat()))
         }
         val center=if(o.shape=="protractor")o.w/2 to o.h else 0f to o.h/2
         val result=mutableMapOf("center" to center,"rotate" to (o.w/2 to -30f),"size" to (o.w to o.h))
@@ -44,8 +44,9 @@ class GeometryInteraction(private val board:Board){
                 "radius"->{val c=GeometryTools.center(o);val radius=hypot(point.x-c.first,point.y-c.second).coerceIn(12f,5000f);o.w=radius*2;o.h=radius*2;o.x=c.first-radius;o.y=c.second-radius}
                 "turn"->{val center=GeometryTools.center(o);val angle=atan2(point.y-center.second,point.x-center.first)*180/PI.toFloat();var delta=angle-lastAngle;while(delta>180)delta-=360;while(delta< -180)delta+=360
                     val steps=ceil(abs(delta)/3).toInt().coerceIn(1,120);for(i in 1..steps){val a=(lastAngle+delta*i/steps)*PI/180;val r=GeometryTools.radius(o);if(arc!!.points.size<10000){val x=center.first+r*cos(a).toFloat();val y=center.second+r*sin(a).toFloat();arc!!.points.add(Point(x,y));arcPath.lineTo(x,y)}}
-                    sweep+=delta;o.geometryAngle=angle;o.geometrySweep=sweep;lastAngle=angle
+                    sweep+=delta;o.geometryAngle=angle-o.rotation;o.geometrySweep=sweep;lastAngle=angle
                 }
+                "start_angle"->{val c=GeometryTools.center(o);o.geometryAngle=atan2(point.y-c.second,point.x-c.first)*180/PI.toFloat()-o.rotation;o.geometrySweep=0f}
                 "rotate"->{val center=o.global(o.w/2,o.h/2);o.rotation=atan2(point.y-center.second,point.x-center.first)*180/PI.toFloat()+90}
                 "size"->{val local=o.local(point.x,point.y);o.w=local.first.coerceIn(60f,5000f);o.h=when(o.shape){"protractor"->o.w/2;"set_square"->o.w/2;else->o.h}}
                 "angle"->{val local=o.local(point.x,point.y);o.geometryAngle=(atan2(o.h-local.second,local.first-o.w/2)*180/PI.toFloat()).coerceIn(0f,180f)}
@@ -69,6 +70,6 @@ class GeometryInteraction(private val board:Board){
     fun draw(canvas:Canvas,zoom:Float){
         arc?.let{if(it.points.size>1)canvas.drawPath(arcPath,arcPaint)}
         val p=handlePaint
-        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")ORANGE else TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";else->"↻"},g.first,g.second+5/zoom,p)}}
+        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")ORANGE else TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";"turn"->"✎";else->"↻"},g.first,g.second+5/zoom,p)}}
     }
 }

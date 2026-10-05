@@ -69,7 +69,7 @@ class Release18Test {
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup();val a=controller.get()
         try{
             call(a,"eraserSettings");val d=ShadowDialog.getLatestDialog()
-            val toggle=all(d.window!!.decorView).filterIsInstance<Switch>().single{it.text=="Use palm as a temporary eraser"}
+            val toggle=all(d.window!!.decorView).filterIsInstance<Switch>().single{it.text.toString()=="Use palm as a temporary eraser"}
             assertFalse(toggle.isChecked);toggle.isChecked=true
             assertTrue(a.board.profile.palmErase)
             assertTrue(ctx.getSharedPreferences("vura",0).getBoolean("palmErase",false))
@@ -96,11 +96,11 @@ class Release18Test {
             UserGuide.show(ctx,media){}
             val d=ShadowDialog.getLatestDialog()
             fun texts()=all(d.window!!.decorView).filterIsInstance<TextView>()
-            assertTrue(texts().any{it.text=="Meet your board"})
-            texts().filterIsInstance<Button>().single{it.text=="Next"}.performClick()
-            assertTrue(texts().any{it.text=="Pen, color and highlighter"})
-            texts().filterIsInstance<Button>().single{it.text=="فارسی / EN"}.performClick()
-            assertTrue(texts().any{it.text=="قلم، رنگ و هایلایتر"})
+            assertTrue(texts().any{it.text.toString()=="Meet your board"})
+            texts().filterIsInstance<Button>().single{it.text.toString()=="Next"}.performClick()
+            assertTrue(texts().any{it.text.toString()=="Pen, color and highlighter"})
+            texts().filterIsInstance<Button>().single{it.text.toString()=="فارسی / EN"}.performClick()
+            assertTrue(texts().any{it.text.toString()=="قلم، رنگ و هایلایتر"})
             val search=texts().filterIsInstance<EditText>().single();search.setText("کف دست")
             assertTrue(texts().filterIsInstance<Button>().any{it.text.toString().contains("پاک‌کردن با کف دست")})
             texts().filterIsInstance<Button>().first{it.text.toString().contains("پاک‌کردن با کف دست")}.performClick()

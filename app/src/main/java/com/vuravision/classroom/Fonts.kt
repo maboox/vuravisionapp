@@ -33,8 +33,8 @@ object Fonts {
     )
     private val families=(persian+english).associateBy{it.id}
     private var app:Context?=null
-    var persianId="system";private set
-    var englishId="system";private set
+    var persianId="kahroba";private set
+    var englishId="rubik";private set
     private val faces=java.util.concurrent.ConcurrentHashMap<String,Typeface>()
     private data class UiStyle(val bold:Boolean,val italic:Boolean,val fa:String?,val en:String?)
     private val bound=WeakHashMap<TextView,UiStyle>()
@@ -44,8 +44,8 @@ object Fonts {
         if(app!==next){faces.clear();bound.clear();watched.clear();TextLayout.clearCache()}
         app=next
         val prefs=context.getSharedPreferences("vura",Context.MODE_PRIVATE)
-        persianId=prefs.getString("fontFa","system")?.takeIf{id->persian.any{it.id==id}}?:"system"
-        englishId=prefs.getString("fontEn","system")?.takeIf{id->english.any{it.id==id}}?:"system"
+        persianId=prefs.getString("fontFa","kahroba")?.takeIf{id->persian.any{it.id==id}}?:"system"
+        englishId=prefs.getString("fontEn","rubik")?.takeIf{id->english.any{it.id==id}}?:"system"
     }
     fun choose(context:Context,fa:String,en:String){
         require(persian.any{it.id==fa} && english.any{it.id==en})

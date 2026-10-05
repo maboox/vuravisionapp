@@ -316,7 +316,7 @@ class MainActivity : Activity() {
                 val c=column().apply{pad(12)};palette(c,pane.color){color->store.editMetadata{pane.color=color}}
                 slider(c,tr("Thickness","ضخامت"),pane.penWidth,undoable=true){width->pane.penWidth=width}
                 val styles=row();c.addView(scrollRow(styles))
-                listOf("round" to tr("Ink","جوهری"),"marker" to tr("Marker","ماژیک"),"dashed" to tr("Dashed","خط‌چین"),"highlight" to tr("Highlighter","هایلایتر")).forEach{(key,title)->
+                PenStyles.selectable.forEach{key->val title=PenStyles.name(this,key)
                     styles.addView(button(title){store.editMetadata{pane.penStyle=key};toast(title)})
                 }
                 slider(c,tr("Dash length","طول خط‌چین"),pane.dashLength,80,undoable=true){v->pane.dashLength=v}
@@ -409,6 +409,7 @@ class MainActivity : Activity() {
         })})
     }
     private fun bindBoardExtras(target:Board){
+        target.gestures.onHistory=::historyHud
         target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
         target.gestures.onPie={x,y->val a=IntArray(2);val b=IntArray(2);target.getLocationInWindow(a);canvasHost.getLocationInWindow(b);pieMenu(x+a[0]-b[0],y+a[1]-b[1])}
         target.onEducationalTap={o,point->when(o.kind){
@@ -454,44 +455,47 @@ class MainActivity : Activity() {
         c.addView(button(tr("Use board units","استفاده از واحد تخته")){prefs.edit().remove("pixelsPerCm").apply();board.sceneChanged();d.dismiss()})
     }
     private fun measureShape(o:Item){
-        val m=Measurements.of(o)?:return;val scale=board.measureScale().toDouble();val unit=if(prefs.getFloat("pixelsPerCm",0f)>0)"cm"else"u"
-        val text=buildString{
-            append(tr("Length / perimeter","طول / محیط")).append(": ").append(MathTools.format(m.perimeter/scale)).append(" $unit\n")
-            m.area?.let{append(tr("Area","مساحت")).append(": ").append(MathTools.format(it/(scale*scale))).append(" $unit²\n")}
-            append(tr("Sides / dimensions","ضلع‌ها / ابعاد")).append(": ").append(m.lengths.joinToString{MathTools.format(it/scale)}).append(" $unit\n")
-            if(m.angles.isNotEmpty())append(tr("Interior angles","زاویه‌های داخلی")).append(": ").append(m.angles.joinToString{MathTools.format(it)+"°"})
-        }
-        val c=column().apply{pad(16)};c.addView(label(text,17f).apply{setTextIsSelectable(true)})
-        c.addView(infoTitle(tr("Units","واحدها"),tr("Centimetres describe the displayed shape at the current zoom using your display calibration. Without calibration, values use board units. Ellipse perimeter is approximate.","سانتی‌متر، اندازهٔ شکل روی نمایشگر در زوم فعلی و مطابق کالیبراسیون است. بدون کالیبراسیون واحد تخته استفاده می‌شود. محیط بیضی تقریبی است.")))
-        dialog(s("measure"),c)
+        if(Measurements.of(o)!=null)board.showMeasurements(o)
     }
     private fun coordinateTap(o:Item,point:PointF){
         val (x,y)=o.local(point.x,point.y);val step=min(o.w,o.h)/(2*o.domain)
         val coordinate=PlotPoint(((x-o.w/2)/step).toDouble(),((o.h/2-y)/step).toDouble())
-        choices("(${MathTools.format(coordinate.x)}, ${MathTools.format(coordinate.y)})",listOf("add_point","coordinates")){i->if(i==0 && !o.locked && store.page.editable(o)){store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+coordinate).takeLast(200)}}else coordinateSettings(o)}
+        choices("(${DisplayNumbers.one(coordinate.x)}, ${DisplayNumbers.one(coordinate.y)})",listOf("add_point","coordinates")){i->if(i==0 && !o.locked && store.page.editable(o)){store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+coordinate).takeLast(200)}}else coordinateSettings(o)}
     }
     private fun coordinateSettings(o:Item){
         val c=column().apply{pad(16)}
         c.addView(button(tr("Functions and axis range","توابع و بازهٔ محور")){graph(existing=o)})
         val r=row();val x=field(hintValue="x");val y=field(hintValue="y");r.addView(x,LinearLayout.LayoutParams(0,-2,1f));r.addView(y,LinearLayout.LayoutParams(0,-2,1f));c.addView(r)
         val list=column();c.addView(list)
-        fun refresh(){list.removeAllViews();o.plotPoints.orEmpty().takeLast(40).forEach{point->val r=row();r.addView(label("(${MathTools.format(point.x)}, ${MathTools.format(point.y)})"),LinearLayout.LayoutParams(0,-2,1f));r.addView(icon("delete",s("delete")){if(!o.locked&&store.page.editable(o)){store.editMetadata{o.plotPoints=o.plotPoints.orEmpty()-point};refresh()}});list.addView(r)}}
+        fun refresh(){list.removeAllViews();o.plotPoints.orEmpty().takeLast(40).forEach{point->val r=row();r.addView(label("(${DisplayNumbers.one(point.x)}, ${DisplayNumbers.one(point.y)})"),LinearLayout.LayoutParams(0,-2,1f));r.addView(icon("delete",s("delete")){if(!o.locked&&store.page.editable(o)){store.editMetadata{o.plotPoints=o.plotPoints.orEmpty()-point};refresh()}});list.addView(r)}}
         c.addView(button(s("add_point")){try{val a=x.text.toString().toDouble();val b=y.text.toString().toDouble();require(a.isFinite()&&b.isFinite()&&abs(a)<=100000&&abs(b)<=100000);if(!o.locked&&store.page.editable(o))store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+PlotPoint(a,b)).takeLast(200)};refresh()}catch(_:Exception){x.error=tr("Enter finite coordinates","مختصات معتبر وارد کنید")}})
         c.addView(button(tr("Find intersections","یافتن تقاطع‌ها")){work({CoordinateTools.intersections(o.text.split(';'),o.domain.toDouble())}){points->if(store.page.items.any{it.id==o.id}&&!o.locked&&store.page.editable(o)){store.editMetadata{o.plotPoints=(o.plotPoints.orEmpty()+points).distinct().takeLast(200)};refresh()}}})
         c.addView(infoTitle(tr("Intersections","تقاطع‌ها"),tr("Numerical approximations within the axis range. Tangencies or very narrow features may be missed. Up to 3 functions are supported; points can also be placed by tapping the graph.","تقاطع‌ها به‌صورت عددی در بازهٔ محور پیدا می‌شوند. تماس مماسی یا جزئیات بسیار باریک ممکن است پیدا نشوند. حداکثر ۳ تابع؛ نقطه‌گذاری با لمس نمودار هم ممکن است.")))
         refresh();dialog(s("coordinates"),ScrollView(this).apply{addView(c)})
     }
     private var pieOverlay:View?=null
+    private var refreshPieSettings:(()->Unit)?=null
+    private var historyOverlay:HistoryScrubView?=null
+    private fun historyHud(position:Int,total:Int){
+        if(!::canvasHost.isInitialized)return
+        if(position<0){historyOverlay?.let{canvasHost.removeView(it)};historyOverlay=null;return}
+        val hud=historyOverlay?:HistoryScrubView(this).also{view->
+            historyOverlay=view;canvasHost.addView(view,FrameLayout.LayoutParams(min(dp(420),(canvasHost.width-dp(32)).coerceAtLeast(dp(180))),dp(64),Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{bottomMargin=dp(78)})
+        }
+        hud.update(position,total)
+    }
     private fun pieSlots():List<String> = try{val a=org.json.JSONArray(prefs.getString("pieSlots","[]"));(0..5).map{a.optString(it).takeIf{key->key in ShortcutCatalog.keys}.orEmpty()}}catch(_:Exception){List(6){""}}
     private fun assignPie(index:Int){
-        choices(tr("Choose shortcut","انتخاب میان‌بر"),listOf("clear_shortcut")+ShortcutCatalog.keys){n->val slots=pieSlots().toMutableList();slots[index]=if(n==0)""else ShortcutCatalog.keys[n-1];prefs.edit().putString("pieSlots",org.json.JSONArray(slots).toString()).apply();pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null}
+        choices(tr("Choose shortcut","انتخاب میان‌بر"),listOf("clear_shortcut")+ShortcutCatalog.keys){n->val slots=pieSlots().toMutableList();slots[index]=if(n==0)""else ShortcutCatalog.keys[n-1];prefs.edit().putString("pieSlots",org.json.JSONArray(slots).toString()).apply();pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null;refreshPieSettings?.invoke()}
     }
     private fun pieSettings(){
         val c=column().apply{pad(16)}
         c.addView(Switch(this).apply{text=tr("Enable five-finger pie menu (experimental)","فعال‌سازی منوی پنج‌انگشتی (آزمایشی)");isChecked=prefs.getBoolean("pieEnabled",false);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v}})
-        c.addView(infoTitle(tr("Gesture","ژست"),tr("Hold five fingers still for one second. Lift your hand, then tap a shortcut. Long-press a slot to replace it. Movement and palm contact do not trigger the menu.","پنج انگشت را یک ثانیه ثابت نگه دارید، دست را بردارید و میان‌بر را بزنید. نگه‌داشتن یک خانه آن را عوض می‌کند. حرکت و تماس کف دست منو را باز نمی‌کنند.")))
-        pieSlots().forEachIndexed{i,key->c.addView(button("${i+1} · "+if(key.isBlank())"+"else s(key)){assignPie(i)})}
-        dialog(s("pie_settings"),ScrollView(this).apply{addView(c)})
+        c.addView(infoTitle(tr("Gesture","ژست"),tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")))
+        val slots=column();c.addView(slots)
+        fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())"+"else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,-2,1f));slots.addView(r)}}
+        refreshPieSettings=::refresh;refresh()
+        dialog(s("pie_settings"),ScrollView(this).apply{addView(c)}).setOnDismissListener{refreshPieSettings=null}
     }
     private fun pieMenu(x:Float,y:Float){
         if(!prefs.getBoolean("pieEnabled",false)||destroyed)return
@@ -500,7 +504,8 @@ class MainActivity : Activity() {
         val radius=dp(100).toFloat();val margin=dp(150).toFloat();val cx=x.coerceIn(min(margin,canvasHost.width/2f),max(canvasHost.width-margin,canvasHost.width/2f));val cy=y.coerceIn(min(margin,canvasHost.height/2f),max(canvasHost.height-margin,canvasHost.height/2f))
         fun dismiss(){canvasHost.removeView(overlay);pieOverlay=null}
         overlay.setOnClickListener{dismiss()}
-        pieSlots().forEachIndexed{i,key->val angle=(-90+i*60)*PI/180;val cell=column().apply{gravity=Gravity.CENTER;background=rounded(SURFACE,dp(16).toFloat(),OUTLINE);pad(4)}
+        val all=pieSlots().mapIndexed{i,key->i to key};val assigned=all.filter{it.second.isNotBlank()};val shown=assigned.ifEmpty{all}
+        shown.forEachIndexed{position,(i,key)->val angle=(-90+position*360.0/shown.size)*PI/180;val cell=column().apply{gravity=Gravity.CENTER;background=rounded(SURFACE,dp(16).toFloat(),OUTLINE);pad(4)}
             val b=icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){dismiss();if(key.isBlank())assignPie(i)else runShortcut(key)}
             b.setOnLongClickListener{dismiss();assignPie(i);true};cell.addView(b)
             if(key.isNotBlank())cell.addView(label(s(key),11f).apply{maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END;gravity=Gravity.CENTER})
@@ -567,7 +572,7 @@ class MainActivity : Activity() {
             body.removeAllViews();palette(body,if(broad)board.profile.thickColor else board.penColor){if(broad)board.profile.thickColor=it else board.penColor=it;savePens();preview.invalidate()}
             slider(body,tr("Thickness","ضخامت"),if(broad)board.profile.thickWidth else board.penWidth,80){if(broad)board.profile.thickWidth=it else board.penWidth=it;savePens();preview.invalidate()}
             val styles=row();body.addView(scrollRow(styles))
-            PenStyles.keys.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
+            PenStyles.selectable.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
             slider(body,tr("Opacity","کدری"),board.penOpacity/255f*100,100){board.penOpacity=(it/100*255).toInt();savePens();preview.invalidate()}
             if(tipStyle()=="dashed"){
                 slider(body,tr("Dash length","طول خط‌چین"),board.dashLength,80){board.dashLength=it;savePens();preview.invalidate()}
@@ -892,7 +897,7 @@ class MainActivity : Activity() {
     }
 
     private fun quickGuide(){
-        UserGuide.show(this,media){prefs.edit().putBoolean("engineering",true).apply();engineering()}
+        UserGuide.show(this,media){}
     }
 
     private fun fileMenu() {
@@ -1171,26 +1176,54 @@ class MainActivity : Activity() {
     }
 
     private fun pages() {
-        val c=column().apply{pad(14)};val d=dialog(s("pages"),ScrollView(this).apply{addView(c)})
-        val actions=row()
-        actions.addView(button("＋ ${s("add_page")}",true){addPage();d.dismiss()})
-        actions.addView(button(s("background")){backgroundSettings()})
-        actions.addView(button(s("clear")){confirm(s("clear_confirm")){projectStore.editMetadata{projectStore.page.items.removeAll{!it.locked && projectStore.page.editable(it)}};whiteboard.clearSelection();d.dismiss()}})
-        c.addView(scrollRow(actions))
-        projectStore.lesson.pages.forEachIndexed{i,page->
-            val r=row().apply{pad(6);background=rounded(if(i==projectStore.lesson.current)0xffeeebff.toInt()else PAPER,dp(12).toFloat())}
-            r.addView(object:View(this){override fun onDraw(canvas:Canvas){board.renderer.page(canvas,page,width,height,false)}}.apply{setOnClickListener{switchPage(i);d.dismiss()}},LinearLayout.LayoutParams(dp(108),dp(64)))
-            r.addView(button("${s("page_short")} ${i+1}",i==projectStore.lesson.current){switchPage(i);d.dismiss()},LinearLayout.LayoutParams(0,dp(50),1f))
-            r.addView(button("⋯"){choices(s("pages"),listOf("duplicate","move_left","move_right","delete")){action->
+        val c=column().apply{pad(14);layoutDirection=resources.configuration.layoutDirection}
+        c.addView(label(s("pages"),20f,NAVY,true).apply{setPadding(dp(8),dp(6),dp(8),dp(10))})
+        val d=dialog("",c)
+        d.window?.setTitle(s("pages"))
+        d.window?.decorView?.layoutDirection=resources.configuration.layoutDirection
+        val actions=row();c.addView(actions)
+        actions.addView(icon("new_page",s("add_page")){addPage();d.dismiss()})
+        actions.addView(icon("background",s("background")){backgroundSettings()})
+        actions.addView(label("${projectStore.lesson.pages.size} · ${s("pages")}",14f,MUTED).apply{gravity=Gravity.CENTER_VERTICAL},LinearLayout.LayoutParams(0,dp(48),1f))
+        val list=ListView(this).apply{divider=null;isVerticalScrollBarEnabled=true}
+        c.addView(list,LinearLayout.LayoutParams(-1,dp(360)))
+        fun options(i:Int){
+            val page=projectStore.lesson.pages[i]
+            choices("${s("page_short")} ${i+1}",listOf("duplicate","move_left","move_right","clear","delete")){action->
                 fun perform(){projectStore.editMetadata{when(action){
                     0->if(projectStore.lesson.pages.size<200){projectStore.lesson.pages.add(i+1,page.copy(id=newId(),layers=page.layers.map{it.copy()}.toMutableList(),panes=page.panes.map{it.copy()}.toMutableList(),items=duplicateItems(page.items).toMutableList()));projectStore.lesson.current=i+1}
                     1,2->{val target=i+if(action==1)-1 else 1;if(target in projectStore.lesson.pages.indices){java.util.Collections.swap(projectStore.lesson.pages,i,target);projectStore.lesson.current=target}}
-                    3->if(projectStore.lesson.pages.size>1){projectStore.lesson.pages.removeAt(i);projectStore.lesson.current=projectStore.lesson.current.coerceAtMost(projectStore.lesson.pages.lastIndex)}
+                    3->page.items.removeAll{!it.locked&&page.editable(it)}
+                    4->if(projectStore.lesson.pages.size>1){projectStore.lesson.pages.removeAt(i);projectStore.lesson.current=projectStore.lesson.current.coerceAtMost(projectStore.lesson.pages.lastIndex)}
                 }};whiteboard.clearSelection();whiteboard.reset();d.dismiss();pages()}
-                if(action==3)confirm(s("clear_confirm")){perform()}else perform()
-            }})
-            c.addView(r,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))})
+                if(action>=3)confirm(s("clear_confirm")){perform()}else perform()
+            }
         }
+        data class PageRow(val root:LinearLayout,val preview:PageThumbnail,val title:TextView,val detail:TextView,val action:View)
+        list.adapter=object:BaseAdapter(){
+            override fun getCount()=projectStore.lesson.pages.size
+            override fun getItem(position:Int)=projectStore.lesson.pages[position]
+            override fun getItemId(position:Int)=position.toLong()
+            override fun getView(position:Int,convertView:View?,parent:ViewGroup):View {
+                val holder=convertView?.tag as? PageRow ?: run{
+                    val r=row().apply{pad(8);minimumHeight=dp(88)}
+                    val preview=PageThumbnail(this@MainActivity,whiteboard.renderer)
+                    r.addView(preview,LinearLayout.LayoutParams(dp(100),dp(64)))
+                    val text=column().apply{pad(8)};val title=label("",16f,NAVY,true);val detail=label("",12f,MUTED)
+                    text.addView(title);text.addView(detail);r.addView(text,LinearLayout.LayoutParams(0,-2,1f))
+                    val more=icon("menu",tr("Page actions","گزینه‌های صفحه")){};r.addView(more)
+                    PageRow(r,preview,title,detail,more).also{r.tag=it}
+                }
+                val page=getItem(position);val current=position==projectStore.lesson.current
+                holder.root.background=rounded(if(current)0xffeeebff.toInt()else SURFACE,dp(12).toFloat(),if(current)TEAL else OUTLINE)
+                holder.preview.page=page;holder.title.text="${s("page_short")} ${position+1}"+(if(current)" ✓"else "")
+                holder.detail.text=tr("${page.items.size} objects","${page.items.size} شیء")
+                holder.root.setOnClickListener{switchPage(position);d.dismiss()};holder.preview.setOnClickListener{holder.root.performClick()}
+                holder.action.setOnClickListener{options(position)}
+                return holder.root
+            }
+        }
+        list.setSelection(projectStore.lesson.current)
     }
 
     private fun activateBoard(target:Board){
@@ -1705,6 +1738,7 @@ class MainActivity : Activity() {
         val c=column().apply{pad(16)}
         c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();dockSignature="";refreshDock()}}})
         c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
+        c.addView(infoTitle(tr("History gesture","ژست تاریخچه"),tr("Double tap with two nearby fingers for Undo. Hold the second tap and slide left/right to browse Undo and Redo; release to keep that point.","دو بار با دو انگشت نزدیک به هم ضربه بزنید. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را مرور کنید؛ با برداشتن دست، همان مرحله حفظ می‌شود.")))
         c.addView(Switch(this).apply{text=tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی");isChecked=prefs.getBoolean("twoFingerUndo",true);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()}})
         dialog(s("input_controls"),c)
     }
@@ -1712,7 +1746,7 @@ class MainActivity : Activity() {
     private fun settings() {
         val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","page_background","calibration","cache","about")
         if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
-        // Engineering is intentionally only reachable through the hidden guide gesture.
+        // Engineering is intentionally only reachable through the hidden About logo gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "fonts"->fontSettings()
@@ -1728,9 +1762,19 @@ class MainActivity : Activity() {
             "page_background"->defaultBackgroundSettings()
             "calibration"->calibrationSettings()
             "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
-            "about"->{val c=column().apply{pad(20)};c.addView(ImageView(this).apply{setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER},LinearLayout.LayoutParams(-1,dp(150)));c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f).apply{setOnClickListener{taps++;if(taps>=7){prefs.edit().putBoolean("engineering",true).apply();toast(s("unlocked"))}}});dialog(s("about"),c)}
+            "about"->about()
             "engineering"->engineering()
         }}
+    }
+
+    private fun about(){
+        val c=column().apply{pad(20)};val gesture=AboutGesture();var close:()->Unit={}
+        c.addView(ImageView(this).apply{
+            setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription="VuraVision logo"
+            setOnClickListener{if(gesture.click(android.os.SystemClock.uptimeMillis())){prefs.edit().putBoolean("engineering",true).apply();close();engineering()}}
+        },LinearLayout.LayoutParams(-1,dp(150)))
+        c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f))
+        close=dialog(s("about"),c)::dismiss
     }
 
     private fun fontSettings(){
@@ -1956,6 +2000,8 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         stopVoice()
+        historyHud(-1,0)
+        if(::board.isInitialized)board.measurements.clear()
         pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null
         if(::board.isInitialized)board.gestures.reset()
         googleSearch?.close();googleSearch=null

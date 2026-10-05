@@ -5,11 +5,12 @@ import android.graphics.*
 
 /** Pressure-free styles: stable width, deterministic texture, no per-frame bitmap. */
 object PenStyles {
-    val keys=listOf("round","marker","pencil","fineliner","chalk","dashed","highlight")
+    val selectable=listOf("round","smooth","marker","dashed","highlight")
+    val keys=listOf("smooth","round","marker","pencil","fineliner","chalk","dashed","highlight")
     private val pencilEffect by lazy{DashPathEffect(floatArrayOf(1.6f,.8f),0f)}
     private val chalkEffect by lazy{DashPathEffect(floatArrayOf(3.2f,1.2f),0f)}
     fun name(c:Context,key:String)=when(key){
-        "round"->c.tr("Ink","جوهری");"marker"->c.tr("Marker","ماژیک");"pencil"->c.tr("Pencil","مداد")
+        "smooth"->c.tr("Smooth pen","قلم نرم");"round"->c.tr("Ink","جوهری");"marker"->c.tr("Marker","ماژیک");"pencil"->c.tr("Pencil","مداد")
         "fineliner"->c.tr("Fineliner","راپید");"chalk"->c.tr("Chalk","گچ");"dashed"->c.tr("Dashed","خط‌چین")
         else->c.tr("Highlighter","هایلایتر")
     }

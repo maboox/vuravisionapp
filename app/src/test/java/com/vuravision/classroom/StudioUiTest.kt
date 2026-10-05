@@ -66,7 +66,7 @@ class StudioUiTest {
         context.getSharedPreferences("vura",0).edit().putString("language",language).commit();val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{for(method in listOf("penSettings","eraserSettings","defaultBackgroundSettings","pieSettings","calibrationSettings")){
                 call(a,method);val d=ShadowDialog.getLatestDialog();capture(d.window!!.decorView,"studio-$method-$language")
-                if(method=="penSettings"){val all=views(d.window!!.decorView);assertTrue(all.any{it.contentDescription==a.tr("Add color to this lesson","افزودن رنگ به این فایل")});assertTrue(all.filterIsInstance<Button>().any{it.text==PenStyles.name(a,"chalk")});assertFalse(all.filterIsInstance<TextView>().any{it.text.toString().contains("pressure sensing")})}
+                if(method=="penSettings"){val all=views(d.window!!.decorView);assertTrue(all.any{it.contentDescription==a.tr("Add color to this lesson","افزودن رنگ به این فایل")});assertTrue(all.filterIsInstance<Button>().any{it.text.toString()==PenStyles.name(a,"smooth")});assertFalse(all.filterIsInstance<TextView>().any{it.text.toString().contains("pressure sensing")})}
                 d.dismiss()
             }
             MainActivity::class.java.getDeclaredMethod("addText",Boolean::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,false)

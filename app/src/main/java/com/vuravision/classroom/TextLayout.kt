@@ -14,5 +14,5 @@ object TextLayout {
   val text=Fonts.style(o.text,key.fa,key.en,o.bold,o.italic)
   return StaticLayout.Builder.obtain(text,0,text.length,paint(o),(o.w-20).toInt().coerceAtLeast(1)).setIncludePad(false).setAlignment(when(o.textAlign){"center"->Layout.Alignment.ALIGN_CENTER;"end"->Layout.Alignment.ALIGN_OPPOSITE;else->Layout.Alignment.ALIGN_NORMAL}).build().also{layouts.put(o.id,Entry(key,it))}
  }
- fun fit(o:Item){Fonts.stamp(o);val tp=paint(o);val natural=o.text.split('\n').maxOfOrNull{line->Layout.getDesiredWidth(Fonts.style(line,Fonts.fa(o),Fonts.en(o),o.bold,o.italic),tp)}?:1f;o.w=(ceil(natural)+22).coerceIn(if(o.kind=="sticky")180f else 24f,720f);o.h=(layout(o).height+18).toFloat().coerceAtLeast(if(o.kind=="sticky")120f else 24f)}
+ fun fit(o:Item){Fonts.stamp(o);val tp=paint(o);val natural=o.text.split('\n').maxOfOrNull{line->Layout.getDesiredWidth(Fonts.style(line,Fonts.fa(o),Fonts.en(o),o.bold,o.italic),tp)}?:1f;o.w=(ceil(natural)+22).coerceIn(if(o.kind=="sticky")180f else 24f,720f);o.h=(layout(o).height+18+(if(o.shape=="element_card")PeriodicTable.cardHeader(o) else 0f)).toFloat().coerceAtLeast(if(o.kind=="sticky")120f else 24f)}
 }

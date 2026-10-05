@@ -94,6 +94,7 @@ class Renderer(private val media: Media) {
         o.fillColor?.let{color->ShapeFill.path(o)?.let{path->val fill=Paint(Paint.ANTI_ALIAS_FLAG).apply{this.color=color;alpha=o.fillAlpha*o.alpha/255;style=Paint.Style.FILL};c.drawPath(path,fill)}}
         when (o.kind) {
             "ink" -> {
+                if(o.shape=="region_fill"){c.restore();return}
                 c.save()
                 c.scale(o.w / o.inkW, o.h / o.inkH)
                 p.style = Paint.Style.STROKE
@@ -117,7 +118,8 @@ class Renderer(private val media: Media) {
                 }
                 c.save()
                 c.clipRect(0f, 0f, o.w, o.h)
-                c.translate(10f, 8f)
+                if(o.kind=="sticky" && o.shape=="element_card")PeriodicTable.drawCard(c,o,media.context)
+                c.translate(10f, if(o.shape=="element_card")PeriodicTable.cardHeader(o) else 8f)
                 TextLayout.layout(o).draw(c)
                 c.restore()
             }
@@ -214,7 +216,7 @@ class Renderer(private val media: Media) {
             } catch (_: IllegalArgumentException) {}
         }
         o.plotPoints.orEmpty().forEach{point->val x=o.w/2+point.x*sx;val y=o.h/2-point.y*sy
-            if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${MathTools.format(point.x)}, ${MathTools.format(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
+            if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${DisplayNumbers.one(point.x)}, ${DisplayNumbers.one(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
         }
         c.restore()
     }

@@ -92,7 +92,7 @@ object UserGuide {
             }
             if(chapters.childCount==0)chapters.addView(context.label(lang("No chapters found","فصلی پیدا نشد"),15f,MUTED))
         }
-        heading.setOnClickListener{taps++;if(taps==3){dialog.dismiss();secret()}}
+
         language.setOnClickListener{fa=!fa;renderBody();renderChapters()}
         previous.setOnClickListener{if(index>0){index--;renderBody();renderChapters()}}
         next.setOnClickListener{if(index<topics.lastIndex){index++;renderBody();renderChapters()}}
