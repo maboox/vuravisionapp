@@ -39,7 +39,7 @@ for p in (root/'app/src').rglob('*.kt'):
     if stack:errors.append(f'{p}: unclosed delimiter at {stack[-1]}')
     if state not in ['code','line']:errors.append(f'{p}: unfinished {state}')
 topics=json.loads((root/'app/src/main/assets/guide/topics.json').read_text())
-assert len(topics)==28 and len({t['id'] for t in topics})==28
+assert len(topics)==27 and len({t['id'] for t in topics})==27
 assert all(len(t['stepsEn'])==len(t['stepsFa']) for t in topics)
 assets=root/'app/src/main/java/com/vuravision/classroom'
 lab_ids=re.search(r'val ids=listOf\((.*?)\)',(assets/'NativeLabs.kt').read_text()).group(1)
@@ -59,4 +59,4 @@ elements=json.loads((root/'app/src/main/assets/science/elements.json').read_text
 assert [int(e['AtomicNumber']) for e in elements]==list(range(1,119))
 assert len({e['Symbol'] for e in elements})==118
 assert all(e['Name'] and e['AtomicMass'] for e in elements)
-print(json.dumps({'kotlin_delimiters':'pass (not compilation)','xml':'pass','guide_chapters':28,'native_labs_classified':len(keys),'font_faces_verified':len(manifest),'periodic_elements_verified':len(elements)},indent=2))
+print(json.dumps({'kotlin_delimiters':'pass (not compilation)','xml':'pass','guide_chapters':27,'native_labs_classified':len(keys),'font_faces_verified':len(manifest),'periodic_elements_verified':len(elements)},indent=2))

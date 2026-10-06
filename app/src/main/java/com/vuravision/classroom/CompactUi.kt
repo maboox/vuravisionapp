@@ -8,6 +8,8 @@ import android.os.Looper
 import android.view.*
 import android.widget.*
 import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object IconCatalog {
     fun resource(key:String)=when(key){
@@ -18,7 +20,7 @@ object IconCatalog {
         "text","fonts","text_size"->R.drawable.feather_type;"layers","new_layer"->R.drawable.feather_layers
         "smart","evaluate","solve","math","formula"->R.drawable.feather_zap
         "tools"->R.drawable.vura_toolbox;"timer","stopwatch"->R.drawable.feather_clock;"split"->R.drawable.feather_columns
-        "shared_room","device_profile"->R.drawable.vura_people;"menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
+        "menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
         "undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
         "share","share_pdf"->R.drawable.feather_share_2;"previous","move_left"->R.drawable.feather_chevron_left
         "next","move_right"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
@@ -41,7 +43,10 @@ object IconCatalog {
         "language","models"->R.drawable.vura_globe;"copy"->R.drawable.vura_copy;"duplicate"->R.drawable.vura_duplicate
         "bold"->R.drawable.vura_bold;"italic"->R.drawable.vura_italic
         "align_start"->R.drawable.vura_align_start;"align_center"->R.drawable.vura_align_center;"align_end"->R.drawable.vura_align_end
-        "pie_settings"->R.drawable.vura_pie;"selection_settings","selection_free","selection_box"->R.drawable.feather_mouse_pointer;"menu_back"->R.drawable.feather_chevron_left
+        "pie_settings"->R.drawable.vura_pie;"selection_settings","selection_free","selection_box"->R.drawable.feather_mouse_pointer;"menu_back"->R.drawable.vura_back
+        "collaboration","participants","collab_collaborate"->R.drawable.vura_users;"profile"->R.drawable.vura_user
+        "collab_control"->R.drawable.vura_cast;"collab_view"->R.drawable.feather_eye;"network","collab_discover"->R.drawable.vura_wifi
+        "leave"->R.drawable.vura_leave;"scan"->R.drawable.vura_camera;"qr"->R.drawable.vura_qr;"address"->R.drawable.vura_link
         "image"->R.drawable.vura_image;"sticky"->R.drawable.vura_sticky;"mind_map"->R.drawable.vura_mind_map
         "paste"->R.drawable.vura_clipboard;"crop","pdf_crop"->R.drawable.vura_crop
         "domain"->R.drawable.vura_graph;"scoreboard"->R.drawable.vura_scoreboard
@@ -76,7 +81,7 @@ fun Context.infoTitle(title:String,details:String):View=row().apply{
     },LinearLayout.LayoutParams(dp(44),dp(44)))
 }
 
-fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit)?,choose:(Int)->Unit):View {
+fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit),choose:(Int)->Unit):View {
     val r=row();var selected=initial;val cells=mutableListOf<View>()
     colors.distinct().forEach{color->
         val cell=object:View(this){private val p=Paint(Paint.ANTI_ALIAS_FLAG)
@@ -84,8 +89,8 @@ fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit)?,choose:(In
         }.apply{contentDescription=String.format(java.util.Locale.US,"#%06X",color and 0xffffff);tooltipText=contentDescription;isFocusable=true;setOnClickListener{selected=color;choose(color);cells.forEach{it.invalidate()}}}
         cells.add(cell);r.addView(cell,LinearLayout.LayoutParams(dp(46),dp(48)))
     }
-    if(add!=null){val plus=WorkspaceIcon(this,"insert",tr("Add color to this lesson","افزودن رنگ به این فایل")){add()}
-    plus.background=rounded(SURFACE,dp(24).toFloat(),OUTLINE);r.addView(plus,LinearLayout.LayoutParams(dp(46),dp(48)))}
+    val plus=WorkspaceIcon(this,"insert",tr("Add color to this lesson","افزودن رنگ به این فایل")){add()}
+    plus.background=rounded(SURFACE,dp(24).toFloat(),OUTLINE);r.addView(plus,LinearLayout.LayoutParams(dp(46),dp(48)))
     return scrollRow(r)
 }
 
@@ -93,4 +98,34 @@ class OptionAdapter(private val c:Context,values:List<String>):ArrayAdapter<Stri
     private fun style(v:View):View{if(v is TextView){v.textSize=16f*c.uiScale();v.setTextColor(NAVY);v.setPadding(c.dp(12),c.dp(10),c.dp(12),c.dp(10));Fonts.bind(v)};return v}
     override fun getView(position:Int,convertView:View?,parent:ViewGroup):View=style(super.getView(position,convertView,parent))
     override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup):View=style(super.getDropDownView(position,convertView,parent))
+}
+
+/** Back is a leading icon in the title row; the arrow mirrors automatically in Persian. */
+fun Context.backIcon(action:()->Unit):WorkspaceIcon=WorkspaceIcon(this,"menu_back",s("menu_back")){action()}
+
+fun Context.dialogTitle(title:String,back:(()->Unit)?):View=row().apply{
+    setPadding(dp(if(back!=null)12 else 24),dp(14),dp(24),dp(2))
+    if(back!=null)addView(backIcon(back),LinearLayout.LayoutParams(dp(48),dp(48)).apply{marginEnd=dp(4)})
+    if(title.isNotBlank())addView(label(title,20f,NAVY,true).apply{maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END},LinearLayout.LayoutParams(0,-2,1f))
+}
+
+/** A Material dialog builder whose optional Back control sits at the top, not among the bottom buttons. */
+fun Context.backDialogBuilder(title:String,back:(()->Unit)?,showBack:Boolean=back!=null):MaterialAlertDialogBuilder{
+    var created:AlertDialog?=null
+    val builder=object:MaterialAlertDialogBuilder(this){
+        override fun create():AlertDialog=super.create().also{created=it}
+    }
+    if(showBack)builder.setCustomTitle(dialogTitle(title){created?.dismiss();back?.invoke()})
+    else if(title.isNotBlank())builder.setCustomTitle(dialogTitle(title,null))
+    return builder
+}
+
+/** Top row of fullscreen screens: optional Back icon followed by the title. */
+fun Context.topTitle(title:String,size:Float,back:(()->Unit)?):View=topTitle(label(title,size,NAVY,true),back)
+fun Context.topTitle(heading:TextView,back:(()->Unit)?):View{
+    if(back==null)return heading
+    return row().apply{
+        addView(backIcon(back),LinearLayout.LayoutParams(dp(48),dp(48)).apply{marginEnd=dp(4)})
+        addView(heading,LinearLayout.LayoutParams(0,-2,1f))
+    }
 }

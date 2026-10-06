@@ -1,35 +1,52 @@
-# VuraVision 1.15.0 · source release
+# VuraVision 1.15.0
 
-Version code 25. The application ID, production signing secrets, Gradle/SDK versions and existing dependencies remain unchanged. This release preserves the 1.14.1 build-verification repair and the prior whiteboard features.
+Version code 25. Application ID, document format (`.vura`, schema 3), Gradle Wrapper,
+dependencies and the four production signing secrets are unchanged.
 
-## Interface corrections
+## Placement fixes
 
-Only the main Menu / Files / Undo / Redo / Share toolbar sits at the bottom-right, beside Hide toolbars. Object actions are anchored above or beside the selection and reposition with the viewport. Ordinary dialogs are centered. Nested navigation uses a Back arrow in the title row, including labs, games, guide and settings. Lab/game Close, save-to-board and gameplay actions remain at the bottom. The pie-menu toolbar button is removed: enable/configure it in normal Settings and open it with the five-finger double tap.
+1. The Pie menu button is no longer on the bottom toolbar. Pie menu stays in
+   **Settings → Pie menu** and opens with the five-finger double tap.
+2. Menus and settings dialogs open in the centre again (1.14 anchored them bottom-right).
+3. The selected object's action bar floats beside the object again: above it, or
+   below when there is no room, and it follows the object while it moves or the board pans.
+4. Back is an icon at the top-left of every nested menu, settings dialog, lab/game screen,
+   guide and periodic table (mirrored in Persian). The bottom button now only closes.
+5. Kept at the bottom as requested: the main toolbar (menu, files, Undo, Redo, share) and
+   the Close/Add-to-board/game controls inside labs and games.
 
-## Experimental local rooms
+## Connected displays (preview, hidden section)
 
-Normal Settings contains Device profile: a local name, opaque color and emoji or optional photo. There is no account. The profile is exchanged only while in a room. Rooms remain in hidden Engineering: About VuraVision → double tap logo → wait 1–3 seconds → double tap again → Shared room.
+Reached from **About → tap the logo (engineering) → Connect displays (preview)**.
+Details: [COLLABORATION.md](COLLABORATION.md).
 
-A host shares the current whiteboard. Guests find the service through Android NSD, scan a QR using the optional camera, read a QR image, or enter an invitation address. All devices need the same local network (Wi-Fi, wired LAN or hotspot); QR transfers the address and invitation token. This implementation has no Internet relay or automatic Wi-Fi provisioning.
+- **Profile**: name, color, and an emoji or photo. Stored only on this device; shown only to
+  people in the same room.
+- **Rooms**: one display creates a room; others join from the list of nearby rooms
+  (DNS-SD on Wi-Fi/Ethernet/hotspot), by scanning the room QR code, or by typing the address.
+  QR and room code admit directly; picking a room from the list asks the owner to let you in.
+- **Roles**, chosen by the room owner per person (and a default for new people):
+  - *View*: follows the owner's page and view; cannot edit.
+  - *Control*: works on the owner's board as if standing at it — same page, same view, one
+    shared Undo/Redo. Page changes go both ways.
+  - *Collaborate*: independent tools, page, view and Undo. Each person's Undo only reverts
+    their own changes.
+- **Presence**: live strokes and a named cursor while someone draws; a soft halo in their
+  color around where they last worked (and, for collaborators, where they were looking)
+  that fades out over one minute.
+- **Selection ownership**: the first person to select an object owns it. Others see a
+  colored outline with that person's name and cannot select, move or erase it until it is released.
+- A guest works on a copy; the guest's own lesson is restored on leaving and the copy can be
+  kept in Recent files.
 
-Every guest initially waits for explicit host approval and receives no lesson, selection leases or drawing previews. The host can grant:
+Limits of the preview: both devices must share a network (same Wi-Fi, or one device's hotspot);
+there is no internet relay. The side-by-side PDF workspace is not shared (PDF objects on the
+board are). The connection is local and unencrypted; the 6-digit room code or the owner's
+approval is required to join.
 
-| Role | Page, camera and tools | Undo / Redo |
-| --- | --- | --- |
-| View | Follow the host; cannot edit | No editing history |
-| Control | Share the host page, camera and tool settings | Host and controller share the host history |
-| Collaborate | Independent current page, camera and tools; shared board content | Separate history for each session |
+## Verification
 
-Live ink/shape previews, names and selection outlines use profile colors. Selection leases are first-come, renew while selected and expire after interruption. Remote selection prevents local object edits. Last activity fades within 60 seconds; identical idle heartbeats do not revive it. Host time is projected onto the local monotonic clock so clock differences between devices do not distort fading.
-
-The host serializes conditional object edits. Conflicts return receipts and a canonical snapshot; Undo is rejected when its inverse would overwrite a subsequent edit by another participant. Concurrent appends keep host arrival order; deletion Undo restores the original stacking position. Structural edits require the current revision. There is a bounded incremental journal with snapshot fallback.
-
-Guest outboxes are idempotent and reconnect after short interruptions. Private guest credentials and outstanding operations are saved separately from lessons in the app-private recovery file. Reconnect to previous room resumes that session after reopening. The first approved shared board becomes a new local project after saving the prior board. Leaving keeps the latest local board; leaving as host closes the room. Switching projects or restarting the UI is blocked while in a room.
-
-Images and PDF objects on the whiteboard transfer with the document. The separate PDF reading workspace, microphone, recognition models and device touch calibration remain local. Profile photos are resized; QR image input, JSON and asset sizes are bounded. Room invitations accept literal local IPv4 addresses only; the existing HTTPS policy for Internet services stays unchanged. LAN room transport uses local sockets and is intended for a trusted classroom network.
-
-Current bounds: 16 sessions including host; 12 MiB document JSON; 64 MiB per asset; 30 history entries per author; 128 queued local operations; 32 operations per transport request; 256 journal entries.
-
-## Verification status
-
-31 new unit tests cover the room engine, actual localhost HTTP transport and UI integration. All previous tests remain enabled (244 total unit-test annotations). Offline source/XML/data/font and workflow checks are recorded in VERIFICATION_1.15.json. Android compilation, unit-test execution, lint, signed APK and emulator/physical-device acceptance are still pending: local Gradle download fails with `Network is unreachable`. This source ZIP is not a claim of a passed Android build.
+`Release115Test` adds 9 tests (toolbar, centred dialogs, Back icon, floating selection bar,
+hidden menu entry, profile round-trip, invite parsing, forwarded Undo, foreign selection locks,
+and a host/guest sync and per-person Undo scenario). `Studio114Test` was updated for the Back icon.
+See `VERIFICATION_1.15.0.json` for what was and was not checked locally.

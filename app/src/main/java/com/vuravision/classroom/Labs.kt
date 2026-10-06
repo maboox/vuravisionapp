@@ -42,13 +42,9 @@ object Labs {
                 pad(20)
             }
         val header = context.row()
-        header.addView(
-            context.label(context.s("lab"), 28f, NAVY, true),
-            LinearLayout.LayoutParams(0, -2, 1f),
-        )
+        header.addView(View(context),LinearLayout.LayoutParams(0, 1, 1f))
         header.addView(context.button(context.s("close")) { d.dismiss() })
-        root.addView(context.navigationHeading(context.s("lab"),back?.let{action->{d.dismiss();action()}}))
-        header.removeViewAt(0)
+        root.addView(context.topTitle(context.s("lab"),28f,back?.let{{d.dismiss();it()}}))
         root.addView(context.label(context.s("lab_intro"), 15f, MUTED))
         val search=context.field(hintValue=context.tr("Search experiments","جست‌وجوی آزمایش‌ها")).apply{setSingleLine(true)}
         root.addView(search)
@@ -188,7 +184,7 @@ object Labs {
             }
         )
         header.addView(context.button(context.s("close")) { d.dismiss() })
-        c.addView(context.navigationHeading(context.s(key),back?.let{action->{d.dismiss();action()}}))
+        c.addView(context.topTitle(context.s(key),24f,back?.let{{d.dismiss();it()}}))
         header.removeViewAt(0)
         c.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
         val sliders=context.column()

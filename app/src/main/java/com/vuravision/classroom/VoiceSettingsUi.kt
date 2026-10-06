@@ -11,11 +11,8 @@ import java.util.concurrent.Executor
 
 class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?=null) {
     private fun tr(en:String,fa:String)=if(activity.resources.configuration.locales[0].language=="fa")fa else en
-    private fun show(title:String,body:View):Dialog {
-        var shown:Dialog?=null
-        return MaterialAlertDialogBuilder(activity).setCustomTitle(activity.navigationHeading(title,back?.let{action->{shown?.dismiss();action()}}))
-            .setView(ScrollView(activity).apply{addView(body)}).setNegativeButton(activity.s("close"),null).setOnCancelListener{d->d.dismiss();back?.invoke()}.show().also{shown=it;Fonts.onShown(it)}
-    }
+    private fun show(title:String,body:View):Dialog=activity.backDialogBuilder(title,back)
+        .setView(ScrollView(activity).apply{addView(body)}).setNegativeButton(activity.s("close")){d,_->d.dismiss()}.setOnCancelListener{d->d.dismiss();back?.invoke()}.show().also{Fonts.onShown(it)}
     fun connection(keys:VoiceKeyStore,worker:Executor,changed:()->Unit)=connectionImpl({keys},worker,changed)
     fun connection(keys:VoiceKeys,worker:Executor,changed:()->Unit)=connectionImpl(keys::forProvider,worker,changed)
     private fun connectionImpl(keys:(String)->VoiceKeyStore,worker:Executor,changed:()->Unit){

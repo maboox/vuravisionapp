@@ -1,18 +1,17 @@
-# 1.15 device acceptance
+# 1.15 checks on real devices
 
-Run GitHub Actions first; retain test and lint reports. Use at least two Android devices on the same local network, preferably one classroom panel and one tablet. The feature is experimental until these checks pass.
+Placement
+- Bottom-right toolbar has no Pie button; Settings → Pie menu still works; five-finger double tap opens it.
+- Main menu, Settings and every settings dialog open centred. In nested menus Back is a top-left arrow (pointing right in Persian); the bottom button closes.
+- Select an object: the action bar appears above it (below when the object is at the top edge), follows it while dragging and panning, and is hidden in focus mode.
+- Labs/games: Close and Add to board remain at the bottom; Back is at the top-left.
 
-1. Verify Menu / Files / Undo / Redo / Share at bottom-right and no Pie toolbar button. Select an object near each edge; actions stay near it. Open nested settings, labs and games: Back is a top arrow, ordinary dialogs centered, lab/game actions bottom.
-2. Set different names, colors and emoji/photos in Settings → Device profile. Restart; profiles persist locally. Open hidden Engineering using the About double-tap / pause / double-tap sequence.
-3. Create a room with an existing multipage board. Join by automatic discovery, camera QR, QR image and manual address. Test a hotspot and a network with discovery blocked. QR must not imply it joins Wi-Fi or bridges networks.
-4. Before approval, guest sees waiting status and no shared document; its prior lesson is preserved. Approve View: host page and camera follow, drawing and object edits are blocked. Remove guest and confirm further access stops.
-5. Grant Control. Change tool, pen, selected panel, zoom and page from both devices. Draw and Undo from the tablet; history matches the host. Check all four vertical panels and geometry tools.
-6. Grant Collaborate. Use different tools, pages and cameras. Draw simultaneously: each Undo removes only that user's edit. Test concurrent additions, deleting and restoring a middle object, and front/back stacking.
-7. Both select the same object; first selection wins and the other sees name/color. Release or disconnect; the lease becomes available. Attempt concurrent edits and Undo after another user's edit; later work must survive and rejected edits must reconcile.
-8. Check live strokes, moving selections and last-position/viewport ghosts. Stop all input: ghost fades within one minute despite polling. Set device clocks differently and repeat.
-9. Import an image, crop with handles, add a lab snapshot and a PDF object. Confirm identical content on both devices; save/leave/reopen and inspect export. Separate PDF reading panes stay local.
-10. Interrupt Wi-Fi briefly while drawing. Reconnect: no duplicated strokes, operations converge. Close and reopen the guest app, choose Reconnect to previous room, and confirm private credentials/history/outbox recover. If host closed the room, local board copy remains accessible after leaving.
-11. Exit host while guest is drawing; guest sees room closed and retains its last local copy. Reopen the original local lesson and the shared copy to ensure they were saved under separate identities.
-12. Repeat in Persian (RTL), landscape, portrait and larger interface sizes. Test camera denied/missing, invalid QR/address, approval changes, and a pending photo/file picker result after closing its dialog.
-
-Record device models, Android versions, network type, observed latency and any failed step. Do not treat localhost or structural checks as proof of two-device behavior.
+Connected displays (two devices on one Wi-Fi, then one device's hotspot)
+- Edit profile (name, color, emoji, photo). Create a room on A; B sees it under Join a room. Picking it shows a request on A; Let in / Decline both work.
+- Scan A's QR from B (camera permission prompt, then direct entry). Repeat with Enter address + code.
+- View: B follows A's page and zoom, cannot draw, sees A's strokes live. Control: B draws on A's board, page changes go both ways, B's Undo undoes on both. Collaborate: independent pages/zoom/tools; Undo on each only reverts own work.
+- While B draws, A sees the live stroke and a named cursor; after lifting, a halo in B's color stays and fades within one minute.
+- Select an object on A: B sees A's colored outline and name and cannot select/erase it. Release on A; B can now take it.
+- Insert an image and a PDF object on B: they appear on A and on a third device.
+- Change roles while drawing; remove a person; end the room; leave as guest with and without "Keep a copy". Guest's own lesson returns.
+- Turn Wi-Fi off on B: B returns to its own lesson with a message within ~45 s; A drops B from the list.

@@ -1,0 +1,28 @@
+{
+  "version": "1.15.0",
+  "version_code": 25,
+  "date_utc": "2026-10-06T12:53:10.063943+00:00",
+  "scope": "Placement fixes (no toolbar Pie button, centred menus, selection actions beside the object, top Back icon) and the hidden 'Connect displays' preview: local profiles, rooms, View/Control/Collaborate roles, presence, selection ownership.",
+  "local_checks": {
+    "kotlin_type_check_main": "pass: all main sources analysed by kotlinc 2.1.20 against Android API 35 platform classes, real Gson 2.12.1 (built from source) and signature stubs for Material/AppCompat/AndroidX/ZXing/NanoHTTPD. Files that only use ML Kit, PDFBox, OkHttp and exp4j were unchanged and not stub-covered.",
+    "kotlin_type_check_tests": "pass for Release115Test.kt and Studio114Test.kt changes (JUnit/Robolectric signature stubs); two pre-existing nullability notes in Studio114Test come from the stricter AOSP jar, not from this change",
+    "sync_simulation": "pass: host + two guests, 26 scenarios (strokes, moves, concurrent same-field edits, per-person undo/redo with history rebase, page add/reorder/delete, restacking, layers, delete-vs-edit, host replacing the lesson, personal zoom/active layer)",
+    "source_structure": "pass (scripts/check-source.py)",
+    "unit_test_methods_in_repo": 222,
+    "new_tests": "Release115Test: 9",
+    "updated_tests": "Studio114Test.ordinarySettingsExposePieSelectionAndBackReturnsThroughMenus uses the top Back icon"
+  },
+  "pending_github_actions": [
+    "Robolectric unit tests",
+    "Android lint (abortOnError)",
+    "signed release APK assembly and apksigner/zipalign checks"
+  ],
+  "pending_devices": "Two-device behaviour (discovery, QR camera scan, latency, roles) per docs/DEVICE_ACCEPTANCE_1.15.md",
+  "known_limits": [
+    "Same Wi-Fi or one device's hotspot required; no internet relay",
+    "Side-by-side PDF workspace is not shared",
+    "Local unencrypted TCP; admission by 6-digit code or owner approval",
+    "Session ends if the activity is recreated (e.g. language change)"
+  ],
+  "signing": "original four secret names preserved; application ID unchanged"
+}

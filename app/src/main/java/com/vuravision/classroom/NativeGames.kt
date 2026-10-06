@@ -15,7 +15,7 @@ object NativeGames {
   val d=Dialog(context,android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
   val root=context.column().apply{setBackgroundColor(PAPER);fitsSystemWindows=true;pad(12)}
   val header=context.row();header.addView(context.label(context.s(key),22f,NAVY,true),LinearLayout.LayoutParams(0,-2,1f));header.addView(context.button(context.s("close")){d.dismiss()})
-  header.removeViewAt(0);root.addView(context.navigationHeading(context.s(key),back?.let{action->{d.dismiss();action()}}))
+  header.removeViewAt(0);root.addView(context.topTitle(context.s(key),22f,back?.let{{d.dismiss();it()}}))
   root.addView(context.label(context.s("rule_$key"),14f,MUTED))
   val game=ArcadeView(context,key.removePrefix("arc_"));root.addView(game,LinearLayout.LayoutParams(-1,0,1f))
   val actions=context.row();actions.addView(context.button(context.tr("Start / next round","شروع / دور بعد"),true){game.startRound()});actions.addView(context.button(context.tr("Side / face-to-face","کنار هم / روبه‌رو")){game.face=!game.face;game.invalidate()});actions.addView(context.button(context.s("restart")){game.restart()});root.addView(context.scrollRow(actions))

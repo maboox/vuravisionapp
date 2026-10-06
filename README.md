@@ -2,31 +2,52 @@
 
 Full Android source, Gradle Wrapper and GitHub Actions for interactive touch panels.
 
-The main Menu / Files / Undo / Redo / Share toolbar is at the bottom-right. Selected-object actions appear above or beside the object; ordinary dialogs are centered and nested menus use a top Back arrow. Lab/game actions stay at the bottom. Enable/configure Pie menu in **Settings → Pie menu**; open it with the five-finger double tap.
+## Release 1.15.0
 
-The previous graphical crop, separate free/box selection, Duplicate with plus icon, four vertical panels, live geometry measurements, clean guide snapping and page counter remain available.
+Placement fixes: no Pie button on the toolbar (Pie menu stays in Settings and the five-finger
+gesture), menus open centred again, the selected object's actions float beside the object, and
+Back is a top-left icon in nested menus and full-screen screens. The bottom toolbar and the
+lab/game action rows stay at the bottom.
 
-## Experimental shared rooms
-
-Set your name, color and emoji/photo in **Settings → Device profile**. To open rooms: **Settings → About VuraVision → double tap the logo → wait 1–3 seconds → double tap again → Shared room**.
-
-One device creates a room; others join by discovery, QR or manual invitation. Devices must share a local Wi-Fi/LAN/hotspot. QR transfers the room address; there is no cross-network relay.
-
-The host approves guests as View, Control or Collaborate. View follows the host without editing; Control shares host tools, page/camera and Undo; Collaborate has independent tools/views and per-user Undo. Profile-colored live strokes, selection leases and fading presence are included, along with conflict reconciliation, guest reconnect/recovery and image/PDF-object transfer. Rooms are experimental and need two-device acceptance testing. See [release details](docs/RELEASE_1.15.md) and [device checklist](docs/DEVICE_ACCEPTANCE_1.15.md).
+New preview in the hidden engineering section: **Connect displays**. Each display has a local
+profile (name, color, emoji or photo). One display creates a room; others join from nearby rooms,
+a QR code or the address. The owner sets each person to View, Control (works on the owner's
+board with shared page/view/Undo) or Collaborate (independent tools/page/Undo, live cursors,
+fading one-minute halos, colored selection ownership). See [release notes](docs/RELEASE_1.15.md)
+and [design notes](docs/COLLABORATION.md).
 
 ## Build with GitHub Actions
 
-Extract this ZIP directly into the repository root, including `.github`. Upload the extracted contents, not only the ZIP. Keep the existing secrets:
+Extract this ZIP directly into the repository root, including `.github`. Do not upload the ZIP as the only repository file. Keep these repository secrets:
 
 | Secret | Value |
 | --- | --- |
-| ANDROID_KEYSTORE_BASE64 | Base64 of the production keystore |
+| ANDROID_KEYSTORE_BASE64 | Base64 of the production .jks/.keystore file |
 | ANDROID_KEYSTORE_PASSWORD | Keystore password |
 | ANDROID_KEY_ALIAS | Key alias |
 | ANDROID_KEY_PASSWORD | Key password |
 
-Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.15.0-<run>` containing the APK and SHA256SUMS.txt. Pull-request builds use debug signing. Application ID and production signing are unchanged.
+Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.15.0-<run>`; it contains `VuraVision-1.15.0.apk` and `SHA256SUMS.txt`. Pull-request builds are unsigned-for-production debug builds. Production builds fail if signing settings are absent. The package ID and signing mechanism are unchanged; there is no activation/serial-number feature.
 
-Current checks are in [VERIFICATION_1.15.json](docs/VERIFICATION_1.15.json). Offline structural checks passed. Local Android compilation/tests/lint/APK are pending because Gradle cannot download in this environment. GitHub Actions retains all 244 unit tests, lint, signing and alignment checks; the manual workflow also runs emulator and web smoke tests.
+Manual workflow runs also execute Android device PDF and Keystore checks on an emulator. Reports are separate artifacts. Android SDK 35 and JDK 17 are used. The Gradle Wrapper is included and invoked as `bash ./gradlew`.
 
-For optional voice services see [voice setup](docs/VOICE_ASSISTANT.md); for search see [Google search](docs/GOOGLE_SEARCH.md). Earlier release and verification documents are historical.
+## Local checks
+
+```bash
+python3 scripts/check-source.py
+npm ci
+npm test
+bash ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+```
+
+Release builds additionally require the production signing environment variables and keystore path. Do not commit a keystore or passwords.
+
+## Verification status
+
+See [VERIFICATION_1.15.0.json](docs/VERIFICATION_1.15.0.json). For this release all main Kotlin
+sources were type-checked locally with Kotlin 2.1.20 against the Android API 35 platform classes,
+real Gson 2.12.1 and small signature stubs for the other libraries; the new and changed tests were
+type-checked the same way, and the sync rules were exercised in a three-device simulation.
+Android unit tests, lint and the signed APK build still run in GitHub Actions; they are not
+claimed as passed here. Behaviour across two physical devices needs the checks in
+[DEVICE_ACCEPTANCE_1.15.md](docs/DEVICE_ACCEPTANCE_1.15.md).
