@@ -198,6 +198,11 @@ data class Lesson(
 }
 
 class Store(var lesson: Lesson = Lesson()) {
+    var editAllowed:()->Boolean={true}
+    var sessionUndo:(()->Unit)?=null
+    var sessionRedo:(()->Unit)?=null
+    var sessionHistory:(()->Pair<Int,Int>)?=null
+    var sessionSeek:((Int)->Unit)?=null
     private val past = ArrayDeque<Lesson>()
     private val future = ArrayDeque<Lesson>()
     var changed: () -> Unit = {}
@@ -217,6 +222,7 @@ class Store(var lesson: Lesson = Lesson()) {
         isCanceling=true;try{changed()}finally{isCanceling=false}
     }
     fun checkpoint() {
+        if(!editAllowed())return
         historyBefore=past.toList() to future.toList()
         past.addLast(snapshot())
         while (past.size > 30) past.removeFirst()
@@ -224,6 +230,7 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun edit(action: () -> Unit) {
+        if(!editAllowed())return
         checkpoint()
         lesson.pages.forEach { page -> page.items.forEach { o -> if(o.points.isNotEmpty()) o.points=o.points.map { it.copy() }.toMutableList() } }
         action()
@@ -231,11 +238,12 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
-    fun editMetadata(action:()->Unit){checkpoint();action();changed()}
-    val undoCount get()=past.size
-    val redoCount get()=future.size
+    fun editMetadata(action:()->Unit){if(!editAllowed())return;checkpoint();action();changed()}
+    val undoCount get()=sessionHistory?.invoke()?.first?:past.size
+    val redoCount get()=sessionHistory?.invoke()?.second?:future.size
     /** Rebuild only once per scrub update, even when crossing many history steps. */
     fun seekHistory(position:Int){
+        sessionSeek?.let{it(position);return}
         val target=position.coerceIn(0,past.size+future.size)
         if(target==past.size)return
         historyBefore=null
@@ -244,6 +252,7 @@ class Store(var lesson: Lesson = Lesson()) {
         changed()
     }
     fun undo() {
+        sessionUndo?.let{it();return}
         historyBefore=null
         if (past.isNotEmpty()) {
             future.addLast(snapshot())
@@ -253,6 +262,7 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun redo() {
+        sessionRedo?.let{it();return}
         historyBefore=null
         if (future.isNotEmpty()) {
             past.addLast(snapshot())
@@ -262,6 +272,7 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun replace(doc: Lesson) {
+        if(!editAllowed())return
         historyBefore=null
         doc.validate()
         lesson = doc

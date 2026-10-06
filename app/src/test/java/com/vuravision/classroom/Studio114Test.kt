@@ -115,7 +115,7 @@ class Studio114Test {
             assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("pie_settings")})
             assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("selection_settings")})
             choose(d,a.s("fonts"));d=ShadowDialog.getLatestDialog() as AlertDialog
-            assertEquals(a.s("menu_back"),d.getButton(AlertDialog.BUTTON_NEGATIVE).text.toString());d.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
+            val back=requireNotNull(d.findViewById<View>(R.id.menu_back_button));assertEquals(a.s("menu_back"),back.contentDescription.toString());back.performClick()
             // AlertDialog delivers button callbacks through the main message queue.
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             assertFalse("Back must close the font settings dialog",d.isShowing)

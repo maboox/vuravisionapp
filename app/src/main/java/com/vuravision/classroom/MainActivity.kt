@@ -17,6 +17,9 @@ import java.util.concurrent.Executors
 import kotlin.math.*
 
 class MainActivity : Activity() {
+    private var rooms:RoomController?=null
+    private var roomUi:RoomUi?=null
+    private lateinit var roomBadge:WorkspaceIcon
     private val projectStore=Store()
     val store:Store get()=if(::board.isInitialized)board.store else projectStore
     private lateinit var whiteboard:Board
@@ -140,6 +143,7 @@ class MainActivity : Activity() {
         board.onSmart={processSmart(it)}
         bindBoardExtras(board)
         store.changed = {
+            rooms?.localChange()
             dirty = true
             if(!whiteboard.isCommitting)whiteboard.sceneChanged() else whiteboard.invalidate()
             refreshDock()
@@ -157,8 +161,26 @@ class MainActivity : Activity() {
             store.lesson.pages[0]=newBoardPage(null)
             refreshTitle()
         }
+        setupRooms()
     }
 
+    private fun setupRooms(){
+        rooms=RoomController(this,projectStore,whiteboard,media,{
+            persist();documentId=newId();prefs.edit().putString("current",documentId).apply()
+        },::roomStateChanged)
+        roomUi=RoomUi(this,rooms!!)
+    }
+    private fun roomStateChanged(){
+        if(destroyed||!::roomBadge.isInitialized)return
+        val session=rooms;roomBadge.visibility=if(session?.active==true)View.VISIBLE else View.GONE
+        roomBadge.alpha=if(session?.connected==true)1f else .5f;roomBadge.contentDescription=s("shared_room")+" · "+session?.frame?.room.orEmpty()
+        refreshDock();refreshTitle();roomUi?.refresh();whiteboard.invalidate()
+    }
+    private fun sharedRoom(){
+        if(loading||whiteboard.hasActiveInteraction){toast(s("room_finish_first"));return}
+        activateBoard(whiteboard);projectStore.lesson.pdf?.let{it.fullscreen=false};syncPdfWorkspace()
+        roomUi?.home(menuReturn.also{menuReturn=null})
+    }
     private val chrome = mutableListOf<View>()
     private var focusMode = false
     private var sidePanel: View? = null
@@ -188,7 +210,6 @@ class MainActivity : Activity() {
         header.addView(icon("undo",s("undo")){store.undo();board.clearSelection()})
         header.addView(icon("redo",s("redo")){store.redo();board.clearSelection()})
         header.addView(icon("share",s("share")){shareOptions()})
-        header.addView(icon("pie_settings",s("pie_settings")){if(prefs.getBoolean("pieEnabled",false))pieMenu(canvasHost.width-dp(150).toFloat(),canvasHost.height-dp(170).toFloat())else pieSettings()})
         val headerHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(header)}
         floating(headerHost,Gravity.BOTTOM or Gravity.RIGHT)
         (headerHost.layoutParams as FrameLayout.LayoutParams).rightMargin=dp(72)
@@ -204,8 +225,8 @@ class MainActivity : Activity() {
         floating(pageHost,Gravity.BOTTOM or Gravity.LEFT)
         selectionBar=row().apply{pad(4)}
         surface(selectionBar)
-        selectionHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
-        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(56),Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{setMargins(dp(78),0,dp(12),dp(78))})
+        selectionHost=HorizontalScrollView(this).apply{id=R.id.selection_toolbar;isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
+        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(56),Gravity.TOP or Gravity.LEFT))
         val focus=icon("fullscreen",tr("Hide / show toolbars","پنهان / نمایان کردن ابزارها")){
             focusMode=!focusMode
             window.decorView.systemUiVisibility=if(focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
@@ -227,12 +248,14 @@ class MainActivity : Activity() {
         voiceMuteButton=icon("mute",tr("Mute microphone","بی‌صدا کردن میکروفن")){voiceMuted=!voiceMuted;voiceAssistant?.setMuted(voiceMuted);refreshMute()}
         voiceMuteButton.visibility=View.GONE
         canvasHost.addView(voiceMuteButton,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),0,dp(12),dp(132))})
+        roomBadge=icon("shared_room",s("shared_room")){sharedRoom()}.apply{visibility=View.GONE}
+        surface(roomBadge);canvasHost.addView(roomBadge,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.TOP or Gravity.RIGHT).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
         prefs.registerOnSharedPreferenceChangeListener(voicePreferenceListener)
         canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot){
             val narrow=r-l<dp(800)
             (pageHost.layoutParams as FrameLayout.LayoutParams).apply{bottomMargin=dp(if(narrow)76 else 12);width=min(dp(344),(r-l-dp(24)).coerceAtLeast(dp(144)))};pageHost.requestLayout()
-            (headerHost.layoutParams as FrameLayout.LayoutParams).apply{width=min(dp(296),(r-l-dp(96)).coerceAtLeast(dp(144)))};headerHost.requestLayout()
-            (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{bottomMargin=dp(if(narrow)140 else 78)};selectionHost.requestLayout()
+            (headerHost.layoutParams as FrameLayout.LayoutParams).apply{width=min(dp(248),(r-l-dp(96)).coerceAtLeast(dp(144)))};headerHost.requestLayout()
+            positionSelectionBar()
             refreshSplitControls()
         }}
         refreshDock();refreshPages()
@@ -255,12 +278,13 @@ class MainActivity : Activity() {
     }
 
     private fun refreshDock() {
+        rooms?.refreshPresence()
         if(!::dock.isInitialized)return
         syncPdfWorkspace()
         if(sidePanelPage!=null && sidePanelPage!==store.page)closeSidePanel()
         if(splitControlsPage!==store.page)refreshSplitControls()
         refreshSelectionBar()
-        val signature="${board.tool}:${store.page.id}:${board.touchMode}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
+        val signature="${board.sessionCanEdit}:${board.tool}:${store.page.id}:${board.touchMode}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
         if(signature==dockSignature)return
         dockSignature=signature;dock.removeAllViews()
         listOf("select","pen","erase","pan","shape","text","smart","layers","split","touch","insert","tools").forEach { key ->
@@ -272,7 +296,7 @@ class MainActivity : Activity() {
                     "insert"->insert();"tools"->classroomTools()
                     else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="select")selectionSettings() else if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
                 }
-            },LinearLayout.LayoutParams(dp(48),dp(48)))
+            }.apply{isEnabled=board.sessionCanEdit||key=="pan";alpha=if(isEnabled)1f else .35f},LinearLayout.LayoutParams(dp(48),dp(48)))
         }
     }
     private fun refreshSelectionBar(){
@@ -309,11 +333,26 @@ class MainActivity : Activity() {
         }
         icon("delete"){board.delete()}
         icon("more",s("edit")){editSelection()}
+        positionSelectionBar()
+    }
+    private fun positionSelectionBar(){
+        if(!::selectionHost.isInitialized||selectionHost.visibility!=View.VISIBLE||canvasHost.width<=0)return
+        val bounds=board.selectionScreenBounds()?:return
+        val a=IntArray(2);val b=IntArray(2);board.getLocationInWindow(a);canvasHost.getLocationInWindow(b);bounds.offset((a[0]-b[0]).toFloat(),(a[1]-b[1]).toFloat())
+        val maxWidth=(canvasHost.width-dp(96)).coerceAtLeast(dp(48))
+        selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.makeMeasureSpec(dp(56),View.MeasureSpec.EXACTLY))
+        val barWidth=selectionBar.measuredWidth.coerceIn(dp(48),maxWidth);val barHeight=dp(56)
+        val above=bounds.top-barHeight-dp(36);val y=if(above>=dp(12))above else bounds.bottom+dp(16)
+        (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{
+            width=barWidth;height=barHeight;gravity=Gravity.TOP or Gravity.LEFT
+            leftMargin=(bounds.centerX()-barWidth/2).toInt().coerceIn(dp(78),(canvasHost.width-barWidth-dp(12)).coerceAtLeast(dp(78)))
+            topMargin=y.toInt().coerceIn(dp(12),(canvasHost.height-barHeight-dp(84)).coerceAtLeast(dp(12)))
+        };selectionHost.requestLayout()
     }
     private fun splitSettings(){
         if(board!==whiteboard){pdfMenu();return}
         navigationBuilder(tr("Split board","تقسیم تخته"))
-            .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.panes.size-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show()
+            .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.panes.size-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show().also{shown(it)}
     }
     private fun refreshSplitControls(){
         splitControls?.let{canvasHost.removeView(it)};splitControls=null;splitControlsPage=store.page
@@ -359,6 +398,7 @@ class MainActivity : Activity() {
         refreshSplitControls()
     }
     private fun switchPage(index:Int) {
+        if(rooms?.active==true&&rooms?.frame?.role==RoomRoles.VIEW)return
         if(index !in projectStore.lesson.pages.indices || board.isDrawing)return
         activateBoard(whiteboard);closeSidePanel();projectStore.lesson.current=index;whiteboard.clearSelection();whiteboard.reset();projectStore.changed()
     }
@@ -423,6 +463,7 @@ class MainActivity : Activity() {
         })})
     }
     private fun bindBoardExtras(target:Board){
+        target.onViewportChanged={positionSelectionBar()}
         target.gestures.onHistory=::historyHud
         target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
         target.gestures.onPie={x,y->val a=IntArray(2);val b=IntArray(2);target.getLocationInWindow(a);canvasHost.getLocationInWindow(b);pieMenu(x+a[0]-b[0],y+a[1]-b[1])}
@@ -528,6 +569,7 @@ class MainActivity : Activity() {
         canvasHost.addView(overlay,FrameLayout.LayoutParams(-1,-1))
     }
     private fun runShortcut(key:String){
+        if(rooms?.active==true&&key in listOf("new","open","recent","language","ui_size")){toast(s("room_leave_first"));return}
         when(key){
             "undo"->store.undo();"redo"->store.redo()
             "pen","erase","select","pan"->{board.tool=key;board.clearSelection();refreshDock()}
@@ -743,14 +785,20 @@ class MainActivity : Activity() {
         val back=menuReturn;menuReturn=null
         menuDialogs.removeAll{it.get()?.isShowing!=true}
         val nested=back!=null || menuDialogs.isNotEmpty()
-        return MaterialAlertDialogBuilder(this).setTitle(title)
-            .setNegativeButton(if(nested)s("menu_back")else s("close")){d,_->d.dismiss();back?.invoke()}
+        val heading=navigationHeading(title,if(nested)({})else null)
+        heading.findViewById<View>(R.id.menu_back_button)?.tag=back
+        return MaterialAlertDialogBuilder(this).setCustomTitle(heading)
+            .setNegativeButton(s("close"),null)
             .setOnCancelListener{d->d.dismiss();back?.invoke()}
     }
     private fun shown(d:AlertDialog):AlertDialog {
         menuDialogs.add(java.lang.ref.WeakReference(d))
         Fonts.onShown(d)
-        d.window?.setGravity(Gravity.BOTTOM or Gravity.RIGHT)
+        d.window?.setGravity(Gravity.CENTER)
+        d.findViewById<View>(R.id.menu_back_button)?.let{button->
+            @Suppress("UNCHECKED_CAST") val back=button.tag as? (() -> Unit)
+            button.setOnClickListener{d.dismiss();back?.invoke()}
+        }
         return d
     }
     private fun dialog(title:String,content:View):AlertDialog =
@@ -943,6 +991,7 @@ class MainActivity : Activity() {
         } else projectFileMenu()
     }
     private fun projectFileMenu() {
+        if(rooms?.active==true){choices(s("files"),listOf("save","export_pdf","export_png","export_jpg")){i->if(i==0)export("vura",true){createDocument(it,"application/octet-stream")}else exportChoice(listOf("pdf","png","jpg")[i-1])};return}
         activateBoard(whiteboard)
         choices(
             s("files"),
@@ -1288,7 +1337,7 @@ class MainActivity : Activity() {
             .setItems(arrayOf(tr("PDF object on board","PDF به‌صورت شیء روی تخته"),tr("Scrollable PDF beside board","PDF قابل اسکرول کنار تخته"))){_,i->
                 pendingPdfMode=i
                 if(i==1)withPdfExit{pick("application/pdf",103)}else pick("application/pdf",103)
-            }.show()
+            }.show().also{shown(it)}
     }
     private fun openPdf(uri:android.net.Uri,flags:Int){
         try{contentResolver.takePersistableUriPermission(uri,flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))}catch(_:SecurityException){}
@@ -1431,6 +1480,8 @@ class MainActivity : Activity() {
     @Deprecated("Platform compatibility")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if(roomUi?.result(requestCode,resultCode,data)==true)return
+        if(requestCode==101&&rooms?.active==true){toast(s("room_leave_first"));return}
         if (resultCode != RESULT_OK) {afterPdfSave=null;return}
         if(requestCode==105){val f=File(cacheDir,"lab-snapshot.png");if(f.exists()){val bitmap=BitmapFactory.decodeFile(f.path);if(bitmap!=null)insertBitmap(bitmap);f.delete()};return}
         val uri = data?.data ?: return
@@ -1771,10 +1822,13 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","selection_settings","pie_settings","page_background","calibration","cache","about")
+        val keys=mutableListOf("device_profile","language","fonts","google_search_settings","ui_size","models","input_controls","selection_settings","pie_settings","page_background","calibration","cache","about")
         if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
         // Engineering is intentionally only reachable through the hidden About logo gesture.
-        choices(s("settings"),keys){index->when(keys[index]){
+        choices(s("settings"),keys){index->
+            if(rooms?.active==true&&keys[index] in listOf("language","ui_size")){toast(s("room_leave_first"));return@choices}
+            when(keys[index]){
+            "device_profile"->roomUi?.profile(menuReturn.also{menuReturn=null})
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "fonts"->fontSettings()
             "voice_assistant"->voiceSettings()
@@ -1783,7 +1837,7 @@ class MainActivity : Activity() {
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
                     listOf(.8f,1f,1.4f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
                     persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
-                }.show()
+                }.show().also{shown(it)}
             "models"->models()
             "input_controls"->inputSettings()
             "selection_settings"->selectionSettings()
@@ -1849,9 +1903,10 @@ class MainActivity : Activity() {
     }
 
     private fun engineering() {
-        val keys=listOf("report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
+        val keys=listOf("shared_room","report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
         choices(s("engineering"),keys) {
             when (keys[it]) {
+                "shared_room"->sharedRoom()
                 "advanced_board" -> advancedBoard()
                 "secret_studio" -> secretStudio()
                 "maboox" -> maboox()
@@ -2028,6 +2083,7 @@ class MainActivity : Activity() {
     }
 
     override fun onPause() {
+        roomUi?.pause();rooms?.pauseDrawing()
         stopVoice()
         historyHud(-1,0)
         if(::board.isInitialized)board.measurements.clear()
@@ -2044,6 +2100,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
+        if(roomUi?.permission(requestCode,grantResults)==true)return
         if(requestCode==voicePermissionRequest){
             if(grantResults.firstOrNull()==android.content.pm.PackageManager.PERMISSION_GRANTED)toggleVoice()
             else toast(s("voice_permission_needed"))
@@ -2110,11 +2167,12 @@ class MainActivity : Activity() {
         board.gestures.reset()
         artPlayer?.pause()
         handler.removeCallbacks(autosave)
-        persist()
+        rooms?.flushHostDocument();persist()
         super.onStop()
     }
 
     override fun onDestroy() {
+        rooms?.endHostAndFlush();persist();roomUi?.close();rooms?.close()
         destroyed = true
         menuDialogs.mapNotNull{it.get()}.forEach{it.dismiss()};menuDialogs.clear()
         prefs.unregisterOnSharedPreferenceChangeListener(voicePreferenceListener)

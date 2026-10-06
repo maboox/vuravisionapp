@@ -24,6 +24,7 @@ object UserGuide {
         val dialog=Dialog(context,R.style.AppTheme)
         val root=context.column().apply{pad(12);setBackgroundColor(PAPER)}
         val header=context.row();root.addView(header)
+        if(back!=null)header.addView(WorkspaceIcon(context,"menu_back",context.s("menu_back")){dialog.dismiss();back()}.apply{id=R.id.menu_back_button;scaleX=if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)-1f else 1f})
         val heading=context.label("",22f,NAVY,true)
         header.addView(heading,LinearLayout.LayoutParams(0,-2,1f))
         val language=context.button("فارسی / EN"){}
@@ -40,7 +41,6 @@ object UserGuide {
         val previous=context.button(""){}
         val next=context.button(""){}
         val position=context.label("",14f,MUTED)
-        if(back!=null)footer.addView(context.button(context.s("menu_back")){dialog.dismiss();back()})
         footer.addView(previous);footer.addView(position,LinearLayout.LayoutParams(0,-2,1f));footer.addView(next)
         fun lang(en:String,persian:String)=if(fa)persian else en
         fun renderBody() {
@@ -59,7 +59,7 @@ object UserGuide {
             val topic=topics[index]
             body.removeAllViews()
             body.addView(context.label(if(fa)topic.titleFa else topic.titleEn,25f,NAVY,true))
-            val imageKey=when(topic.id){"workspace"->"workspace";else->null}
+            val imageKey:String?=null // Current chrome is illustrated with the native tools below.
             val screenshot=imageKey?.let{key->try{
                 context.assets.open("guide/$key-${if(fa)"fa"else"en"}.png").use{BitmapFactory.decodeStream(it)}
             }catch(_:java.io.IOException){null}}
@@ -128,17 +128,17 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
         when(topic){
             "workspace","settings"->{
                 paint.color=PAPER;canvas.drawRoundRect(22f,22f,878f,397f,18f,18f,paint)
-                paint.color=SURFACE;canvas.drawRoundRect(42f,36f,380f,92f,12f,12f,paint);canvas.drawRoundRect(42f,112f,98f,342f,12f,12f,paint)
+                paint.color=SURFACE;canvas.drawRoundRect(505f,333f,858f,389f,12f,12f,paint);canvas.drawRoundRect(42f,112f,98f,342f,12f,12f,paint)
                 listOf("menu","files","undo","redo","share").forEachIndexed{i,key->
-                    val icon=WorkspaceIcon(context,key,key){};icon.measure(48,48);icon.layout(0,0,48,48);canvas.save();canvas.translate(48f+i*64f,39f);icon.draw(canvas);canvas.restore()
+                    val icon=WorkspaceIcon(context,key,key){};icon.measure(48,48);icon.layout(0,0,48,48);canvas.save();canvas.translate(514f+i*64f,337f);icon.draw(canvas);canvas.restore()
                 }
                 for(i in 0..4){shape(if(i==0)"circle"else"rectangle",55f,125f+i*42,24f,24f,NAVY,2f)}
                 line(listOf(175f to 230f,235f to 160f,310f to 255f,392f to 170f,470f to 242f),NAVY,5f)
                 shape("circle",580f,135f,150f,150f,ORANGE)
-                badge(1,402f,65f);badge(2,123f,157f);badge(3,408f,362f)
-                text("1  Menu + files","۱  منو و فایل",485f,70f)
-                text("2  Drawing tools","۲  ابزار رسم",485f,322f)
-                text("3  Pages","۳  صفحه‌ها",485f,362f)
+                badge(1,480f,360f);badge(2,123f,157f);badge(3,125f,365f)
+                text("Menu · Undo · files","منو، Undo، فایل",485f,70f)
+                text("Drawing tools","ابزار رسم",485f,110f)
+                text("1 / 12","۱ / ۱۲",166f,370f)
             }
             "pen","dashes"->{
                 for(i in 0..3)line(listOf(100f to 100f+i*65,220f to 76f+i*65,345f to 120f+i*65,480f to 94f+i*65,620f to 118f+i*65),intArrayOf(NAVY,TEAL,ORANGE,0xffbb5279.toInt())[i],if(i==3)18f else (i+1)*3f,topic=="dashes"||i==2)
@@ -180,7 +180,7 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
             }
             "pages","split"->{
                 val backgrounds=intArrayOf(Color.WHITE,0xff242b39.toInt(),0xffffedc9.toInt(),0xffdef4e9.toInt())
-                for(i in 0..3){canvas.save();canvas.translate(45f+(i%2)*415f,25f+(i/2)*192f);canvas.clipRect(0f,0f,390f,173f);renderer.background(canvas,Page(background=if(i==0)"grid"else"dots"),RectF(0f,0f,390f,173f),backgrounds[i]);canvas.restore();badge(i+1,75f+(i%2)*415f,55f+(i/2)*192f)}
+                for(i in 0..3){canvas.save();canvas.translate(45f+i*205f,25f);canvas.clipRect(0f,0f,195f,370f);renderer.background(canvas,Page(background=if(i==0)"grid"else"dots"),RectF(0f,0f,195f,370f),backgrounds[i]);canvas.restore();badge(i+1,75f+i*205f,55f)}
             }
             "geometry"->{
                 renderer.draw(canvas,Item(kind="shape",shape="ruler",x=85f,y=180f,w=390f,h=70f,color=NAVY))
@@ -213,6 +213,14 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
                 line(listOf(90f to 325f,810f to 325f),MUTED,2f)
                 shape("arrow",600f,278f,130f,1f,ORANGE)
                 text("Change a control","کنترل را تغییر دهید",135f,110f)
+            }
+            "shared-room"->{
+                val colors=intArrayOf(TEAL,ORANGE,0xff7754ad.toInt())
+                listOf("View" to "مشاهده","Control" to "کنترل","Collaborate" to "همکاری").forEachIndexed{i,label->
+                    val x=65f+i*275;shape("rectangle",x,115f,240f,180f,colors[i],3f);badge(i+1,x+30,145f);text(label.first,label.second,x+20,265f,colors[i])
+                }
+                text("Local profiles · shared board","پروفایل محلی · تختهٔ مشترک",120f,70f)
+                text("Same Wi-Fi / LAN / hotspot","یک وای‌فای، شبکه یا هات‌اسپات",120f,360f)
             }
             "games"->{
                 shape("rectangle",130f,63f,550f,280f,MUTED,2f)

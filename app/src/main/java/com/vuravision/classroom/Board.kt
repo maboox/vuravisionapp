@@ -6,6 +6,26 @@ import android.view.*
 import kotlin.math.*
 
 class Board(context: Context, val store: Store, val renderer: Renderer) : View(context) {
+    var sessionCanEdit=true
+    var canEditItem:(Item)->Boolean={true}
+    var onInteraction:(MotionEvent)->Unit={}
+    var onViewportChanged:()->Unit={}
+    var roomOverlay:RoomPresenceOverlay?=null
+    var selectionColor=0xffe46d38.toInt()
+    private var remotePreviews:Set<String> = emptySet()
+    val hasActiveInteraction get()=isDrawing||changed||navigationActive||transforming.isNotEmpty()
+    fun reconcilePage(){activePane=activePane.coerceIn(store.page.panes.indices);selected.retainAll(store.page.items.map{it.id}.toSet());sceneChanged()}
+    fun applySharedPane(index:Int){activePane=index.coerceIn(store.page.panes.indices);clearSelection();sceneChanged()}
+    fun paneScreenBounds(index:Int)=paneRect(index.coerceIn(store.page.panes.indices))
+    fun screenRect(bounds:RectF,index:Int=activePane):RectF {
+        val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val state=store.page.panes[n]
+        return RectF(r.left+density*(state.tx+bounds.left*state.zoom),r.top+density*(state.ty+bounds.top*state.zoom),r.left+density*(state.tx+bounds.right*state.zoom),r.top+density*(state.ty+bounds.bottom*state.zoom))
+    }
+    fun selectionScreenBounds():RectF?=chosen().takeIf{it.isNotEmpty()}?.let{screenRect(contentBounds(it))}
+    fun viewportWorld():RoomRect {val r=paneRect(activePane);val a=world(r.left,r.top);val b=world(r.right,r.bottom);return RoomRect(a.x,a.y,b.x,b.y)}
+    fun roomPreviews():List<Item> =(live.values.toList()+listOfNotNull(geometry.preview())+store.page.items.filter{it.id in transforming}).take(8).map {v->
+        v.deepCopy().apply{if(points.size>2000){val source=points;points=(0..1999).map{source[(it.toLong()*(source.size-1)/1999).toInt()].copy()}.toMutableList()}}
+    }
     var interactiveResize=false
     var fixedPageWidth:Float?=null
     var fixedPageHeight:Float?=null
@@ -170,7 +190,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(id in guideStopped)return
         val tolerance=14f/store.page.panes[o.pane].zoom
         if(!guides.containsKey(id) && guideSnapEnabled && tool!="smart"){
-            val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==o.pane && it.shape in GeometryTools.keys && GeometryTools.snap(it,point.x,point.y,tolerance)!=null}
+            val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==o.pane && canEditItem(it) && it.shape in GeometryTools.keys && GeometryTools.snap(it,point.x,point.y,tolerance)!=null}
             if(guide!=null){
                 guides[id]=guide;guideLengths[id]=0f
                 o.points.clear();renderer.forgetInk(o.id);smoothers.remove(id);cancelHold(id)
@@ -228,7 +248,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         setBackgroundColor(Color.WHITE)
     }
 
-    fun chosen() = if(selected.isEmpty()) emptyList() else store.page.visibleItems().filter { it.pane==activePane && it.id in selected && store.page.editable(it) && !it.locked }
+    fun chosen() = if(selected.isEmpty()) emptyList() else store.page.visibleItems().filter { it.pane==activePane && it.id in selected && canEditItem(it) && store.page.editable(it) && !it.locked }
 
     fun clearSelection() {
         selected.clear()
@@ -247,7 +267,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
         geometry.cancel()
         if(changed){store.cancelCheckpoint();changed=false}
-        actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";sceneChanged()
+        actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";navigationActive=false;touchFocus=null;tappedSelected=false;sceneChanged()
     }
     fun navigateGesture(e:MotionEvent){
         for(i in 0 until e.pointerCount)pointerPanes[e.getPointerId(i)]=activePane
@@ -291,7 +311,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun insert(o: Item) {
-        if(!store.page.canDraw())return
+        if(!sessionCanEdit||!store.editAllowed()||!store.page.canDraw())return
         o.layerId=store.page.activeLayerId
         o.pane=activePane
         if(o.kind in listOf("text","sticky"))TextLayout.fit(o)
@@ -332,10 +352,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun finishResize(){interactiveResize=false;onSizeChanged(width,height,width,height);invalidate()}
     private fun transformCanvas(c:Canvas,index:Int=activePane) {val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val p=store.page.panes[n];c.clipRect(r);c.translate(r.left,r.top);c.scale(density,density);c.translate(p.tx,p.ty);c.scale(p.zoom,p.zoom) }
     override fun onDraw(c:Canvas) {
+        val previewIds=roomOverlay?.previewIds().orEmpty()
+        if(previewIds!=remotePreviews){remotePreviews=previewIds;backingDirty=true}
         val page=store.page
         val navigating=navigationActive || mode=="navigate"
         val age=android.os.SystemClock.uptimeMillis()-lastFullRender
-        if(navigating && page.panes.size==1 && live.isEmpty() && backingDirty && cachedPage===page && backing!=null && age<80){
+        if(roomOverlay==null && navigating && page.panes.size==1 && live.isEmpty() && backingDirty && cachedPage===page && backing!=null && age<80){
             c.drawColor(page.panes[0].background)
             val ratio=zoom/cachedZoom
             c.save();c.translate(density*(tx-cachedTx*ratio),density*(ty-cachedTy*ratio));c.scale(ratio,ratio);c.drawBitmap(backing!!,0f,0f,p);c.restore()
@@ -344,7 +366,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(backing==null){
             page.panes.indices.forEach{index->c.save();transformCanvas(c,index)
                 val clip=RectF(c.clipBounds);renderer.background(c,page,clip,page.panes[index].background)
-                renderer.scene(c,page,region=clip,pane=index,exclude=transforming);c.restore()}
+                renderer.scene(c,page,region=clip,pane=index,exclude=transforming+remotePreviews);c.restore()}
         }
         backing?.let { bitmap ->
             val target=backingCanvas?:Canvas(bitmap);target.save()
@@ -355,13 +377,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     target.save();transformCanvas(target,index)
                     val screen=paneRect(index);val l=world(screen.left,screen.top,index);val r=world(screen.right,screen.bottom,index)
                     renderer.background(target,page,RectF(l.x,l.y,r.x,r.y),page.panes[index].background)
-                    renderer.scene(target,page,region=RectF(l.x,l.y,r.x,r.y),pane=index,exclude=transforming);target.restore()
+                    renderer.scene(target,page,region=RectF(l.x,l.y,r.x,r.y),pane=index,exclude=transforming+remotePreviews);target.restore()
                 }
                 cachedPage=page;backingDirty=false;cacheRebuilds++;lastFullRender=android.os.SystemClock.uptimeMillis();cachedZoom=zoom;cachedTx=tx;cachedTy=ty
             } else dirtyRegion?.let { region ->
                 target.save();transformCanvas(target);target.clipRect(region)
                 renderer.background(target,page,region,pane.background)
-                renderer.scene(target,page,region=region,pane=activePane)
+                renderer.scene(target,page,region=region,pane=activePane,exclude=transforming+remotePreviews)
                 target.restore()
             }
             dirtyRegion=null
@@ -380,7 +402,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             c.restore()
         }
         c.save();transformCanvas(c)
-        p.color = 0xffe46d38.toInt()
+        p.color = selectionColor
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1.5f / zoom
         val items = chosen()
@@ -418,9 +440,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             p.style=Paint.Style.STROKE;p.strokeWidth=density
             store.page.panes.indices.forEach{index->p.color=if(index==activePane)0xff9990b5.toInt()else 0xffdcd9e5.toInt();val border=paneRect(index);border.inset(density/2,density/2);c.drawRect(border,p)}
         }
+        roomOverlay?.draw(c)
     }
 
-    override fun onTouchEvent(e: MotionEvent): Boolean {
+    override fun onTouchEvent(e:MotionEvent):Boolean {
+        val result=handleTouch(e);onInteraction(e);onViewportChanged();return result
+    }
+    private fun handleTouch(e: MotionEvent): Boolean {
         if(!isEnabled)return true
         if(gestures.event(e))return true
         if(e.actionMasked==MotionEvent.ACTION_DOWN)onActivate()
@@ -438,6 +464,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             pointerPanes[id]=n
             if(e.actionMasked==MotionEvent.ACTION_DOWN && activePane!=n){activePane=n;clearSelection()}
         }
+        if(!sessionCanEdit||!store.editAllowed()){navigate(e);return true}
         val at = world(e.getX(e.actionIndex), e.getY(e.actionIndex),pointerPanes[id]?:activePane)
         if(geometry.active){geometry.event(e,at);if(!geometry.active){transforming=emptySet();backingDirty=true;pointerPanes.clear()};invalidate();return true}
         if(e.actionMasked==MotionEvent.ACTION_DOWN && tool!="erase" && tool!="fill" && geometry.start(at,22f/zoom)){
@@ -446,7 +473,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(tool=="fill"){
             if(e.actionMasked==MotionEvent.ACTION_UP){val target=store.page.visibleItems().asReversed().firstOrNull{it.pane==activePane&&(ShapeFill.contains(it,at.x,at.y)||it.hit(at.x,at.y,0f))}
                 if(target!=null&&ShapeFill.contains(target,at.x,at.y)){
-                    if(!target.locked&&store.page.editable(target))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
+                    if(!target.locked&&canEditItem(target)&&store.page.editable(target))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
                 }else if((target==null || target.id==pdfBaseId) && fillColor!=null)HandFill.create(store.page,activePane,at.x,at.y,fillColor!!,fillAlpha)?.let{result->
                     store.editMetadata{store.page.items.add(result.index,result.item)}
                 }
@@ -675,7 +702,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     if(tool=="pen")mindStart[id]?.let{if(MindMap.attach(store.page,o,it.x,it.y))backingDirty=true}
                     renderer.forgetInk(o.id)
                     if(tool=="smart" && smartMode!="shape"){
-                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{store.page.editable(it)})else emptyList()
+                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{store.page.editable(it)&&canEditItem(it)})else emptyList()
                         if(enclosed.isNotEmpty())post{onSmart(enclosed)}
                         else android.widget.Toast.makeText(context,context.tr("Circle existing writing with a closed loop. Use Pen to write.","دور نوشتهٔ قبلی یک خط بسته بکشید. برای نوشتن از قلم استفاده کنید."),android.widget.Toast.LENGTH_SHORT).show()
                     }else if(tool=="smart" && smartMode=="shape"){
@@ -689,7 +716,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 actions.remove(id);eraseLast.remove(id);broadPointers.remove(id);pointerPanes.remove(id)
                 if (id == primary) {
                     box?.let { rect ->
-                        selected.addAll(SmartSelection.selectGesture(lasso,rect,store.page.visibleItems().filter{it.pane==activePane&&store.page.editable(it)&&!it.locked},selectionMode).map{it.id})
+                        selected.addAll(SmartSelection.selectGesture(lasso,rect,store.page.visibleItems().filter{it.pane==activePane&&store.page.editable(it)&&canEditItem(it)&&!it.locked},selectionMode).map{it.id})
                     }
                     box = null
                     lasso.clear()
@@ -773,11 +800,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         val radius=eraserRadius/store.page.panes[index].zoom
         val region=RectF(min(from.x,q.x)-radius-4/zoom,min(from.y,q.y)-radius-4/zoom,max(from.x,q.x)+radius+4/zoom,max(from.y,q.y)+radius+4/zoom)
         if(dirtyRegion==null)dirtyRegion=region else dirtyRegion!!.union(region)
-        if(eraserMode=="area")store.page.items.filter{it.pane==index && store.page.editable(it) && (eraseObjects||it.kind=="ink")}.forEach{Erasing.cut(it,from,q,radius)}
+        if(eraserMode=="area")store.page.items.filter{it.pane==index && store.page.editable(it)&&canEditItem(it) && (eraseObjects||it.kind=="ink")}.forEach{Erasing.cut(it,from,q,radius)}
         else {
             val steps=ceil(hypot(q.x-from.x,q.y-from.y)/max(radius*.5f,1f)).toInt().coerceIn(1,20000)
             store.page.items.removeAll { o ->
-                if(o.pane!=index || o.locked || !store.page.editable(o) || (!eraseObjects&&o.kind!="ink"))false else {
+                if(o.pane!=index || o.locked || !store.page.editable(o) || !canEditItem(o) || (!eraseObjects&&o.kind!="ink"))false else {
                     val bounds=itemBounds(o).apply{inset(-o.width*3-4,-o.width*3-4)}
                     val removed=RectF.intersects(bounds,region) && (0..steps).any { i ->val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)}
                     if(removed)dirtyRegion?.union(bounds)

@@ -4,13 +4,13 @@
     "titleEn": "Meet your board",
     "titleFa": "آشنایی با تخته",
     "stepsEn": [
-      "The top floating bar contains the main menu, lesson files, Undo, Redo and sharing. The left dock contains drawing and classroom tools. Hold an icon to see its name.",
+      "The main Menu, Files, Undo, Redo and Share controls sit at the bottom-right, beside Hide toolbars. Drawing tools stay on the side; ordinary dialogs open in the center.",
       "Tap Pen and write in the canvas. Tap the selected Pen icon again to open its settings; the same second-tap gesture opens Eraser settings.",
       "The bottom page strip manages lesson pages. The corner full-screen button hides or restores the floating toolbars.",
       "The optional voice assistant is hidden and off by default. The administrator enables it in hidden Engineering → Assistant behavior. Then the separate lower-right button starts/ends a Persian conversation about the visible board/PDF, even when drawing toolbars are hidden."
     ],
     "stepsFa": [
-      "نوار شناور بالا شامل منوی اصلی، فایل درس، بازگردانی، انجام دوباره و اشتراک است. نوار کناری ابزارهای رسم و کلاس را دارد. برای دیدن نام ابزار، آیکون را نگه دارید.",
+      "منوی اصلی، فایل‌ها، Undo، Redo و اشتراک پایین راست کنار پنهان کردن ابزارها هستند. ابزارهای رسم کنار صفحه می‌مانند و پنجره‌های معمولی وسط باز می‌شوند.",
       "قلم را انتخاب کنید و روی تخته بنویسید. برای تنظیمات قلم، دوباره روی آیکون قلم انتخاب‌شده بزنید؛ تنظیمات پاک‌کن هم با همین روش باز می‌شود.",
       "نوار پایین برای مدیریت صفحه‌های درس است. دکمهٔ تمام‌صفحه در گوشه، نوارهای ابزار را پنهان یا دوباره نمایش می‌دهد.",
       "دستیار صوتی اختیاری پیش‌فرض خاموش و پنهان است. مدیر از تنظیمات مخفی ← رفتار دستیار صوتی فعالش می‌کند. سپس دکمهٔ مستقل پایین راست، مکالمهٔ فارسی دربارهٔ تخته و PDF نمایان را شروع یا پایان می‌دهد؛ حتی با پنهان کردن نوارهای رسم."
@@ -131,12 +131,14 @@
     "stepsEn": [
       "Tap Select, then tap its active icon again for Selection settings. Free selection is the default and draws only a loop; Box selection draws only a dashed rectangle. Tap an individual object or enclose object centres to select them.",
       "Drag selected content to move it, or use handles to resize and rotate. The action bar is near the bottom. Images and PDF snapshots offer Crop instead of a color action.",
-      "Duplicate immediately creates another copy and uses the + icon; there is no board Copy/Paste. Crop opens a bright rectangle with dimmed surroundings: drag any edge or corner, move the rectangle, then press Crop. Undo restores the original."
+      "Duplicate immediately creates another copy and uses the + icon; there is no board Copy/Paste. Crop opens a bright rectangle with dimmed surroundings: drag any edge or corner, move the rectangle, then press Crop. Undo restores the original.",
+      "Object actions appear above or beside the selected object. Nested menus have a Back arrow at the top."
     ],
     "stepsFa": [
       "انتخاب را بزنید و برای تنظیمات، دوباره روی آیکون فعال انتخاب بزنید. پیش‌فرض انتخاب آزاد است و فقط مسیر آزاد نشان داده می‌شود؛ انتخاب کادری فقط مستطیل خط‌چین دارد. روی یک شیء بزنید یا مرکز اشیاء را داخل محدودهٔ انتخاب قرار دهید.",
       "محتوای انتخاب‌شده را برای جابه‌جایی بکشید یا از دستگیره‌ها برای تغییر اندازه و چرخش استفاده کنید. نوار ویرایش نزدیک پایین صفحه است. تصاویر و عکس آزمایش به‌جای گزینهٔ رنگ، کراپ دارند.",
-      "تکثیر با آیکون + یک نسخهٔ تازه می‌سازد؛ کپی و پیست اشیاء حذف شده‌اند. کراپ، کادر روشن و اطراف تیره دارد؛ گیرهٔ هر طرف یا گوشه را بکشید یا کادر را جابه‌جا کنید و کراپ را بزنید. بازگردانی تصویر اصلی را برمی‌گرداند."
+      "تکثیر با آیکون + یک نسخهٔ تازه می‌سازد؛ کپی و پیست اشیاء حذف شده‌اند. کراپ، کادر روشن و اطراف تیره دارد؛ گیرهٔ هر طرف یا گوشه را بکشید یا کادر را جابه‌جا کنید و کراپ را بزنید. بازگردانی تصویر اصلی را برمی‌گرداند.",
+      "عملیات آبجکت بالا یا کنار انتخاب باز می‌شود. منوهای داخلی فلش بازگشت در بالا دارند."
     ],
     "tipEn": "Keep locked objects on a separate layer while editing annotations above them.",
     "tipFa": "هنگام نوشتن توضیح روی محتوا، اشیای ثابت را در لایهٔ جدا قفل کنید."
@@ -149,13 +151,13 @@
       "The Pan tool navigates the canvas instead of drawing. Drag to move the view and use supported two-contact gestures to zoom.",
       "In Pen + touch mode, a broad contact can select while the fine tip writes. Two broad contacts navigate. Accurate separation requires contact-size reporting and calibration.",
       "Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view.",
-      "Two quick stationary taps with two nearby fingers undo one edit. Moving contacts navigate instead. This gesture can be disabled in Input controls. Hold the second two-finger tap and slide left/right to browse undo and redo, then release at the desired step. The pie menu is available in normal Settings and has a bottom toolbar button. Enable it, assign shortcuts and double tap with five fingers. It shows assigned shortcuts, or six plus buttons when empty."
+      "Two quick stationary taps with two nearby fingers undo one edit. Moving contacts navigate instead. This gesture can be disabled in Input controls. Hold the second two-finger tap and slide left/right to browse undo and redo, then release at the desired step. The pie menu is enabled and configured in normal Settings. Enable it, assign shortcuts and double tap with five fingers. It shows assigned shortcuts, or six plus buttons when empty."
     ],
     "stepsFa": [
       "ابزار جابه‌جایی، نمای تخته را حرکت می‌دهد و چیزی رسم نمی‌کند. برای حرکت نما بکشید و برای بزرگ‌نمایی از حرکت دو تماس پشتیبانی‌شده استفاده کنید.",
       "در حالت قلم و لمس، تماس پهن می‌تواند انتخاب کند و سر باریک بنویسد. دو تماس پهن برای جابه‌جایی و بزرگ‌نمایی‌اند. تفکیک درست به گزارش اندازهٔ تماس و کالیبراسیون وابسته است.",
       "جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید.",
-      "دو بار سریع با دو انگشت نزدیک به هم ضربه بزنید تا یک مرحله بازگردد. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را زنده مرور کنید؛ دست را در مرحلهٔ دلخواه بردارید. پای‌منو از تنظیمات معمول قابل فعال‌سازی و تنظیم است؛ با دکمهٔ نوار پایین یا دو ضربهٔ پنج‌انگشتی باز می‌شود. فقط میان‌برهای انتخاب‌شده را نشان می‌دهد؛ در حالت خالی شش دکمهٔ + دارد."
+      "دو بار سریع با دو انگشت نزدیک به هم ضربه بزنید تا یک مرحله بازگردد. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را زنده مرور کنید؛ دست را در مرحلهٔ دلخواه بردارید. پای‌منو از تنظیمات معمول قابل فعال‌سازی و تنظیم است؛ با دو ضربهٔ پنج‌انگشتی باز می‌شود. فقط میان‌برهای انتخاب‌شده را نشان می‌دهد؛ در حالت خالی شش دکمهٔ + دارد."
     ],
     "tipEn": "If a finger writes instead of navigating, check the input mode and contact thresholds.",
     "tipFa": "اگر انگشت به‌جای جابه‌جایی می‌نویسد، حالت ورودی و آستانهٔ اندازهٔ تماس را بررسی کنید."
@@ -478,7 +480,8 @@
       "Settings → Fonts chooses Persian and English independently, with previews. New text and smart conversion keep the font pair in the project. Optionally apply the pair to editable text on the active page; Undo restores the previous fonts.",
       "The voice assistant is off and hidden by default. Once enabled by the administrator, Settings → Voice assistant selects Gemini, OpenAI or OpenRouter and stores each key separately. Active conversations send audio and workspace images to the selected service. OpenRouter is turn-based. Leaving the app ends the conversation. Settings → Google search settings chooses Ask each time, Internal floating browser or Default device browser.",
       "During a voice conversation, the microphone mute button stops recording and sending your voice while assistant playback continues. Google search settings separates browser destination from Review text before search; disabling review opens the first nonempty recognition result directly.",
-      "Hidden settings: About VuraVision → double tap the logo → wait 1–3 seconds → double tap again. Assistant and pie menu stay disabled until enabled there."
+      "Hidden settings: About VuraVision → double tap the logo → wait 1–3 seconds → double tap again. Shared room is experimental there. Pie menu is in normal Settings, off by default; open it with the five-finger double tap.",
+      "Settings → Device profile sets your local name, color and emoji or photo. It is shown to other devices only while sharing a room."
     ],
     "stepsFa": [
       "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
@@ -487,9 +490,33 @@
       "تنظیمات → فونت‌ها، انتخاب مستقل فارسی و انگلیسی و پیش‌نمایش دارد. متن تازه و تبدیل هوشمند فونت‌ها را در پروژه نگه می‌دارند. می‌توانید روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال کنید؛ بازگردانی فونت قبلی را برمی‌گرداند.",
       "دستیار صوتی پیش‌فرض خاموش و پنهان است. پس از فعال‌سازی مدیر، تنظیمات ← دستیار صوتی انتخاب Gemini، OpenAI یا OpenRouter و کلید جداگانه دارد. مکالمهٔ فعال صدا و تصویر فضای کار را به سرویس انتخابی می‌فرستد. OpenRouter نوبتی است. خروج از برنامه مکالمه را پایان می‌دهد. تنظیمات ← جستجوی گوگل، انتخاب هر بار بپرس، مرورگر داخلی شناور یا مرورگر پیش‌فرض دستگاه دارد.",
       "در مکالمهٔ صوتی، دکمهٔ میوت میکروفن ضبط و ارسال صدای شما را متوقف می‌کند و صدای دستیار ادامه دارد. تنظیمات جستجوی گوگل، مقصد مرورگر را از بررسی متن قبل از جستجو جدا می‌کند؛ با خاموش کردن بررسی، اولین نتیجهٔ غیرخالی مستقیم جست‌وجو می‌شود.",
-      "تنظیمات مخفی: دربارهٔ VuraVision ← دو ضربه روی لوگو ← انتظار ۱ تا ۳ ثانیه ← دوباره دو ضربه. دستیار و پای‌منو تا فعال‌سازی از این بخش خاموش‌اند."
+      "تنظیمات مخفی: دربارهٔ VuraVision ← دو ضربه روی لوگو ← انتظار ۱ تا ۳ ثانیه ← دوباره دو ضربه. اتاق مشترک آزمایشی اینجاست. پای‌منو در تنظیمات معمولی و پیش‌فرض خاموش است؛ با دو ضربهٔ پنج‌انگشتی باز می‌شود.",
+      "تنظیمات ← پروفایل دستگاه، نام، رنگ و ایموجی یا عکس محلی شما را تنظیم می‌کند؛ فقط هنگام کار در اتاق به دستگاه‌های دیگر نشان داده می‌شود."
     ],
     "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
     "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."
+  },
+  {
+    "id": "shared-room",
+    "titleEn": "Shared room · experimental",
+    "titleFa": "اتاق مشترک · آزمایشی",
+    "stepsEn": [
+      "Set a name, color and emoji or photo in Settings → Device profile. No account is needed; the profile stays on this device.",
+      "Open hidden Engineering from the About logo gesture, then Shared room. The host creates a room from the current whiteboard. Connect all devices to the same Wi-Fi, LAN or hotspot.",
+      "Guests find rooms automatically, scan the invitation QR, choose a QR image or enter the address. QR does not join Wi-Fi or connect separate networks. Guests see no board until the host approves them.",
+      "View follows the host page and camera. Control shares host tools, page, camera and Undo. Collaborate keeps independent tools and page views; Undo affects your own changes.",
+      "Live strokes and names use profile colors. The first selection leases the object; other users see its colored outline. Last activity fades within one minute. Conflicting edits are restored from the host without overwriting later edits by someone else.",
+      "A short interruption reconnects automatically. Reconnect to previous room restores a guest session after reopening. Leaving keeps the board as a local project; a host leaving closes the room. Images and board PDF objects transfer; the separate PDF reading workspace stays local."
+    ],
+    "stepsFa": [
+      "از تنظیمات ← پروفایل دستگاه، نام، رنگ و ایموجی یا عکس را تعیین کنید. حساب لازم نیست و پروفایل روی همین دستگاه می‌ماند.",
+      "با ژست لوگوی درباره، بخش مخفی مهندسی و سپس اتاق مشترک را باز کنید. میزبان از تختهٔ فعلی اتاق می‌سازد. همهٔ دستگاه‌ها به یک وای‌فای، شبکهٔ محلی یا هات‌اسپات وصل باشند.",
+      "مهمان اتاق را خودکار پیدا می‌کند، QR دعوت را اسکن می‌کند، عکس QR انتخاب می‌کند یا آدرس می‌دهد. QR به وای‌فای وصل نمی‌کند و شبکه‌های جدا را به هم متصل نمی‌کند. پیش از تأیید میزبان، تخته به مهمان نمی‌رسد.",
+      "مشاهده صفحه و نمای میزبان را دنبال می‌کند. کنترل، ابزار، صفحه، نما و Undo میزبان را مشترک می‌کند. همکاری ابزار و نمای مستقل دارد و Undo فقط تغییرات خودتان را برمی‌گرداند.",
+      "خط زنده و نام هر نفر به رنگ پروفایلش دیده می‌شود. اولین انتخاب، آبجکت را موقتاً در اختیار می‌گیرد؛ بقیه حاشیهٔ رنگی را می‌بینند. آخرین فعالیت تا یک دقیقه محو می‌شود. تغییر متعارض از نسخهٔ میزبان بازیابی می‌شود و ویرایش بعدی دیگری با Undo پاک نمی‌شود.",
+      "قطع کوتاه خودکار دوباره وصل می‌شود. اتصال دوباره به اتاق قبلی، نشست مهمان را پس از باز کردن برنامه بازیابی می‌کند. خروج، تخته را پروژهٔ محلی نگه می‌دارد؛ خروج میزبان اتاق را می‌بندد. عکس و PDF روی تخته منتقل می‌شوند و فضای جداگانهٔ مطالعهٔ PDF محلی می‌ماند."
+    ],
+    "tipEn": "Start with two devices and approve View first, then try Control and Collaborate. This experimental feature still needs device acceptance testing.",
+    "tipFa": "با دو دستگاه شروع کنید؛ ابتدا مشاهده و سپس کنترل و همکاری را امتحان کنید. این قابلیت آزمایشی هنوز به آزمون روی دستگاه نیاز دارد."
   }
 ]

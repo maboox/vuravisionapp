@@ -18,7 +18,7 @@ object IconCatalog {
         "text","fonts","text_size"->R.drawable.feather_type;"layers","new_layer"->R.drawable.feather_layers
         "smart","evaluate","solve","math","formula"->R.drawable.feather_zap
         "tools"->R.drawable.vura_toolbox;"timer","stopwatch"->R.drawable.feather_clock;"split"->R.drawable.feather_columns
-        "menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
+        "shared_room","device_profile"->R.drawable.vura_people;"menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
         "undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
         "share","share_pdf"->R.drawable.feather_share_2;"previous","move_left"->R.drawable.feather_chevron_left
         "next","move_right"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
@@ -76,7 +76,7 @@ fun Context.infoTitle(title:String,details:String):View=row().apply{
     },LinearLayout.LayoutParams(dp(44),dp(44)))
 }
 
-fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit),choose:(Int)->Unit):View {
+fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit)?,choose:(Int)->Unit):View {
     val r=row();var selected=initial;val cells=mutableListOf<View>()
     colors.distinct().forEach{color->
         val cell=object:View(this){private val p=Paint(Paint.ANTI_ALIAS_FLAG)
@@ -84,8 +84,8 @@ fun Context.colorPalette(initial:Int,colors:List<Int>,add:(()->Unit),choose:(Int
         }.apply{contentDescription=String.format(java.util.Locale.US,"#%06X",color and 0xffffff);tooltipText=contentDescription;isFocusable=true;setOnClickListener{selected=color;choose(color);cells.forEach{it.invalidate()}}}
         cells.add(cell);r.addView(cell,LinearLayout.LayoutParams(dp(46),dp(48)))
     }
-    val plus=WorkspaceIcon(this,"insert",tr("Add color to this lesson","افزودن رنگ به این فایل")){add()}
-    plus.background=rounded(SURFACE,dp(24).toFloat(),OUTLINE);r.addView(plus,LinearLayout.LayoutParams(dp(46),dp(48)))
+    if(add!=null){val plus=WorkspaceIcon(this,"insert",tr("Add color to this lesson","افزودن رنگ به این فایل")){add()}
+    plus.background=rounded(SURFACE,dp(24).toFloat(),OUTLINE);r.addView(plus,LinearLayout.LayoutParams(dp(46),dp(48)))}
     return scrollRow(r)
 }
 

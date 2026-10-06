@@ -237,8 +237,9 @@ object Games {
             context.label(context.s("games"), 28f, NAVY, true),
             LinearLayout.LayoutParams(0, -2, 1f),
         )
-        if(back!=null)head.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         head.addView(context.button(context.s("close")) { d.dismiss() })
+        root.addView(context.navigationHeading(context.s("games"),back?.let{action->{d.dismiss();action()}}))
+        head.removeViewAt(0)
         root.addView(context.label(context.s("games_intro"), 15f, MUTED))
         val search=EditText(context).apply{
             hint=context.tr("Search games","جست‌وجوی بازی‌ها")
@@ -330,8 +331,7 @@ object Games {
                 pad(14)
             }
         val header = context.row()
-        val heading = context.label(context.s(key), 23f, NAVY, true)
-        root.addView(heading)
+        root.addView(context.navigationHeading(context.s(key),back?.let{action->{d.dismiss();action()}}))
         val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
         root.addView(score)
         root.addView(context.label(context.s("game_layout_help"),13f,MUTED))
@@ -515,7 +515,6 @@ object Games {
                 render()
             }
         )
-        if(back!=null)header.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         header.addView(context.button(context.s("close")) { d.dismiss() })
         action.setOnClickListener {
             if (!started || game.finished || !game.resolved) {

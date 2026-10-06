@@ -101,7 +101,7 @@ class Release19Test {
     }
     @Test fun guideHasOrderedBilingualPdfChapters(){
         val topics=UserGuide.topics(context)
-        assertEquals(27,topics.size)
+        assertEquals(28,topics.size)
         assertTrue(topics.indexOfFirst{it.id=="pdf-reader"}<topics.indexOfFirst{it.id=="pdf-save"})
         assertTrue(topics.all{it.stepsEn.size==it.stepsFa.size && it.titleEn.isNotBlank() && it.titleFa.isNotBlank()})
     }

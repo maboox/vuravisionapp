@@ -29,7 +29,9 @@ class GoogleSearchSettingsUi(private val activity:Activity) {
         val destination=Spinner(activity).apply{adapter=OptionAdapter(activity,listOf(tr("Ask each time","هر بار بپرس"),tr("Internal floating browser","مرورگر داخلی شناور"),tr("Default device browser","مرورگر پیش‌فرض دستگاه")));setSelection(GoogleSearchSettings.destinations.indexOf(initial.destination))};content.addView(destination)
         val adjacent=CheckBox(activity).apply{text=tr("Request external browser beside the board (if supported)","درخواست مرورگر خارجی کنار تخته (اگر دستگاه پشتیبانی کند)");isChecked=initial.adjacent};content.addView(adjacent)
         val review=Switch(activity).apply{text=tr("Review text before search","بررسی متن قبل از جست‌وجو");isChecked=initial.review};content.addView(review)
-        val dialog=MaterialAlertDialogBuilder(activity).setTitle(activity.s("google_search_settings")).setView(content).setNegativeButton(activity.s(if(back==null)"cancel"else"menu_back")){_,_->back?.invoke()}.setOnCancelListener{back?.invoke()}.setPositiveButton(activity.s("apply")){_,_->GoogleSearchSettings(GoogleSearchSettings.destinations[destination.selectedItemPosition],adjacent.isChecked,review.isChecked).save(activity)}.show()
+        var close:()->Unit={}
+        val dialog=MaterialAlertDialogBuilder(activity).setCustomTitle(activity.navigationHeading(activity.s("google_search_settings"),back?.let{action->{close();action()}})).setView(content).setNegativeButton(activity.s("cancel"),null).setOnCancelListener{back?.invoke()}.setPositiveButton(activity.s("apply")){_,_->GoogleSearchSettings(GoogleSearchSettings.destinations[destination.selectedItemPosition],adjacent.isChecked,review.isChecked).save(activity)}.show()
+        close=dialog::dismiss
         Fonts.onShown(dialog)
     }
 }

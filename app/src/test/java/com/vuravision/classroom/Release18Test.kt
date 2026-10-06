@@ -91,7 +91,7 @@ class Release18Test {
     @Test fun guideIsCompleteSearchableAndBilingual(){
         val media=Media(ctx)
         try{
-            val topics=UserGuide.topics(ctx);assertEquals(27,topics.size);assertEquals(27,topics.map{it.id}.distinct().size)
+            val topics=UserGuide.topics(ctx);assertEquals(28,topics.size);assertEquals(28,topics.map{it.id}.distinct().size)
             assertTrue(topics.all{it.stepsEn.size==it.stepsFa.size && it.stepsEn.size>=3 && it.titleFa.isNotBlank() && it.tipEn.isNotBlank()})
             UserGuide.show(ctx,media){}
             val d=ShadowDialog.getLatestDialog()

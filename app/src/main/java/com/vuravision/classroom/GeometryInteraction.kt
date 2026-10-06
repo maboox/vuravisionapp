@@ -11,6 +11,7 @@ class GeometryInteraction(private val board:Board){
     private val arcPath=Path();private val arcPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeCap=Paint.Cap.ROUND;strokeJoin=Paint.Join.ROUND}
     private val handlePaint=Paint(Paint.ANTI_ALIAS_FLAG)
     val active get()=guide!=null
+    fun preview():Item?=arc?.deepCopy()?.apply{if(kind=="ink"){w=1f;h=1f;inkW=1f;inkH=1f}}
     fun handles(o:Item):Map<String,Pair<Float,Float>> {
         if(o.shape=="compass"){
             val cy=if(o.geometryVersion==1)o.h/2 else 0f;val r=GeometryTools.radius(o);val a=o.geometryAngle*PI/180
@@ -22,7 +23,7 @@ class GeometryInteraction(private val board:Board){
         return result
     }
     fun start(point:PointF,tolerance:Float):Boolean {
-        val pair=board.store.page.visibleItems().asReversed().filter{it.pane==board.activePane&&it.shape in GeometryTools.keys && !it.locked&&board.store.page.editable(it)}.firstNotNullOfOrNull{o->handles(o).entries.map{entry->val p=o.global(entry.value.first,entry.value.second);entry to hypot(point.x-p.first,point.y-p.second)}.filter{it.second<tolerance}.minByOrNull{it.second}?.let{o to it.first.key}}?:return false
+        val pair=board.store.page.visibleItems().asReversed().filter{board.canEditItem(it)&&it.pane==board.activePane&&it.shape in GeometryTools.keys && !it.locked&&board.store.page.editable(it)}.firstNotNullOfOrNull{o->handles(o).entries.map{entry->val p=o.global(entry.value.first,entry.value.second);entry to hypot(point.x-p.first,point.y-p.second)}.filter{it.second<tolerance}.minByOrNull{it.second}?.let{o to it.first.key}}?:return false
         if(pair.second in listOf("turn","angle") && !board.store.page.canDraw())return false
         guide=pair.first;handle=pair.second;base=pair.first.deepCopy();start=point;checkpointed=false;drawingStopped=false;sweep=0f
         if(handle=="turn"){

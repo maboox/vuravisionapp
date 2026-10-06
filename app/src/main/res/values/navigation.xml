@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <item name="menu_back_button" type="id" />
+    <item name="selection_toolbar" type="id" />
     <item name="main_menu_button" type="id" />
     <string name="main_menu">Main menu</string>
 </resources>
