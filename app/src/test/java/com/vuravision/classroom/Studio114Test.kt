@@ -1,6 +1,7 @@
 package com.vuravision.classroom
 
 import android.graphics.*
+import android.os.Looper
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -26,7 +27,13 @@ class Studio114Test {
     private fun trace(vararg points:Pair<Float,Float>){points.forEachIndexed{i,p->event(board,if(i==0)0 else if(i==points.lastIndex)1 else 2,p.first,p.second,200+i*20L)}}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
     private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
-    private fun choose(d:AlertDialog,label:String){val list=d.listView;val index=(0 until list.adapter.count).first{list.adapter.getItem(it).toString()==label};list.performItemClick(list.adapter.getView(index,null,list),index,index.toLong())}
+    private fun choose(d:AlertDialog,label:String){
+        val list=requireNotNull(d.listView){"Expected an open menu containing $label"}
+        val labels=(0 until list.adapter.count).map{list.adapter.getItem(it).toString()}
+        val index=labels.indexOf(label)
+        assertTrue("Menu must contain $label; actual items: $labels",index>=0)
+        list.performItemClick(list.adapter.getView(index,null,list),index,index.toLong())
+    }
     @Test fun freeAndBoxSelectionHaveDifferentHitRegions(){
         val inside=Item(kind="shape",x=20f,y=20f,w=10f,h=10f)
         val outside=Item(kind="shape",x=80f,y=80f,w=10f,h=10f)
@@ -109,7 +116,13 @@ class Studio114Test {
             assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("selection_settings")})
             choose(d,a.s("fonts"));d=ShadowDialog.getLatestDialog() as AlertDialog
             assertEquals(a.s("menu_back"),d.getButton(AlertDialog.BUTTON_NEGATIVE).text.toString());d.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
-            d=ShadowDialog.getLatestDialog() as AlertDialog;choose(d,a.s("pie_settings"))
+            // AlertDialog delivers button callbacks through the main message queue.
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            assertFalse("Back must close the font settings dialog",d.isShowing)
+            val settings=ShadowDialog.getLatestDialog() as AlertDialog
+            assertNotSame("Back must reopen the parent menu",d,settings)
+            assertTrue("The parent settings menu must be visible",settings.isShowing)
+            choose(settings,a.s("pie_settings"))
             d=ShadowDialog.getLatestDialog() as AlertDialog;assertTrue(views(d.window!!.decorView).filterIsInstance<Switch>().any{!it.text.toString().contains("experimental")})
             d.dismiss()
         }finally{ctl.pause().stop().destroy()}
@@ -124,16 +137,34 @@ class Studio114Test {
             assertFalse("copy" in ShortcutCatalog.keys);assertFalse("paste" in ShortcutCatalog.keys);d.dismiss()
         }finally{ctl.pause().stop().destroy()}
     }
-    @Test fun labAndGameCloseAndSaveControlsAreInBottomRows(){
+    @Test
+    @Config(qualifiers="en-w1400dp-h900dp-land-mdpi")
+    fun labAndGameCloseAndSaveControlsAreInBottomRows(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{
-            fun position(text:String):Int {
-                val d=ShadowDialog.getLatestDialog();val root=d.window!!.decorView
-                root.measure(View.MeasureSpec.makeMeasureSpec(1400,1073741824),View.MeasureSpec.makeMeasureSpec(900,1073741824));root.layout(0,0,1400,900)
-                val v=views(root).filterIsInstance<Button>().first{it.text.toString()==text};val p=IntArray(2);v.getLocationInWindow(p);return p[1]
+            fun assertBottomActions(vararg labels:String) {
+                val d=ShadowDialog.getLatestDialog()
+                assertTrue("Lab/game dialog must be visible",d.isShowing)
+                // Measure the app's content, not platform DecorView constraints from
+                // Robolectric's default phone window; use the same panel dimensions.
+                val content=d.findViewById<ViewGroup>(android.R.id.content).getChildAt(0) as LinearLayout
+                val metrics=a.resources.displayMetrics
+                content.measure(View.MeasureSpec.makeMeasureSpec(metrics.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(metrics.heightPixels,View.MeasureSpec.EXACTLY))
+                content.layout(0,0,metrics.widthPixels,metrics.heightPixels)
+                val footer=content.getChildAt(content.childCount-1) as ViewGroup
+                val footerBounds=Rect();footer.getDrawingRect(footerBounds);content.offsetDescendantRectToMyCoords(footer,footerBounds)
+                assertEquals("Action footer must touch the padded bottom: $footerBounds in ${content.width}x${content.height}",content.height-content.paddingBottom,footerBounds.bottom)
+                labels.forEach{label->
+                    val button=views(footer).filterIsInstance<Button>().firstOrNull{it.text.toString()==label}
+                    assertNotNull("Bottom action row must contain $label",button)
+                    val v=requireNotNull(button);val bounds=Rect();v.getDrawingRect(bounds);content.offsetDescendantRectToMyCoords(v,bounds)
+                    assertTrue("$label must have a visible touch target: $bounds",v.isShown && bounds.width()>0 && bounds.height()>0)
+                    assertTrue("$label must sit in the bottom third: $bounds in ${content.width}x${content.height}",bounds.top>=content.height*2/3)
+                    assertTrue("$label must fit in its footer: $bounds in $footerBounds",footerBounds.contains(bounds))
+                }
             }
-            Labs.open(a,"native_lens"){it.recycle()};assertTrue(position(a.s("close"))>600);assertTrue(position(a.s("add_board"))>600);ShadowDialog.getLatestDialog().dismiss()
-            NativeGames.open(a,"arc_math");assertTrue(position(a.s("close"))>600);ShadowDialog.getLatestDialog().dismiss()
+            Labs.open(a,"native_lens"){it.recycle()};assertBottomActions(a.s("close"),a.s("add_board"));ShadowDialog.getLatestDialog().dismiss()
+            NativeGames.open(a,"arc_math");assertBottomActions(a.s("close"));ShadowDialog.getLatestDialog().dismiss()
         }finally{ctl.pause().stop().destroy()}
     }
     @Test fun pageCounterAndPrimaryControlsStayNearBottomInBothLanguages(){

@@ -1,0 +1,48 @@
+{
+  "version": "1.14.1",
+  "version_code": 24,
+  "date_utc": "2026-10-06T08:33:12.275810+00:00",
+  "scope": "Repair the three reported 1.14.0 UI-test failures; no LAN collaboration/casting added.",
+  "supplied_ci_log_1_14_0": {
+    "source": "User-supplied Pasted markdown(4).md",
+    "debug_and_release_kotlin_compilation": "pass",
+    "debug_and_release_java_compilation": "pass",
+    "unit_tests": {
+      "total": 213,
+      "passed": 210,
+      "failed": 3
+    },
+    "failure_task": ":app:testDebugUnitTest",
+    "failed_cases": [
+      "Studio114Test.ordinarySettingsExposePieSelectionAndBackReturnsThroughMenus",
+      "Studio114Test.labAndGameCloseAndSaveControlsAreInBottomRows",
+      "StudioUiTest.settingsHaveOneGuideLocationAndCalibrationInNormalSettings"
+    ],
+    "lint_and_apk": "not confirmed complete by the supplied log"
+  },
+  "fixes": {
+    "menu_back": "Drain the main queue after clicking the AlertDialog button, assert parent reopening before selecting its item.",
+    "bottom_actions": "Use matching panel qualifiers and measure app content; verify visible action bounds and footer alignment in content coordinates.",
+    "public_settings": "Expect Pie menu and Selection settings in normal Settings while preserving guide/calibration/voice assertions."
+  },
+  "local_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 27,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118,
+    "workflow_yaml": "pass",
+    "test_cases_retained": "pass; no tests removed or ignored",
+    "signing": "original four secret names preserved"
+  },
+  "android_test_execution_1_14_1": "not executed locally: Gradle distribution download failed with Network is unreachable; pending GitHub Actions",
+  "android_lint_1_14_1": "pending GitHub Actions",
+  "production_apk_1_14_1": "pending GitHub Actions",
+  "unchanged_javascript": "The script syntax checks from 1.14.0 remain applicable; no JavaScript files changed. Full web smoke remains configured in Actions.",
+  "limitations": [
+    "The supplied previous CI result does not establish a full pass for this patch.",
+    "Full Android tests, lint, signing and alignment checks are still mandatory in Actions.",
+    "Physical-display gestures and latency need target-hardware testing."
+  ]
+}

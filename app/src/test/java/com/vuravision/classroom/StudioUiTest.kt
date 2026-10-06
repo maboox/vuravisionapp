@@ -34,11 +34,12 @@ class StudioUiTest {
             next=page(null);assertEquals("grid",next.background);assertEquals(Color.CYAN,next.panes.single().background)
         }finally{ctl.pause().stop().destroy()}
     }
-    @Test fun settingsHaveOneGuideLocationAndCalibrationInNormalSettings(){
+    @Test fun settingsExposePieSelectionAndCalibrationWithoutDuplicatingGuide(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{assertFalse(a.getSharedPreferences("vura",0).getBoolean("pieEnabled",false));assertFalse(VoiceSettings.enabled(a))
             call(a,"settings");val d=ShadowDialog.getLatestDialog();val keys=views(d.window!!.decorView).filterIsInstance<ListView>().single().adapter.let{(0 until it.count).map{n->it.getItem(n)}}
-            assertTrue(keys.contains(a.s("calibration")));assertFalse(keys.contains(a.s("help")));assertFalse(keys.contains(a.s("voice_assistant")));assertFalse(keys.contains(a.s("pie_settings")));d.dismiss()
+            assertTrue(keys.contains(a.s("calibration")));assertTrue(keys.contains(a.s("pie_settings")));assertTrue(keys.contains(a.s("selection_settings")))
+            assertFalse(keys.contains(a.s("help")));assertFalse(keys.contains(a.s("voice_assistant")));d.dismiss()
             call(a,"eraserSettings");val e=ShadowDialog.getLatestDialog();assertFalse(views(e.window!!.decorView).filterIsInstance<Button>().any{it.text.toString().contains("Calibrate")});e.dismiss()
         }finally{ctl.pause().stop().destroy()}
     }
