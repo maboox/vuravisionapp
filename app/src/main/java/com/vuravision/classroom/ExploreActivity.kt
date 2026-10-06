@@ -13,8 +13,8 @@ class ExploreActivity:Activity(){
  override fun onCreate(state:Bundle?){super.onCreate(state);window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   val lab=intent.getBooleanExtra("lab",false);val root=column().apply{setBackgroundColor(NAVY);fitsSystemWindows=true};setContentView(root)
   val bar=row().apply{pad(8)};bar.addView(label(if(lab)tr("Discovery lab · 68","آزمایشگاه اکتشاف · ۶۸")else tr("Arcade · 49","بازی‌ها · ۴۹"),18f,Color.WHITE,true),LinearLayout.LayoutParams(0,-2,1f))
-  bar.addView(button(s("close")){finish()});root.addView(bar)
-  web=WebView(this);root.addView(web,LinearLayout.LayoutParams(-1,0,1f))
+  bar.addView(button(s("close")){finish()})
+  web=WebView(this);root.addView(web,LinearLayout.LayoutParams(-1,0,1f));root.addView(scrollRow(bar).apply{isFillViewport=true})
   web.settings.apply{javaScriptEnabled=true;domStorageEnabled=true;allowFileAccess=false;allowContentAccess=false;blockNetworkLoads=true;setSupportMultipleWindows(false);mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW}
   web.webViewClient=object:WebViewClient(){override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest)=true}
   val language=getSharedPreferences("vura",0).getString("language","en")?:"en"

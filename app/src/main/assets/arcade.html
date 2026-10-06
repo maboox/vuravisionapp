@@ -41,7 +41,7 @@ body.en .half{direction:ltr}
 .half.bottom{background:linear-gradient(to bottom,rgba(242,112,138,.02),rgba(242,112,138,.10))}
 .divider{height:2px;background:rgba(255,255,255,.14);z-index:5}
 .fab{position:absolute;z-index:40;width:46px;height:46px;border-radius:50%;background:rgba(42,42,49,.94);border:1px solid var(--border);font-size:17px;display:flex;align-items:center;justify-content:center}
-.fab.exit{left:10px;top:50%;transform:translateY(-50%)}
+.fab.exit{left:10px;top:auto;bottom:10px;transform:none}
 .scorePill{position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;background:rgba(42,42,49,.94);border:1px solid var(--border);border-radius:99px;padding:9px 12px;gap:3px;font-weight:800;font-size:16px;line-height:1}
 .scorePill i{width:16px;height:1px;background:var(--border)}
 #sTop{color:var(--p2);transform:rotate(180deg)}
@@ -51,7 +51,7 @@ body.landscape #game{flex-direction:row}
 body.landscape .half.top{transform:none;background:linear-gradient(to left,rgba(94,159,232,.02),rgba(94,159,232,.10))}
 body.landscape .half.bottom{background:linear-gradient(to right,rgba(242,112,138,.02),rgba(242,112,138,.10))}
 body.landscape .divider{height:auto;width:2px}
-body.landscape .fab.exit{left:50%;top:10px;transform:translateX(-50%)}
+body.landscape .fab.exit{left:auto;right:10px;top:auto;bottom:10px;transform:none}
 body.landscape .scorePill{right:auto;left:50%;top:auto;bottom:10px;transform:translateX(-50%);flex-direction:row;padding:10px 14px;gap:8px}
 body.landscape .scorePill i{width:1px;height:16px}
 body.landscape #sTop{transform:none}

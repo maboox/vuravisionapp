@@ -16,7 +16,8 @@ object UserGuide {
     fun topics(context:Context):List<GuideTopic> = context.assets.open("guide/topics.json").bufferedReader().use{
         Gson().fromJson(it,Array<GuideTopic>::class.java).toList()
     }
-    fun show(context:Context,media:Media,secret:()->Unit) {
+    fun show(context:Context,media:Media,secret:()->Unit)=show(context,media,secret,null)
+    fun show(context:Context,media:Media,secret:()->Unit,back:(()->Unit)?) {
         val topics=topics(context)
         var fa=context.resources.configuration.locales[0].language=="fa"
         var index=0;var taps=0
@@ -39,6 +40,7 @@ object UserGuide {
         val previous=context.button(""){}
         val next=context.button(""){}
         val position=context.label("",14f,MUTED)
+        if(back!=null)footer.addView(context.button(context.s("menu_back")){dialog.dismiss();back()})
         footer.addView(previous);footer.addView(position,LinearLayout.LayoutParams(0,-2,1f));footer.addView(next)
         fun lang(en:String,persian:String)=if(fa)persian else en
         fun renderBody() {

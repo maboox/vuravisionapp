@@ -86,7 +86,8 @@ object PeriodicTable {
         body.addView(c.button(c.tr("Add element card to board","افزودن کارت عنصر به تخته")){insert(Item(kind="sticky",shape="element_card",selectedElement=e.number,text=details(c,e),width=15f,w=300f,h=380f,noteColor=colors[e.value("GroupBlock")]?:PAPER));close()})
         MaterialAlertDialogBuilder(c).setTitle("${e.symbol} · ${c.tr(e.name,e.fa)}").setView(ScrollView(c).apply{addView(body)}).setNegativeButton(c.s("close"),null).show().also{close=it::dismiss;Fonts.onShown(it)}
     }
-    fun show(c:Context,insert:(Item)->Unit){
+    fun show(c:Context,insert:(Item)->Unit)=show(c,insert,null)
+    fun show(c:Context,insert:(Item)->Unit,back:(()->Unit)?){
         var close:()->Unit={};val add:(Item)->Unit={insert(it);close()}
         val body=c.column().apply{pad(12)};val o=Item(kind="periodic",w=900f,h=550f)
         val table=object:View(c){
@@ -101,6 +102,7 @@ object PeriodicTable {
         val legend=c.row();colors.forEach{(family,color)->legend.addView(c.label(c.tr(family,PeriodicTable.family(c,family)),12f).apply{setBackgroundColor(color)})};body.addView(c.scrollRow(legend))
         body.addView(c.button(c.tr("Add interactive table to board","افزودن جدول تعاملی به تخته")){add(o.deepCopy())})
         body.addView(c.infoTitle(c.tr("Data source","منبع داده"),"PubChem / NCBI · 2026-10-05\n"+c.tr("Missing values are shown as —; f-block elements are shown separately. Atomic masses follow the source, including isotope masses where applicable.","دادهٔ ناموجود با — نشان داده می‌شود؛ عناصر بلوک f جدا آمده‌اند. جرم‌ها مطابق منبع‌اند و در موارد مربوط جرم ایزوتوپی نمایش داده می‌شود.")))
+        if(back!=null)body.addView(c.button(c.s("menu_back")){close();back()})
         MaterialAlertDialogBuilder(c).setTitle(c.s("periodic")).setView(ScrollView(c).apply{addView(body)}).setNegativeButton(c.s("close"),null).show().also{close=it::dismiss;Fonts.onShown(it)}
     }
 }

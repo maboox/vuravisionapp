@@ -32,7 +32,8 @@ object Labs {
         NativeLabs.keys + listOf("energy", "triangle_area", "statistics", "dilution", "trig", "periodic_table")
 
     fun show(context: Context, insert: (Bitmap) -> Unit) = show(context,insert,{})
-    fun show(context: Context, insert: (Bitmap) -> Unit, insertItem:(Item)->Unit) {
+    fun show(context:Context,insert:(Bitmap)->Unit,insertItem:(Item)->Unit)=show(context,insert,insertItem,null)
+    fun show(context: Context, insert: (Bitmap) -> Unit, insertItem:(Item)->Unit, back:(()->Unit)?) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val root =
             context.column().apply {
@@ -45,8 +46,8 @@ object Labs {
             context.label(context.s("lab"), 28f, NAVY, true),
             LinearLayout.LayoutParams(0, -2, 1f),
         )
+        if(back!=null)header.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         header.addView(context.button(context.s("close")) { d.dismiss() })
-        root.addView(header)
         root.addView(context.label(context.s("lab_intro"), 15f, MUTED))
         val search=context.field(hintValue=context.tr("Search experiments","جست‌وجوی آزمایش‌ها")).apply{setSingleLine(true)}
         root.addView(search)
@@ -94,7 +95,7 @@ object Labs {
                     isFocusable=true
                     setOnClickListener {
                         d.dismiss()
-                        if(key=="periodic_table")PeriodicTable.show(context,insertItem)else open(context, key, insert)
+                        if(key=="periodic_table")PeriodicTable.show(context,insertItem){show(context,insert,insertItem,back)}else open(context,key,insert){show(context,insert,insertItem,back)}
                     }
                 }
                 cards.add(key to card)
@@ -121,6 +122,7 @@ object Labs {
             override fun onNothingSelected(parent:AdapterView<*>?){}
         }
         applyFilter()
+        root.addView(header)
         d.setContentView(root)
         d.show()
     }
@@ -162,7 +164,8 @@ object Labs {
             else -> listOf(LabControl("p(heads)", 0f, 1f, .5f), LabControl("N", 10f, 1000f, 100f))
         }
 
-    fun open(context: Context, key: String, insert: (Bitmap) -> Unit) {
+    fun open(context:Context,key:String,insert:(Bitmap)->Unit)=open(context,key,insert,null)
+    fun open(context: Context, key: String, insert: (Bitmap) -> Unit, back:(()->Unit)?) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val c =
             context.column().apply {
@@ -183,8 +186,10 @@ object Labs {
                 d.dismiss()
             }
         )
+        if(back!=null)header.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         header.addView(context.button(context.s("close")) { d.dismiss() })
-        c.addView(header)
+        c.addView(context.label(context.s(key),24f,NAVY,true))
+        header.removeViewAt(0)
         c.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
         val sliders=context.column()
         val sliderViews=mutableListOf<SeekBar>()
@@ -235,7 +240,8 @@ object Labs {
                 view.invalidate()
             }
         )
-        c.addView(r)
+        c.addView(context.scrollRow(r))
+        c.addView(context.scrollRow(header))
         d.setContentView(c)
         d.show()
         d.setOnDismissListener { view.running = false }

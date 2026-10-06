@@ -38,10 +38,10 @@ object IconCatalog {
         "help","about","info","report"->R.drawable.vura_info
         "lab","periodic"->R.drawable.vura_atom;"games","dice"->R.drawable.vura_dice
         "settings","engineering","advanced_board","ui_size"->R.drawable.vura_settings
-        "language","models"->R.drawable.vura_globe;"copy","duplicate"->R.drawable.vura_copy
+        "language","models"->R.drawable.vura_globe;"copy"->R.drawable.vura_copy;"duplicate"->R.drawable.vura_duplicate
         "bold"->R.drawable.vura_bold;"italic"->R.drawable.vura_italic
         "align_start"->R.drawable.vura_align_start;"align_center"->R.drawable.vura_align_center;"align_end"->R.drawable.vura_align_end
-        "pie_settings"->R.drawable.vura_pie
+        "pie_settings"->R.drawable.vura_pie;"selection_settings","selection_free","selection_box"->R.drawable.feather_mouse_pointer;"menu_back"->R.drawable.feather_chevron_left
         "image"->R.drawable.vura_image;"sticky"->R.drawable.vura_sticky;"mind_map"->R.drawable.vura_mind_map
         "paste"->R.drawable.vura_clipboard;"crop","pdf_crop"->R.drawable.vura_crop
         "domain"->R.drawable.vura_graph;"scoreboard"->R.drawable.vura_scoreboard

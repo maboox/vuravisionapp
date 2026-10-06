@@ -1,0 +1,40 @@
+{
+  "version": "1.14.0",
+  "version_code": 23,
+  "date_utc": "2026-10-06T08:17:46.258247+00:00",
+  "source_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "drawable_references": "pass",
+    "unique_string_names": "pass",
+    "guide_chapters": 27,
+    "font_faces_verified": 21,
+    "native_labs_classified": 74,
+    "periodic_elements_verified": 118
+  },
+  "javascript_syntax": {
+    "script_blocks": 2,
+    "status": "pass"
+  },
+  "ci_workflow": {
+    "yaml": "pass",
+    "version_artifact_names": "1.14.0",
+    "signing_secrets": "original four names preserved",
+    "device_tests": "manual workflow_dispatch"
+  },
+  "new_regression_tests": {
+    "suite": "Studio114Test",
+    "tests": 12,
+    "execution": "pending GitHub Actions"
+  },
+  "android_compilation": "not executed: Gradle distribution download failed with Network is unreachable",
+  "android_lint": "not executed locally; configured in Actions",
+  "android_device_tests": "not executed locally; configured for manual Actions run",
+  "web_smoke": "not executed locally: npm offline cache lacks jsdom dependencies; configured in Actions",
+  "production_apk": "not built locally; GitHub Actions builds with existing production secrets",
+  "limitations": [
+    "Physical-display multi-contact gestures, palm detection and latency require target hardware testing.",
+    "Physical centimetres require display calibration; default u equals ten document coordinates.",
+    "Previous reports apply only to their original source versions."
+  ]
+}

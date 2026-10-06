@@ -286,4 +286,8 @@
 <string name="restore_erased">بازگرداندن ناحیه‌های پاک‌شده</string>
 <string name="input_controls">تنظیمات لمس</string>
 <string name="fonts">فونت‌ها</string>
+<string name="menu_back">بازگشت</string>
+<string name="selection_settings">تنظیمات انتخاب</string>
+<string name="selection_free">انتخاب آزاد</string>
+<string name="selection_box">انتخاب کادری</string>
 </resources>

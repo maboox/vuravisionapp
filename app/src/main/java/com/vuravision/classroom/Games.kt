@@ -224,7 +224,7 @@ object Games {
     val keys =
         NativeGames.keys + QuizCatalog.keys
 
-    fun show(context: Context) {
+    fun show(context: Context, back:(()->Unit)?=null) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val root =
             context.column().apply {
@@ -237,8 +237,8 @@ object Games {
             context.label(context.s("games"), 28f, NAVY, true),
             LinearLayout.LayoutParams(0, -2, 1f),
         )
+        if(back!=null)head.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         head.addView(context.button(context.s("close")) { d.dismiss() })
-        root.addView(head)
         root.addView(context.label(context.s("games_intro"), 15f, MUTED))
         val search=EditText(context).apply{
             hint=context.tr("Search games","جست‌وجوی بازی‌ها")
@@ -277,10 +277,10 @@ object Games {
             )
             if(key in QuizCatalog.keys || key=="math_race") { val example=GameEngine(key,Random(42)).apply{next(0)};words.addView(context.label(example.question,16f,TEAL,true)) }
             cardContent.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
-            cardContent.addView(WorkspaceIcon(context,"next",context.s("start")){d.dismiss();open(context,key)})
+            cardContent.addView(WorkspaceIcon(context,"next",context.s("start")){d.dismiss();open(context,key){show(context,back)}})
             val card=context.card(cardContent,cornerRadius=20,elevation=1).apply{
                 isClickable=true;isFocusable=true;contentDescription=context.s(key)
-                setOnClickListener{d.dismiss();open(context,key)}
+                setOnClickListener{d.dismiss();open(context,key){show(context,back)}}
             }
             cards.add(key to card)
             list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, context.dp(6), 0, context.dp(6)) })
@@ -311,12 +311,13 @@ object Games {
             ScrollView(context).apply { addView(list) },
             LinearLayout.LayoutParams(-1, 0, 1f),
         )
+        root.addView(head)
         d.setContentView(root)
         d.show()
     }
 
-    fun open(context: Context, key: String) {
-        if(key in NativeGames.keys){NativeGames.open(context,key);return}
+    fun open(context: Context, key: String, back:(()->Unit)?=null) {
+        if(key in NativeGames.keys){NativeGames.open(context,key,back);return}
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val handler = Handler(Looper.getMainLooper())
         var game = GameEngine(key)
@@ -330,8 +331,7 @@ object Games {
             }
         val header = context.row()
         val heading = context.label(context.s(key), 23f, NAVY, true)
-        header.addView(heading, LinearLayout.LayoutParams(0, -2, 1f))
-        root.addView(header)
+        root.addView(heading)
         val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
         root.addView(score)
         root.addView(context.label(context.s("game_layout_help"),13f,MUTED))
@@ -515,6 +515,7 @@ object Games {
                 render()
             }
         )
+        if(back!=null)header.addView(context.button(context.s("menu_back")){d.dismiss();back()})
         header.addView(context.button(context.s("close")) { d.dismiss() })
         action.setOnClickListener {
             if (!started || game.finished || !game.resolved) {
@@ -546,6 +547,7 @@ object Games {
                 }
             }
         render()
+        root.addView(context.scrollRow(header))
         d.setContentView(root)
         d.show()
         handler.post(tick)

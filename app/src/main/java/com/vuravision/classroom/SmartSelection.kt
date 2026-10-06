@@ -1,9 +1,10 @@
 package com.vuravision.classroom
 import kotlin.math.*
 object SmartSelection {
- fun selectGesture(path:List<android.graphics.PointF>,bounds:android.graphics.RectF,items:List<Item>):List<Item>{
+ fun selectGesture(path:List<android.graphics.PointF>,bounds:android.graphics.RectF,items:List<Item>,mode:String?=null):List<Item>{
   val area=abs(path.indices.sumOf{i->val a=path[i];val b=path[(i+1)%path.size];(a.x*b.y-b.x*a.y).toDouble()})/2
-  val polygon=path.size>=5 && area>bounds.width()*bounds.height()*.2
+  val polygon=if(mode==null)path.size>=5 && area>bounds.width()*bounds.height()*.2 else mode=="free"
+  if(polygon && path.size<3)return emptyList()
   return items.filter{o->
    val x=o.x+o.w/2;val y=o.y+o.h/2
    if(!polygon) android.graphics.RectF(bounds).apply{inset(-8f,-8f)}.contains(x,y)

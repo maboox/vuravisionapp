@@ -129,14 +129,14 @@
     "titleEn": "Select and edit",
     "titleFa": "انتخاب و ویرایش",
     "stepsEn": [
-      "Tap Select. Tap an item or drag an enclosing selection region. The selection bar appears above the canvas.",
-      "Drag a selected item to move it. Use its handles to resize or rotate. Use the selection bar for color, copying, duplicate, delete and further edits.",
-      "Copy stores a local clipboard; Duplicate immediately creates another copy. Undo reverses edits. For a mind-map node, related child content is handled with the node."
+      "Tap Select, then tap its active icon again for Selection settings. Free selection is the default and draws only a loop; Box selection draws only a dashed rectangle. Tap an individual object or enclose object centres to select them.",
+      "Drag selected content to move it, or use handles to resize and rotate. The action bar is near the bottom. Images and PDF snapshots offer Crop instead of a color action.",
+      "Duplicate immediately creates another copy and uses the + icon; there is no board Copy/Paste. Crop opens a bright rectangle with dimmed surroundings: drag any edge or corner, move the rectangle, then press Crop. Undo restores the original."
     ],
     "stepsFa": [
-      "انتخاب را بزنید. روی یک شیء بزنید یا محدودهٔ انتخاب را دور محتوا بکشید. نوار انتخاب بالای تخته ظاهر می‌شود.",
-      "برای جابه‌جایی، شیء انتخاب‌شده را بکشید. از دستگیره‌ها برای تغییر اندازه و چرخش استفاده کنید. نوار انتخاب، رنگ، کپی، تکثیر، حذف و ویرایش‌های بیشتر را دارد.",
-      "کپی در کلیپ‌بورد داخلی قرار می‌گیرد؛ تکثیر بلافاصله نسخهٔ دوم می‌سازد. بازگردانی ویرایش را برمی‌گرداند. محتوای مرتبط با گرهٔ مایندمپ همراه گره مدیریت می‌شود."
+      "انتخاب را بزنید و برای تنظیمات، دوباره روی آیکون فعال انتخاب بزنید. پیش‌فرض انتخاب آزاد است و فقط مسیر آزاد نشان داده می‌شود؛ انتخاب کادری فقط مستطیل خط‌چین دارد. روی یک شیء بزنید یا مرکز اشیاء را داخل محدودهٔ انتخاب قرار دهید.",
+      "محتوای انتخاب‌شده را برای جابه‌جایی بکشید یا از دستگیره‌ها برای تغییر اندازه و چرخش استفاده کنید. نوار ویرایش نزدیک پایین صفحه است. تصاویر و عکس آزمایش به‌جای گزینهٔ رنگ، کراپ دارند.",
+      "تکثیر با آیکون + یک نسخهٔ تازه می‌سازد؛ کپی و پیست اشیاء حذف شده‌اند. کراپ، کادر روشن و اطراف تیره دارد؛ گیرهٔ هر طرف یا گوشه را بکشید یا کادر را جابه‌جا کنید و کراپ را بزنید. بازگردانی تصویر اصلی را برمی‌گرداند."
     ],
     "tipEn": "Keep locked objects on a separate layer while editing annotations above them.",
     "tipFa": "هنگام نوشتن توضیح روی محتوا، اشیای ثابت را در لایهٔ جدا قفل کنید."
@@ -149,13 +149,13 @@
       "The Pan tool navigates the canvas instead of drawing. Drag to move the view and use supported two-contact gestures to zoom.",
       "In Pen + touch mode, a broad contact can select while the fine tip writes. Two broad contacts navigate. Accurate separation requires contact-size reporting and calibration.",
       "Navigation changes the view, not object coordinates. Use Fit where available to bring the content back into view.",
-      "Two quick stationary taps with two nearby fingers undo one edit. Moving contacts navigate instead. This gesture can be disabled in Input controls. Hold the second two-finger tap and slide left/right to browse undo and redo, then release at the desired step. The experimental pie menu stays off by default; enable it in hidden settings and double tap with five fingers. It shows assigned shortcuts, or six plus buttons when empty."
+      "Two quick stationary taps with two nearby fingers undo one edit. Moving contacts navigate instead. This gesture can be disabled in Input controls. Hold the second two-finger tap and slide left/right to browse undo and redo, then release at the desired step. The pie menu is available in normal Settings and has a bottom toolbar button. Enable it, assign shortcuts and double tap with five fingers. It shows assigned shortcuts, or six plus buttons when empty."
     ],
     "stepsFa": [
       "ابزار جابه‌جایی، نمای تخته را حرکت می‌دهد و چیزی رسم نمی‌کند. برای حرکت نما بکشید و برای بزرگ‌نمایی از حرکت دو تماس پشتیبانی‌شده استفاده کنید.",
       "در حالت قلم و لمس، تماس پهن می‌تواند انتخاب کند و سر باریک بنویسد. دو تماس پهن برای جابه‌جایی و بزرگ‌نمایی‌اند. تفکیک درست به گزارش اندازهٔ تماس و کالیبراسیون وابسته است.",
       "جابه‌جایی نما، مختصات اشیاء را عوض نمی‌کند. در بخش‌هایی که جا دادن محتوا وجود دارد، از آن برای بازگرداندن محتوا به نما استفاده کنید.",
-      "دو بار سریع با دو انگشت نزدیک به هم ضربه بزنید تا یک مرحله بازگردد. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را زنده مرور کنید؛ دست را در مرحلهٔ دلخواه بردارید. پای‌منو پیش‌فرض خاموش است؛ پس از فعال‌سازی از تنظیمات مخفی، با دو ضربهٔ پنج‌انگشتی باز می‌شود. فقط میان‌برهای انتخاب‌شده را نشان می‌دهد؛ در حالت خالی شش دکمهٔ + دارد."
+      "دو بار سریع با دو انگشت نزدیک به هم ضربه بزنید تا یک مرحله بازگردد. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را زنده مرور کنید؛ دست را در مرحلهٔ دلخواه بردارید. پای‌منو از تنظیمات معمول قابل فعال‌سازی و تنظیم است؛ با دکمهٔ نوار پایین یا دو ضربهٔ پنج‌انگشتی باز می‌شود. فقط میان‌برهای انتخاب‌شده را نشان می‌دهد؛ در حالت خالی شش دکمهٔ + دارد."
     ],
     "tipEn": "If a finger writes instead of navigating, check the input mode and contact thresholds.",
     "tipFa": "اگر انگشت به‌جای جابه‌جایی می‌نویسد، حالت ورودی و آستانهٔ اندازهٔ تماس را بررسی کنید."
@@ -237,12 +237,12 @@
     "titleEn": "Split the board",
     "titleFa": "تقسیم تخته",
     "stepsEn": [
-      "Tap Split board and choose one, two, three or four panels. Each panel has an independent view and its own pen and background controls.",
+      "Tap Split board and choose one, two, three or four panels. Each panel has an independent view and its own pen and background controls. All split layouts use full-height vertical columns, including four panels.",
       "Tap the desired panel and draw there. The active panel has a highlighted border. Use the pen/background buttons at that panel’s edge.",
       "When returning to fewer panels, content from removed panels is retained in the first panel rather than discarded."
     ],
     "stepsFa": [
-      "تقسیم تخته را بزنید و یک، دو، سه یا چهار بخش انتخاب کنید. هر بخش نمای مستقل و کنترل قلم و پس‌زمینهٔ خودش را دارد.",
+      "تقسیم تخته را بزنید و یک، دو، سه یا چهار بخش انتخاب کنید. هر بخش نمای مستقل و کنترل قلم و پس‌زمینهٔ خودش را دارد. همهٔ حالت‌ها، از جمله چهار بخش، ستون‌های عمودیِ کنار هم با ارتفاع کامل دارند.",
       "روی بخش دلخواه بزنید و همان‌جا رسم کنید. بخش فعال حاشیهٔ مشخص دارد. از دکمه‌های قلم و پس‌زمینه کنار همان بخش استفاده کنید.",
       "وقتی تعداد بخش‌ها را کم کنید، محتوای بخش‌های حذف‌شده در بخش اول حفظ می‌شود و دور ریخته نمی‌شود."
     ],
@@ -256,14 +256,14 @@
     "stepsEn": [
       "Open Classroom tools and add a ruler, set square, protractor or compass. Select a guide to reveal its center, size and rotation handles.",
       "The compass has center, radius, start-angle and drawing handles. Rotate the inner handle to set the start without drawing, then turn the pencil handle on the circumference to draw an arc. One Undo removes the arc and restores the guide. Draw with tool creates a full circle.",
-      "Use the protractor angle handle to choose a ray and read its angle. Ruler and set-square actions construct parallel or perpendicular lines. Settings → Calibration contains pen/palm calibration and physical ruler calibration; uncalibrated dimensions use u, not centimetres.",
-      "Measurements appear beside the selected shape for six seconds, using at most one decimal. Ruler label density adapts to calibration and zoom."
+      "Use the inner protractor handle to set its angle without drawing; its orange pencil handle draws an undoable ray. Guides show live lengths/angles while drawing. Entering snap removes the free prefix from that contact; leaving the guide stops drawing until lift.",
+      "Measurements appear beside the selected shape for six seconds, using at most one decimal. Ruler label density adapts to calibration and zoom. Default units use ten board coordinates per u; real cm requires Settings → Calibration."
     ],
     "stepsFa": [
       "از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را اضافه کنید. ابزار را انتخاب کنید تا دستگیره‌های مرکز، اندازه و چرخش دیده شوند.",
       "پرگار چهار دستهٔ مرکز، شعاع، زاویهٔ شروع و رسم دارد. دستهٔ چرخش داخلی را برای انتخاب نقطهٔ شروع بدون رسم بچرخانید؛ سپس دستهٔ مداد روی محیط را بچرخانید تا کمان رسم شود. یک Undo کمان را حذف و پرگار را بازمی‌گرداند. رسم با ابزار یک دایرهٔ کامل می‌سازد.",
-      "دستگیرهٔ زاویهٔ نقاله جهت نیم‌خط و عدد زاویه را تنظیم می‌کند. خط‌کش و گونیا فرمان رسم موازی و عمود دارند. تنظیمات ← کالیبراسیون، کالیبراسیون قلم/کف دست و خط‌کش فیزیکی را دارد؛ قبل از کالیبراسیون ابعاد با u نمایش داده می‌شوند، نه سانتی‌متر.",
-      "اندازه‌ها شش ثانیه کنار شکل انتخاب‌شده نمایش داده می‌شوند و حداکثر یک رقم اعشار دارند. فاصلهٔ عددهای خطکش با زوم و کالیبراسیون تنظیم می‌شود."
+      "با دستهٔ داخلی نقاله، زاویه را بدون رسم تنظیم کنید؛ دستهٔ زرد مداد نیم‌خط قابل بازگردانی می‌کشد. ابزارها هنگام رسم طول و زاویهٔ زنده دارند. ورود به اسنپ، خط آزاد ابتدای همان تماس را حذف می‌کند؛ خروج از ابزار رسم را تا برداشتن قلم متوقف می‌کند.",
+      "اندازه‌ها شش ثانیه کنار شکل انتخاب‌شده نمایش داده می‌شوند و حداکثر یک رقم اعشار دارند. فاصلهٔ عددهای خطکش با زوم و کالیبراسیون تنظیم می‌شود. مقیاس پیش‌فرض هر واحد u برابر ده مختصات تخته است؛ سانتی‌متر واقعی از تنظیمات ← کالیبراسیون فعال می‌شود."
     ],
     "tipEn": "Rotate the ruler first, then begin the stroke close to its long edge.",
     "tipFa": "ابتدا خط‌کش را بچرخانید و بعد خط را نزدیک لبهٔ بلند آن آغاز کنید."

@@ -44,6 +44,10 @@ object GeometryTools {
  fun draw(c:Canvas,o:Item,pixelsPerCm:Float=0f){
   val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=0xddf0f7f7.toInt();style=Paint.Style.FILL}
   val w=o.w;val h=o.h
+  val matrix=Matrix();c.getMatrix(matrix);val values=FloatArray(9);matrix.getValues(values)
+  val pxPerUnit=hypot(values[0],values[3]).coerceAtLeast(.0001f)
+  val unit=if(pixelsPerCm>0)pixelsPerCm/pxPerUnit else 10f
+  val unitName=if(pixelsPerCm>0)"cm"else"u"
   when(o.shape){
    "ruler"->c.drawRoundRect(0f,0f,w,h,6f,6f,p)
    "set_square"->{val path=Path();path.moveTo(0f,0f);path.lineTo(w,h);path.lineTo(0f,h);path.close();c.drawPath(path,p)}
@@ -52,16 +56,13 @@ object GeometryTools {
     p.color=TEAL;p.strokeWidth=4f;p.style=Paint.Style.STROKE
     p.pathEffect=DashPathEffect(floatArrayOf(5f,7f),0f);p.strokeWidth=1.2f;c.drawCircle(cx,cy,r,p);p.pathEffect=null
     p.strokeWidth=4f;c.drawLine(cx,cy,cx+r*cos(a).toFloat(),cy+r*sin(a).toFloat(),p)
-    p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=15f;c.drawText("r = ${DisplayNumbers.one(r.toDouble())} u",cx+8,cy-12,p)
+    p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=15f;c.drawText("r = ${DisplayNumbers.one((r/unit).toDouble())} $unitName",cx+8,cy-12,p)
     c.drawText("${DisplayNumbers.one(o.geometrySweep.toDouble())}°",cx+8,cy+20,p)
    }
   }
   p.color=TEAL;p.strokeWidth=1.5f;p.style=Paint.Style.STROKE
   if(o.shape=="ruler"){
    c.drawRoundRect(0f,0f,w,h,6f,6f,p)
-   val matrix=Matrix();c.getMatrix(matrix);val values=FloatArray(9);matrix.getValues(values)
-   val pxPerUnit=hypot(values[0],values[3]).coerceAtLeast(.0001f)
-   val unit=if(pixelsPerCm>0)pixelsPerCm/pxPerUnit else 1f
    // Keep labels readable on the display, independent of calibration and zoom.
    val text=14f/pxPerUnit;p.textSize=text
    val labelUnits=rulerLabelStep(unit*pxPerUnit,max(40f,p.measureText(DisplayNumbers.one((w/unit).toDouble()))*pxPerUnit+12f))

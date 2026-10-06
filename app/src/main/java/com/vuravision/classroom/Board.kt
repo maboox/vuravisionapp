@@ -16,7 +16,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var onActivate:()->Unit={}
     private var transforming:Set<String> = emptySet()
     fun copyToolsFrom(b:Board){
-        tool=b.tool;shape=b.shape;touchMode=b.touchMode;profile=b.profile.copy()
+        tool=b.tool;shape=b.shape;touchMode=b.touchMode;selectionMode=b.selectionMode;profile=b.profile.copy()
         penColor=b.penColor;highlightColor=b.highlightColor;penWidth=b.penWidth;highlightWidth=b.highlightWidth
         penStyle=b.penStyle;penOpacity=b.penOpacity;dashLength=b.dashLength;dashGap=b.dashGap
         eraserMode=b.eraserMode;eraserRadius=b.eraserRadius;eraseObjects=b.eraseObjects
@@ -37,6 +37,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var fillColor:Int?=TEAL
     var fillAlpha=255
     var tool = "pen"
+    var selectionMode="free"
     var touchMode=false
     var activePane=0
         private set
@@ -55,8 +56,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private fun paneRect(index:Int):RectF{
         val n=store.page.panes.size
         if(n==1)return RectF(0f,0f,width.toFloat(),height.toFloat())
-        if(n<4)return RectF(width*index.toFloat()/n,0f,width*(index+1f)/n,height.toFloat())
-        return RectF((index%2)*width/2f,(index/2)*height/2f,(index%2+1)*width/2f,(index/2+1)*height/2f)
+        return RectF(width*index.toFloat()/n,0f,width*(index+1f)/n,height.toFloat())
     }
     private val broadPointers=mutableSetOf<Int>()
     private var touchSpan=0f
@@ -144,6 +144,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(filter==null)o.points.add(point)else{filter.target(point);filter.advance(point.t)?.let{o.points.add(it)};removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
     }
     private val guides=mutableMapOf<Int,Item>()
+    private val guideStopped=mutableSetOf<Int>()
+    private val guideLengths=mutableMapOf<Int,Float>()
     private val holdCallbacks=mutableMapOf<Int,Runnable>()
     private val holdAt=mutableMapOf<Int,PointF>()
     private val heldStart=mutableMapOf<Int,PointF>()
@@ -164,9 +166,44 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private fun snap(id:Int,point:PointF):PointF = (if(guideSnapEnabled)guides[id] else null)?.let{
         GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom)
     }?:point
+    private fun sampleGuidedInk(id:Int,o:Item,point:Point) {
+        if(id in guideStopped)return
+        val tolerance=14f/store.page.panes[o.pane].zoom
+        if(!guides.containsKey(id) && guideSnapEnabled && tool!="smart"){
+            val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==o.pane && it.shape in GeometryTools.keys && GeometryTools.snap(it,point.x,point.y,tolerance)!=null}
+            if(guide!=null){
+                guides[id]=guide;guideLengths[id]=0f
+                o.points.clear();renderer.forgetInk(o.id);smoothers.remove(id);cancelHold(id)
+            }
+        }
+        val guide=guides[id]
+        if(guide==null){sampleInk(id,o,point);return}
+        val projected=GeometryTools.snap(guide,point.x,point.y,tolerance)
+        if(projected==null){guideStopped.add(id);return}
+        o.points.lastOrNull()?.let{last->guideLengths[id]=(guideLengths[id]?:0f)+hypot(projected.x-last.x,projected.y-last.y)}
+        o.points.add(point.copy(x=projected.x,y=projected.y))
+    }
+    private fun drawGuideMeasurements(canvas:Canvas){
+        live.forEach{(id,ink)->val guide=guides[id]?:return@forEach
+            if(ink.pane!=activePane)return@forEach
+            val last=ink.points.lastOrNull()?:return@forEach
+            val length=(guideLengths[id]?:0f)/measureScale()
+            var text=DisplayNumbers.one(length.toDouble())+" "+measurementUnit()
+            if(guide.shape=="compass"){
+                val r=GeometryTools.radius(guide);text+=" · "+DisplayNumbers.one((guideLengths[id]?:0f)/r*180/PI)+"°"
+            }else if(guide.shape in listOf("protractor","set_square")){
+                val first=ink.points.first();val angle=if(guide.shape=="protractor"){
+                    val local=guide.local(last.x,last.y);atan2(guide.h-local.second,local.first-guide.w/2)*180/PI
+                }else atan2(last.y-first.y,last.x-first.x)*180/PI
+                text+=" · "+DisplayNumbers.one(abs(angle))+"°"
+            }
+            measurements.label(canvas,text,last.x,last.y-28/zoom,zoom)
+        }
+    }
+    fun measurementUnit()=if(context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)>0)"cm"else"u"
     private fun cancelHold(id:Int){holdCallbacks.remove(id)?.let{removeCallbacks(it)};holdAt.remove(id)}
     private fun scheduleHold(id:Int,at:PointF){
-        if(!holdRecognitionEnabled || heldStart.containsKey(id))return
+        if(!holdRecognitionEnabled || heldStart.containsKey(id) || guides.containsKey(id))return
         val last=holdAt[id]
         if(last!=null && hypot(last.x-at.x,last.y-at.y)<holdTolerance/store.page.panes[pointerPanes[id]?:activePane].zoom)return
         cancelHold(id);holdAt[id]=PointF(at.x,at.y)
@@ -203,11 +240,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     fun measureScale():Float {
         val pixels=context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)
-        return if(pixels>0)pixels/(density*zoom) else 1f
+        return if(pixels>0)pixels/(density*zoom) else 10f
     }
     fun abortPendingGesture(){
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
         geometry.cancel()
         if(changed){store.cancelCheckpoint();changed=false}
         actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";sceneChanged()
@@ -226,7 +263,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         measurements.clear()
         gestures.reset();geometry.cancel()
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
         activePane=activePane.coerceIn(store.page.panes.indices)
         backingDirty=true
         zoom = 1f
@@ -368,12 +405,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 }
             }
         }
-        box?.let {
-            p.style = Paint.Style.STROKE
-            c.drawRect(it, p)
+        if(selectionMode=="box")box?.let {
+            p.style = Paint.Style.STROKE;p.pathEffect=DashPathEffect(floatArrayOf(6f/zoom,4f/zoom),0f)
+            c.drawRect(it,p);p.pathEffect=null
         }
-        if(lasso.size>1){val path=Path();path.moveTo(lasso[0].x,lasso[0].y);lasso.drop(1).forEach{path.lineTo(it.x,it.y)};p.style=Paint.Style.STROKE;c.drawPath(path,p)}
+        if(selectionMode=="free" && lasso.size>1){val path=Path();path.moveTo(lasso[0].x,lasso[0].y);lasso.drop(1).forEach{path.lineTo(it.x,it.y)};p.style=Paint.Style.STROKE;c.drawPath(path,p)}
         geometry.draw(c,zoom)
+        drawGuideMeasurements(c)
         measurements.draw(c,zoom)
         c.restore()
         if(store.page.panes.size>1){
@@ -391,7 +429,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             if(geometry.active){geometry.cancel();navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true}
             if(pdfBaseId!=null && changed && (tool=="erase" || actions.values.any{it=="erase"}))store.undo()
             holdCallbacks.keys.toList().forEach(::cancelHold)
-            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
             if(transforming.isNotEmpty())original.forEach{base->store.page.items.firstOrNull{it.id==base.id}?.let{o->o.x=base.x;o.y=base.y;o.w=base.w;o.h=base.h;o.rotation=base.rotation;o.width=base.width}}
             navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true
         }
@@ -528,10 +566,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
                     val splitInk=store.page.panes.size>1
                     val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
-                    val guide=if(!guideSnapEnabled)null else store.page.visibleItems().asReversed().firstOrNull{it.pane==pointerPanes[id] && it.shape in GeometryTools.keys &&
-                        GeometryTools.snap(it,at.x,at.y,14f/store.page.panes[it.pane].zoom)!=null}
-                    if(guide!=null)guides[id]=guide
-                    val start=snap(id,at)
                     mindStart[id]=at
                     live[id] =
                         Item(
@@ -545,13 +579,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             dashLength=if(splitInk)drawingPane.dashLength else dashLength,
                             dashGap=if(splitInk)drawingPane.dashGap else dashGap,
                             alpha = if (style == "highlight") 75*penOpacity/255 else penOpacity,
-                            points =
-                                mutableListOf(
-                                    Point(start.x, start.y, e.eventTime, e.getPressure(e.actionIndex))
-                                ),
+                            points = mutableListOf(),
                         )
-                    if(style=="smooth"){smoothers[id]=StrokeSmoother(live.getValue(id).points.first());removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
-                    if(tool=="pen"&&style!="smooth")scheduleHold(id,start)
+                    sampleGuidedInk(id,live.getValue(id),Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex)))
+                    if(style=="smooth" && id !in guides){smoothers[id]=StrokeSmoother(live.getValue(id).points.first());removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
+                    if(tool=="pen"&&style!="smooth")scheduleHold(id,at)
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -565,7 +597,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         erase(point,eraseLast[pid]?:point,pointerPanes[pid]?:activePane);eraseLast[pid]=point
                     } else if (actions[pid] == "select" && pid == primary) {
                         if (mode == "box") {
-                            lasso.add(point)
+                            if(selectionMode=="free")lasso.add(point)
                             box =
                                 RectF(
                                     min(anchor.x, point.x),
@@ -602,19 +634,17 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                 for (j in 0 until e.historySize) {
                                     val q=PointF((e.getHistoricalX(i,j)-rect.left-density*state.tx)/scale,
                                         (e.getHistoricalY(i,j)-rect.top-density*state.ty)/scale)
-                                    val snapped=snap(pid,q)
-                                    sampleInk(pid,o,
+                                    sampleGuidedInk(pid,o,
                                         Point(
-                                            snapped.x,
-                                            snapped.y,
+                                            q.x,
+                                            q.y,
                                             e.getHistoricalEventTime(j),
                                             e.getHistoricalPressure(i, j),
                                         )
                                     )
                                 }
-                                val snapped=snap(pid,point)
-                                sampleInk(pid,o,Point(snapped.x, snapped.y, e.eventTime, e.getPressure(i)))
-                                if(tool=="pen"&&o.shape!="smooth")scheduleHold(pid,snapped)
+                                sampleGuidedInk(pid,o,Point(point.x,point.y,e.eventTime,e.getPressure(i)))
+                                if(tool=="pen"&&o.shape!="smooth")scheduleHold(pid,point)
                             }
                         }
                 }
@@ -624,8 +654,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 cancelHold(id)
                 live.remove(id)?.let { o ->
                     if (o.kind == "ink") {
-                        val end=snap(id,at);val endpoint=Point(end.x,end.y,e.eventTime)
-                        smoothers.remove(id)?.let{o.points.addAll(it.finish(endpoint))}?:o.points.add(endpoint)
+                        val endpoint=Point(at.x,at.y,e.eventTime)
+                        val filter=smoothers.remove(id)
+                        if(filter!=null)o.points.addAll(filter.finish(endpoint))else sampleGuidedInk(id,o,endpoint)
+                        if(o.points.isEmpty() || id in guides && (guideLengths[id]?:0f)<.5f)return@let
                         if(smoothers.isEmpty())removeCallbacks(smoothFrame)
                         val left = o.points.minOf { it.x }
                         val top = o.points.minOf { it.y }
@@ -652,12 +684,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     }else {checkpoint();store.page.items.add(o)}
                     if(tool!="smart")commitToBacking(o) else if(smartMode=="shape")backingDirty=true
                 }
-                guides.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
+                guides.remove(id);guideStopped.remove(id);guideLengths.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
                 val wasSelection=actions[id]=="select"
                 actions.remove(id);eraseLast.remove(id);broadPointers.remove(id);pointerPanes.remove(id)
                 if (id == primary) {
                     box?.let { rect ->
-                        selected.addAll(SmartSelection.selectGesture(lasso,rect,store.page.visibleItems().filter{it.pane==activePane&&store.page.editable(it)}).map{it.id})
+                        selected.addAll(SmartSelection.selectGesture(lasso,rect,store.page.visibleItems().filter{it.pane==activePane&&store.page.editable(it)&&!it.locked},selectionMode).map{it.id})
                     }
                     box = null
                     lasso.clear()

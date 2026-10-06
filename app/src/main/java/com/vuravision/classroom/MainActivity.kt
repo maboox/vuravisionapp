@@ -47,7 +47,6 @@ class MainActivity : Activity() {
     private val recognition = Recognition()
     private val prefs by lazy { getSharedPreferences("vura", MODE_PRIVATE) }
     private var documentId = ""
-    private var clipboard = listOf<Item>()
     private var pendingExport: File? = null
     private var sharing: Sharing? = null
     private var shareDialog: Dialog? = null
@@ -119,6 +118,7 @@ class MainActivity : Activity() {
         board.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true)
         board.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
         board.penOpacity=prefs.getInt("penOpacity",255)
+        board.selectionMode=prefs.getString("selectionMode","free")?.takeIf{it in listOf("free","box")}?:"free"
         board.touchMode=prefs.getBoolean("touchMode",false)
         smartSource=prefs.getString("smartSource","auto")?:"auto"
         board.smartMode=prefs.getString("smartMode","text")?:"text"
@@ -188,18 +188,24 @@ class MainActivity : Activity() {
         header.addView(icon("undo",s("undo")){store.undo();board.clearSelection()})
         header.addView(icon("redo",s("redo")){store.redo();board.clearSelection()})
         header.addView(icon("share",s("share")){shareOptions()})
-        floating(header,Gravity.TOP or Gravity.START)
+        header.addView(icon("pie_settings",s("pie_settings")){if(prefs.getBoolean("pieEnabled",false))pieMenu(canvasHost.width-dp(150).toFloat(),canvasHost.height-dp(170).toFloat())else pieSettings()})
+        val headerHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(header)}
+        floating(headerHost,Gravity.BOTTOM or Gravity.RIGHT)
+        (headerHost.layoutParams as FrameLayout.LayoutParams).rightMargin=dp(72)
         // Titles/status remain available in the document menu; canvas chrome uses icons.
         titleView=label("");status=label("");pageLabel=label("")
         dock=column().apply{pad(4)}
         val dockScroll=ScrollView(this).apply{isVerticalScrollBarEnabled=false;addView(dock)}
-        floating(dockScroll,Gravity.TOP or Gravity.BOTTOM or Gravity.START,80,78,dp(56),-1)
+        floating(dockScroll,Gravity.TOP or Gravity.BOTTOM or Gravity.START,12,140,dp(56),-1)
         pageStrip=row().apply{pad(4)}
-        floating(pageStrip,Gravity.BOTTOM or Gravity.START)
+        pageStrip.layoutDirection=View.LAYOUT_DIRECTION_LTR
+        pageLabel=label("",14f,NAVY,true).apply{gravity=Gravity.CENTER;minWidth=dp(72);layoutDirection=View.LAYOUT_DIRECTION_LTR}
+        val pageHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(pageStrip)}
+        floating(pageHost,Gravity.BOTTOM or Gravity.LEFT)
         selectionBar=row().apply{pad(4)}
         surface(selectionBar)
         selectionHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
-        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(56),Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply{setMargins(dp(78),dp(78),dp(12),0)})
+        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(56),Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{setMargins(dp(78),0,dp(12),dp(78))})
         val focus=icon("fullscreen",tr("Hide / show toolbars","پنهان / نمایان کردن ابزارها")){
             focusMode=!focusMode
             window.decorView.systemUiVisibility=if(focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
@@ -208,7 +214,7 @@ class MainActivity : Activity() {
             refreshSplitControls()
         }
         surface(focus)
-        canvasHost.addView(focus,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.END).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
+        canvasHost.addView(focus,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
         voiceButton=button(s("voice_assistant")){toggleVoice()}.apply{
             id=R.id.voice_assistant_button
             setIconResource(R.drawable.feather_mic);iconSize=dp(20)
@@ -222,7 +228,13 @@ class MainActivity : Activity() {
         voiceMuteButton.visibility=View.GONE
         canvasHost.addView(voiceMuteButton,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),0,dp(12),dp(132))})
         prefs.registerOnSharedPreferenceChangeListener(voicePreferenceListener)
-        canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot)refreshSplitControls()}
+        canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot){
+            val narrow=r-l<dp(800)
+            (pageHost.layoutParams as FrameLayout.LayoutParams).apply{bottomMargin=dp(if(narrow)76 else 12);width=min(dp(344),(r-l-dp(24)).coerceAtLeast(dp(144)))};pageHost.requestLayout()
+            (headerHost.layoutParams as FrameLayout.LayoutParams).apply{width=min(dp(296),(r-l-dp(96)).coerceAtLeast(dp(144)))};headerHost.requestLayout()
+            (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{bottomMargin=dp(if(narrow)140 else 78)};selectionHost.requestLayout()
+            refreshSplitControls()
+        }}
         refreshDock();refreshPages()
     }
     private fun closeSidePanel(){sidePanel?.let{canvasHost.removeView(it)};sidePanel=null;sidePanelPage=null}
@@ -238,8 +250,7 @@ class MainActivity : Activity() {
 
     private fun refreshTitle() {
         titleView.text = projectStore.lesson.title.ifBlank { s("lesson") }
-        pageLabel.text =
-            "${projectStore.lesson.current+1} / ${projectStore.lesson.pages.size}   ·   ${s("pages")}"
+        pageLabel.text = "${projectStore.lesson.current+1} / ${projectStore.lesson.pages.size}"
         refreshPages()
     }
 
@@ -259,7 +270,7 @@ class MainActivity : Activity() {
                     "layers"->layers();"split"->splitSettings();"text"->addText(false);"shape"->{pdfPane?.writingMode();shapes()};"smart"->{pdfPane?.writingMode();smart()}
                     "touch"->{if(!board.isDrawing){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}}
                     "insert"->insert();"tools"->classroomTools()
-                    else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
+                    else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="select")selectionSettings() else if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
                 }
             },LinearLayout.LayoutParams(dp(48),dp(48)))
         }
@@ -290,8 +301,8 @@ class MainActivity : Activity() {
         }
         if(items.any{it.kind=="ink"})icon("shape",tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
         items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)selectionBar.addView(this.icon("measure",s("measure")){measureShape(o)})}
-        icon("color"){colors()}
-        icon("copy"){clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()};toast(s("copy"))}
+        if(items.any{it.kind !in listOf("image","pdf")})icon("color"){colors()}
+        if(items.singleOrNull()?.kind in listOf("image","pdf"))icon("crop"){crop(items.single())}
         icon("duplicate"){
             val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
             store.editMetadata{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
@@ -301,7 +312,7 @@ class MainActivity : Activity() {
     }
     private fun splitSettings(){
         if(board!==whiteboard){pdfMenu();return}
-        MaterialAlertDialogBuilder(this).setTitle(tr("Split board","تقسیم تخته"))
+        navigationBuilder(tr("Split board","تقسیم تخته"))
             .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.panes.size-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show()
     }
     private fun refreshSplitControls(){
@@ -309,7 +320,7 @@ class MainActivity : Activity() {
         val n=store.page.panes.size;if(n==1||focusMode||canvasHost.width==0)return
         val overlay=FrameLayout(this);splitControls=overlay
         canvasHost.addView(overlay,0.coerceAtLeast(canvasHost.childCount-1),FrameLayout.LayoutParams(-1,-1))
-        val columns=if(n==4)2 else n;val rows=if(n==4)2 else 1
+        val columns=n
         store.page.panes.forEachIndexed{i,pane->
             val actions=row().apply{pad(2)};surface(actions)
             actions.addView(icon("pen",tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")){
@@ -326,18 +337,21 @@ class MainActivity : Activity() {
             actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){
                 backgroundSettings(i)
             })
-            overlay.addView(actions,FrameLayout.LayoutParams(dp(100),dp(52)).apply{
-                leftMargin=((i%columns+1)*canvasHost.width/columns-dp(112)).coerceAtLeast(dp(76))
-                topMargin=(i/columns)*canvasHost.height/rows+dp(if(i/columns==0)142 else 12)
+            val controlWidth=min(dp(100),(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
+            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,dp(52)).apply{
+                leftMargin=(i+1)*canvasHost.width/columns-controlWidth-dp(6)
+                topMargin=(canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)).coerceAtLeast(dp(12))
             })
         }
     }
     private fun refreshPages() {
         if(!::pageStrip.isInitialized)return
         val signature="${projectStore.lesson.current}:${projectStore.lesson.pages.joinToString{it.id}}:${projectStore.page.panes.size}"
+        pageLabel.text="${projectStore.lesson.current+1} / ${projectStore.lesson.pages.size}"
         if(signature==pageSignature)return
         pageSignature=signature;pageStrip.removeAllViews()
         pageStrip.addView(icon("previous",s("previous")){switchPage(projectStore.lesson.current-1)})
+        pageStrip.addView(pageLabel)
         pageStrip.addView(icon("pages",s("pages")+" · ${projectStore.lesson.current+1}/${projectStore.lesson.pages.size}"){pages()})
         pageStrip.addView(icon("next",s("next")){switchPage(projectStore.lesson.current+1)})
         pageStrip.addView(icon("insert",s("add_page")){addPage()})
@@ -490,7 +504,7 @@ class MainActivity : Activity() {
     }
     private fun pieSettings(){
         val c=column().apply{pad(16)}
-        c.addView(Switch(this).apply{text=tr("Enable five-finger pie menu (experimental)","فعال‌سازی منوی پنج‌انگشتی (آزمایشی)");isChecked=prefs.getBoolean("pieEnabled",false);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v}})
+        c.addView(Switch(this).apply{text=tr("Enable five-finger pie menu","فعال‌سازی منوی پنج‌انگشتی");isChecked=prefs.getBoolean("pieEnabled",false);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v}})
         c.addView(infoTitle(tr("Gesture","ژست"),tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")))
         val slots=column();c.addView(slots)
         fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())"+"else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,-2,1f));slots.addView(r)}}
@@ -535,12 +549,11 @@ class MainActivity : Activity() {
             "recent"->withPdfExit{recent()}
             "export_pdf","export_png","export_jpg"->exportChoice(key.substringAfter('_'))
             "rename"->rename();"lab"->openExplorer(true);"games"->openExplorer(false);"share"->shareOptions();"help"->quickGuide()
-            "google_search_settings"->GoogleSearchSettingsUi(this).show();"fonts"->fontSettings();"models"->models();"input_controls"->inputSettings();"page_background"->defaultBackgroundSettings();"calibration"->calibrationSettings()
+            "google_search_settings"->GoogleSearchSettingsUi(this).show(menuReturn.also{menuReturn=null});"fonts"->fontSettings();"models"->models();"input_controls"->inputSettings();"page_background"->defaultBackgroundSettings();"calibration"->calibrationSettings()
             "settings"->settings()
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "ui_size"->choices(s("ui_size"),listOf("small","medium","large")){i->persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
-            "copy"->{clipboard=MindMap.group(store.page,board.chosen()).map{it.deepCopy()}}
-            "paste"->paste();"delete"->board.delete()
+            "delete"->board.delete()
             "duplicate"->{val copies=duplicateItems(board.chosen());store.editMetadata{copies.forEach{it.x+=24;it.y+=24;store.page.items.add(it)}}}
             "lock"->board.edit{it.locked=true}
             "unlock_all"->board.unlockAll()
@@ -724,20 +737,46 @@ class MainActivity : Activity() {
         };c.addView(r)}
     }
 
-    private fun dialog(title: String, content: View): AlertDialog =
-        MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton(s("close"), null)
-            .create()
-            .also { it.show();Fonts.onShown(it) }
+    private var menuReturn:(()->Unit)?=null
+    private val menuDialogs=mutableListOf<java.lang.ref.WeakReference<AlertDialog>>()
+    private fun navigationBuilder(title:String):MaterialAlertDialogBuilder {
+        val back=menuReturn;menuReturn=null
+        menuDialogs.removeAll{it.get()?.isShowing!=true}
+        val nested=back!=null || menuDialogs.isNotEmpty()
+        return MaterialAlertDialogBuilder(this).setTitle(title)
+            .setNegativeButton(if(nested)s("menu_back")else s("close")){d,_->d.dismiss();back?.invoke()}
+            .setOnCancelListener{d->d.dismiss();back?.invoke()}
+    }
+    private fun shown(d:AlertDialog):AlertDialog {
+        menuDialogs.add(java.lang.ref.WeakReference(d))
+        Fonts.onShown(d)
+        d.window?.setGravity(Gravity.BOTTOM or Gravity.RIGHT)
+        return d
+    }
+    private fun dialog(title:String,content:View):AlertDialog =
+        navigationBuilder(title).setView(content).create().also{it.show();shown(it)}
 
-    private fun choices(title: String, keys: List<String>, action: (Int) -> Unit) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setAdapter(MenuRows(this,keys)) { _, i -> action(i) }
-            .setNegativeButton(s("cancel"), null)
-            .show().also{Fonts.onShown(it)}
+    private fun choices(title:String,keys:List<String>,action:(Int)->Unit) {
+        val parent=menuReturn
+        navigationBuilder(title).setAdapter(MenuRows(this,keys)){d,i->
+            d.dismiss()
+            menuReturn={menuReturn=parent;choices(title,keys,action)}
+            try{action(i)}finally{menuReturn=null}
+        }.show().also{shown(it)}
+    }
+
+    private fun selectionSettings(){
+        val c=column().apply{pad(16)}
+        c.addView(infoTitle(s("selection_settings"),tr("Tap the active selection icon to open these settings. Free selection follows your drawn loop; box selection shows only a dashed rectangle.","با زدن دوبارهٔ آیکون انتخاب، این تنظیمات باز می‌شود. انتخاب آزاد مسیر شما را دنبال می‌کند؛ انتخاب کادری فقط مستطیل خط‌چین نشان می‌دهد.")))
+        val modes=listOf("free","box");val group=RadioGroup(this)
+        modes.forEach{mode->group.addView(RadioButton(this).apply{
+            id=View.generateViewId();tag=mode;text=s(if(mode=="free")"selection_free"else"selection_box");textSize=16f*uiScale();minHeight=dp(52);isChecked=board.selectionMode==mode
+        })}
+        group.setOnCheckedChangeListener{g,id->val mode=g.findViewById<RadioButton>(id)?.tag as? String?:return@setOnCheckedChangeListener
+            prefs.edit().putString("selectionMode",mode).apply();whiteboard.selectionMode=mode;board.selectionMode=mode;board.clearSelection()
+        }
+        c.addView(group)
+        dialog(s("selection_settings"),c)
     }
 
     private fun confirm(title: String, action: () -> Unit) {
@@ -762,13 +801,11 @@ class MainActivity : Activity() {
             }
         box.addView(edit)
         val d =
-            MaterialAlertDialogBuilder(this)
-                .setTitle(title)
+            navigationBuilder(title)
                 .setView(box)
-                .setNegativeButton(s("cancel"), null)
                 .setPositiveButton(s("apply"), null)
                 .create()
-        d.show()
+        d.show();shown(d)
         d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             try {
                 action(edit.text.toString())
@@ -897,12 +934,12 @@ class MainActivity : Activity() {
     }
 
     private fun quickGuide(){
-        UserGuide.show(this,media){}
+        UserGuide.show(this,media,{},menuReturn.also{menuReturn=null})
     }
 
     private fun fileMenu() {
         if(projectStore.lesson.pdf!=null){
-            MaterialAlertDialogBuilder(this).setTitle(s("files")).setItems(arrayOf(tr("PDF file and workspace","فایل PDF و فضای مطالعه"),tr("Board projects and exports","پروژه‌ها و خروجی تخته"))){_,i->if(i==0)pdfMenu()else projectFileMenu()}.show()
+            choices(s("files"),listOf(tr("PDF file and workspace","فایل PDF و فضای مطالعه"),tr("Board projects and exports","پروژه‌ها و خروجی تخته"))){i->if(i==0)pdfMenu()else projectFileMenu()}
         } else projectFileMenu()
     }
     private fun projectFileMenu() {
@@ -972,12 +1009,14 @@ class MainActivity : Activity() {
     }
 
     private fun colors() {
-        val chosen=board.chosen()
+        val chosen=board.chosen().filter{it.kind !in listOf("image","pdf")}
+        if(board.chosen().isNotEmpty() && chosen.isEmpty())return
         val initial=chosen.singleOrNull()?.let{if(it.kind=="sticky")it.noteColor else it.color}?:board.inkColor
         val c=column().apply{pad(16)}
         palette(c,initial){color->
             if(chosen.isEmpty()){board.inkColor=color;savePens()}
             else board.edit{item->
+                if(item.kind in listOf("image","pdf"))return@edit
                 if(item.kind=="sticky"){
                     item.noteColor=color
                     if(Color.luminance(color)<.25 && Color.luminance(item.color)<.35)item.color=Color.WHITE
@@ -1038,7 +1077,9 @@ class MainActivity : Activity() {
         val items = board.chosen()
         if (items.isEmpty()) return
         val one = items.singleOrNull()
-        val keys = mutableListOf("delete", "duplicate", "copy", "lock", "front", "back", "color", "smart")
+        val keys = mutableListOf("delete", "duplicate", "lock", "front", "back")
+        if(items.any{it.kind !in listOf("image","pdf")})keys.add("color")
+        if(items.any{it.kind in listOf("ink","text","sticky")})keys.add("smart")
         if(one!=null&&Measurements.of(one)!=null)keys.add("measure")
         if(one!=null&&ShapeFill.path(one)!=null)keys.add("fill")
         if(one?.kind=="periodic")keys.add("periodic")
@@ -1052,7 +1093,6 @@ class MainActivity : Activity() {
         if(one?.shape in listOf("ruler","set_square"))keys.addAll(listOf("draw_parallel","draw_perpendicular"))
         if (one?.kind == "pdf") keys.addAll(listOf("previous", "next", "page_picker"))
         if (one?.kind in listOf("image", "pdf")) keys.add("crop")
-        keys.add("paste")
         choices(s("edit"), keys) { i ->
             when (keys[i]) {
                 "measure" -> one?.let{measureShape(it)}
@@ -1064,10 +1104,6 @@ class MainActivity : Activity() {
                 "draw_parallel","draw_perpendicular" -> if(one!=null&&!one.locked&&store.page.editable(one)){val line=GeometryTools.construction(one,keys[i]=="draw_perpendicular");store.editMetadata{store.page.items.add(line)}}
                 "draw_with_tool" -> {if(one!=null&&!one.locked&&store.page.editable(one)){val result=GeometryTools.construction(one);store.editMetadata{store.page.items.add(result)}}}
                 "delete" -> board.delete()
-                "copy" -> {
-                    clipboard = MindMap.group(store.page,items).map { it.deepCopy() }
-                    toast(s("copy"))
-                }
                 "duplicate" -> {
                     store.editMetadata {
                         duplicateItems(MindMap.group(store.page,items))
@@ -1081,7 +1117,6 @@ class MainActivity : Activity() {
                             .forEach { store.page.items.add(it) }
                     }
                 }
-                "paste" -> paste()
                 "lock" -> {
                     store.editMetadata { items.forEach { it.locked = !it.locked } }
                 }
@@ -1126,52 +1161,44 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun paste() {
-        if(!store.page.canDraw())return
-        if (clipboard.isEmpty()) return
-        val c = board.center()
-        val bounds = contentBounds(clipboard)
-        store.editMetadata {
-            val pasted =
-                duplicateItems(clipboard).onEach {
-                    it.apply {
-                        layerId = store.page.activeLayerId
-                        pane = board.activePane
-                        x += c.x - bounds.centerX()
-                        y += c.y - bounds.centerY()
-                        locked = false
+    private fun crop(o:Item) {
+        if(o.locked || o.kind !in listOf("image","pdf"))return
+        val targetPage=store.page;val targetStore=store;val original=o.deepCopy()
+        val returnMenu=menuReturn;menuReturn=null
+        work({requireNotNull(media.image(original,true))}){preview->
+            menuReturn=returnMenu
+            val content=column().apply{pad(8)}
+            val selector=ImageCropView(this,preview)
+            content.addView(selector,LinearLayout.LayoutParams(-1,min(dp(460),(resources.displayMetrics.heightPixels*.55f).toInt())))
+            val actions=row()
+            actions.addView(button(s("reset")){selector.reset()})
+            var close:()->Unit={}
+            actions.addView(button(s("crop"),true){
+                val region=RectF(selector.region);close()
+                work({
+                    val source=requireNotNull(media.image(original,true))
+                    val left=(source.width*region.left).toInt().coerceIn(0,source.width-1)
+                    val top=(source.height*region.top).toInt().coerceIn(0,source.height-1)
+                    val right=ceil(source.width*region.right).toInt().coerceIn(left+1,source.width)
+                    val bottom=ceil(source.height*region.bottom).toInt().coerceIn(top+1,source.height)
+                    val rendered=if(original.cuts.isEmpty())source else Bitmap.createBitmap(source.width,source.height,Bitmap.Config.ARGB_8888).also{bitmap->
+                        Renderer(media).draw(Canvas(bitmap),original.copy(x=0f,y=0f,w=source.width.toFloat(),h=source.height.toFloat(),rotation=0f,alpha=255),true)
                     }
-                }
-            store.page.items.addAll(pasted)
-            board.selected.clear()
-            board.selected.addAll(pasted.map { it.id })
-        }
-        board.tool = "select"
-        refreshDock()
-    }
-
-    private fun crop(o: Item) {
-        if (o.locked) return
-        input(s("crop_help"), "0, 0, 100, 100") { value ->
-            val n = value.split(',').map { it.trim().toFloat() }
-            require(n.size == 4 && n.all { it in 0f..100f } && n[2] > n[0] && n[3] > n[1])
-            work({
-                val b = requireNotNull(media.image(o, true))
-                val left = (b.width * n[0] / 100).toInt().coerceAtMost(b.width - 1)
-                val top = (b.height * n[1] / 100).toInt().coerceAtMost(b.height - 1)
-                val w = ((n[2] - n[0]) * b.width / 100).toInt().coerceIn(1, b.width - left)
-                val h = ((n[3] - n[1]) * b.height / 100).toInt().coerceIn(1, b.height - top)
-                media.save(Bitmap.createBitmap(b, left, top, w, h))
-            }) { asset ->
-                board.edit {
-                    it.asset = asset
-                    it.kind = "image"
-                    it.w *= ((n[2] - n[0]) / 100)
-                    it.h *= ((n[3] - n[1]) / 100)
-                    it.pdfPage = 0
-                    it.pageCount = 1
-                }
-            }
+                    val result=Bitmap.createBitmap(rendered,left,top,right-left,bottom-top)
+                    try{media.save(result)}finally{if(result!==source && result!==rendered)result.recycle();if(rendered!==source)rendered.recycle()}
+                }, cropped@{asset->
+                    if(targetStore.page!==targetPage)return@cropped
+                    val item=targetPage.items.firstOrNull{it.id==original.id}?:return@cropped
+                    if(item.locked || !targetPage.editable(item))return@cropped
+                    val center=item.global(item.w*(region.left+region.right)/2,item.h*(region.top+region.bottom)/2)
+                    targetStore.editMetadata{
+                        item.asset=asset;item.kind="image";item.w*=region.width();item.h*=region.height()
+                        item.x=center.first-item.w/2;item.y=center.second-item.h/2;item.pdfPage=0;item.pageCount=1;item.cuts=emptyList()
+                    }
+                    board.sceneChanged();refreshDock()
+                })
+            })
+            content.addView(scrollRow(actions));close=dialog(s("crop"),content)::dismiss
         }
     }
 
@@ -1257,7 +1284,7 @@ class MainActivity : Activity() {
         (pdfPane?.parent as? PdfSplitLayout)?.applyPresentation()
     }
     private fun choosePdfImport(){
-        MaterialAlertDialogBuilder(this).setTitle(tr("Open PDF","بازکردن PDF"))
+        navigationBuilder(tr("Open PDF","بازکردن PDF"))
             .setItems(arrayOf(tr("PDF object on board","PDF به‌صورت شیء روی تخته"),tr("Scrollable PDF beside board","PDF قابل اسکرول کنار تخته"))){_,i->
                 pendingPdfMode=i
                 if(i==1)withPdfExit{pick("application/pdf",103)}else pick("application/pdf",103)
@@ -1290,12 +1317,12 @@ class MainActivity : Activity() {
     }
     private fun pdfMenu(){
         val state=projectStore.lesson.pdf?:return
-        val choices=arrayOf(tr("Save annotations to the original PDF","ذخیرهٔ یادداشت‌ها روی همان PDF"),tr("Save as a new PDF","ذخیره به‌صورت PDF جدید"),
+        val entries=listOf(tr("Save annotations to the original PDF","ذخیرهٔ یادداشت‌ها روی همان PDF"),tr("Save as a new PDF","ذخیره به‌صورت PDF جدید"),
             tr("Keep annotations in the project only","یادداشت‌ها فقط در پروژه بمانند"),tr("Hand / writing mode","حالت دست / نوشتن"),
             tr("Swap PDF and board sides","تعویض سمت PDF و تخته"),tr("PDF fullscreen / split","PDF تمام‌صفحه / کنار تخته"),
             tr("Fit PDF to width","نمایش PDF متناسب با عرض"),tr("Copy page or region to board","کپی صفحه یا بخشی از آن به تخته"),
             tr("Export board pages as PDF","خروجی PDF از صفحات تخته"),tr("Close PDF workspace","بستن بخش PDF"))
-        MaterialAlertDialogBuilder(this).setTitle(state.title+if(state.unsaved)" •"else"").setItems(choices){_,i->when(i){
+        choices(state.title+if(state.unsaved)" •"else"",entries){i->when(i){
             0->savePdf(true)
             1->savePdf(false)
             2->{persist();toast(tr("Editable annotations are saved in the project","یادداشت‌های قابل‌ویرایش در پروژه ذخیره می‌شوند"))}
@@ -1306,7 +1333,7 @@ class MainActivity : Activity() {
             7->copyPdfPage()
             8->choices(s("export_pdf"),listOf("current_page","all_pages")){n->export("pdf",n==1){createDocument(it,"application/pdf")}}
             9->withPdfExit{activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pdf=null}}
-        }}.setNegativeButton(s("close"),null).show()
+        }}
     }
     private fun withPdfExit(action:()->Unit){
         val state=projectStore.lesson.pdf
@@ -1744,21 +1771,23 @@ class MainActivity : Activity() {
     }
 
     private fun settings() {
-        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","page_background","calibration","cache","about")
+        val keys=mutableListOf("language","fonts","google_search_settings","ui_size","models","input_controls","selection_settings","pie_settings","page_background","calibration","cache","about")
         if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
         // Engineering is intentionally only reachable through the hidden About logo gesture.
         choices(s("settings"),keys){index->when(keys[index]){
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "fonts"->fontSettings()
             "voice_assistant"->voiceSettings()
-            "google_search_settings"->GoogleSearchSettingsUi(this).show()
-            "ui_size"->MaterialAlertDialogBuilder(this).setTitle(tr("Interface size","اندازهٔ رابط کاربری"))
+            "google_search_settings"->GoogleSearchSettingsUi(this).show(menuReturn.also{menuReturn=null})
+            "ui_size"->navigationBuilder(tr("Interface size","اندازهٔ رابط کاربری"))
                 .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
                     listOf(.8f,1f,1.4f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
                     persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
                 }.show()
             "models"->models()
             "input_controls"->inputSettings()
+            "selection_settings"->selectionSettings()
+            "pie_settings"->pieSettings()
             "page_background"->defaultBackgroundSettings()
             "calibration"->calibrationSettings()
             "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
@@ -1820,14 +1849,13 @@ class MainActivity : Activity() {
     }
 
     private fun engineering() {
-        val keys=listOf("report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior", "pie_settings")
+        val keys=listOf("report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
         choices(s("engineering"),keys) {
             when (keys[it]) {
                 "advanced_board" -> advancedBoard()
                 "secret_studio" -> secretStudio()
                 "maboox" -> maboox()
-                "voice_behavior" -> VoiceSettingsUi(this).advanced{stopVoice()}
-                "pie_settings" -> pieSettings()
+                "voice_behavior" -> VoiceSettingsUi(this,menuReturn.also{menuReturn=null}).advanced{stopVoice()}
                 "report" -> {
                     val report =
                         "VuraVision ${BuildConfig.VERSION_NAME}\n${Build.MANUFACTURER} ${Build.MODEL}\nAndroid ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}\n${resources.displayMetrics}\nPointers: device-reported only\nObjects: ${store.page.items.size}\nLast error: $lastError\n" +
@@ -1977,7 +2005,8 @@ class MainActivity : Activity() {
     }
 
     private fun openExplorer(lab:Boolean){
-        if(lab)Labs.show(this,{insertBitmap(it)},{board.insert(it)})else Games.show(this)
+        val back=menuReturn;menuReturn=null
+        if(lab)Labs.show(this,{insertBitmap(it)},{board.insert(it)},back)else Games.show(this,back)
     }
 
     private fun insertBitmap(bitmap: Bitmap) {
@@ -2023,7 +2052,7 @@ class MainActivity : Activity() {
 
     private fun voiceSettings(){
         if(!VoiceSettings.enabled(this))return
-        VoiceSettingsUi(this).connection(voiceKeys,voiceWorker){stopVoice()}
+        VoiceSettingsUi(this,menuReturn.also{menuReturn=null}).connection(voiceKeys,voiceWorker){stopVoice()}
     }
     private fun toggleVoice(){
         if(!VoiceSettings.enabled(this)){stopVoice();return}
@@ -2087,6 +2116,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         destroyed = true
+        menuDialogs.mapNotNull{it.get()}.forEach{it.dismiss()};menuDialogs.clear()
         prefs.unregisterOnSharedPreferenceChangeListener(voicePreferenceListener)
         googleSearch?.close();googleSearch=null
         stopVoice()

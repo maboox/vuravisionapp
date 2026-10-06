@@ -286,4 +286,8 @@
 <string name="restore_erased">Restore erased areas</string>
 <string name="input_controls">Touch input</string>
 <string name="fonts">Fonts</string>
+<string name="menu_back">Back</string>
+<string name="selection_settings">Selection settings</string>
+<string name="selection_free">Free selection</string>
+<string name="selection_box">Box selection</string>
 </resources>
