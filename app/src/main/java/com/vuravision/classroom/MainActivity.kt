@@ -1921,7 +1921,7 @@ class MainActivity : Activity() {
     private fun historySettings(){
         val c=column().apply{pad(16)};val values=listOf(10,25,50,100,200)
         c.addView(infoTitle(s("history_settings"),tr("History steps on this device; per author in a room. Larger limits use more memory.","تعداد مراحل بازگردانی این دستگاه؛ در اتاق برای هر کاربر. مقدار بیشتر حافظهٔ بیشتری مصرف می‌کند.")))
-        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,values.map{it.toString()});setSelection(values.indexOf(HistorySettings.load(this)).coerceAtLeast(0))};c.addView(pick)
+        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,values.map{it.toString()});setSelection(values.indexOf(HistorySettings.load(this@MainActivity)).coerceAtLeast(0))};c.addView(pick)
         val d=dialog(s("history_settings"),c);c.addView(button(s("apply"),true){val value=values[pick.selectedItemPosition];prefs.edit().putInt("historyLimit",value).apply();projectStore.historyLimit=value;board.store.historyLimit=value;pdfPane?.setHistoryLimit(value);rooms?.setHistoryLimit(value);d.dismiss()})
     }
     private fun addClearSlider(c:LinearLayout,done:()->Unit){

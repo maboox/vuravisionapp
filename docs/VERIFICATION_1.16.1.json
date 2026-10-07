@@ -1,0 +1,37 @@
+{
+  "version": "1.16.1",
+  "version_code": 27,
+  "date_utc": "2026-10-07T04:45:04.283341+00:00",
+  "scope": "Fix the MainActivity.historySettings Spinner/Context Kotlin type mismatch from the attached GitHub Actions log.",
+  "reported_error": "MainActivity.kt:1924:154: actual type Spinner, expected Context (debug and release compilation).",
+  "fix": "HistorySettings.load(this@MainActivity) explicitly uses the Activity context inside Spinner.apply.",
+  "local_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 28,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118,
+    "workflow_yaml": "pass",
+    "previous_source_files_retained": 396,
+    "previous_transient_entry_excluded": ".kotlin/sessions/kotlin-compiler-16231874874423206326.salive",
+    "changed_existing_files": [
+      ".github/workflows/android.yml",
+      "README.fa.md",
+      "README.md",
+      "app/build.gradle.kts",
+      "app/src/main/java/com/vuravision/classroom/MainActivity.kt"
+    ],
+    "main_activity_change": "exactly one Context receiver change; all other application source and assets identical to 1.16.0",
+    "gradle_change": "version only; dependencies, application ID and signing unchanged",
+    "workflow_change": "artifact version labels only",
+    "unit_test_annotations": 278,
+    "gradle_wrapper_included": true
+  },
+  "android_compilation": "Attempted compileDebugKotlin and compileReleaseKotlin, blocked before compilation: Gradle 8.11.1 download failed with java.net.SocketException: Network is unreachable.",
+  "android_unit_tests": "Not executed locally; testDebugUnitTest blocked by Gradle bootstrap. All 278 existing tests remain enabled in GitHub Actions.",
+  "android_lint": "Not executed locally; lintDebug blocked by Gradle bootstrap. Mandatory lint remains in GitHub Actions.",
+  "production_apk": "Not built locally. Confirm build, signing and 16 KiB alignment in GitHub Actions.",
+  "physical_device_acceptance": "Not run. Existing 1.16 device checklist remains applicable.",
+  "previous_release_reports": "Historical reports retained unchanged; this report describes the patch validation."
+}

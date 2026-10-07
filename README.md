@@ -1,6 +1,8 @@
-# VuraVision 1.16.0
+# VuraVision 1.16.1
 
 Full Android source, Gradle Wrapper and GitHub Actions for interactive touch panels.
+
+1.16.1 fixes the Kotlin compilation error in the Undo history settings: the Spinner now loads preferences using the Activity context. See [patch notes](RELEASE_1.16.1.md).
 
 The main Menu / Files / Undo / Redo / Share toolbar is at the bottom-right. Selected-object actions appear above or beside the object; ordinary dialogs are centered and nested menus use a top Back arrow. Lab/game actions stay at the bottom. Enable/configure Pie menu in **Settings → Pie menu**; open it with the five-finger double tap.
 
@@ -27,8 +29,8 @@ Extract this ZIP directly into the repository root, including `.github`. Upload 
 | ANDROID_KEY_ALIAS | Key alias |
 | ANDROID_KEY_PASSWORD | Key password |
 
-Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.16.0-<run>` containing the APK and SHA256SUMS.txt. Pull-request builds use debug signing. Application ID and production signing are unchanged.
+Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.16.1-<run>` containing the APK and SHA256SUMS.txt. Pull-request builds use debug signing. Application ID and production signing are unchanged.
 
-Current checks are in [VERIFICATION_1.16.json](docs/VERIFICATION_1.16.json). Offline structural checks passed. Local Android compilation/tests/lint/APK are pending because Gradle cannot download in this environment. GitHub Actions retains all 278 unit tests, lint, signing and alignment checks; the manual workflow also runs emulator and web smoke tests.
+Current checks are in [VERIFICATION_1.16.1.json](docs/VERIFICATION_1.16.1.json). Offline structural checks passed. Local Android compilation/tests/lint/APK are pending because Gradle cannot download in this environment. GitHub Actions retains all 278 unit tests, lint, signing and alignment checks; the manual workflow also runs emulator and web smoke tests.
 
 For optional voice services see [voice setup](docs/VOICE_ASSISTANT.md); for search see [Google search](docs/GOOGLE_SEARCH.md). Earlier release and verification documents are historical.
