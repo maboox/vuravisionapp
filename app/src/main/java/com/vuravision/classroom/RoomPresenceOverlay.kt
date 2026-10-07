@@ -15,8 +15,9 @@ class RoomPresenceOverlay(private val board:Board) {
     fun draw(c:Canvas){
         val page=board.store.page;val density=board.resources.displayMetrics.density;val members=frame.members.associateBy{it.profile.id};var visible=false
         frame.presence.filter{it.peer!=self&&it.page==page.id}.forEach{presence->
+            if(presence.pane !in page.visiblePaneIndices)return@forEach
             val age=now()-presence.at;if(age !in 0..60000)return@forEach;visible=true
-            val profile=members[presence.peer]?.profile?:return@forEach;val pane=presence.pane.coerceIn(page.panes.indices);val state=page.panes[pane];val clip=board.paneScreenBounds(pane)
+            val profile=members[presence.peer]?.profile?:return@forEach;val pane=presence.pane;val state=page.panes[pane];val clip=board.paneScreenBounds(pane)
             val alpha=if(presence.active)1f else (.65f*(1-age/60000f)).coerceIn(0f,.65f)
             c.save();c.clipRect(clip)
             if(age<1500)presence.live.forEach{v->c.save();c.translate(clip.left,clip.top);c.scale(density,density);c.translate(state.tx,state.ty);c.scale(state.zoom,state.zoom);board.renderer.draw(c,v);c.restore()}
@@ -27,6 +28,7 @@ class RoomPresenceOverlay(private val board:Board) {
             c.restore()
         }
         frame.locks.filterValues{it!=self}.forEach{(key,peer)->val item=page.items.firstOrNull{RoomDocuments.key(page.id,it.id)==key}?:return@forEach;val profile=members[peer]?.profile?:return@forEach
+            if(item.pane !in page.visiblePaneIndices)return@forEach
             val pane=board.paneScreenBounds(item.pane);val bounds=board.screenRect(itemBounds(item),item.pane)
             c.save();c.clipRect(pane);paint.color=profile.color;paint.alpha=220;paint.style=Paint.Style.STROKE;paint.strokeWidth=2*density;paint.pathEffect=null;c.drawRoundRect(bounds,4*density,4*density,paint);label(c,profile,bounds.left,bounds.top-8*density,pane,1f);c.restore()}
         if(visible)board.postInvalidateDelayed(1000)

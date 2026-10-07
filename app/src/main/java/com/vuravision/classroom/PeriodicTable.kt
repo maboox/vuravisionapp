@@ -101,6 +101,10 @@ object PeriodicTable {
         body.addView(HorizontalScrollView(c).apply{addView(table,ViewGroup.LayoutParams(c.dp(900),c.dp(550)))})
         val legend=c.row();colors.forEach{(family,color)->legend.addView(c.label(c.tr(family,PeriodicTable.family(c,family)),12f).apply{setBackgroundColor(color)})};body.addView(c.scrollRow(legend))
         body.addView(c.button(c.tr("Add interactive table to board","افزودن جدول تعاملی به تخته")){add(o.deepCopy())})
+        body.addView(c.button(c.tr("Add complete table as image","افزودن تصویر کامل جدول به تخته")){
+            val bitmap=Bitmap.createBitmap(1800,1100,Bitmap.Config.ARGB_8888);val media=Media(c)
+            try{draw(Canvas(bitmap),Item(kind="periodic",w=1800f,h=1100f),c);val asset=media.save(bitmap);add(Item(kind="image",asset=asset,w=900f,h=550f))}finally{bitmap.recycle();media.close()}
+        })
         body.addView(c.infoTitle(c.tr("Data source","منبع داده"),"PubChem / NCBI · 2026-10-05\n"+c.tr("Missing values are shown as —; f-block elements are shown separately. Atomic masses follow the source, including isotope masses where applicable.","دادهٔ ناموجود با — نشان داده می‌شود؛ عناصر بلوک f جدا آمده‌اند. جرم‌ها مطابق منبع‌اند و در موارد مربوط جرم ایزوتوپی نمایش داده می‌شود.")))
         MaterialAlertDialogBuilder(c).setCustomTitle(c.navigationHeading(c.s("periodic"),back?.let{action->{close();action()}})).setView(ScrollView(c).apply{addView(body)}).setNegativeButton(c.s("close"),null).show().also{close=it::dismiss;Fonts.onShown(it)}
     }

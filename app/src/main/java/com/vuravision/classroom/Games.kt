@@ -324,6 +324,11 @@ object Games {
         var game = GameEngine(key)
         var face = context.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT
         var started = false
+        var namePause:Long?=null;var pausedDuration=0L
+        fun gameNow()=(namePause?:SystemClock.elapsedRealtime())-pausedDuration
+        val nameLabels=mutableListOf<TextView>()
+        var redraw:()->Unit={}
+        fun rename(i:Int){namePause=SystemClock.elapsedRealtime();GamePlayers.edit(context,i){pausedDuration+=SystemClock.elapsedRealtime()-(namePause?:SystemClock.elapsedRealtime());namePause=null;redraw()}}
         val root =
             context.column().apply {
                 setBackgroundColor(PAPER)
@@ -333,6 +338,7 @@ object Games {
         val header = context.row()
         root.addView(context.navigationHeading(context.s(key),back?.let{action->{d.dismiss();action()}}))
         val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
+        val names=context.row();repeat(2){i->val label=context.label(GamePlayers.name(context,i),16f,if(i==0)TEAL else ORANGE,true).apply{gravity=Gravity.CENTER;minimumHeight=context.dp(48);setOnClickListener{rename(i)}};nameLabels.add(label);names.addView(label,LinearLayout.LayoutParams(0,-2,1f))};root.addView(names)
         root.addView(score)
         root.addView(context.label(context.s("game_layout_help"),13f,MUTED))
         val area = context.column()
@@ -341,9 +347,10 @@ object Games {
         val action = context.button(context.s("start"), true) {}
         root.addView(action)
         fun render() {
-            val now = SystemClock.elapsedRealtime()
+            nameLabels.forEachIndexed{i,v->v.text=GamePlayers.name(context,i)}
+            val now = gameNow()
             score.text =
-                "${context.s("player1")}   ${game.scores[0]} : ${game.scores[1]}   ${context.s("player2")}    ·    ${context.s("round")} ${game.round}"
+                "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("round")} ${game.round}"
             area.removeAllViews()
             prompts.clear()
             if (!started) {
@@ -373,7 +380,7 @@ object Games {
                 area.addView(
                     context
                         .label(
-                            "${context.s("winner")}: ${context.s(if(game.finished)game.leader()else game.result)}",
+                            "${context.s("winner")}: ${GamePlayers.display(context,if(game.finished)game.leader()else game.result)}",
                             24f,
                             TEAL,
                             true,
@@ -396,7 +403,7 @@ object Games {
             }
             if (key == "tictac") {
                 area.addView(
-                    context.label("${context.s("turn")}: ${context.s("player${game.turn+1}")}", 18f)
+                    context.label("${context.s("turn")}: ${GamePlayers.name(context,game.turn)}", 18f)
                 )
                 repeat(3) { r ->
                     val row = context.row()
@@ -443,11 +450,11 @@ object Games {
                     }
                 col.addView(
                     context.label(
-                        context.s("player${player+1}"),
+                        GamePlayers.name(context,player),
                         14f,
                         if (player == 0) TEAL else ORANGE,
                         true,
-                    )
+                    ).apply{setOnClickListener{rename(player)}}
                 )
                 val prompt =
                     when {
@@ -470,11 +477,11 @@ object Games {
                     opts.addView(
                         context
                             .button(context.s(value), true) {
-                                game.answer(player, i, SystemClock.elapsedRealtime())
+                                game.answer(player, i, gameNow())
                                 if (game.resolved) render()
                                 else {
                                     score.text =
-                                        "${context.s("player1")}   ${game.scores[0]} : ${game.scores[1]}   ${context.s("player2")}    ·    ${context.s("round")} ${game.round}"
+                                        "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("round")} ${game.round}"
                                     if (key != "tap_race") {
                                         for (j in 0 until opts.childCount) opts
                                             .getChildAt(j)
@@ -521,7 +528,7 @@ object Games {
                 game = GameEngine(key)
             }
             started = true
-            game.next(SystemClock.elapsedRealtime())
+            game.next(gameNow())
             render()
         }
         val tick =
@@ -530,12 +537,12 @@ object Games {
 
                 override fun run() {
                     if (started) {
-                        game.tick(SystemClock.elapsedRealtime())
-                        val state = "${game.resolved}-${SystemClock.elapsedRealtime()>=game.go}"
+                        game.tick(gameNow())
+                        val state = "${game.resolved}-${gameNow()>=game.go}"
                         if (key == "tap_race" && !game.resolved)
                             prompts.forEach {
                                 it.text =
-                                    "${((15000-(SystemClock.elapsedRealtime()-game.start)).coerceAtLeast(0)+999)/1000} s"
+                                    "${((15000-(gameNow()-game.start)).coerceAtLeast(0)+999)/1000} s"
                             }
                         if (state != lastState) {
                             render()
@@ -545,6 +552,7 @@ object Games {
                     handler.postDelayed(this, 50)
                 }
             }
+        redraw=::render
         render()
         root.addView(context.scrollRow(header))
         d.setContentView(root)

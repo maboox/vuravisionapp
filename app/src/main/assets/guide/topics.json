@@ -61,12 +61,14 @@
     "stepsEn": [
       "Select Eraser, then tap it again. Whole stroke / object removes an entire item when touched. Area eraser removes only the region along the eraser path.",
       "Set the eraser radius. Enable Include objects to also erase text, shapes, images and PDF regions; turn it off to erase handwriting only.",
-      "Undo restores erased content. Locked items and locked or hidden layers are protected from normal editing."
+      "Undo restores erased content. Locked items and locked or hidden layers are protected from normal editing.",
+      "Slide the thumb all the way to the end and release to clear the current page. In split mode this clears only your active panel. Undo restores the items; locked items and the PDF source are retained."
     ],
     "stepsFa": [
       "پاک‌کن را انتخاب و دوباره روی آن بزنید. حالت کل خط یا شیء، تمام مورد لمس‌شده را حذف می‌کند. پاک‌کن ناحیه‌ای فقط قسمت زیر مسیر پاک‌کن را پاک می‌کند.",
       "شعاع پاک‌کن را تنظیم کنید. گزینهٔ اعمال روی اشیاء، پاک‌کردن متن، شکل، تصویر و بخش‌های سند را هم فعال می‌کند؛ با خاموش‌بودن آن فقط دست‌نویس پاک می‌شود.",
-      "با بازگردانی، محتوا برمی‌گردد. اشیای قفل‌شده و لایه‌های قفل یا پنهان در برابر ویرایش معمولی محافظت می‌شوند."
+      "با بازگردانی، محتوا برمی‌گردد. اشیای قفل‌شده و لایه‌های قفل یا پنهان در برابر ویرایش معمولی محافظت می‌شوند.",
+      "دستهٔ کشویی را تا انتها بکشید و رها کنید تا صفحه پاک شود. در حالت تقسیم فقط بخش فعال شما پاک می‌شود. بازگردانی اشیا را برمی‌گرداند؛ اشیای قفل‌شده و منبع PDF حفظ می‌شوند."
     ],
     "tipEn": "Try Area mode on a long line; only the crossed section should disappear.",
     "tipFa": "تمرین: در حالت ناحیه‌ای روی وسط یک خط بلند بکشید؛ فقط همان بخش باید پاک شود."
@@ -186,12 +188,12 @@
     "stepsEn": [
       "Open Classroom tools and choose Mind map. The starting diagram contains three empty nodes; typing is optional.",
       "Write from inside a node. On lifting the pen, attached writing can expand the node. Move the node to carry its attached writing with it.",
-      "Select a node. The side plus adds a child; the lower plus adds a sibling. Change the box color from the selection bar. Connectors stay behind boxes."
+      "Select a node and edit its text or box color. Open More → Add child branch / Add sibling branch to create a clearly named branch. Connectors stay behind boxes."
     ],
     "stepsFa": [
       "ابزارهای کلاس را باز و مایندمپ را انتخاب کنید. نمودار اولیه سه گرهٔ خالی دارد و تایپ‌کردن اجباری نیست.",
       "نوشتن را از داخل گره شروع کنید. بعد از برداشتن قلم، نوشتهٔ متصل می‌تواند کادر را بزرگ کند. با جابه‌جایی گره، نوشتهٔ متصل همراهش حرکت می‌کند.",
-      "گره را انتخاب کنید. به‌علاوهٔ کنار، فرزند و به‌علاوهٔ پایین، هم‌سطح می‌سازد. رنگ باکس را از نوار انتخاب تغییر دهید. اتصال‌ها زیر باکس‌ها قرار می‌گیرند."
+      "گره را انتخاب و متن یا رنگ کادر آن را تغییر دهید. از گزینه‌های بیشتر ← افزودن شاخهٔ فرزند / افزودن شاخهٔ هم‌سطح برای ساخت شاخه استفاده کنید. اتصال‌ها پشت کادرها باقی می‌مانند."
     ],
     "tipEn": "Try a central topic and two handwritten branches; move the parent after writing.",
     "tipFa": "تمرین: یک موضوع اصلی و دو شاخهٔ دست‌نویس بسازید؛ سپس گرهٔ والد را جابه‌جا کنید."
@@ -223,13 +225,15 @@
       "Use the page strip to add and switch pages. A lesson contains multiple pages; switching does not create a new lesson.",
       "Open the page background panel. Pick a preset or custom color and combine it with plain, dots, grid, ruled or hatch.",
       "Each page retains its background. Background changes are included in lesson saves and PDF/image exports.",
-      "Settings → New-page background chooses the default color and pattern. Enable inheritance to copy only the current page’s background style to the next page; a new lesson starts with the configured defaults."
+      "Settings → New-page background chooses the default color and pattern. Enable inheritance to copy only the current page’s background style to the next page; a new lesson starts with the configured defaults.",
+      "Open Pages to use Duplicate, Move up, Move down, Clear and Delete icons directly beside each preview. Clear/Delete still ask for confirmation."
     ],
     "stepsFa": [
       "از نوار صفحه‌ها برای افزودن و تغییر صفحه استفاده کنید. یک درس می‌تواند چند صفحه داشته باشد؛ تغییر صفحه، درس تازه نمی‌سازد.",
       "پنل پس‌زمینهٔ صفحه را باز کنید. رنگ آماده یا دلخواه را با الگوی ساده، نقطه‌ای، شطرنجی، خط‌دار یا هاشور ترکیب کنید.",
       "هر صفحه پس‌زمینهٔ خودش را حفظ می‌کند. تغییر پس‌زمینه در ذخیرهٔ درس و خروجی تصویر یا سند هم حفظ می‌شود.",
-      "تنظیمات ← پس‌زمینهٔ صفحهٔ جدید، رنگ و طرح پیش‌فرض را انتخاب می‌کند. با روشن کردن ارث‌بری فقط سبک زمینهٔ صفحهٔ فعلی به صفحهٔ بعد می‌رود؛ درس جدید با پیش‌فرض‌های تنظیم‌شده شروع می‌شود."
+      "تنظیمات ← پس‌زمینهٔ صفحهٔ جدید، رنگ و طرح پیش‌فرض را انتخاب می‌کند. با روشن کردن ارث‌بری فقط سبک زمینهٔ صفحهٔ فعلی به صفحهٔ بعد می‌رود؛ درس جدید با پیش‌فرض‌های تنظیم‌شده شروع می‌شود.",
+      "در بخش صفحه‌ها، آیکون‌های تکرار، انتقال به بالا، انتقال به پایین، پاک‌کردن و حذف کنار هر پیش‌نمایش هستند. پاک‌کردن و حذف همچنان تأیید می‌خواهند."
     ],
     "tipEn": "Try a dark page with light ink, then a light grid page for geometry.",
     "tipFa": "تمرین: یک صفحهٔ تیره با قلم روشن و یک صفحهٔ روشن شطرنجی برای هندسه بسازید."
@@ -241,12 +245,14 @@
     "stepsEn": [
       "Tap Split board and choose one, two, three or four panels. Each panel has an independent view and its own pen and background controls. All split layouts use full-height vertical columns, including four panels.",
       "Tap the desired panel and draw there. The active panel has a highlighted border. Use the pen/background buttons at that panel’s edge.",
-      "When returning to fewer panels, content from removed panels is retained in the first panel rather than discarded."
+      "Returning to one canvas restores your original solo board without merging. The split workspace is saved separately and returns when you split again. Reducing four panels to two or three hides the other panels and retains their drawings.",
+      "Every panel can have a different background pattern and color. Background changes apply only to the chosen panel."
     ],
     "stepsFa": [
       "تقسیم تخته را بزنید و یک، دو، سه یا چهار بخش انتخاب کنید. هر بخش نمای مستقل و کنترل قلم و پس‌زمینهٔ خودش را دارد. همهٔ حالت‌ها، از جمله چهار بخش، ستون‌های عمودیِ کنار هم با ارتفاع کامل دارند.",
       "روی بخش دلخواه بزنید و همان‌جا رسم کنید. بخش فعال حاشیهٔ مشخص دارد. از دکمه‌های قلم و پس‌زمینه کنار همان بخش استفاده کنید.",
-      "وقتی تعداد بخش‌ها را کم کنید، محتوای بخش‌های حذف‌شده در بخش اول حفظ می‌شود و دور ریخته نمی‌شود."
+      "بازگشت به یک بخش، تختهٔ تک‌صفحهٔ قبلی را بدون ادغام نقاشی‌ها برمی‌گرداند. محیط تقسیم‌شده جدا حفظ می‌شود و با تقسیم دوباره بازمی‌گردد. کاهش چهار بخش به دو یا سه، بخش‌های دیگر را پنهان می‌کند و نقاشی‌هایشان را حفظ می‌کند.",
+      "هر بخش می‌تواند طرح و رنگ پس‌زمینهٔ متفاوت داشته باشد. تغییر پس‌زمینه فقط روی بخش انتخابی اعمال می‌شود."
     ],
     "tipEn": "Try two students writing in differently colored panels. Multi-touch depends on the hardware.",
     "tipFa": "تمرین: دو نفر در دو بخش با رنگ متفاوت بنویسند. تعداد تماس هم‌زمان به سخت‌افزار بستگی دارد."
@@ -259,13 +265,15 @@
       "Open Classroom tools and add a ruler, set square, protractor or compass. Select a guide to reveal its center, size and rotation handles.",
       "The compass has center, radius, start-angle and drawing handles. Rotate the inner handle to set the start without drawing, then turn the pencil handle on the circumference to draw an arc. One Undo removes the arc and restores the guide. Draw with tool creates a full circle.",
       "Use the inner protractor handle to set its angle without drawing; its orange pencil handle draws an undoable ray. Guides show live lengths/angles while drawing. Entering snap removes the free prefix from that contact; leaving the guide stops drawing until lift.",
-      "Measurements appear beside the selected shape for six seconds, using at most one decimal. Ruler label density adapts to calibration and zoom. Default units use ten board coordinates per u; real cm requires Settings → Calibration."
+      "Measurements appear beside the selected shape for six seconds, using at most one decimal. Ruler label density adapts to calibration and zoom. Default units use ten board coordinates per u; real cm requires Settings → Calibration.",
+      "Length/angle labels from drawing with guides remain as editable text and share the drawing’s Undo. Triangle snapping stays on the edge where the contact began. Use the ∠ handle or More → Set square slope to change its incline. The ↻ handle and Rotate command rotate a guide; number sizes follow its size."
     ],
     "stepsFa": [
       "از ابزارهای کلاس، خط‌کش، گونیا، نقاله یا پرگار را اضافه کنید. ابزار را انتخاب کنید تا دستگیره‌های مرکز، اندازه و چرخش دیده شوند.",
       "پرگار چهار دستهٔ مرکز، شعاع، زاویهٔ شروع و رسم دارد. دستهٔ چرخش داخلی را برای انتخاب نقطهٔ شروع بدون رسم بچرخانید؛ سپس دستهٔ مداد روی محیط را بچرخانید تا کمان رسم شود. یک Undo کمان را حذف و پرگار را بازمی‌گرداند. رسم با ابزار یک دایرهٔ کامل می‌سازد.",
       "با دستهٔ داخلی نقاله، زاویه را بدون رسم تنظیم کنید؛ دستهٔ زرد مداد نیم‌خط قابل بازگردانی می‌کشد. ابزارها هنگام رسم طول و زاویهٔ زنده دارند. ورود به اسنپ، خط آزاد ابتدای همان تماس را حذف می‌کند؛ خروج از ابزار رسم را تا برداشتن قلم متوقف می‌کند.",
-      "اندازه‌ها شش ثانیه کنار شکل انتخاب‌شده نمایش داده می‌شوند و حداکثر یک رقم اعشار دارند. فاصلهٔ عددهای خطکش با زوم و کالیبراسیون تنظیم می‌شود. مقیاس پیش‌فرض هر واحد u برابر ده مختصات تخته است؛ سانتی‌متر واقعی از تنظیمات ← کالیبراسیون فعال می‌شود."
+      "اندازه‌ها شش ثانیه کنار شکل انتخاب‌شده نمایش داده می‌شوند و حداکثر یک رقم اعشار دارند. فاصلهٔ عددهای خطکش با زوم و کالیبراسیون تنظیم می‌شود. مقیاس پیش‌فرض هر واحد u برابر ده مختصات تخته است؛ سانتی‌متر واقعی از تنظیمات ← کالیبراسیون فعال می‌شود.",
+      "عددهای طول و زاویهٔ رسم با ابزار به صورت متن قابل ویرایش باقی می‌مانند و همراه همان رسم بازگردانی می‌شوند. اسنپ گونیا فقط روی ضلع شروع همان تماس می‌ماند. با دستگیرهٔ ∠ یا گزینهٔ بیشتر ← شیب گونیا، شیب را تغییر دهید. دستگیرهٔ ↻ و گزینهٔ چرخش ابزار آن را می‌چرخانند؛ اندازهٔ عددها با اندازهٔ ابزار تغییر می‌کند."
     ],
     "tipEn": "Rotate the ruler first, then begin the stroke close to its long edge.",
     "tipFa": "ابتدا خط‌کش را بچرخانید و بعد خط را نزدیک لبهٔ بلند آن آغاز کنید."
@@ -314,13 +322,15 @@
       "Select suitable writing or typed text. In the selection bar choose Calculate / solve, Plot function or Convert units.",
       "Supported maths include arithmetic and simple equations up to degree two in x; plotting uses a numeric function expression. Check recognized text before applying.",
       "For units, use expressions such as 12 inch to cm, 2 kg to g or 32 F to C. The original writing remains when a conversion result is added.",
-      "Coordinate plane supports up to three functions, tapping to add a point, numeric point entry and numerical intersections. Tangencies or very narrow features may be missed; supported offline equations still have one unknown only."
+      "Coordinate plane supports up to three functions, tapping to add a point, numeric point entry and numerical intersections. Tangencies or very narrow features may be missed; supported offline equations still have one unknown only.",
+      "On a coordinate graph, add points and enable Connect points in order. Find intersections checks functions, crossed point segments and their intersections with functions. Intersection markers are separate from your original points. Numerical tangencies may be missed; coincident segments are not listed as isolated intersections."
     ],
     "stepsFa": [
       "نوشتهٔ مناسب یا متن تایپی را انتخاب کنید. از نوار انتخاب، محاسبه و حل، رسم تابع یا تبدیل واحد را بزنید.",
       "عملیات شامل محاسبات عددی و معادله‌های ساده تا درجهٔ دو در متغیر ایکس است؛ نمودار از عبارت تابع عددی استفاده می‌کند. قبل از اعمال، متن تشخیص‌داده‌شده را بررسی کنید.",
       "برای تبدیل واحد، عبارت‌هایی مثل تبدیل ۱۲ اینچ به سانتی‌متر یا ۲ کیلوگرم به گرم بنویسید. عبارت ورودی انگلیسی هم پذیرفته می‌شود. هنگام افزودن نتیجه، نوشتهٔ اصلی حفظ می‌شود.",
-      "محور مختصات تا سه تابع، نقطه‌گذاری با لمس، ورود عددی نقطه و تقاطع عددی دارد. تماس مماسی یا جزئیات بسیار باریک ممکن است پیدا نشوند؛ حل‌گر آفلاین هنوز فقط یک مجهول دارد."
+      "محور مختصات تا سه تابع، نقطه‌گذاری با لمس، ورود عددی نقطه و تقاطع عددی دارد. تماس مماسی یا جزئیات بسیار باریک ممکن است پیدا نشوند؛ حل‌گر آفلاین هنوز فقط یک مجهول دارد.",
+      "روی نمودار مختصات، نقطه‌ها را اضافه و اتصال نقاط به ترتیب را فعال کنید. یافتن تقاطع، توابع، تقاطع پاره‌خط‌های نقاط و تقاطعشان با توابع را بررسی می‌کند. نشانگرهای تقاطع از نقاط اصلی جدا هستند. تماس مماسی ممکن است در روش عددی پیدا نشود؛ قسمت‌های منطبق به عنوان تقاطع منفرد فهرست نمی‌شوند."
     ],
     "tipEn": "This is not a general symbolic maths system; fractions or complex handwriting may need manual correction.",
     "tipFa": "این ابزار سامانهٔ عمومی ریاضی نمادین نیست؛ کسرها یا دست‌نویس پیچیده ممکن است به اصلاح دستی نیاز داشته باشند."
@@ -441,13 +451,15 @@
       "Open Discovery lab. The catalog groups experiments by Physics, Chemistry, Mathematics and Statistics; filter by subject or lesson topic and search by name.",
       "Change its sliders and controls. Some simulations have start, pause or restart controls; scroll inside the control area if more settings are below.",
       "Where available, insert a snapshot into the board. The snapshot is an image, not an editable live simulation.",
-      "Chemistry → Atom → Interactive periodic table contains 118 elements offline. Tap or search an element, compare two elements, or add its card or the interactive table to the board. Hidden or background native lab animations pause automatically."
+      "Chemistry → Atom → Interactive periodic table contains 118 elements offline. Tap or search an element, compare two elements, or add its card or the interactive table to the board. Hidden or background native lab animations pause automatically.",
+      "In the periodic table, Add complete table as image inserts all 118 elements as a regular crop/resizeable board image."
     ],
     "stepsFa": [
       "آزمایشگاه را باز کنید. فهرست کارت‌ها بر اساس فیزیک، شیمی، ریاضی و آمار دسته‌بندی شده؛ با موضوع درس فیلتر یا نام آزمایش را جست‌وجو کنید.",
       "اسلایدرها و کنترل‌ها را تغییر دهید. بعضی آزمایش‌ها شروع، مکث یا شروع دوباره دارند؛ برای تنظیمات بیشتر، بخش کنترل‌ها را اسکرول کنید.",
       "در موارد پشتیبانی‌شده، تصویر لحظه‌ای را به تخته اضافه کنید. این تصویر، شبیه‌سازی زنده و قابل ویرایش نیست.",
-      "شیمی ← اتم ← جدول تناوبی تعاملی، ۱۱۸ عنصر را آفلاین دارد. عنصر را لمس یا جست‌وجو کنید، دو عنصر را مقایسه کنید، یا کارت و جدول تعاملی را به تخته بیاورید. پویانمایی آزمایش‌های بومی پنهان یا پس‌زمینه خودکار متوقف می‌شود."
+      "شیمی ← اتم ← جدول تناوبی تعاملی، ۱۱۸ عنصر را آفلاین دارد. عنصر را لمس یا جست‌وجو کنید، دو عنصر را مقایسه کنید، یا کارت و جدول تعاملی را به تخته بیاورید. پویانمایی آزمایش‌های بومی پنهان یا پس‌زمینه خودکار متوقف می‌شود.",
+      "در جدول تناوبی، افزودن تصویر کامل جدول به تخته، هر ۱۱۸ عنصر را به صورت تصویر معمولی قابل کراپ و تغییر اندازه اضافه می‌کند."
     ],
     "tipEn": "These are educational, simplified models; use their visible units and assumptions in class.",
     "tipFa": "این‌ها مدل‌های آموزشی و ساده‌شده‌اند؛ واحدها و فرض‌های نمایش‌داده‌شده را در کلاس توضیح دهید."
@@ -459,12 +471,14 @@
     "stepsEn": [
       "Open Games from the main menu. Search or filter to choose an activity. Read its instructions before starting.",
       "For two-player activities, choose the available layout and use each player’s side. Touch each player’s area independently where the hardware supports simultaneous contacts.",
-      "Use the activity’s restart and round controls. Close the game to return to the lesson without replacing its pages."
+      "Use the activity’s restart and round controls. Close the game to return to the lesson without replacing its pages.",
+      "Tap a player name to rename it. Names are saved locally and used in game panels and results. A running round pauses while you edit a name."
     ],
     "stepsFa": [
       "بازی‌ها را از منوی اصلی باز کنید. با جست‌وجو یا فیلتر، فعالیت را انتخاب و قبل از شروع دستور آن را بخوانید.",
       "در فعالیت دونفره، چیدمان موجود را انتخاب و از سمت هر بازیکن استفاده کنید. اگر سخت‌افزار لمس هم‌زمان را پشتیبانی کند، دو نفر مستقل لمس می‌کنند.",
-      "از کنترل شروع دوباره و دورهای بازی استفاده کنید. با بستن بازی، به درس برمی‌گردید و صفحه‌های آن عوض نمی‌شوند."
+      "از کنترل شروع دوباره و دورهای بازی استفاده کنید. با بستن بازی، به درس برمی‌گردید و صفحه‌های آن عوض نمی‌شوند.",
+      "برای تغییر نام، روی نام بازیکن بزنید. نام‌ها محلی ذخیره می‌شوند و در بخش بازیکن و نتیجهٔ بازی نمایش داده می‌شوند. هنگام ویرایش نام، دور در حال اجرا مکث می‌کند."
     ],
     "tipEn": "Try a short reaction or arithmetic activity between classroom exercises.",
     "tipFa": "بین تمرین‌های کلاس، یک فعالیت کوتاه واکنش یا حساب اجرا کنید."
@@ -481,7 +495,8 @@
       "The voice assistant is off and hidden by default. Once enabled by the administrator, Settings → Voice assistant selects Gemini, OpenAI or OpenRouter and stores each key separately. Active conversations send audio and workspace images to the selected service. OpenRouter is turn-based. Leaving the app ends the conversation. Settings → Google search settings chooses Ask each time, Internal floating browser or Default device browser.",
       "During a voice conversation, the microphone mute button stops recording and sending your voice while assistant playback continues. Google search settings separates browser destination from Review text before search; disabling review opens the first nonempty recognition result directly.",
       "Hidden settings: About VuraVision → double tap the logo → wait 1–3 seconds → double tap again. Shared room is experimental there. Pie menu is in normal Settings, off by default; open it with the five-finger double tap.",
-      "Settings → Device profile sets your local name, color and emoji or photo. It is shown to other devices only while sharing a room."
+      "Settings → Device profile sets your local name, color and emoji or photo. It is shown to other devices only while sharing a room.",
+      "Selection settings open only by tapping the active Select icon. Pie shortcuts include Clear page. Hidden Engineering settings contain Undo history limit: default 50; choices 10, 25, 50, 100 or 200."
     ],
     "stepsFa": [
       "تنظیمات را برای زبان فارسی یا انگلیسی، اندازهٔ رابط، مدل تشخیص و کنترل ورودی باز کنید. زبان راهنما داخل خودش هم قابل تغییر است.",
@@ -491,7 +506,8 @@
       "دستیار صوتی پیش‌فرض خاموش و پنهان است. پس از فعال‌سازی مدیر، تنظیمات ← دستیار صوتی انتخاب Gemini، OpenAI یا OpenRouter و کلید جداگانه دارد. مکالمهٔ فعال صدا و تصویر فضای کار را به سرویس انتخابی می‌فرستد. OpenRouter نوبتی است. خروج از برنامه مکالمه را پایان می‌دهد. تنظیمات ← جستجوی گوگل، انتخاب هر بار بپرس، مرورگر داخلی شناور یا مرورگر پیش‌فرض دستگاه دارد.",
       "در مکالمهٔ صوتی، دکمهٔ میوت میکروفن ضبط و ارسال صدای شما را متوقف می‌کند و صدای دستیار ادامه دارد. تنظیمات جستجوی گوگل، مقصد مرورگر را از بررسی متن قبل از جستجو جدا می‌کند؛ با خاموش کردن بررسی، اولین نتیجهٔ غیرخالی مستقیم جست‌وجو می‌شود.",
       "تنظیمات مخفی: دربارهٔ VuraVision ← دو ضربه روی لوگو ← انتظار ۱ تا ۳ ثانیه ← دوباره دو ضربه. اتاق مشترک آزمایشی اینجاست. پای‌منو در تنظیمات معمولی و پیش‌فرض خاموش است؛ با دو ضربهٔ پنج‌انگشتی باز می‌شود.",
-      "تنظیمات ← پروفایل دستگاه، نام، رنگ و ایموجی یا عکس محلی شما را تنظیم می‌کند؛ فقط هنگام کار در اتاق به دستگاه‌های دیگر نشان داده می‌شود."
+      "تنظیمات ← پروفایل دستگاه، نام، رنگ و ایموجی یا عکس محلی شما را تنظیم می‌کند؛ فقط هنگام کار در اتاق به دستگاه‌های دیگر نشان داده می‌شود.",
+      "تنظیمات انتخاب فقط با زدن دوبارهٔ آیکون انتخاب باز می‌شوند. میان‌برهای Pie شامل پاک کردن صفحه هستند. تنظیمات مخفی مهندسی، ظرفیت تاریخچهٔ بازگردانی را دارد: پیش‌فرض ۵۰ و گزینه‌های ۱۰، ۲۵، ۵۰، ۱۰۰ یا ۲۰۰."
     ],
     "tipEn": "This guide and normal drawing work offline. Optional model downloads and network sharing have their own connectivity needs.",
     "tipFa": "این راهنما و رسم معمولی آفلاین‌اند. دانلود مدل اختیاری و اشتراک شبکه، نیاز ارتباطی خودشان را دارند."

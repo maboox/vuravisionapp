@@ -18,8 +18,9 @@ class GeometryInteraction(private val board:Board){
             return mapOf("center" to (o.w/2 to cy),"radius" to (o.w/2-r*sin(a).toFloat() to cy+r*cos(a).toFloat()),"turn" to (o.w/2+r*cos(a).toFloat() to cy+r*sin(a).toFloat()),"start_angle" to (o.w/2+r*.55f*cos(a).toFloat() to cy+r*.55f*sin(a).toFloat()))
         }
         val center=if(o.shape=="protractor")o.w/2 to o.h else 0f to o.h/2
-        val result=mutableMapOf("center" to center,"rotate" to (o.w/2 to -30f),"size" to (o.w to o.h))
+        val result=mutableMapOf("center" to center,"rotate" to (o.w/2 to o.h+32f),"size" to (o.w to o.h))
         if(o.shape=="protractor"){result["size"]=o.w to o.h+32f;val a=o.geometryAngle*PI/180;result["angle"]=o.w/2+o.w/2*cos(a).toFloat() to o.h-o.h*sin(a).toFloat();result["start_angle"]=o.w/2+o.w*.28f*cos(a).toFloat() to o.h-o.h*.56f*sin(a).toFloat()}
+        if(o.shape=="set_square")result["slope"]=o.w+32f to o.h/2
         return result
     }
     fun start(point:PointF,tolerance:Float):Boolean {
@@ -30,12 +31,12 @@ class GeometryInteraction(private val board:Board){
             val o=pair.first;val center=GeometryTools.center(o);lastAngle=o.geometryAngle+o.rotation
             val angle=lastAngle*PI/180;val radius=GeometryTools.radius(o)
             val x=center.first+radius*cos(angle).toFloat();val y=center.second+radius*sin(angle).toFloat()
-            arc=Item(kind="ink",color=board.penColor,width=board.penWidth,layerId=board.store.page.activeLayerId,pane=board.activePane,points=mutableListOf(Point(x,y)))
-            arcPath.reset();arcPath.moveTo(x,y);arcPaint.color=board.penColor;arcPaint.strokeWidth=board.penWidth
+            arc=Item(kind="ink",color=board.inkColor,width=board.inkWidth,layerId=board.store.page.activeLayerId,pane=board.activePane,points=mutableListOf(Point(x,y)))
+            arcPath.reset();arcPath.moveTo(x,y);arcPaint.color=board.inkColor;arcPaint.strokeWidth=board.inkWidth
         }
         if(handle=="angle"){
             board.store.checkpoint();checkpointed=true
-            arc=GeometryTools.construction(pair.first).apply{color=board.penColor;width=board.penWidth;layerId=board.store.page.activeLayerId}
+            arc=GeometryTools.construction(pair.first).apply{color=board.inkColor;width=board.inkWidth;layerId=board.store.page.activeLayerId}
         }
         board.selected.clear();board.selected.add(pair.first.id);return true
     }
@@ -64,10 +65,11 @@ class GeometryInteraction(private val board:Board){
                     if(o.shape=="protractor"){val local=o.local(point.x,point.y);o.geometryAngle=(atan2(o.h-local.second,local.first-o.w/2)*180/PI.toFloat()).coerceIn(0f,180f)}
                     else{val c=GeometryTools.center(o);o.geometryAngle=atan2(point.y-c.second,point.x-c.first)*180/PI.toFloat()-o.rotation;o.geometrySweep=0f}
                 }
-                "rotate"->{val center=o.global(o.w/2,o.h/2);o.rotation=atan2(point.y-center.second,point.x-center.first)*180/PI.toFloat()+90}
-                "size"->{val local=o.local(point.x,point.y);o.w=local.first.coerceIn(60f,5000f);o.h=when(o.shape){"protractor"->o.w/2;"set_square"->o.w/2;else->o.h}}
+                "rotate"->{val b=base!!;val center=b.global(b.w/2,b.h/2);val a=atan2(point.y-center.second,point.x-center.first);val initial=atan2(start.y-center.second,start.x-center.first);o.rotation=b.rotation+(a-initial)*180/PI.toFloat()}
+                "slope"->{val local=o.local(point.x,point.y);val angle=(atan2(local.second*2,o.w)*180/PI.toFloat()).coerceIn(10f,80f);GeometryTools.setSlope(o,angle)}
+                "size"->{val local=o.local(point.x,point.y);val ratio=o.h/o.w;o.w=local.first.coerceIn(60f,5000f);o.h=when(o.shape){"protractor"->o.w/2;"set_square"->o.w*ratio;"ruler"->o.w*(base!!.h/base!!.w);else->o.h}}
                 "angle"->{val local=o.local(point.x,point.y);o.geometryAngle=(atan2(o.h-local.second,local.first-o.w/2)*180/PI.toFloat()).coerceIn(0f,180f)
-                    arc=GeometryTools.construction(o).apply{color=board.penColor;width=board.penWidth;layerId=board.store.page.activeLayerId}
+                    arc=GeometryTools.construction(o).apply{color=board.inkColor;width=board.inkWidth;layerId=board.store.page.activeLayerId}
                 }
             }
             board.invalidate()
@@ -75,6 +77,8 @@ class GeometryInteraction(private val board:Board){
         if(e.actionMasked==MotionEvent.ACTION_UP){
             arc?.takeIf{checkpointed && (it.kind=="shape" || it.points.size>1) && board.store.page.canDraw()}?.let{ink->
                 if(ink.kind=="ink"){val left=ink.points.minOf{it.x};val top=ink.points.minOf{it.y};ink.w=(ink.points.maxOf{it.x}-left).coerceAtLeast(1f);ink.h=(ink.points.maxOf{it.y}-top).coerceAtLeast(1f);ink.x=left;ink.y=top;ink.inkW=ink.w;ink.inkH=ink.h;ink.points.forEach{it.x-=left;it.y-=top}};board.store.page.items.add(ink)
+                val label=if(o.shape=="compass"){val value=DisplayNumbers.one((GeometryTools.radius(o)/board.measureScale()).toDouble())+" "+board.measurementUnit()+" · "+DisplayNumbers.one(sweep.toDouble())+"°";val at=o.global(handles(o).getValue("turn").first,handles(o).getValue("turn").second);GuideLabels.text(value,at.first,at.second,board.store.page.panes[o.pane].zoom,ink,30f)}else GuideLabels.construction(board,o,ink)
+                board.store.page.items.add(label)
             }
             guide=null;base=null;arc=null
             if(checkpointed)board.store.changed();checkpointed=false;board.sceneChanged();board.onSelection()
@@ -97,6 +101,6 @@ class GeometryInteraction(private val board:Board){
             board.measurements.label(canvas,text,at.first,at.second-30/zoom,zoom)
         }
         val p=handlePaint
-        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")ORANGE else TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";"turn","angle"->"✎";else->"↻"},g.first,g.second+5/zoom,p)}}
+        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")ORANGE else TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";"slope"->"∠";"turn","angle"->"✎";else->"↻"},g.first,g.second+5/zoom,p)}}
     }
 }

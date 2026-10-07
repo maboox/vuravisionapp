@@ -185,7 +185,7 @@ class PdfPane(
         visible.forEach{i->
             if(i !in boards){
                 val sheet=state.sheets[i]
-                val store=stores.getOrPut(i){Store(Lesson(pages=mutableListOf(sheet.page)))}
+                val store=stores.getOrPut(i){Store(Lesson(pages=mutableListOf(sheet.page))).apply{historyLimit=HistorySettings.load(context)}}
                 val b=Board(context,store,Renderer(media)).apply{interactiveResize=this@PdfPane.interactiveResize;fixedPageWidth=sheet.width;fixedPageHeight=sheet.height;pdfBaseId=sheet.page.items.first().id;copyToolsFrom(currentBoard())}
                 b.onActivate={b.copyToolsFrom(currentBoard());activate(b)}
                 b.onSelection={if(b===currentBoard())activate(b)}
@@ -202,6 +202,7 @@ class PdfPane(
     fun endResize(){interactiveResize=false;boards.values.forEach{it.finishResize()}}
     fun mediaReady(asset:String){if(asset==state.asset)boards.values.forEach{it.sceneChanged()}}
     fun refreshText(){boards.values.forEach{it.sceneChanged()};Fonts.applyTree(this)}
+    fun setHistoryLimit(value:Int){stores.values.forEach{it.historyLimit=value}}
     fun dispose(){disposed=true;removeCallbacks(materializeTask);materializePosted=false;boards.values.forEach{it.reset();it.releaseBacking();it.renderer.releasePdfFrame()};boards.clear();stores.clear()}
 }
 object PdfTouch {

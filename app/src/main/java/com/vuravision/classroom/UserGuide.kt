@@ -173,7 +173,7 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
                 val a=Item(kind="sticky",shape="mindnode",x=530f,y=65f,w=195f,h=85f,text=if(fa)"شاخهٔ اول"else"Branch one",parentNode=parent.id,noteColor=0xffcdeeeB.toInt(),width=21f)
                 val b=a.copy(id=newId(),y=277f,text=if(fa)"شاخهٔ دوم"else"Branch two",noteColor=0xffe9ecff.toInt())
                 renderer.scene(canvas,Page(items=mutableListOf(parent,a,b)))
-                text("+",if(fa)"+"else"+",315f,215f,TEAL)
+                text("Add branch","افزودن شاخه",315f,376f,TEAL)
             }
             "layers"->{
                 for(i in 2 downTo 0){paint.color=intArrayOf(SECONDARY_CONTAINER,PRIMARY_CONTAINER,0xffffe8b2.toInt())[i];canvas.drawRoundRect(160f+i*90,80f+i*70,550f+i*90,220f+i*70,15f,15f,paint);text("Layer ${i+1}","لایهٔ ${i+1}",200f+i*90,125f+i*70)}

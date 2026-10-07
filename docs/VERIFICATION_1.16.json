@@ -1,0 +1,45 @@
+{
+  "version": "1.16.0",
+  "version_code": 26,
+  "date_utc": "2026-10-06T16:04:45.562621+00:00",
+  "scope": "Independent split backgrounds, retained solo/split workspaces, graph point connections, persistent geometry annotations, guide rotation/slope/fonts/edge locking, contextual actions, periodic bitmap, clear slider/Pie, direct page controls, icon scaling, configurable 50-step history and game-player names.",
+  "local_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 28,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118,
+    "resource_references": "pass",
+    "workflow_yaml": "pass",
+    "unit_test_annotations": 278,
+    "tests_ignored": 0,
+    "new_bilingual_keys_verified": 9,
+    "inline_javascript": {
+      "blocks": 2,
+      "status": "pass (syntax only)"
+    },
+    "previous_source_files_retained": 388,
+    "new_source_files": 9,
+    "gradle_wrapper_included": true,
+    "application_id": "com.vuravision.classroom.beta",
+    "signing": "original four ANDROID_* secret names retained"
+  },
+  "tests_added": {
+    "Studio116Test": 32,
+    "RoomEngineTest_new": 2
+  },
+  "android_compilation": "NOT RUN: Gradle bootstrap fails downloading Gradle 8.11.1 with java.net.SocketException: Network is unreachable.",
+  "android_unit_tests": "NOT RUN locally; all 278 tests are enabled in GitHub Actions.",
+  "android_lint": "NOT RUN locally; mandatory in GitHub Actions.",
+  "production_apk": "NOT BUILT locally; production signing and 16 KiB alignment remain in GitHub Actions.",
+  "web_runtime_smoke": "NOT RUN locally: jsdom is not installed. Unchanged inline JavaScript syntax passed; full smoke remains configured in manual Actions.",
+  "physical_device_acceptance": "NOT RUN. See DEVICE_ACCEPTANCE_1.16.md; shared-room scope remains experimental.",
+  "limitations": [
+    "Numerical function intersections can miss tangencies/narrow features; coincident sections are not isolated intersection points.",
+    "Older split files without a solo archive can recover only their first panel; previously merged old drawings cannot be reconstructed.",
+    "Retained dormant workspaces count toward existing document/sample limits.",
+    "Very extreme zoom clamps permanent-label font sizes to the existing document format limits.",
+    "No passed Android build, executed Robolectric tests or successful physical-device session is claimed."
+  ]
+}

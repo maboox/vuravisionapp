@@ -52,7 +52,7 @@ object RoomDocuments {
     fun same(a:Any?,b:Any?)=a==b
     /** Device camera, active layer, pen settings and the separate PDF reader stay local. */
     fun structure(doc:Lesson)=doc.copy(current=0,pdf=null,customColors=doc.customColors?.toMutableList(),pages=doc.pages.map{p->p.copy(items=mutableListOf(),
-        activeLayerId=p.layers.first().id,layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{Pane(background=it.background)}.toMutableList())}.toMutableList())
+        activeLayerId=p.layers.first().id,layers=p.layers.map{it.copy()}.toMutableList(),panes=p.panes.map{Pane(background=it.background,pattern=it.pattern)}.toMutableList(),alternateCanvas=p.alternateCanvas?.duplicate(false))}.toMutableList())
     fun appendOnly(order:RoomOrder)=order.after==order.before.filter{it in order.after}+order.after.filter{it !in order.before}
     fun edit(before:Lesson,after:Lesson,revision:Long):RoomOperation? {
         val old=before.pages.flatMap{p->p.items.map{key(p.id,it.id) to (p.id to it)}}.toMap()
@@ -77,6 +77,9 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
     private val authors=mutableMapOf<String,String>()
     private val past=mutableMapOf<String,ArrayDeque<History>>()
     private val future=mutableMapOf<String,ArrayDeque<History>>()
+    private var limit=50
+    val historyLimit get()=limit
+    @Synchronized fun setHistoryLimit(value:Int){limit=value.coerceIn(10,200);(past.values+future.values).forEach{while(it.size>historyLimit)it.removeFirst()}}
     private val receipts=mutableMapOf<String,LinkedHashMap<String,RoomReceipt>>()
     private val journal=ArrayDeque<RoomDelta>()
     val hostId=host.id
@@ -120,7 +123,7 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
         val desired=if(editing)p.selected.filter{itemId->page.items.any{it.id==itemId}}else emptyList()
         val keys=desired.map{RoomDocuments.key(page.id,it)}.toSet();leases.entries.removeAll{it.value.peer==id&&it.key !in keys}
         keys.forEach{k->if(leases[k]?.peer in listOf(null,id))leases[k]=Lease(id,clock()+5000)}
-        val live=if(editing)p.live.filter{v->v.kind in listOf("ink","shape")&&v.points.size<=2000&&v.pane in page.panes.indices&&
+        val live=if(editing)p.live.filter{v->v.kind in listOf("ink","shape")&&v.points.size<=2000&&v.pane in page.visiblePaneIndices&&
             (page.items.none{it.id==v.id}||leases[RoomDocuments.key(page.id,v.id)]?.peer==id)&&
             listOf(v.x,v.y,v.w,v.h,v.width,v.rotation,v.inkW,v.inkH).all{it.isFinite()}&&v.width in .1f..200f&&v.w>0&&v.h>0&&v.inkW>0&&v.inkH>0&&v.points.all{it.x.isFinite()&&it.y.isFinite()}}.map{it.deepCopy()}else emptyList()
         val old=positions[id];val touched=p.active||old==null||old.page!=p.page||old.viewport!=p.viewport||old.x!=p.x||old.y!=p.y||old.selected!=desired
@@ -134,7 +137,7 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
                 require(op.patches.size<=20000);if(op.structure!=null)check(op.baseRevision==revision){"document_changed"}
                 val before=op.structure?.let{RoomDocuments.structure(document)};commit(id,op.patches,op.structure,op.orders)
                 val entry=History(op.patches.map{it.copy(before=it.before?.deepCopy(),after=it.after?.deepCopy())},before,op.structure?.let{RoomDocuments.structure(document)},op.orders)
-                val stack=past.getOrPut(owner(id)){ArrayDeque()};stack.addLast(entry);while(stack.size>30)stack.removeFirst();future.getOrPut(owner(id)){ArrayDeque()}.clear()
+                val stack=past.getOrPut(owner(id)){ArrayDeque()};stack.addLast(entry);while(stack.size>historyLimit)stack.removeFirst();future.getOrPut(owner(id)){ArrayDeque()}.clear()
             }
             "undo","redo"->{
                 val undo=op.kind=="undo";val who=owner(id);val source=(if(undo)past else future).getOrPut(who){ArrayDeque()};val entry=source.lastOrNull()?:return
@@ -161,7 +164,7 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
         if(structure!=null){
             require(structure.pdf==null&&structure.pages.size in 1..200);val old=candidate.pages.associateBy{it.id};val current=candidate.pages[candidate.current].id
             candidate.title=structure.title;candidate.customColors=structure.customColors?.toMutableList()
-            candidate.pages=structure.pages.map{m->m.copy(items=old[m.id]?.items?:mutableListOf(),layers=m.layers.map{it.copy()}.toMutableList(),panes=m.panes.map{it.copy()}.toMutableList())}.toMutableList()
+            candidate.pages=structure.pages.map{m->m.copied().copy(items=old[m.id]?.items?:mutableListOf(),layers=m.layers.map{it.copy()}.toMutableList(),panes=m.panes.map{it.copy()}.toMutableList())}.toMutableList()
             candidate.current=candidate.pages.indexOfFirst{it.id==current}.coerceAtLeast(0)
         }
         patches.forEach{p->val page=candidate.pages.firstOrNull{it.id==p.page};if(page==null){check(p.after==null){"page_missing"};return@forEach}

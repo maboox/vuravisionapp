@@ -290,4 +290,13 @@
 <string name="selection_settings">تنظیمات انتخاب</string>
 <string name="selection_free">انتخاب آزاد</string>
 <string name="selection_box">انتخاب کادری</string>
+    <string name="clear_page">پاک کردن صفحه</string>
+    <string name="move_up">انتقال صفحه به بالا</string>
+    <string name="move_down">انتقال صفحه به پایین</string>
+    <string name="rotate">چرخش ابزار</string>
+    <string name="guide_slope">شیب گونیا (درجه)</string>
+    <string name="history_settings">ظرفیت تاریخچهٔ بازگردانی</string>
+    <string name="connect_points">اتصال نقاط به ترتیب</string>
+    <string name="add_child">افزودن شاخهٔ فرزند</string>
+    <string name="add_sibling">افزودن شاخهٔ هم‌سطح</string>
 </resources>

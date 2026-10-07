@@ -64,9 +64,10 @@ class RoomController(private val context:Context,private val store:Store,private
         if(active){point=board.world(event.x,event.y);touching=event.actionMasked !in listOf(MotionEvent.ACTION_UP,MotionEvent.ACTION_CANCEL);refreshPresence()
             if(!board.hasActiveInteraction)deferred?.let{deferred=null;applyDocument(it)}}}}
     private fun resetSession(){lastTools=null;lastPage="";sentProfile=null;uploaded.clear();historyTarget=null;acknowledgedUndo=0;needsDocument=false;ended=false;message="";messageUntil=0;touching=false;deferred=null;joinedDocument=hosting}
+    fun setHistoryLimit(value:Int){server?.engine?.setHistoryLimit(value)}
     fun host(name:String){
         check(!active&&!connecting&&!board.hasActiveInteraction);require(name.isNotBlank()&&name.length<=60)
-        profile=DeviceProfiles.load(context);val engine=RoomEngine(store.lesson,profile,name.trim());val service=RoomServer(engine,media)
+        profile=DeviceProfiles.load(context);val engine=RoomEngine(store.lesson,profile,name.trim()).apply{setHistoryLimit(store.historyLimit)};val service=RoomServer(engine,media)
         service.start(8000,false);server=service;peer=engine.hostId;credential=engine.hostCredential;hosting=true;active=true;connected=true
         generation++;canonical=engine.snapshot();revision=engine.revision;baseline=store.lesson.copyDeep();frame=engine.frame(peer,-1);resetSession();attach();refreshPresence();discovery.advertise(service);schedule(0,generation);changed()
     }
@@ -101,7 +102,7 @@ class RoomController(private val context:Context,private val store:Store,private
     private fun history(kind:String){if(!active||!canEdit||board.hasActiveInteraction)return;historyTarget=null;enqueue(RoomOperation(kind=kind,baseRevision=revision))}
     private fun queueHistory(){val target=historyTarget?:return;synchronized(pending){
         if(pending.values.any{it.kind in listOf("undo","redo")})return
-        val count=(target-acknowledgedUndo).coerceIn(-30,30);repeat(minOf(kotlin.math.abs(count),(126-pending.size).coerceAtLeast(0))){val op=RoomOperation(kind=if(count<0)"undo"else"redo",baseRevision=revision);pending[op.id]=op}
+        val count=(target-acknowledgedUndo).coerceIn(-200,200);repeat(minOf(kotlin.math.abs(count),(126-pending.size).coerceAtLeast(0))){val op=RoomOperation(kind=if(count<0)"undo"else"redo",baseRevision=revision);pending[op.id]=op}
     }}
     fun refreshPresence(){
         if(!active)return;profile=DeviceProfiles.load(context).copy(id=peer);board.selectionColor=profile.color

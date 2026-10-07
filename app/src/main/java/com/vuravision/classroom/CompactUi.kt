@@ -12,14 +12,14 @@ import androidx.core.content.ContextCompat
 object IconCatalog {
     fun resource(key:String)=when(key){
         "pen","rename","pencil","edit"->R.drawable.feather_edit_2
-        "erase"->R.drawable.vura_eraser;"select"->R.drawable.feather_mouse_pointer
+        "erase","clear_page"->R.drawable.vura_eraser;"select"->R.drawable.feather_mouse_pointer
         "touch","input_controls","touch_test"->R.drawable.vura_touch
         "pan","drag"->R.drawable.feather_move;"shape","set_square"->R.drawable.feather_triangle
         "text","fonts","text_size"->R.drawable.feather_type;"layers","new_layer"->R.drawable.feather_layers
         "smart","evaluate","solve","math","formula"->R.drawable.feather_zap
         "tools"->R.drawable.vura_toolbox;"timer","stopwatch"->R.drawable.feather_clock;"split"->R.drawable.feather_columns
         "shared_room","device_profile"->R.drawable.vura_people;"menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
-        "undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
+        "rotate"->R.drawable.feather_rotate_cw;"undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
         "share","share_pdf"->R.drawable.feather_share_2;"previous","move_left"->R.drawable.feather_chevron_left
         "next","move_right"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
         "visible"->R.drawable.feather_eye;"hidden"->R.drawable.feather_eye_off
@@ -28,8 +28,8 @@ object IconCatalog {
         "fullscreen","stress"->R.drawable.feather_maximize;"fit"->R.drawable.feather_minimize
         "files","open","recent"->R.drawable.feather_folder
         "pages","export_pdf","export_png","export_jpg","pdf","page_picker"->R.drawable.feather_file
-        "save"->R.drawable.vura_save;"up","front","thicker"->R.drawable.feather_arrow_up
-        "down","back","thinner"->R.drawable.feather_arrow_down
+        "save"->R.drawable.vura_save;"up","front","thicker","move_up"->R.drawable.feather_arrow_up
+        "down","back","thinner","move_down"->R.drawable.feather_arrow_down
         "convert","restore_erased","cache"->R.drawable.feather_refresh_cw
         "color","palette"->R.drawable.vura_palette;"fill"->R.drawable.vura_bucket;"search","google_search_settings"->R.drawable.vura_search
         "graph","coordinates"->R.drawable.vura_graph;"measure","ruler","calibration","thresholds"->R.drawable.vura_ruler
@@ -37,7 +37,7 @@ object IconCatalog {
         "voice_assistant","voice_behavior"->R.drawable.feather_mic;"mute"->R.drawable.vura_mic_off
         "help","about","info","report"->R.drawable.vura_info
         "lab","periodic"->R.drawable.vura_atom;"games","dice"->R.drawable.vura_dice
-        "settings","engineering","advanced_board","ui_size"->R.drawable.vura_settings
+        "settings","engineering","advanced_board","ui_size","history_settings","guide_slope"->R.drawable.vura_settings
         "language","models"->R.drawable.vura_globe;"copy"->R.drawable.vura_copy;"duplicate"->R.drawable.vura_duplicate
         "bold"->R.drawable.vura_bold;"italic"->R.drawable.vura_italic
         "align_start"->R.drawable.vura_align_start;"align_center"->R.drawable.vura_align_center;"align_end"->R.drawable.vura_align_end

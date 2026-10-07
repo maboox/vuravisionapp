@@ -14,11 +14,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var selectionColor=0xffe46d38.toInt()
     private var remotePreviews:Set<String> = emptySet()
     val hasActiveInteraction get()=isDrawing||changed||navigationActive||transforming.isNotEmpty()
-    fun reconcilePage(){activePane=activePane.coerceIn(store.page.panes.indices);selected.retainAll(store.page.items.map{it.id}.toSet());sceneChanged()}
-    fun applySharedPane(index:Int){activePane=index.coerceIn(store.page.panes.indices);clearSelection();sceneChanged()}
-    fun paneScreenBounds(index:Int)=paneRect(index.coerceIn(store.page.panes.indices))
+    fun reconcilePage(){activePane=activePane.coerceIn(store.page.visiblePaneIndices);selected.retainAll(store.page.items.map{it.id}.toSet());sceneChanged()}
+    fun applySharedPane(index:Int){activePane=index.coerceIn(store.page.visiblePaneIndices);clearSelection();sceneChanged()}
+    fun paneScreenBounds(index:Int)=paneRect(index.coerceIn(store.page.visiblePaneIndices))
     fun screenRect(bounds:RectF,index:Int=activePane):RectF {
-        val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val state=store.page.panes[n]
+        val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val state=store.page.panes[n]
         return RectF(r.left+density*(state.tx+bounds.left*state.zoom),r.top+density*(state.ty+bounds.top*state.zoom),r.left+density*(state.tx+bounds.right*state.zoom),r.top+density*(state.ty+bounds.bottom*state.zoom))
     }
     fun selectionScreenBounds():RectF?=chosen().takeIf{it.isNotEmpty()}?.let{screenRect(contentBounds(it))}
@@ -65,16 +65,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun split(count:Int){
         if(isDrawing)return
         require(count in 1..4)
-        store.editMetadata{
-            while(store.page.panes.size<count)store.page.panes.add(Pane(color=intArrayOf(NAVY,TEAL,0xffba4058.toInt(),0xff7754ad.toInt())[store.page.panes.size]))
-            // Keep all objects when merging panels back into fewer panes.
-            store.page.items.filter{it.pane>=count}.forEach{it.pane=0}
-            while(store.page.panes.size>count)store.page.panes.removeAt(store.page.panes.lastIndex)
-        }
+        store.editMetadata{store.page.switchPanels(count)}
         activePane=0;clearSelection();sceneChanged()
     }
     private fun paneRect(index:Int):RectF{
-        val n=store.page.panes.size
+        val n=store.page.visiblePaneCount
         if(n==1)return RectF(0f,0f,width.toFloat(),height.toFloat())
         return RectF(width*index.toFloat()/n,0f,width*(index+1f)/n,height.toFloat())
     }
@@ -145,7 +140,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var profile = TouchProfile()
     var onSelection: () -> Unit = {}
     val selected = linkedSetOf<String>()
-    private val pane get()=store.page.panes[activePane.coerceIn(store.page.panes.indices)]
+    private val pane get()=store.page.panes[activePane.coerceIn(store.page.visiblePaneIndices)]
     private var zoom:Float get()=pane.zoom;set(v){pane.zoom=v}
     private var tx:Float get()=pane.tx;set(v){pane.tx=v}
     private var ty:Float get()=pane.ty;set(v){pane.ty=v}
@@ -166,6 +161,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private val guides=mutableMapOf<Int,Item>()
     private val guideStopped=mutableSetOf<Int>()
     private val guideLengths=mutableMapOf<Int,Float>()
+    private val guideEdges=mutableMapOf<Int,Int>()
+    private val guideEdgeCandidates=mutableMapOf<Int,List<Int>>()
+    private val guideStart=mutableMapOf<Int,Point>()
     private val holdCallbacks=mutableMapOf<Int,Runnable>()
     private val holdAt=mutableMapOf<Int,PointF>()
     private val heldStart=mutableMapOf<Int,PointF>()
@@ -184,7 +182,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private fun snap(id:Int,point:PointF):PointF = (if(guideSnapEnabled)guides[id] else null)?.let{
-        GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom)
+        GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom,guideEdges[id])
     }?:point
     private fun sampleGuidedInk(id:Int,o:Item,point:Point) {
         if(id in guideStopped)return
@@ -192,13 +190,24 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(!guides.containsKey(id) && guideSnapEnabled && tool!="smart"){
             val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==o.pane && canEditItem(it) && it.shape in GeometryTools.keys && GeometryTools.snap(it,point.x,point.y,tolerance)!=null}
             if(guide!=null){
-                guides[id]=guide;guideLengths[id]=0f
+                guides[id]=guide;guideLengths[id]=0f;guideEdges[id]=GeometryTools.nearestEdge(guide,point.x,point.y)?:0
+                val candidates=GeometryTools.edgeCandidates(guide,point.x,point.y,tolerance,3f/store.page.panes[o.pane].zoom)
+                if(candidates.size>1){guideEdgeCandidates[id]=candidates;guideStart[id]=point.copy()}
                 o.points.clear();renderer.forgetInk(o.id);smoothers.remove(id);cancelHold(id)
             }
         }
         val guide=guides[id]
         if(guide==null){sampleInk(id,o,point);return}
-        val projected=GeometryTools.snap(guide,point.x,point.y,tolerance)
+        guideStart[id]?.let{start->
+            if(hypot(point.x-start.x,point.y-start.y)>2f/store.page.panes[o.pane].zoom){
+                guideEdges[id]=GeometryTools.nearestEdge(guide,point.x,point.y,guideEdgeCandidates[id])?:guideEdges.getValue(id)
+                val first=GeometryTools.snap(guide,start.x,start.y,tolerance,guideEdges[id])
+                o.points.clear();renderer.forgetInk(o.id);guideLengths[id]=0f
+                if(first!=null)o.points.add(start.copy(x=first.x,y=first.y))
+                guideStart.remove(id);guideEdgeCandidates.remove(id)
+            }else if(o.points.isNotEmpty())return
+        }
+        val projected=GeometryTools.snap(guide,point.x,point.y,tolerance,guideEdges[id])
         if(projected==null){guideStopped.add(id);return}
         o.points.lastOrNull()?.let{last->guideLengths[id]=(guideLengths[id]?:0f)+hypot(projected.x-last.x,projected.y-last.y)}
         o.points.add(point.copy(x=projected.x,y=projected.y))
@@ -207,16 +216,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         live.forEach{(id,ink)->val guide=guides[id]?:return@forEach
             if(ink.pane!=activePane)return@forEach
             val last=ink.points.lastOrNull()?:return@forEach
-            val length=(guideLengths[id]?:0f)/measureScale()
-            var text=DisplayNumbers.one(length.toDouble())+" "+measurementUnit()
-            if(guide.shape=="compass"){
-                val r=GeometryTools.radius(guide);text+=" · "+DisplayNumbers.one((guideLengths[id]?:0f)/r*180/PI)+"°"
-            }else if(guide.shape in listOf("protractor","set_square")){
-                val first=ink.points.first();val angle=if(guide.shape=="protractor"){
-                    val local=guide.local(last.x,last.y);atan2(guide.h-local.second,local.first-guide.w/2)*180/PI
-                }else atan2(last.y-first.y,last.x-first.x)*180/PI
-                text+=" · "+DisplayNumbers.one(abs(angle))+"°"
-            }
+            val text=GuideLabels.strokeText(guide,ink.points,guideLengths[id]?:0f,measureScale(),measurementUnit())
             measurements.label(canvas,text,last.x,last.y-28/zoom,zoom)
         }
     }
@@ -256,15 +256,16 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         invalidate()
     }
 
-    fun world(x: Float, y: Float,index:Int=activePane):PointF{val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val p=store.page.panes[n];return PointF(((x-r.left)/density-p.tx)/p.zoom,((y-r.top)/density-p.ty)/p.zoom)}
+    fun world(x: Float, y: Float,index:Int=activePane):PointF{val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val p=store.page.panes[n];return PointF(((x-r.left)/density-p.tx)/p.zoom,((y-r.top)/density-p.ty)/p.zoom)}
 
-    fun measureScale():Float {
+    fun measureScale()=measureScale(activePane)
+    fun measureScale(index:Int):Float {
         val pixels=context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)
-        return if(pixels>0)pixels/(density*zoom) else 10f
+        return if(pixels>0)pixels/(density*store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].zoom) else 10f
     }
     fun abortPendingGesture(){
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
         geometry.cancel()
         if(changed){store.cancelCheckpoint();changed=false}
         actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";navigationActive=false;touchFocus=null;tappedSelected=false;sceneChanged()
@@ -276,15 +277,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     fun beginGestureNavigation(x:Float,y:Float,initialSpan:Float){navigationActive=true;lastFocus=PointF(x,y);span=initialSpan}
     fun center():PointF {
         if(fixedPageWidth!=null){val visible=Rect();if(getLocalVisibleRect(visible))return world(visible.exactCenterX(),visible.exactCenterY())}
-        return paneRect(activePane.coerceIn(store.page.panes.indices)).let{world(it.centerX(),it.centerY())}
+        return paneRect(activePane.coerceIn(store.page.visiblePaneIndices)).let{world(it.centerX(),it.centerY())}
     }
 
     fun reset() {
         measurements.clear()
         gestures.reset();geometry.cancel()
         holdCallbacks.keys.toList().forEach(::cancelHold)
-        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
-        activePane=activePane.coerceIn(store.page.panes.indices)
+        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+        activePane=activePane.coerceIn(store.page.visiblePaneIndices)
         backingDirty=true
         zoom = 1f
         tx = 0f
@@ -350,22 +351,22 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         fitFixed();backingDirty=true
     }
     fun finishResize(){interactiveResize=false;onSizeChanged(width,height,width,height);invalidate()}
-    private fun transformCanvas(c:Canvas,index:Int=activePane) {val n=index.coerceIn(store.page.panes.indices);val r=paneRect(n);val p=store.page.panes[n];c.clipRect(r);c.translate(r.left,r.top);c.scale(density,density);c.translate(p.tx,p.ty);c.scale(p.zoom,p.zoom) }
+    private fun transformCanvas(c:Canvas,index:Int=activePane) {val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val p=store.page.panes[n];c.clipRect(r);c.translate(r.left,r.top);c.scale(density,density);c.translate(p.tx,p.ty);c.scale(p.zoom,p.zoom) }
     override fun onDraw(c:Canvas) {
         val previewIds=roomOverlay?.previewIds().orEmpty()
         if(previewIds!=remotePreviews){remotePreviews=previewIds;backingDirty=true}
         val page=store.page
         val navigating=navigationActive || mode=="navigate"
         val age=android.os.SystemClock.uptimeMillis()-lastFullRender
-        if(roomOverlay==null && navigating && page.panes.size==1 && live.isEmpty() && backingDirty && cachedPage===page && backing!=null && age<80){
+        if(roomOverlay==null && navigating && page.visiblePaneCount==1 && live.isEmpty() && backingDirty && cachedPage===page && backing!=null && age<80){
             c.drawColor(page.panes[0].background)
             val ratio=zoom/cachedZoom
             c.save();c.translate(density*(tx-cachedTx*ratio),density*(ty-cachedTy*ratio));c.scale(ratio,ratio);c.drawBitmap(backing!!,0f,0f,p);c.restore()
             postInvalidateDelayed((80-age).coerceAtLeast(1));return
         }
         if(backing==null){
-            page.panes.indices.forEach{index->c.save();transformCanvas(c,index)
-                val clip=RectF(c.clipBounds);renderer.background(c,page,clip,page.panes[index].background)
+            page.visiblePaneIndices.forEach{index->c.save();transformCanvas(c,index)
+                val clip=RectF(c.clipBounds);renderer.background(c,page,clip,page.panes[index].background,index)
                 renderer.scene(c,page,region=clip,pane=index,exclude=transforming+remotePreviews);c.restore()}
         }
         backing?.let { bitmap ->
@@ -373,16 +374,16 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             val page=store.page
             val full=backingDirty || cachedPage!==page || (cachedCount!=page.items.size && dirtyRegion==null)
             if(full) {
-                page.panes.indices.forEach{index->
+                page.visiblePaneIndices.forEach{index->
                     target.save();transformCanvas(target,index)
                     val screen=paneRect(index);val l=world(screen.left,screen.top,index);val r=world(screen.right,screen.bottom,index)
-                    renderer.background(target,page,RectF(l.x,l.y,r.x,r.y),page.panes[index].background)
+                    renderer.background(target,page,RectF(l.x,l.y,r.x,r.y),page.panes[index].background,index)
                     renderer.scene(target,page,region=RectF(l.x,l.y,r.x,r.y),pane=index,exclude=transforming+remotePreviews);target.restore()
                 }
                 cachedPage=page;backingDirty=false;cacheRebuilds++;lastFullRender=android.os.SystemClock.uptimeMillis();cachedZoom=zoom;cachedTx=tx;cachedTy=ty
             } else dirtyRegion?.let { region ->
                 target.save();transformCanvas(target);target.clipRect(region)
-                renderer.background(target,page,region,pane.background)
+                renderer.background(target,page,region,pane.background,activePane)
                 renderer.scene(target,page,region=region,pane=activePane,exclude=transforming+remotePreviews)
                 target.restore()
             }
@@ -414,18 +415,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 c.drawCircle(b.right, b.bottom, 10f / zoom, p)
                 c.drawCircle(b.centerX(), b.top - 28 / zoom, 10f / zoom, p)
             }
-            items.singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->
-                p.color=TEAL;p.strokeWidth=2f/zoom
-                val radius=15f/zoom
-                listOf(node.x+node.w+30f/zoom to node.y+node.h/2,
-                    node.x+node.w/2 to node.y+node.h+30f/zoom).forEach{(x,y)->
-                    p.style=Paint.Style.FILL;c.drawCircle(x,y,radius,p)
-                    p.color=Color.WHITE;p.style=Paint.Style.STROKE
-                    c.drawLine(x-7/zoom,y,x+7/zoom,y,p)
-                    c.drawLine(x,y-7/zoom,x,y+7/zoom,p)
-                    p.color=TEAL
-                }
-            }
+
         }
         if(selectionMode=="box")box?.let {
             p.style = Paint.Style.STROKE;p.pathEffect=DashPathEffect(floatArrayOf(6f/zoom,4f/zoom),0f)
@@ -436,9 +426,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         drawGuideMeasurements(c)
         measurements.draw(c,zoom)
         c.restore()
-        if(store.page.panes.size>1){
+        if(store.page.visiblePaneCount>1){
             p.style=Paint.Style.STROKE;p.strokeWidth=density
-            store.page.panes.indices.forEach{index->p.color=if(index==activePane)0xff9990b5.toInt()else 0xffdcd9e5.toInt();val border=paneRect(index);border.inset(density/2,density/2);c.drawRect(border,p)}
+            store.page.visiblePaneIndices.forEach{index->p.color=if(index==activePane)0xff9990b5.toInt()else 0xffdcd9e5.toInt();val border=paneRect(index);border.inset(density/2,density/2);c.drawRect(border,p)}
         }
         roomOverlay?.draw(c)
     }
@@ -455,12 +445,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             if(geometry.active){geometry.cancel();navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true}
             if(pdfBaseId!=null && changed && (tool=="erase" || actions.values.any{it=="erase"}))store.undo()
             holdCallbacks.keys.toList().forEach(::cancelHold)
-            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
+            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
             if(transforming.isNotEmpty())original.forEach{base->store.page.items.firstOrNull{it.id==base.id}?.let{o->o.x=base.x;o.y=base.y;o.w=base.w;o.h=base.h;o.rotation=base.rotation;o.width=base.width}}
             navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true
         }
         if(e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN)){
-            val n=store.page.panes.indices.firstOrNull{paneRect(it).contains(e.getX(e.actionIndex),e.getY(e.actionIndex))}?:0
+            val n=store.page.visiblePaneIndices.firstOrNull{paneRect(it).contains(e.getX(e.actionIndex),e.getY(e.actionIndex))}?:0
             pointerPanes[id]=n
             if(e.actionMasked==MotionEvent.ACTION_DOWN && activePane!=n){activePane=n;clearSelection()}
         }
@@ -523,13 +513,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     if(pdfBaseId!=null && profile.classify(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex))=="palm") {if(pdfPalmErase)"erase" else "reject"} else profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
                 actions[id] = behavior
                 if (behavior == "reject") return true
-                if(e.actionMasked==MotionEvent.ACTION_DOWN && effectiveTool=="select"){
-                    chosen().singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->
-                        val child=hypot(at.x-(node.x+node.w+30f/zoom),at.y-(node.y+node.h/2))<22f/zoom
-                        val sibling=hypot(at.x-(node.x+node.w/2),at.y-(node.y+node.h+30f/zoom))<22f/zoom
-                        if(child||sibling){actions[id]="mind_add";post{onMindAdd(node,sibling)};return true}
-                    }
-                }
+
                 if(id !in broadPointers && (tool in listOf("pen","highlight","shape") || (tool=="smart" && smartMode=="shape"))) {
                     if(!store.page.canDraw()){actions[id]="reject";android.widget.Toast.makeText(context,context.tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"),android.widget.Toast.LENGTH_SHORT).show();return true}
                 }
@@ -591,7 +575,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 } else if (tool in listOf("pen", "highlight", "smart")) {
                     if(tool!="smart" || smartMode=="shape")checkpoint()
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
-                    val splitInk=store.page.panes.size>1
+                    val splitInk=store.page.visiblePaneCount>1
                     val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
                     mindStart[id]=at
                     live[id] =
@@ -600,7 +584,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             pane=pointerPanes[id]?:activePane,
                             w = 1f,
                             h = 1f,
-                            color = if(store.page.panes.size>1)store.page.panes[pointerPanes[id]?:activePane].color else if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
+                            color = if(store.page.visiblePaneCount>1)store.page.panes[pointerPanes[id]?:activePane].color else if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
                             width = (if(splitInk)drawingPane.penWidth else if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
                             shape = style,
                             dashLength=if(splitInk)drawingPane.dashLength else dashLength,
@@ -680,12 +664,14 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             MotionEvent.ACTION_POINTER_UP -> {
                 cancelHold(id)
                 live.remove(id)?.let { o ->
+                    var guideLabel:Item?=null
                     if (o.kind == "ink") {
                         val endpoint=Point(at.x,at.y,e.eventTime)
                         val filter=smoothers.remove(id)
                         if(filter!=null)o.points.addAll(filter.finish(endpoint))else sampleGuidedInk(id,o,endpoint)
                         if(o.points.isEmpty() || id in guides && (guideLengths[id]?:0f)<.5f)return@let
                         if(smoothers.isEmpty())removeCallbacks(smoothFrame)
+                        guides[id]?.let{guide->val last=o.points.last();guideLabel=GuideLabels.text(GuideLabels.strokeText(guide,o.points,guideLengths[id]?:0f,measureScale(o.pane),measurementUnit()),last.x,last.y,store.page.panes[o.pane].zoom,o)}
                         val left = o.points.minOf { it.x }
                         val top = o.points.minOf { it.y }
                         o.w = (o.points.maxOf { it.x } - left).coerceAtLeast(1f)
@@ -708,10 +694,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     }else if(tool=="smart" && smartMode=="shape"){
                         val converted=ShapeRecognition.convert(o)
                         store.page.items.add((converted?:o).apply{layerId=o.layerId;pane=o.pane})
-                    }else {checkpoint();store.page.items.add(o)}
+                    }else {checkpoint();store.page.items.add(o);guideLabel?.let{store.page.items.add(it);backingDirty=true}}
                     if(tool!="smart")commitToBacking(o) else if(smartMode=="shape")backingDirty=true
                 }
-                guides.remove(id);guideStopped.remove(id);guideLengths.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
+                guides.remove(id);guideStopped.remove(id);guideLengths.remove(id);guideEdges.remove(id);guideEdgeCandidates.remove(id);guideStart.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
                 val wasSelection=actions[id]=="select"
                 actions.remove(id);eraseLast.remove(id);broadPointers.remove(id);pointerPanes.remove(id)
                 if (id == primary) {
@@ -771,7 +757,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     o.y = b.top + (base.y - b.top) * factor
                     if(original.size==1 && base.kind=="shape" && base.shape=="ruler"){
                         o.w=(base.w+point.x-anchor.x).coerceIn(40f,100000f)
-                        o.h=base.h
+                        o.h=(base.h*o.w/base.w).coerceIn(.01f,100000f)
                     }else if(original.size==1 && base.kind=="shape" && !Shapes.uniform(base.shape) && base.shape !in GeometryTools.keys){
                         o.w=(base.w+point.x-anchor.x).coerceIn(4f,100000f)
                         o.h=(base.h+point.y-anchor.y).coerceIn(4f,100000f)
@@ -796,7 +782,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             }
             backingDirty=true
         }
-        if(store.page.panes.size>1)backingDirty=true
+        if(store.page.visiblePaneCount>1)backingDirty=true
         val radius=eraserRadius/store.page.panes[index].zoom
         val region=RectF(min(from.x,q.x)-radius-4/zoom,min(from.y,q.y)-radius-4/zoom,max(from.x,q.x)+radius+4/zoom,max(from.y,q.y)+radius+4/zoom)
         if(dirtyRegion==null)dirtyRegion=region else dirtyRegion!!.union(region)

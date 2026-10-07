@@ -31,4 +31,4 @@ data class PdfWorkspaceState(
         }
     }
 }
-fun Lesson.allAssetItems(): List<Item> = pages.flatMap{it.items} + pdf?.sheets.orEmpty().flatMap{it.page.items}
+fun Lesson.allAssetItems(): List<Item> = pages.flatMap{it.validationCanvases().flatMap{c->c.items}} + pdf?.sheets.orEmpty().flatMap{it.page.items}

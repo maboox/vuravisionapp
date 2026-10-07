@@ -75,7 +75,7 @@ class Studio114Test {
         val protractor=Item(kind="shape",shape="protractor",x=100f,y=200f,w=300f,h=150f,geometryAngle=45f)
         store.page.items.add(protractor)
         trace(356.066f to 243.934f,250f to 200f,250f to 200f)
-        assertEquals(2,store.page.items.size);val ray=store.page.items.last()
+        assertEquals(3,store.page.items.size);val ray=store.page.items.single{it.kind=="shape"&&it.shape=="line"}
         assertEquals("line",ray.shape);assertEquals(150f,ray.w,.01f);assertEquals(-90f,ray.rotation,.01f)
         assertEquals(90f,protractor.geometryAngle,.01f)
         store.undo();assertEquals(1,store.page.items.size);assertEquals(45f,store.page.items.single().geometryAngle,.01f)
@@ -83,7 +83,7 @@ class Studio114Test {
     @Test fun protractorZeroAnglePencilDoesNotResizeTheGuide(){
         val guide=Item(kind="shape",shape="protractor",x=100f,y=200f,w=300f,h=150f,geometryAngle=0f)
         store.page.items.add(guide);trace(400f to 350f,400f to 350f)
-        assertEquals(2,store.page.items.size);assertEquals("line",store.page.items.last().shape);assertEquals(300f,guide.w,.01f)
+        assertEquals(3,store.page.items.size);assertEquals("line",store.page.items.single{it.kind=="shape"&&it.shape=="line"}.shape);assertEquals(300f,guide.w,.01f)
     }
     @Test fun boardUnitsUseTenCoordinatesButPhysicalCalibrationStillUsesPixels(){
         assertEquals(10f,board.measureScale(),.01f)
@@ -107,13 +107,13 @@ class Studio114Test {
             view.reset();assertEquals(RectF(0f,0f,1f,1f),view.region)
         }finally{bitmap.recycle();canvas.recycle()}
     }
-    @Test fun ordinarySettingsExposePieSelectionAndBackReturnsThroughMenus(){
+    @Test fun ordinarySettingsExposePieAndBackReturnsThroughMenus(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{
             call(a,"menu");choose(ShadowDialog.getLatestDialog() as AlertDialog,a.s("settings"))
             var d=ShadowDialog.getLatestDialog() as AlertDialog
             assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("pie_settings")})
-            assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("selection_settings")})
+            assertFalse((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("selection_settings")})
             choose(d,a.s("fonts"));d=ShadowDialog.getLatestDialog() as AlertDialog
             val back=requireNotNull(d.findViewById<View>(R.id.menu_back_button));assertEquals(a.s("menu_back"),back.contentDescription.toString());back.performClick()
             // AlertDialog delivers button callbacks through the main message queue.

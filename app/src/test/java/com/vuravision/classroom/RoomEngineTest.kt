@@ -49,4 +49,12 @@ class RoomEngineTest {
     @Test fun invalidGeometryRejectsAtomically(){val e=engine();val p=guest(e);val result=add(e,p.peer,Item(kind="shape",x=Float.NaN));assertFalse(result.receipts.single().accepted);assertTrue(e.snapshot().pages[0].items.isEmpty());assertEquals(0L,e.revision)}
     @Test fun profilesUpdateInRoomAndLeavingMarksOffline(){val e=engine();val p=guest(e);val f=e.poll(p.peer,RoomPoll(profile=DeviceProfile(name="New name",color=TEAL,emoji="🌱")));assertEquals("New name",f.members.first{it.profile.id==p.peer}.profile.name);e.leave(p.peer);assertFalse(e.frame(host.id,-1).members.first{it.profile.id==p.peer}.online)}
     @Test fun endingRoomFreezesDocumentAndInvalidatesCredentials(){val e=engine();add(e,host.id);val p=guest(e);val final=e.snapshot();e.end();assertFalse(e.authenticate(p.peer,p.credential));try{add(e,host.id);fail("Closed room must reject edits")}catch(_:IllegalStateException){};assertEquals(final,e.snapshot())}
+    @Test fun sharedHistoryDefaultsToFiftyAndCanBeTrimmed(){val e=engine();repeat(60){assertTrue(add(e,host.id).receipts.single().accepted)};assertEquals(50,e.frame(host.id,e.revision).undo);e.setHistoryLimit(10);assertEquals(10,e.frame(host.id,e.revision).undo);repeat(10){assertTrue(op(e,host.id,"undo").receipts.single().accepted)};assertEquals(50,e.snapshot().pages[0].items.size)}
+    @Test fun sharedSplitSwitchPreservesBothCanvasesAndUndo(){val original=Item(kind="text",text="Solo");val e=engine(Lesson(pages=mutableListOf(Page(items=mutableListOf(original)))))
+        assertTrue(edit(e,host.id){it.pages[0].switchPanels(3)}.receipts.single().accepted)
+        assertTrue(edit(e,host.id){it.pages[0].items.add(Item(kind="text",text="Partner",pane=2));it.pages[0].panes[2].pattern="grid"}.receipts.single().accepted)
+        assertTrue(edit(e,host.id){it.pages[0].switchPanels(1)}.receipts.single().accepted);assertEquals(listOf("Solo"),e.snapshot().pages[0].items.map{it.text})
+        assertTrue(op(e,host.id,"undo").receipts.single().accepted);val split=e.snapshot().pages[0];assertEquals(3,split.visiblePaneCount);assertEquals("grid",split.pattern(2));assertEquals(2,split.items.size)
+    }
+
 }

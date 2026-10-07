@@ -36,7 +36,7 @@ class BackgroundMindMapTest {
             val background=ShadowDialog.getLatestDialog()
             val buttons=views(background.window!!.decorView).filterIsInstance<MaterialButton>()
             buttons.single{it.text.toString()=="Hatched"}.performClick()
-            assertEquals("hatch",activity.store.page.background)
+            assertEquals("hatch",activity.store.page.pattern(0))
             views(background.window!!.decorView).single{it.contentDescription=="Add color to this lesson"}.performClick()
             val picker=ShadowDialog.getLatestDialog() as AlertDialog
             val hex=views(picker.window!!.decorView).filterIsInstance<TextInputEditText>().single()
@@ -44,7 +44,7 @@ class BackgroundMindMapTest {
             picker.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             assertEquals(Color.parseColor("#123ABC"),activity.store.page.panes[0].background)
-            assertEquals("hatch",activity.store.page.background)
+            assertEquals("hatch",activity.store.page.pattern(0))
             background.dismiss()
             val second=Page()
             activity.store.lesson.pages.add(second)

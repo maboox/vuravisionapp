@@ -290,4 +290,13 @@
 <string name="selection_settings">Selection settings</string>
 <string name="selection_free">Free selection</string>
 <string name="selection_box">Box selection</string>
+    <string name="clear_page">Clear page</string>
+    <string name="move_up">Move page up</string>
+    <string name="move_down">Move page down</string>
+    <string name="rotate">Rotate guide</string>
+    <string name="guide_slope">Set square slope (degrees)</string>
+    <string name="history_settings">Undo history limit</string>
+    <string name="connect_points">Connect points in order</string>
+    <string name="add_child">Add child branch</string>
+    <string name="add_sibling">Add sibling branch</string>
 </resources>

@@ -46,10 +46,11 @@ class Renderer(private val media: Media) {
             return step
         }
     }
-    fun background(c: Canvas, page: Page, area: RectF, fill:Int=page.panes.firstOrNull()?.background?:Color.WHITE) {
-        val color=if(page.background=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
+    fun background(c: Canvas, page: Page, area: RectF, fill:Int=page.panes.firstOrNull()?.background?:Color.WHITE,paneIndex:Int=0) {
+        val pattern=page.pattern(paneIndex)
+        val color=if(pattern=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
         c.drawColor(color)
-        if (page.background !in listOf("dots", "grid", "ruled", "hatch")) return
+        if (pattern !in listOf("dots", "grid", "ruled", "hatch")) return
         p.color = if(android.graphics.Color.luminance(color)<.35)0x55ffffff else 0xffd8dce2.toInt()
         p.strokeWidth = 1f
         p.style = Paint.Style.FILL
@@ -61,7 +62,7 @@ class Renderer(private val media: Media) {
         val top = floor(area.top / step).toInt()
         val bottom = ceil(area.bottom / step).toInt()
         if ((right - left).toLong() * (bottom - top) > 400000) return
-        if(page.background=="hatch"){
+        if(pattern=="hatch"){
             c.save();c.clipRect(area)
             val diagonals=ceil((area.height()+area.width())/step).toInt()
             for(i in 0..diagonals){val x=area.left-area.height()+i*step
@@ -69,10 +70,10 @@ class Renderer(private val media: Media) {
             }
             c.restore();return
         }
-        for (y in top..bottom) if (page.background == "dots")
+        for (y in top..bottom) if (pattern == "dots")
             for (x in left..right) c.drawCircle(x * step, y * step, 1.1f, p)
         else c.drawLine(area.left, y * step, area.right, y * step, p)
-        if (page.background == "grid")
+        if (pattern == "grid")
             for (x in left..right) c.drawLine(x * step, area.top, x * step, area.bottom, p)
     }
 
@@ -215,6 +216,13 @@ class Renderer(private val media: Media) {
                 c.drawText(s, 12f, 20f + index * 18, p)
             } catch (_: IllegalArgumentException) {}
         }
+        if(o.connectPlotPoints && o.plotPoints.orEmpty().size>1){
+            val path=Path();o.plotPoints.orEmpty().forEachIndexed{i,v->val x=o.w/2+(v.x*sx).toFloat();val y=o.h/2-(v.y*sy).toFloat();if(i==0)path.moveTo(x,y)else path.lineTo(x,y)}
+            p.color=TEAL;p.style=Paint.Style.STROKE;p.strokeWidth=2.5f;c.drawPath(path,p)
+        }
+        o.plotIntersections.orEmpty().forEach{v->val x=o.w/2+(v.x*sx).toFloat();val y=o.h/2-(v.y*sy).toFloat()
+            if(x in 0f..o.w&&y in 0f..o.h){p.color=ORANGE;p.style=Paint.Style.STROKE;p.strokeWidth=2f;c.drawCircle(x,y,6f,p);c.drawLine(x-4,y-4,x+4,y+4,p);c.drawLine(x-4,y+4,x+4,y-4,p);p.style=Paint.Style.FILL;p.textSize=12f;c.drawText("(${DisplayNumbers.one(v.x)}, ${DisplayNumbers.one(v.y)})",x+8,y-8,p)}
+        }
         o.plotPoints.orEmpty().forEach{point->val x=o.w/2+point.x*sx;val y=o.h/2-point.y*sy
             if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${DisplayNumbers.one(point.x)}, ${DisplayNumbers.one(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
         }
@@ -224,7 +232,7 @@ class Renderer(private val media: Media) {
     fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null,exclude:Set<String> = emptySet()) {
         val visibleLayers=page.layers.filter { it.visible && it.opacity>0f }
         // Draw all branches first: a parent may occur before its child in item order.
-        val nodes=page.items.filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
+        val nodes=page.visibleItems().filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
         if(nodes.isNotEmpty()){
             val layerOpacity=visibleLayers.associate{it.id to it.opacity}
             nodes.values.forEach{child->
@@ -244,7 +252,7 @@ class Renderer(private val media: Media) {
         }
         visibleLayers.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
-            page.items.filter { it.layerId==layer.id && (pane==null||it.pane==pane) && it.id !in exclude }.forEach { o ->
+            page.items.filter { it.pane in page.visiblePaneIndices && it.layerId==layer.id && (pane==null||it.pane==pane) && it.id !in exclude }.forEach { o ->
                 if(region==null || RectF.intersects(itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) },region))draw(c,o,sync)
             }
             c.restoreToCount(save)
@@ -252,11 +260,11 @@ class Renderer(private val media: Media) {
     }
 
     fun page(c: Canvas, page: Page, width: Int, height: Int, sync: Boolean) {
-        if(page.panes.size>1){
-            val n=page.panes.size;val columns=if(n==4)2 else n;val rows=if(n==4)2 else 1
-            page.panes.forEachIndexed{i,p->
+        if(page.visiblePaneCount>1){
+            val n=page.visiblePaneCount;val columns=n;val rows=1
+            page.panes.take(n).forEachIndexed{i,p->
                 val w=width/columns;val h=height/rows;c.save();c.translate((i%columns*w).toFloat(),(i/columns*h).toFloat());c.clipRect(0,0,w,h)
-                val subset=page.copy(items=page.items.filter{it.pane==i}.toMutableList(),panes=mutableListOf(p.copy()))
+                val subset=page.copy(background=page.pattern(i),items=page.items.filter{it.pane==i}.map{it.copy(pane=0)}.toMutableList(),panes=mutableListOf(p.copy()),paneCount=1,alternateCanvas=null)
                 page(c,subset,w,h,sync);c.restore()
             };return
         }
