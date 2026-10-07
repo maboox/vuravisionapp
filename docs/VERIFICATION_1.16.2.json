@@ -1,0 +1,60 @@
+{
+  "version": "1.16.2",
+  "version_code": 28,
+  "date_utc": "2026-10-07T04:55:34.241239+00:00",
+  "scope": "Fix geometry pen color/width on split panels; update compass regressions to cover permanent measurement text and shared Undo/Redo.",
+  "supplied_actions_evidence": {
+    "release": "1.16.1",
+    "debug_and_release_application_compilation": "passed",
+    "test_compilation": "passed",
+    "unit_tests": {
+      "executed": 278,
+      "passed": 275,
+      "failed": 3
+    },
+    "failed_tests": [
+      "Studio116Test.constructionAndItsLabelUsePanelPenAndUndoTogether",
+      "StudioGestureTest.compassTurnDrawsOneArcAndUndoRestoresGuide",
+      "StudioGestureTest.rotatedCompassKeepsStartHandleUnderTheFingerAndDrawsFromThere"
+    ],
+    "release_lint_and_apk": "completion not confirmed by the supplied log; build stopped at failing unit tests"
+  },
+  "changes": [
+    "Board.guideInkColor/guideInkWidth resolve per-panel settings in split mode and current global ink in solo mode.",
+    "MainActivity menu constructions and GeometryInteraction compass arcs/protractor rays use the guide panel settings; preview pen matches the arc.",
+    "Compass tests locate the arc by kind, retain geometry assertions, verify measurement text and one-step Undo/Redo.",
+    "Construction regression covers both panels and parallel/perpendicular output; two added regressions cover handle drawing in both panels and restoring solo pen/highlighter."
+  ],
+  "local_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 28,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118,
+    "workflow_yaml": "pass",
+    "previous_source_files_retained": 398,
+    "changed_existing_files": [
+      ".github/workflows/android.yml",
+      "README.fa.md",
+      "README.md",
+      "app/build.gradle.kts",
+      "app/src/main/java/com/vuravision/classroom/Board.kt",
+      "app/src/main/java/com/vuravision/classroom/GeometryInteraction.kt",
+      "app/src/main/java/com/vuravision/classroom/MainActivity.kt",
+      "app/src/test/java/com/vuravision/classroom/Studio116Test.kt",
+      "app/src/test/java/com/vuravision/classroom/StudioGestureTest.kt"
+    ],
+    "unit_test_annotations": 280,
+    "tests_ignored": 0,
+    "added_test_annotations": 2,
+    "gradle_wrapper_included": true,
+    "application_id": "com.vuravision.classroom.beta",
+    "toolchain_dependencies_and_signing": "unchanged; workflow changes only artifact version labels"
+  },
+  "android_compilation": "Attempted locally; blocked before compilation by Gradle 8.11.1 download failure: java.net.SocketException: Network is unreachable. Prior compilation success does not validate the patched source.",
+  "android_unit_tests": "Not executed locally for 1.16.2; testDebugUnitTest blocked at Gradle bootstrap. All 280 tests remain enabled in GitHub Actions.",
+  "android_lint": "Not executed locally; lintRelease blocked at Gradle bootstrap. Mandatory lint remains in Actions.",
+  "production_apk": "Not built locally. Signing and 16 KiB alignment checks remain mandatory in Actions.",
+  "physical_device_acceptance": "Not run. Check different panel pen colors/widths for constructions, compass and protractor; verify permanent label plus drawing share Undo/Redo; then return to solo mode."
+}

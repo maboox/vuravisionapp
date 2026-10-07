@@ -105,6 +105,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var inkWidth:Float
         get()=if(tool=="highlight")highlightWidth else penWidth
         set(v) { if(tool=="highlight")highlightWidth=v else penWidth=v }
+    fun guideInkColor(index:Int=activePane):Int =
+        if(store.page.visiblePaneCount>1)store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].color else inkColor
+    fun guideInkWidth(index:Int=activePane):Float =
+        if(store.page.visiblePaneCount>1)store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].penWidth else inkWidth
     val isDrawing get()=live.isNotEmpty() || geometry.active
     var isCommitting=false
         private set

@@ -31,12 +31,12 @@ class GeometryInteraction(private val board:Board){
             val o=pair.first;val center=GeometryTools.center(o);lastAngle=o.geometryAngle+o.rotation
             val angle=lastAngle*PI/180;val radius=GeometryTools.radius(o)
             val x=center.first+radius*cos(angle).toFloat();val y=center.second+radius*sin(angle).toFloat()
-            arc=Item(kind="ink",color=board.inkColor,width=board.inkWidth,layerId=board.store.page.activeLayerId,pane=board.activePane,points=mutableListOf(Point(x,y)))
-            arcPath.reset();arcPath.moveTo(x,y);arcPaint.color=board.inkColor;arcPaint.strokeWidth=board.inkWidth
+            arc=Item(kind="ink",color=board.guideInkColor(o.pane),width=board.guideInkWidth(o.pane),layerId=board.store.page.activeLayerId,pane=o.pane,points=mutableListOf(Point(x,y)))
+            arcPath.reset();arcPath.moveTo(x,y);arcPaint.color=arc!!.color;arcPaint.strokeWidth=arc!!.width
         }
         if(handle=="angle"){
             board.store.checkpoint();checkpointed=true
-            arc=GeometryTools.construction(pair.first).apply{color=board.inkColor;width=board.inkWidth;layerId=board.store.page.activeLayerId}
+            arc=GeometryTools.construction(pair.first).apply{color=board.guideInkColor(pair.first.pane);width=board.guideInkWidth(pair.first.pane);layerId=board.store.page.activeLayerId}
         }
         board.selected.clear();board.selected.add(pair.first.id);return true
     }
@@ -69,7 +69,7 @@ class GeometryInteraction(private val board:Board){
                 "slope"->{val local=o.local(point.x,point.y);val angle=(atan2(local.second*2,o.w)*180/PI.toFloat()).coerceIn(10f,80f);GeometryTools.setSlope(o,angle)}
                 "size"->{val local=o.local(point.x,point.y);val ratio=o.h/o.w;o.w=local.first.coerceIn(60f,5000f);o.h=when(o.shape){"protractor"->o.w/2;"set_square"->o.w*ratio;"ruler"->o.w*(base!!.h/base!!.w);else->o.h}}
                 "angle"->{val local=o.local(point.x,point.y);o.geometryAngle=(atan2(o.h-local.second,local.first-o.w/2)*180/PI.toFloat()).coerceIn(0f,180f)
-                    arc=GeometryTools.construction(o).apply{color=board.inkColor;width=board.inkWidth;layerId=board.store.page.activeLayerId}
+                    arc=GeometryTools.construction(o).apply{color=board.guideInkColor(o.pane);width=board.guideInkWidth(o.pane);layerId=board.store.page.activeLayerId}
                 }
             }
             board.invalidate()

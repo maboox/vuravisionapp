@@ -1914,7 +1914,7 @@ class MainActivity : Activity() {
 
     private fun insertConstruction(guide:Item,perpendicular:Boolean=false){
         if(guide.locked||!store.page.editable(guide)||!store.page.canDraw()||!board.canEditItem(guide))return
-        val result=GeometryTools.construction(guide,perpendicular).apply{color=board.inkColor;width=board.inkWidth;layerId=store.page.activeLayerId}
+        val result=GeometryTools.construction(guide,perpendicular).apply{color=board.guideInkColor(guide.pane);width=board.guideInkWidth(guide.pane);layerId=store.page.activeLayerId}
         val label=GuideLabels.construction(board,guide,result)
         store.editMetadata{store.page.items.add(result);store.page.items.add(label)}
     }

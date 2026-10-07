@@ -136,12 +136,49 @@ class Studio116Test {
         assertEquals("8 u",text.text);assertEquals(1,store.undoCount);store.undo();assertEquals(1,store.page.items.size);store.redo();assertEquals("8 u",store.page.items.single{it.kind=="text"}.text)
     }
     @Test fun constructionAndItsLabelUsePanelPenAndUndoTogether(){withActivity{a->
-        a.board.split(2);a.store.page.panes[0].color=Color.MAGENTA;a.store.page.panes[0].penWidth=9f
-        val ruler=Item(kind="shape",shape="ruler",w=300f,h=64f);a.store.page.items.add(ruler);val before=a.store.undoCount
-        MainActivity::class.java.getDeclaredMethod("insertConstruction",Item::class.java,Boolean::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,ruler,false)
-        val line=a.store.page.items.single{it.kind=="shape"&&it.shape=="line"};assertEquals(Color.MAGENTA,line.color);assertEquals(9f,line.width,0f)
-        assertTrue(a.store.page.items.single{it.kind=="text"}.text.startsWith("30 u"));assertEquals(before+1,a.store.undoCount);a.store.undo();assertEquals(listOf(ruler.id),a.store.page.items.map{it.id})
+        a.board.split(2)
+        a.store.page.panes[0].color=Color.MAGENTA;a.store.page.panes[0].penWidth=9f
+        a.store.page.panes[1].color=Color.CYAN;a.store.page.panes[1].penWidth=13f
+        val insert=MainActivity::class.java.getDeclaredMethod("insertConstruction",Item::class.java,Boolean::class.javaPrimitiveType).apply{isAccessible=true}
+        for(index in 0..1){a.board.applySharedPane(index)
+            val ruler=Item(kind="shape",shape="ruler",w=300f,h=64f,pane=index);a.store.page.items.add(ruler)
+            for(perpendicular in listOf(false,true)){
+                val before=a.store.undoCount;val ids=a.store.page.items.map{it.id}
+                insert.invoke(a,a.store.page.items.single{it.id==ruler.id},perpendicular)
+                val line=a.store.page.items.single{it.kind=="shape"&&it.shape=="line"}
+                assertEquals(if(index==0)Color.MAGENTA else Color.CYAN,line.color);assertEquals(if(index==0)9f else 13f,line.width,0f);assertEquals(index,line.pane)
+                val label=a.store.page.items.single{it.kind=="text"};assertTrue(label.text.startsWith("30 u"));assertEquals(index,label.pane)
+                assertEquals(before+1,a.store.undoCount);a.store.undo();assertEquals(ids,a.store.page.items.map{it.id})
+            }
+        }
     }}
+    @Test fun compassAndProtractorHandlesUseTheirOwnPanelPen(){
+        for(shape in listOf("compass","protractor"))for(index in 0..1){
+            val store=Store();val b=board(store);b.split(2);b.penColor=Color.BLACK;b.penWidth=2f
+            store.page.panes[0].color=Color.MAGENTA;store.page.panes[0].penWidth=9f
+            store.page.panes[1].color=Color.CYAN;store.page.panes[1].penWidth=13f
+            val guide=if(shape=="compass")Item(kind="shape",shape=shape,x=50f,y=50f,w=200f,h=200f,pane=index,geometryVersion=1,geometryAngle=0f)
+                else Item(kind="shape",shape=shape,x=100f,y=200f,w=300f,h=150f,pane=index,geometryAngle=45f)
+            store.page.items.add(guide);val before=store.undoCount;val dx=index*500f
+            if(shape=="compass")trace(b,(250f+dx) to 150f,(150f+dx) to 250f,(150f+dx) to 250f)
+            else trace(b,(356.066f+dx) to 243.934f,(250f+dx) to 200f,(250f+dx) to 200f)
+            val drawing=store.page.items.single{it.id!=guide.id&&it.kind!="text"}
+            assertEquals(if(index==0)Color.MAGENTA else Color.CYAN,drawing.color);assertEquals(if(index==0)9f else 13f,drawing.width,0f);assertEquals(index,drawing.pane)
+            val label=store.page.items.single{it.kind=="text"};assertEquals(index,label.pane);assertTrue(label.text.endsWith("90°"))
+            assertEquals(before+1,store.undoCount);store.undo();assertEquals(listOf(guide.id),store.page.items.map{it.id})
+            store.redo();assertEquals(3,store.page.items.size);assertEquals(drawing.id,store.page.items.single{it.id!=guide.id&&it.kind!="text"}.id)
+        }
+    }
+    @Test fun returningToSoloMakesGuideDrawingUseTheCurrentPen(){
+        for(tool in listOf("pen","highlight")){
+            val store=Store();val b=board(store);b.split(2);store.page.panes[0].color=Color.RED;store.page.panes[0].penWidth=2f;b.split(1)
+            b.tool=tool;b.penColor=Color.MAGENTA;b.penWidth=9f;b.highlightColor=Color.CYAN;b.highlightWidth=13f
+            store.page.items.add(Item(kind="shape",shape="compass",x=50f,y=50f,w=200f,h=200f,geometryVersion=1,geometryAngle=0f))
+            trace(b,250f to 150f,150f to 250f,150f to 250f)
+            val arc=store.page.items.single{it.kind=="ink"}
+            assertEquals(if(tool=="pen")Color.MAGENTA else Color.CYAN,arc.color);assertEquals(if(tool=="pen")9f else 13f,arc.width,0f)
+        }
+    }
     @Test fun permanentLabelsRemainValidAtExtremeZoom(){
         for(zoom in listOf(.001f,1f,1000f)){val label=GuideLabels.text("20 u · 90°",100f,100f,zoom,Item());Lesson(pages=mutableListOf(Page(items=mutableListOf(label)))).validate();assertTrue(label.width in .1f..200f)}
     }

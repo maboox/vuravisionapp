@@ -80,7 +80,13 @@ class StudioGestureTest {
         event(0,300,listOf(50f to 150f),0f,MotionEvent.TOOL_TYPE_STYLUS)
         event(2,330,listOf(150f to 50f),0f,MotionEvent.TOOL_TYPE_STYLUS);event(1,350,listOf(150f to 50f),0f,MotionEvent.TOOL_TYPE_STYLUS)
         val handle=GeometryInteraction(board).handles(compass).getValue("turn");val end=compass.global(handle.first,handle.second)
-        assertEquals(150f,end.first,.01f);assertEquals(50f,end.second,.01f);assertEquals(2,store.page.items.size)
+        assertEquals(150f,end.first,.01f);assertEquals(50f,end.second,.01f);assertEquals(3,store.page.items.size)
+        val arc=store.page.items.single{it.kind=="ink"};assertTrue(arc.points.size>=30)
+        assertEquals(50f,arc.x+arc.points.first().x,.01f);assertEquals(150f,arc.y+arc.points.first().y,.01f)
+        assertEquals(150f,arc.x+arc.points.last().x,.01f);assertEquals(50f,arc.y+arc.points.last().y,.01f)
+        val label=store.page.items.single{it.kind=="text"};assertEquals("10 u · 90°",label.text);assertEquals(arc.pane,label.pane)
+        store.undo();assertEquals(1,store.page.items.size);assertEquals(90f,store.page.items.single().geometryAngle,.01f)
+        store.redo();assertEquals(3,store.page.items.size);assertEquals(label.id,store.page.items.single{it.kind=="text"}.id)
     }
     @Test fun smoothPenFollowsWithLagAndFinishesAtTheTipWithoutPressure(){
         board.penStyle="smooth";board.holdRecognitionEnabled=false
@@ -97,9 +103,12 @@ class StudioGestureTest {
         event(0,200,listOf(250f to 150f),0f,MotionEvent.TOOL_TYPE_STYLUS);assertTrue(board.isDrawing)
         event(2,230,listOf(150f to 250f),0f,MotionEvent.TOOL_TYPE_STYLUS);event(2,260,listOf(50f to 150f),0f,MotionEvent.TOOL_TYPE_STYLUS)
         event(1,280,listOf(50f to 150f),0f,MotionEvent.TOOL_TYPE_STYLUS)
-        assertFalse(board.isDrawing);assertEquals(2,store.page.items.size);val arc=store.page.items.last();assertEquals("ink",arc.kind);assertTrue(arc.points.size>=60)
+        assertFalse(board.isDrawing);assertEquals(3,store.page.items.size);val arc=store.page.items.single{it.kind=="ink"};assertTrue(arc.points.size>=60)
         arc.points.forEach{assertEquals(100f,kotlin.math.hypot(arc.x+it.x-150f,arc.y+it.y-150f),.05f)}
-        assertEquals(180f,compass.geometrySweep,.01f);store.undo();assertEquals(1,store.page.items.size);assertEquals(0f,store.page.items.single().geometryAngle)
+        val label=store.page.items.single{it.kind=="text"};assertEquals("10 u · 180°",label.text);assertEquals(arc.layerId,label.layerId)
+        assertEquals(180f,compass.geometrySweep,.01f);assertEquals(1,store.undoCount)
+        store.undo();assertEquals(1,store.page.items.size);assertEquals(0f,store.page.items.single().geometryAngle)
+        store.redo();assertEquals(3,store.page.items.size);assertEquals(arc.id,store.page.items.single{it.kind=="ink"}.id);assertEquals(label.id,store.page.items.single{it.kind=="text"}.id)
     }
     @Test fun highlighterOpacityAffectsFixedWidthStroke(){
         board.penStyle="highlight";board.penOpacity=128;board.penWidth=4f
