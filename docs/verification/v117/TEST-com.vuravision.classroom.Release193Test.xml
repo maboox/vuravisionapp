@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Release193Test" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:22" hostname="033dd159fe3b" time="0.24">
+  <properties/>
+  <testcase name="unlockRecoversLockedItemsAndLayersPreservesPdfBaseAndSupportsUndo" classname="com.vuravision.classroom.Release193Test" time="0.027"/>
+  <testcase name="retainedPdfFrameSurvivesSharedCacheClearingWithoutReloading" classname="com.vuravision.classroom.Release193Test" time="0.038"/>
+  <testcase name="fullscreenAndSwapRequestChildLayoutWithoutTouchAndRestoreWhiteboard" classname="com.vuravision.classroom.Release193Test" time="0.15"/>
+  <testcase name="currentSolverAcceptsOneUnknownAndRejectsTwoUnknownSystems" classname="com.vuravision.classroom.Release193Test" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

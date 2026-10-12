@@ -73,14 +73,14 @@ class RoomServer(val engine:RoomEngine,private val media:Media):NanoHTTPD("0.0.0
                 path.startsWith("/asset/")->{
                     val member=engine.frame(id,engine.revision);check(member.approved){"not_approved"};val name=path.removePrefix("/asset/")
                     require(name.matches(Regex("[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}"))&&!name.contains(".."));val file=media.file(name)
-                    if(session.method==Method.GET){check(engine.snapshot().allAssetItems().any{it.asset==name}&&file.isFile)
+                    if(session.method==Method.GET){check(engine.referencesAsset(name)&&file.isFile)
                         newFixedLengthResponse(Response.Status.OK,"application/octet-stream",file.inputStream(),file.length()).apply{addHeader("Cache-Control","no-store")}}
                     else if(session.method==Method.PUT){
                         check(member.role!=RoomRoles.VIEW){"read_only"};val size=session.headers["content-length"]?.toLongOrNull()?:-1;require(size in 1..64L*1024*1024)
                         val files=mutableMapOf<String,String>();session.parseBody(files);val temporary=File(requireNotNull(files["content"]));check(temporary.length()==size)
                         if(!file.exists()){val staged=File(media.dir,"${name}.${newId()}.room-part")
                             try{temporary.inputStream().use{i->staged.outputStream().use{boundedCopy(i,it,64L*1024*1024)}};check(staged.length()==size&&staged.renameTo(file))}finally{staged.delete()}}
-                        else check(file.length()==size){"asset_conflict"};json(mapOf("ok" to true))
+                        else check(file.length()==size && sameFileContents(file,temporary)){"asset_conflict"};json(mapOf("ok" to true))
                     }else response(Response.Status.METHOD_NOT_ALLOWED,"invalid_method")
                 }
                 else->response(Response.Status.NOT_FOUND,"room_closed")
@@ -96,4 +96,19 @@ class RoomServer(val engine:RoomEngine,private val media:Media):NanoHTTPD("0.0.0
         val fallback=NetworkInterface.getNetworkInterfaces().toList().filter{it.isUp&&!it.isLoopback}.flatMap{it.inetAddresses.toList()}
         (preferred+fallback).filter{it is Inet4Address&&it.isSiteLocalAddress}.mapNotNull{it.hostAddress}.distinct().map{RoomAddress(it,listeningPort,invite)}
     }.getOrDefault(emptyList())
+}
+
+/** An existing immutable asset must match bytes, not only the file length. */
+internal fun sameFileContents(first:File,second:File):Boolean {
+    if(first.length()!=second.length())return false
+    return first.inputStream().buffered().use{a->second.inputStream().buffered().use{b->
+        val left=ByteArray(32768);val right=ByteArray(32768)
+        var n=a.read(left)
+        while(n>=0){
+            var read=0;while(read<n){val count=b.read(right,read,n-read);if(count<=0)return false;read+=count}
+            for(i in 0 until n)if(left[i]!=right[i])return false
+            n=a.read(left)
+        }
+        b.read()<0
+    }}
 }

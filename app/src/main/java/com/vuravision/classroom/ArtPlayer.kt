@@ -76,7 +76,7 @@ class ArtPlayer(private val context:Context,private val board:Board,
         }
     }
     fun start() {
-        check(!board.isDrawing)
+        check(!board.hasActiveInteraction)
         require(lesson.pages.size<200){context.tr("The lesson already has 200 pages","درس به سقف ۲۰۰ صفحه رسیده است")}
         require(lesson.pages.sumOf{it.items.size}+items.size<20000){context.tr("Create a new lesson before adding this drawing","قبل از افزودن نقاشی، درس تازه بسازید")}
         require(lesson.pages.sumOf{p->p.items.sumOf{it.points.size}}+items.sumOf{it.points.size}<1000000){context.tr("Create a new lesson before adding this drawing","قبل از افزودن نقاشی، درس تازه بسازید")}
@@ -92,7 +92,7 @@ class ArtPlayer(private val context:Context,private val board:Board,
         pauseButton=context.button(context.tr("Pause","مکث")){
             paused=!paused
             (buttons.getChildAt(0) as Button).text=context.tr(if(paused)"Resume"else"Pause",if(paused)"ادامه"else"مکث")
-            if(!paused)handler.post(tick)else handler.removeCallbacks(tick)
+            if(!paused){current?.let{it.points=it.points.map{p->p.copy()}.toMutableList()};handler.post(tick)}else handler.removeCallbacks(tick)
         }
         buttons.addView(pauseButton)
         buttons.addView(context.button("1×"){

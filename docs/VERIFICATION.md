@@ -1,3 +1,5 @@
+> Current release: [1.17 verification](VERIFICATION_1.17.0.json), [audit](AUDIT_1.17.md), and [device acceptance](DEVICE_ACCEPTANCE_1.17.md). The text below is historical.
+
 # Version 1.2 verification
 
 ## Second supplied GitHub log — unique menu ID correction

@@ -81,7 +81,7 @@ class GeometryInteraction(private val board:Board){
                 board.store.page.items.add(label)
             }
             guide=null;base=null;arc=null
-            if(checkpointed)board.store.changed();checkpointed=false;board.sceneChanged();board.onSelection()
+            if(checkpointed && !board.store.discardUnchangedCheckpoint())board.store.changed();checkpointed=false;board.sceneChanged();board.onSelection()
         }
         return true
     }

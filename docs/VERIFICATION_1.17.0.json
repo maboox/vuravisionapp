@@ -1,0 +1,255 @@
+{
+  "version": "1.17.0",
+  "version_code": 29,
+  "date_utc": "2026-10-12T10:18:24.960418+00:00",
+  "application_id": "com.vuravision.classroom.beta",
+  "toolchain": {
+    "jdk": "jdk-17.0.20.1+1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compile_sdk": 35,
+    "build_tools": "35.0.0"
+  },
+  "android_debug_compilation": "pass",
+  "android_release_compilation": "pass",
+  "unit_tests": {
+    "tests": 316,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "added_regressions": 36,
+    "report_files": 31
+  },
+  "lint": {
+    "debug": {
+      "status": "pass",
+      "issues_by_severity": {
+        "Warning": 852
+      },
+      "issues_by_id": {
+        "AppBundleLocaleChanges": 1,
+        "UseSwitchCompatOrMaterialCode": 3,
+        "DiscouragedApi": 1,
+        "SetJavaScriptEnabled": 2,
+        "TrustAllX509TrustManager": 3,
+        "DataExtractionRules": 1,
+        "DrawAllocation": 31,
+        "StaticFieldLeak": 2,
+        "UnusedResources": 643,
+        "TypographyEllipsis": 3,
+        "ViewConstructor": 13,
+        "UseKtx": 97,
+        "ClickableViewAccessibility": 2,
+        "SetTextI18n": 35,
+        "RtlHardcoded": 15
+      }
+    },
+    "release": {
+      "status": "pass",
+      "issues_by_severity": {
+        "Warning": 852
+      },
+      "issues_by_id": {
+        "AppBundleLocaleChanges": 1,
+        "UseSwitchCompatOrMaterialCode": 3,
+        "DiscouragedApi": 1,
+        "SetJavaScriptEnabled": 2,
+        "TrustAllX509TrustManager": 3,
+        "DataExtractionRules": 1,
+        "DrawAllocation": 31,
+        "StaticFieldLeak": 2,
+        "UnusedResources": 643,
+        "TypographyEllipsis": 3,
+        "ViewConstructor": 13,
+        "UseKtx": 97,
+        "ClickableViewAccessibility": 2,
+        "SetTextI18n": 35,
+        "RtlHardcoded": 15
+      }
+    }
+  },
+  "lint_notes": "Warnings remain. Most are dynamic unused-resource suggestions, optional KTX, UI allocations and deprecated APIs. Three TrustAll warnings are in transitive Bouncy Castle code; application source configures no custom TLS trust manager or hostname verifier. No warning baseline was added to hide findings.",
+  "debug_apk": {
+    "assembly": "pass",
+    "bytes": 92384260,
+    "sha256": "3af39b32e07eb024aae3c1daf4266e56ef12807c68b755e6804a70979f2dd5be",
+    "signature": "verified; development certificate only",
+    "zip_alignment_16k": "pass",
+    "native_elf_load_and_relro_rounding": {
+      "status": "pass",
+      "libraries": [
+        {
+          "file": "lib/arm64-v8a/libdigitalink.so",
+          "bits": 64,
+          "load_alignment": [
+            16384,
+            16384,
+            16384
+          ],
+          "relro_ranges": [
+            [
+              6651904,
+              6828032
+            ]
+          ],
+          "relro_rounding": "pass"
+        },
+        {
+          "file": "lib/arm64-v8a/libmlkit_google_ocr_pipeline.so",
+          "bits": 64,
+          "load_alignment": [
+            16384,
+            16384,
+            16384
+          ],
+          "relro_ranges": [
+            [
+              10272768,
+              10842112
+            ]
+          ],
+          "relro_rounding": "pass"
+        },
+        {
+          "file": "lib/armeabi-v7a/libdigitalink.so",
+          "bits": 32,
+          "load_alignment": [
+            4096,
+            4096,
+            4096
+          ],
+          "relro_ranges": [],
+          "relro_rounding": "not applicable"
+        },
+        {
+          "file": "lib/armeabi-v7a/libmlkit_google_ocr_pipeline.so",
+          "bits": 32,
+          "load_alignment": [
+            4096,
+            4096,
+            4096
+          ],
+          "relro_ranges": [],
+          "relro_rounding": "not applicable"
+        },
+        {
+          "file": "lib/x86/libdigitalink.so",
+          "bits": 32,
+          "load_alignment": [
+            4096,
+            4096,
+            4096
+          ],
+          "relro_ranges": [],
+          "relro_rounding": "not applicable"
+        },
+        {
+          "file": "lib/x86/libmlkit_google_ocr_pipeline.so",
+          "bits": 32,
+          "load_alignment": [
+            4096,
+            4096,
+            4096
+          ],
+          "relro_ranges": [],
+          "relro_rounding": "not applicable"
+        },
+        {
+          "file": "lib/x86_64/libdigitalink.so",
+          "bits": 64,
+          "load_alignment": [
+            16384,
+            16384,
+            16384
+          ],
+          "relro_ranges": [
+            [
+              8536064,
+              8708096
+            ]
+          ],
+          "relro_rounding": "pass"
+        },
+        {
+          "file": "lib/x86_64/libmlkit_google_ocr_pipeline.so",
+          "bits": 64,
+          "load_alignment": [
+            16384,
+            16384,
+            16384
+          ],
+          "relro_ranges": [
+            [
+              10878976,
+              11411456
+            ]
+          ],
+          "relro_rounding": "pass"
+        }
+      ]
+    }
+  },
+  "instrumentation_test_apk": "assembled; connected tests not executed locally",
+  "production_apk": "not signed locally; existing GitHub Secrets and mandatory signing gate retained",
+  "web_smoke": {
+    "catalog": {
+      "cards": 68,
+      "subjectFilter": true,
+      "topicFilter": true,
+      "search": true,
+      "navigation": true
+    },
+    "catalogFa": {
+      "direction": "rtl",
+      "search": true
+    },
+    "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+    "labs": 204,
+    "labFailures": [],
+    "games": 49,
+    "gameFailures": [],
+    "errors": []
+  },
+  "structural_checks": {
+    "kotlin_delimiters": "pass (not compilation)",
+    "xml": "pass",
+    "guide_chapters": 28,
+    "native_labs_classified": 74,
+    "font_faces_verified": 21,
+    "periodic_elements_verified": 118
+  },
+  "native_screenshots": [
+    "verification/v117/board-en.png",
+    "verification/v117/board-fa.png"
+  ],
+  "baseline_source_files_retained": 400,
+  "changed_existing_files": [
+    ".github/workflows/android.yml",
+    "README.fa.md",
+    "README.md",
+    "app/build.gradle.kts",
+    "app/src/main/AndroidManifest.xml",
+    "app/src/main/java/com/vuravision/classroom/ArtPlayer.kt",
+    "app/src/main/java/com/vuravision/classroom/Board.kt",
+    "app/src/main/java/com/vuravision/classroom/Document.kt",
+    "app/src/main/java/com/vuravision/classroom/Erasing.kt",
+    "app/src/main/java/com/vuravision/classroom/Files.kt",
+    "app/src/main/java/com/vuravision/classroom/GeometryInteraction.kt",
+    "app/src/main/java/com/vuravision/classroom/ImageCropView.kt",
+    "app/src/main/java/com/vuravision/classroom/MainActivity.kt",
+    "app/src/main/java/com/vuravision/classroom/MindMap.kt",
+    "app/src/main/java/com/vuravision/classroom/NativeGames.kt",
+    "app/src/main/java/com/vuravision/classroom/PdfExport.kt",
+    "app/src/main/java/com/vuravision/classroom/PdfPane.kt",
+    "app/src/main/java/com/vuravision/classroom/PdfWorkspaceState.kt",
+    "app/src/main/java/com/vuravision/classroom/Renderer.kt",
+    "app/src/main/java/com/vuravision/classroom/RoomController.kt",
+    "app/src/main/java/com/vuravision/classroom/RoomNetwork.kt",
+    "app/src/main/java/com/vuravision/classroom/RoomProtocol.kt",
+    "app/src/main/java/com/vuravision/classroom/TextLayout.kt",
+    "docs/VERIFICATION.md"
+  ],
+  "physical_device_acceptance": "not run; target-panel latency/calibration, Android WebView, and two-device Wi-Fi tests remain in DEVICE_ACCEPTANCE_1.17.md",
+  "shared_rooms": "experimental, hidden, same LAN; local PDF reading workspace is not shared"
+}

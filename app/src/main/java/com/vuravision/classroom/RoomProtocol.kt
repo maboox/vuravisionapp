@@ -103,6 +103,7 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
     @Synchronized fun remove(id:String){require(id!=hostId);peers[id]?.revoked=true;release(id);positions.remove(id);past.remove(id);future.remove(id);receipts.remove(id)}
     @Synchronized fun leave(id:String){if(id!=hostId){peers[id]?.seen=clock()-10001;release(id);positions.remove(id)}}
     @Synchronized fun snapshot()=document.copyDeep()
+    @Synchronized fun referencesAsset(name:String)=document.allAssetItems().any{it.asset==name}
     @Synchronized fun end(){ended=true}
     private fun owner(id:String)=if(peers.getValue(id).role==RoomRoles.CONTROL)hostId else id
     private fun release(id:String){leases.entries.removeAll{it.value.peer==id}}
@@ -125,7 +126,7 @@ class RoomEngine(initial:Lesson,host:DeviceProfile,val name:String,private val c
         keys.forEach{k->if(leases[k]?.peer in listOf(null,id))leases[k]=Lease(id,clock()+5000)}
         val live=if(editing)p.live.filter{v->v.kind in listOf("ink","shape")&&v.points.size<=2000&&v.pane in page.visiblePaneIndices&&
             (page.items.none{it.id==v.id}||leases[RoomDocuments.key(page.id,v.id)]?.peer==id)&&
-            listOf(v.x,v.y,v.w,v.h,v.width,v.rotation,v.inkW,v.inkH).all{it.isFinite()}&&v.width in .1f..200f&&v.w>0&&v.h>0&&v.inkW>0&&v.inkH>0&&v.points.all{it.x.isFinite()&&it.y.isFinite()}}.map{it.deepCopy()}else emptyList()
+            listOf(v.x,v.y,v.w,v.h,v.width,v.rotation,v.inkW,v.inkH).all{it.isFinite()}&&v.width in .1f..320f&&v.w>0&&v.h>0&&v.inkW>0&&v.inkH>0&&v.points.all{it.x.isFinite()&&it.y.isFinite()}}.map{it.deepCopy()}else emptyList()
         val old=positions[id];val touched=p.active||old==null||old.page!=p.page||old.viewport!=p.viewport||old.x!=p.x||old.y!=p.y||old.selected!=desired
         // Retain the previous timestamp after expiry so idle heartbeats cannot revive the ghost.
         positions[id]=p.copy(peer=id,selected=desired.filter{leases[RoomDocuments.key(page.id,it)]?.peer==id},live=live,at=if(touched)clock()else old!!.at)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.VoiceApiKeyTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:51" hostname="033dd159fe3b" time="0.003">
+  <properties/>
+  <testcase name="emptyAndOversizedValuesAreRejected" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.002"/>
+  <testcase name="obviousLinksAreRejected" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <testcase name="standardKeyRemainsUnchanged" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <testcase name="whitespaceAndDirectionMarksAtPasteBoundariesAreRemoved" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <testcase name="noProviderPrefixOrMinimumLengthIsAssumed" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.001"/>
+  <testcase name="pairedCopyQuotesAreRemoved" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <testcase name="interiorBytesAreNeverSilentlyRewritten" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <testcase name="opaqueLongCredentialIsNotRejectedByOldFormatAssumptions" classname="com.vuravision.classroom.VoiceApiKeyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

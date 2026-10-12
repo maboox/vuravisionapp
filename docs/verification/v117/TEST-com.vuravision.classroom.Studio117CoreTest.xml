@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Studio117CoreTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:31" hostname="033dd159fe3b" time="0.01">
+  <properties/>
+  <testcase name="outputLimitRejectsOverflowBeforeWriting" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="assetNamesRejectDirectoryAndTraversalPaths" classname="com.vuravision.classroom.Studio117CoreTest" time="0.0"/>
+  <testcase name="duplicateAndEmptyPageIdsAreRejected" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="broadHighlightWidthCanBeSavedButInvalidAlphaCannot" classname="com.vuravision.classroom.Studio117CoreTest" time="0.0"/>
+  <testcase name="dormantCanvasPointEditsDoNotChangeSavedSnapshots" classname="com.vuravision.classroom.Studio117CoreTest" time="0.002"/>
+  <testcase name="unchangedEditPreservesRedoAndHistoryCapacity" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="waitingSavesCoalesceToLatestSnapshot" classname="com.vuravision.classroom.Studio117CoreTest" time="0.002"/>
+  <testcase name="overlappingPausesStopTheClockExactlyOnce" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="coalescingDoesNotDropOtherProjects" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="failedWriteDoesNotBlockNextProject" classname="com.vuravision.classroom.Studio117CoreTest" time="0.0"/>
+  <testcase name="throwingEditRestoresDocumentAndRedo" classname="com.vuravision.classroom.Studio117CoreTest" time="0.001"/>
+  <testcase name="newSnapshotDuringWriteRunsAfterIt" classname="com.vuravision.classroom.Studio117CoreTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

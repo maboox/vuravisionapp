@@ -151,7 +151,7 @@ data class Page(
         paneCount=count
     }
     fun layer(item: Item) = layers.first { it.id == item.layerId }
-    fun visibleItems() = layers.filter { it.visible && it.opacity > 0f }.flatMap { l -> items.filter { it.layerId == l.id && it.pane in visiblePaneIndices } }
+    fun visibleItems():List<Item> {val grouped=items.filter{it.pane in visiblePaneIndices}.groupBy{it.layerId};return layers.filter{it.visible&&it.opacity>0f}.flatMap{grouped[it.id].orEmpty()}}
     fun editable(item: Item) = layer(item).let { it.visible && !it.locked && it.opacity > 0f }
     fun canDraw() = layers.first { it.id == activeLayerId }.let { it.visible && !it.locked && it.opacity > 0f }
 }
@@ -179,6 +179,7 @@ data class Lesson(
             schema = 3
         }
         require(pages.size in 1..200 && current in pages.indices)
+        require(pages.map{it.id}.distinct().size==pages.size && pages.all{it.id.isNotBlank()})
         customColors = (customColors ?: mutableListOf()).distinct().take(40).toMutableList()
         pdf?.validate()
         val canvases=pages.flatMap{it.validationCanvases()}
@@ -206,13 +207,14 @@ data class Lesson(
                     }
                 )
                 require(o.w in .01f..100000f && o.h in .01f..100000f && o.inkW > 0 && o.inkH > 0)
-                require(o.width in .1f..200f)
+                require(o.width in .1f..320f)
                 require(o.dashLength.isFinite() && o.dashGap.isFinite() && o.dashLength in 0f..1000f && o.dashGap in 0f..1000f)
                 require(o.pageCount > 0 && o.pdfPage in 0 until o.pageCount)
                 require(o.domain in .1f..1000f)
                 require(o.text.length <= 100000)
                 require(listOf(o.fontFa,o.fontEn).all{it==null || it.matches(Regex("[a-z0-9_]{1,40}"))})
-                require(o.asset.isEmpty() || o.asset.matches(Regex("[a-zA-Z0-9._-]+")))
+                require(o.asset.isEmpty() || AssetNames.valid(o.asset))
+                require(o.id.isNotBlank() && o.alpha in 0..255)
                 require(o.cuts.size <= 100000)
                 require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
                 require(o.fillRuns.orEmpty().size<=50000 && o.fillRuns.orEmpty().all{r->listOf(r.x,r.y,r.end,r.height).all{it.isFinite()} && r.x>=0 && r.y>=0 && r.end>=r.x && r.height>0})
@@ -262,13 +264,17 @@ class Store(var lesson: Lesson = Lesson()) {
     fun edit(action: () -> Unit) {
         if(!editAllowed())return
         checkpoint()
-        lesson.pages.forEach { page -> page.items.forEach { o -> if(o.points.isNotEmpty()) o.points=o.points.map { it.copy() }.toMutableList() } }
-        action()
-        changed()
+        lesson.pages.flatMap{it.validationCanvases()}.forEach { page -> page.items.forEach { o -> if(o.points.isNotEmpty()) o.points=o.points.map { it.copy() }.toMutableList() } }
+        try{action()}catch(e:Exception){cancelCheckpoint();throw e}
+        if(!discardUnchangedCheckpoint())changed()
     }
 
     /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
-    fun editMetadata(action:()->Unit){if(!editAllowed())return;checkpoint();action();changed()}
+    fun editMetadata(action:()->Unit){if(!editAllowed())return;checkpoint();try{action()}catch(e:Exception){cancelCheckpoint();throw e};if(!discardUnchangedCheckpoint())changed()}
+    fun discardUnchangedCheckpoint():Boolean {
+        if(historyBefore==null || lesson!=past.lastOrNull())return false
+        cancelCheckpoint();return true
+    }
     val undoCount get()=sessionHistory?.invoke()?.first?:past.size
     val redoCount get()=sessionHistory?.invoke()?.second?:future.size
     /** Rebuild only once per scrub update, even when crossing many history steps. */

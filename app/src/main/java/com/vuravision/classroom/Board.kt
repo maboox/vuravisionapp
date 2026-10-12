@@ -10,6 +10,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var canEditItem:(Item)->Boolean={true}
     var onInteraction:(MotionEvent)->Unit={}
     var onViewportChanged:()->Unit={}
+    /** View-local area left clear by the surrounding application controls. */
+    var fitViewport:(()->RectF)?=null
     var roomOverlay:RoomPresenceOverlay?=null
     var selectionColor=0xffe46d38.toInt()
     private var remotePreviews:Set<String> = emptySet()
@@ -63,7 +65,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         private set
     private val pointerPanes=mutableMapOf<Int,Int>()
     fun split(count:Int){
-        if(isDrawing)return
+        if(hasActiveInteraction)return
         require(count in 1..4)
         store.editMetadata{store.page.switchPanels(count)}
         activePane=0;clearSelection();sceneChanged()
@@ -100,11 +102,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var dashLength=12f
     var dashGap=8f
     var inkColor:Int
-        get()=if(tool=="highlight")highlightColor else penColor
-        set(v) { if(tool=="highlight")highlightColor=v else penColor=v }
+        get()=if(store.page.visiblePaneCount>1)pane.color else if(tool=="highlight")highlightColor else penColor
+        set(v) { if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=v} else if(tool=="highlight")highlightColor=v else penColor=v }
     var inkWidth:Float
-        get()=if(tool=="highlight")highlightWidth else penWidth
-        set(v) { if(tool=="highlight")highlightWidth=v else penWidth=v }
+        get()=if(store.page.visiblePaneCount>1)pane.penWidth else if(tool=="highlight")highlightWidth else penWidth
+        set(v) { if(store.page.visiblePaneCount>1)store.editMetadata{pane.penWidth=v.coerceIn(.1f,80f)} else if(tool=="highlight")highlightWidth=v else penWidth=v }
     fun guideInkColor(index:Int=activePane):Int =
         if(store.page.visiblePaneCount>1)store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].color else inkColor
     fun guideInkWidth(index:Int=activePane):Float =
@@ -113,6 +115,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var isCommitting=false
         private set
     private var backing:Bitmap?=null
+    private val bitmapPaint=Paint(Paint.FILTER_BITMAP_FLAG)
     private var backingCanvas:Canvas?=null
     private var backingDirty=true
     private var navigationActive=false
@@ -137,7 +140,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         val page=store.page;val layer=page.layers.lastOrNull{it.visible&&it.opacity>0}
         val bitmap=backing
         if(bitmap!=null && !backingDirty && dirtyRegion==null && cachedPage===page && cachedCount==page.items.size-1 && layer?.id==o.layerId && layer.opacity==1f){
-            val c=Canvas(bitmap);c.save();transformCanvas(c,o.pane);renderer.draw(c,o);c.restore();cachedCount=page.items.size
+            val c=backingCanvas?:return;c.save();transformCanvas(c,o.pane);renderer.draw(c,o);c.restore();cachedCount=page.items.size
         }else backingDirty=true
     }
 
@@ -272,8 +275,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
         geometry.cancel()
         if(changed){store.cancelCheckpoint();changed=false}
-        actions.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";navigationActive=false;touchFocus=null;tappedSelected=false;sceneChanged()
+        actions.clear();eraseLast.clear();broadPointers.clear();transforming=emptySet();pointerPanes.clear();mode="";navigationActive=false;touchFocus=null;tappedSelected=false
+        parent?.requestDisallowInterceptTouchEvent(false);sceneChanged()
     }
+    fun undo(){gestures.reset();abortPendingGesture();store.undo();reconcilePage();clearSelection()}
+    fun redo(){gestures.reset();abortPendingGesture();store.redo();reconcilePage();clearSelection()}
     fun navigateGesture(e:MotionEvent){
         for(i in 0 until e.pointerCount)pointerPanes[e.getPointerId(i)]=activePane
         navigate(e)
@@ -286,7 +292,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
 
     fun reset() {
         measurements.clear()
-        gestures.reset();geometry.cancel()
+        gestures.reset();abortPendingGesture()
         holdCallbacks.keys.toList().forEach(::cancelHold)
         smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
         activePane=activePane.coerceIn(store.page.visiblePaneIndices)
@@ -305,13 +311,17 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             reset()
             return
         }
-        val b = contentBounds(store.page.visibleItems().filter{it.pane==activePane})
-        val viewport=paneRect(activePane)
+        val items=store.page.visibleItems().filter{it.pane==activePane}
+        if(items.isEmpty()){reset();return}
+        val b = contentBounds(items)
+        val panel=paneRect(activePane)
+        val viewport=RectF(panel)
+        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
         zoom =
             min(viewport.width() / density / (b.width() + 90), viewport.height() / density / (b.height() + 90))
                 .coerceIn(.15f, 6f)
-        tx = viewport.width() / density / 2 - b.centerX() * zoom
-        ty = viewport.height() / density / 2 - b.centerY() * zoom
+        tx = (viewport.centerX()-panel.left) / density - b.centerX() * zoom
+        ty = (viewport.centerY()-panel.top) / density - b.centerY() * zoom
         invalidate()
     }
 
@@ -337,8 +347,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     fun delete() {
-        val ids=MindMap.group(store.page,chosen()).mapTo(mutableSetOf()){it.id}
-        store.editMetadata { store.page.items.removeAll { it.id in ids } }
+        val ids=MindMap.group(store.page,chosen()).filter{canEditItem(it)&&it.pane==activePane}.mapTo(mutableSetOf()){it.id}
+        store.editMetadata { store.page.items.removeAll { it.id in ids };store.page.items.filter{it.parentNode in ids}.forEach{it.parentNode=""} }
         clearSelection()
     }
 
@@ -350,10 +360,19 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
 
     override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
-        backing?.recycle();backing=if(!interactiveResize && w>0 && h>0 && w.toLong()*h<=(if(fixedPageWidth==null)16_000_000L else 6_000_000L))Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888) else null
-        backingCanvas=backing?.let{Canvas(it)}
+        releaseBacking()
+        if(!interactiveResize && w>0 && h>0){
+            val budget=(Runtime.getRuntime().maxMemory()/12).coerceIn(4L*1024*1024,32L*1024*1024)
+            val pixels=minOf(budget/4,if(fixedPageWidth==null)8_000_000L else 2_000_000L)
+            val factor=minOf(1.0,sqrt(pixels.toDouble()/(w.toDouble()*h))).toFloat()
+            try{
+                val bitmap=Bitmap.createBitmap((w*factor).toInt().coerceAtLeast(1),(h*factor).toInt().coerceAtLeast(1),Bitmap.Config.ARGB_8888)
+                backing=bitmap;backingCanvas=Canvas(bitmap).apply{scale(bitmap.width.toFloat()/w,bitmap.height.toFloat()/h)}
+            }catch(_:OutOfMemoryError){backing=null;backingCanvas=null}
+        }
         fitFixed();backingDirty=true
     }
+
     fun finishResize(){interactiveResize=false;onSizeChanged(width,height,width,height);invalidate()}
     private fun transformCanvas(c:Canvas,index:Int=activePane) {val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val p=store.page.panes[n];c.clipRect(r);c.translate(r.left,r.top);c.scale(density,density);c.translate(p.tx,p.ty);c.scale(p.zoom,p.zoom) }
     override fun onDraw(c:Canvas) {
@@ -365,7 +384,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(roomOverlay==null && navigating && page.visiblePaneCount==1 && live.isEmpty() && backingDirty && cachedPage===page && backing!=null && age<80){
             c.drawColor(page.panes[0].background)
             val ratio=zoom/cachedZoom
-            c.save();c.translate(density*(tx-cachedTx*ratio),density*(ty-cachedTy*ratio));c.scale(ratio,ratio);c.drawBitmap(backing!!,0f,0f,p);c.restore()
+            c.save();c.translate(density*(tx-cachedTx*ratio),density*(ty-cachedTy*ratio));c.scale(ratio,ratio);c.drawBitmap(backing!!,null,RectF(0f,0f,width.toFloat(),height.toFloat()),bitmapPaint);c.restore()
             postInvalidateDelayed((80-age).coerceAtLeast(1));return
         }
         if(backing==null){
@@ -392,7 +411,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 target.restore()
             }
             dirtyRegion=null
-            cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,0f,0f,null)
+            cachedCount=page.items.size;target.restore();c.drawBitmap(bitmap,null,RectF(0f,0f,width.toFloat(),height.toFloat()),bitmapPaint)
         }
         store.page.items.filter{it.id in transforming}.forEach{o->
             c.save();transformCanvas(c,o.pane)
@@ -445,14 +464,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(gestures.event(e))return true
         if(e.actionMasked==MotionEvent.ACTION_DOWN)onActivate()
         val id = e.getPointerId(e.actionIndex)
-        if(e.actionMasked==MotionEvent.ACTION_CANCEL){
-            if(geometry.active){geometry.cancel();navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true}
-            if(pdfBaseId!=null && changed && (tool=="erase" || actions.values.any{it=="erase"}))store.undo()
-            holdCallbacks.keys.toList().forEach(::cancelHold)
-            smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
-            if(transforming.isNotEmpty())original.forEach{base->store.page.items.firstOrNull{it.id==base.id}?.let{o->o.x=base.x;o.y=base.y;o.w=base.w;o.h=base.h;o.rotation=base.rotation;o.width=base.width}}
-            navigationActive=false;transforming=emptySet();pointerPanes.clear();actions.clear();changed=false;sceneChanged();return true
-        }
+        if(e.actionMasked==MotionEvent.ACTION_CANCEL){abortPendingGesture();return true}
         if(e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN)){
             val n=store.page.visiblePaneIndices.firstOrNull{paneRect(it).contains(e.getX(e.actionIndex),e.getY(e.actionIndex))}?:0
             pointerPanes[id]=n
@@ -461,7 +473,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(!sessionCanEdit||!store.editAllowed()){navigate(e);return true}
         val at = world(e.getX(e.actionIndex), e.getY(e.actionIndex),pointerPanes[id]?:activePane)
         if(geometry.active){geometry.event(e,at);if(!geometry.active){transforming=emptySet();backingDirty=true;pointerPanes.clear()};invalidate();return true}
-        if(e.actionMasked==MotionEvent.ACTION_DOWN && tool!="erase" && tool!="fill" && geometry.start(at,22f/zoom)){
+        if(e.actionMasked==MotionEvent.ACTION_DOWN && tool in listOf("pen","highlight","shape","select") && profile.action(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex))=="draw" && geometry.start(at,22f/zoom)){
             transforming=chosen().map{it.id}.toSet();backingDirty=true;onSelection();invalidate();return true
         }
         if(tool=="fill"){
@@ -530,7 +542,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     actions[id]="select"
                     val chosen = chosen()
                     val bounds = contentBounds(chosen)
-                    original = chosen.filter { !it.locked }.map { it.deepCopy() }
+                    original = chosen.filter { !it.locked }.map { it.copy() }
                     mode =
                         when {
                             chosen.isNotEmpty() &&
@@ -543,7 +555,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         }
                     if (mode.isEmpty()) {
                         val hit =
-                            store.page.visibleItems().asReversed().filter { it.pane==activePane && store.page.editable(it) && !it.locked }.firstOrNull {
+                            store.page.visibleItems().asReversed().filter { it.pane==activePane && store.page.editable(it) && canEditItem(it) && !it.locked }.firstOrNull {
                                 it.hit(at.x, at.y, 9 / zoom)
                             }
                         if (hit == null) {
@@ -556,7 +568,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                 selected.clear()
                                 selected.add(hit.id)
                             }
-                            original = MindMap.group(store.page,chosen()).map { it.deepCopy() }
+                            original = MindMap.group(store.page,chosen()).filter{canEditItem(it)&&it.pane==activePane}.map { it.copy() }
                             mode = "move"
                         }
                     }
@@ -689,10 +701,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             it.y -= top
                         }
                     }
-                    if(tool=="pen")mindStart[id]?.let{if(MindMap.attach(store.page,o,it.x,it.y))backingDirty=true}
+                    if(tool=="pen")mindStart[id]?.let{if(MindMap.attach(store.page,o,it.x,it.y,canEditItem))backingDirty=true}
                     renderer.forgetInk(o.id)
                     if(tool=="smart" && smartMode!="shape"){
-                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{store.page.editable(it)&&canEditItem(it)})else emptyList()
+                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{it.pane==o.pane&&store.page.editable(it)&&canEditItem(it)})else emptyList()
                         if(enclosed.isNotEmpty())post{onSmart(enclosed)}
                         else android.widget.Toast.makeText(context,context.tr("Circle existing writing with a closed loop. Use Pen to write.","دور نوشتهٔ قبلی یک خط بسته بکشید. برای نوشتن از قلم استفاده کنید."),android.widget.Toast.LENGTH_SHORT).show()
                     }else if(tool=="smart" && smartMode=="shape"){
@@ -719,20 +731,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                 }
                 if (e.actionMasked == MotionEvent.ACTION_UP) {
                     if(transforming.isNotEmpty()){transforming=emptySet();backingDirty=true}
-                    if(changed || mode=="navigate") { isCommitting=true;store.changed();isCommitting=false }
+                    if(changed || mode=="navigate") { isCommitting=true;try{if(!changed || !store.discardUnchangedCheckpoint())store.changed()}finally{isCommitting=false} }
                     changed = false
                     mode = ""
                     performClick()
                 }
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                smoothers.clear();removeCallbacks(smoothFrame);live.clear()
-                broadPointers.clear();pointerPanes.clear();lasso.clear();touchFocus=null
-                actions.clear()
-                box = null
-                if (changed) store.undo()
-                changed = false
-                mode = ""
             }
         }
         postInvalidateOnAnimation()
@@ -796,7 +799,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             store.page.items.removeAll { o ->
                 if(o.pane!=index || o.locked || !store.page.editable(o) || !canEditItem(o) || (!eraseObjects&&o.kind!="ink"))false else {
                     val bounds=itemBounds(o).apply{inset(-o.width*3-4,-o.width*3-4)}
-                    val removed=RectF.intersects(bounds,region) && (0..steps).any { i ->val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)}
+                    val removed=RectF.intersects(bounds,region) && if(o.kind=="ink"&&o.shape!="region_fill"&&o.cuts.isEmpty())Erasing.hitsInk(o,from,q,radius)
+                        else (0..steps).any { i ->val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)}
                     if(removed)dirtyRegion?.union(bounds)
                     removed
                 }

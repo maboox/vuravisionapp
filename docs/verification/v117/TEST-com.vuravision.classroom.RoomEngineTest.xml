@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.RoomEngineTest" tests="23" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:23" hostname="033dd159fe3b" time="0.53">
+  <properties/>
+  <testcase name="selectionLeaseIsFirstComeAndExpires" classname="com.vuravision.classroom.RoomEngineTest" time="0.033"/>
+  <testcase name="viewersCannotDrawTakeLocksOrPublishLiveInk" classname="com.vuravision.classroom.RoomEngineTest" time="0.021"/>
+  <testcase name="concurrentAppendOrderRemainsHostArrivalOrder" classname="com.vuravision.classroom.RoomEngineTest" time="0.02"/>
+  <testcase name="pendingGuestsReceiveNoDocumentUntilApproved" classname="com.vuravision.classroom.RoomEngineTest" time="0.018"/>
+  <testcase name="idleHeartbeatsDoNotReviveAFadedGhost" classname="com.vuravision.classroom.RoomEngineTest" time="0.015"/>
+  <testcase name="explicitReorderIsUndoable" classname="com.vuravision.classroom.RoomEngineTest" time="0.017"/>
+  <testcase name="downgradeReleasesLocksAndRevocationRejectsCredential" classname="com.vuravision.classroom.RoomEngineTest" time="0.014"/>
+  <testcase name="sharedSplitSwitchPreservesBothCanvasesAndUndo" classname="com.vuravision.classroom.RoomEngineTest" time="0.021"/>
+  <testcase name="invalidGeometryRejectsAtomically" classname="com.vuravision.classroom.RoomEngineTest" time="0.014"/>
+  <testcase name="controlUsesHostUndoAndSharedNavigationAndTools" classname="com.vuravision.classroom.RoomEngineTest" time="0.016"/>
+  <testcase name="undoRestoresDeletedObjectAtItsOriginalStackPosition" classname="com.vuravision.classroom.RoomEngineTest" time="0.016"/>
+  <testcase name="profileIdentityCannotImpersonateHostOrAnotherSession" classname="com.vuravision.classroom.RoomEngineTest" time="0.024"/>
+  <testcase name="collaborateUndoAffectsOnlyThatAuthorsHistory" classname="com.vuravision.classroom.RoomEngineTest" time="0.017"/>
+  <testcase name="livePreviewDoesNotCommitInkToTheDocument" classname="com.vuravision.classroom.RoomEngineTest" time="0.015"/>
+  <testcase name="expiredJournalFallsBackToASnapshot" classname="com.vuravision.classroom.RoomEngineTest" time="0.035"/>
+  <testcase name="independentCameraAndPenChangesDoNotCreateDocumentOperations" classname="com.vuravision.classroom.RoomEngineTest" time="0.017"/>
+  <testcase name="profilesUpdateInRoomAndLeavingMarksOffline" classname="com.vuravision.classroom.RoomEngineTest" time="0.016"/>
+  <testcase name="endingRoomFreezesDocumentAndInvalidatesCredentials" classname="com.vuravision.classroom.RoomEngineTest" time="0.018"/>
+  <testcase name="sharedHistoryDefaultsToFiftyAndCanBeTrimmed" classname="com.vuravision.classroom.RoomEngineTest" time="0.111"/>
+  <testcase name="conditionalObjectConflictRejectsTheWholeOperation" classname="com.vuravision.classroom.RoomEngineTest" time="0.02"/>
+  <testcase name="staleStructuralChangeIsRejected" classname="com.vuravision.classroom.RoomEngineTest" time="0.016"/>
+  <testcase name="undoCannotOverwriteAnotherPersonsSubsequentEdit" classname="com.vuravision.classroom.RoomEngineTest" time="0.017"/>
+  <testcase name="retriesAreIdempotentEvenAfterAnotherOperation" classname="com.vuravision.classroom.RoomEngineTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.BackgroundMindMapTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:11" hostname="033dd159fe3b" time="0.996">
+  <properties/>
+  <testcase name="pageBackgroundKeepsPatternAndCustomColorTogether" classname="com.vuravision.classroom.BackgroundMindMapTest" time="0.944"/>
+  <testcase name="branchesStayBehindBothNodeBoxes" classname="com.vuravision.classroom.BackgroundMindMapTest" time="0.052"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

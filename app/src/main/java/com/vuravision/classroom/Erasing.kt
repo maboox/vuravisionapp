@@ -6,6 +6,25 @@ data class EraseCut(var ax:Float=0f,var ay:Float=0f,var bx:Float=0f,var by:Float
  fun contains(x:Float,y:Float,w:Float,h:Float)=distance(x*basisW/w,y*basisH/h,ax,ay,bx,by)<=radius
 }
 object Erasing {
+ /** Test the complete eraser sweep against unmasked ink in linear time. */
+ fun hitsInk(o:Item,a:PointF,b:PointF,radius:Float):Boolean {
+  val (ax,ay)=o.local(a.x,a.y);val (bx,by)=o.local(b.x,b.y)
+  val limit=radius+o.width/2;val sx=o.w/o.inkW;val sy=o.h/o.inkH
+  var previous:Point?=null
+  for(point in o.points){
+   val x=point.x*sx;val y=point.y*sy
+   if(distance(x,y,ax,ay,bx,by)<=limit)return true
+   previous?.let{p->if(segmentDistance(ax,ay,bx,by,p.x*sx,p.y*sy,x,y)<=limit)return true}
+   previous=point
+  }
+  return false
+ }
+ private fun segmentDistance(ax:Float,ay:Float,bx:Float,by:Float,cx:Float,cy:Float,dx:Float,dy:Float):Float {
+  val rx=(bx-ax).toDouble();val ry=(by-ay).toDouble();val sx=(dx-cx).toDouble();val sy=(dy-cy).toDouble()
+  val cross=rx*sy-ry*sx
+  if(cross!=0.0){val qx=(cx-ax).toDouble();val qy=(cy-ay).toDouble();val t=(qx*sy-qy*sx)/cross;val u=(qx*ry-qy*rx)/cross;if(t in 0.0..1.0&&u in 0.0..1.0)return 0f}
+  return minOf(distance(ax,ay,cx,cy,dx,dy),distance(bx,by,cx,cy,dx,dy),distance(cx,cy,ax,ay,bx,by),distance(dx,dy,ax,ay,bx,by))
+ }
  fun cut(o:Item,a:PointF,b:PointF,radius:Float):Boolean {
   if(o.locked)return false
   val bounds=itemBounds(o);bounds.inset(-radius,-radius)

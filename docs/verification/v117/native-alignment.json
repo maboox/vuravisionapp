@@ -1,0 +1,113 @@
+{
+  "status": "pass",
+  "libraries": [
+    {
+      "file": "lib/arm64-v8a/libdigitalink.so",
+      "bits": 64,
+      "load_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "relro_ranges": [
+        [
+          6651904,
+          6828032
+        ]
+      ],
+      "relro_rounding": "pass"
+    },
+    {
+      "file": "lib/arm64-v8a/libmlkit_google_ocr_pipeline.so",
+      "bits": 64,
+      "load_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "relro_ranges": [
+        [
+          10272768,
+          10842112
+        ]
+      ],
+      "relro_rounding": "pass"
+    },
+    {
+      "file": "lib/armeabi-v7a/libdigitalink.so",
+      "bits": 32,
+      "load_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "relro_ranges": [],
+      "relro_rounding": "not applicable"
+    },
+    {
+      "file": "lib/armeabi-v7a/libmlkit_google_ocr_pipeline.so",
+      "bits": 32,
+      "load_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "relro_ranges": [],
+      "relro_rounding": "not applicable"
+    },
+    {
+      "file": "lib/x86/libdigitalink.so",
+      "bits": 32,
+      "load_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "relro_ranges": [],
+      "relro_rounding": "not applicable"
+    },
+    {
+      "file": "lib/x86/libmlkit_google_ocr_pipeline.so",
+      "bits": 32,
+      "load_alignment": [
+        4096,
+        4096,
+        4096
+      ],
+      "relro_ranges": [],
+      "relro_rounding": "not applicable"
+    },
+    {
+      "file": "lib/x86_64/libdigitalink.so",
+      "bits": 64,
+      "load_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "relro_ranges": [
+        [
+          8536064,
+          8708096
+        ]
+      ],
+      "relro_rounding": "pass"
+    },
+    {
+      "file": "lib/x86_64/libmlkit_google_ocr_pipeline.so",
+      "bits": 64,
+      "load_alignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "relro_ranges": [
+        [
+          10878976,
+          11411456
+        ]
+      ],
+      "relro_rounding": "pass"
+    }
+  ]
+}

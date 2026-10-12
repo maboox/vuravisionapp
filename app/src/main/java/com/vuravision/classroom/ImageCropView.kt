@@ -60,6 +60,7 @@ class ImageCropView(context: Context, private val bitmap: Bitmap) : View(context
                 invalidate()
             }
             MotionEvent.ACTION_CANCEL->{region.set(before);handle=-1;pointer=-1;parent?.requestDisallowInterceptTouchEvent(false);invalidate()}
+            MotionEvent.ACTION_POINTER_UP->{if(event.getPointerId(event.actionIndex)==pointer){handle=-1;pointer=-1;parent?.requestDisallowInterceptTouchEvent(false)}}
             MotionEvent.ACTION_UP->{handle=-1;pointer=-1;parent?.requestDisallowInterceptTouchEvent(false);performClick()}
         }
         return true

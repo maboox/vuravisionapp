@@ -41,7 +41,7 @@ class RoomController(private val context:Context,private val store:Store,private
     private var needsDocument=false
     private val recoveryScheduled=java.util.concurrent.atomic.AtomicBoolean(false)
     private var lastSavedRecovery:RoomRecovery?=null
-    private var baseline=store.lesson.copyDeep()
+    private var baseline=store.lesson.copy(pdf=null).copyForSave()
     private var applying=false
     private var joinedDocument=false
     private var deferred:Lesson?=null
@@ -69,21 +69,21 @@ class RoomController(private val context:Context,private val store:Store,private
         check(!active&&!connecting&&!board.hasActiveInteraction);require(name.isNotBlank()&&name.length<=60)
         profile=DeviceProfiles.load(context);val engine=RoomEngine(store.lesson,profile,name.trim()).apply{setHistoryLimit(store.historyLimit)};val service=RoomServer(engine,media)
         service.start(8000,false);server=service;peer=engine.hostId;credential=engine.hostCredential;hosting=true;active=true;connected=true
-        generation++;canonical=engine.snapshot();revision=engine.revision;baseline=store.lesson.copyDeep();frame=engine.frame(peer,-1);resetSession();attach();refreshPresence();discovery.advertise(service);schedule(0,generation);changed()
+        generation++;canonical=engine.snapshot();revision=engine.revision;baseline=store.lesson.copy(pdf=null).copyForSave();frame=engine.frame(peer,-1);resetSession();attach();refreshPresence();discovery.advertise(service);schedule(0,generation);changed()
     }
     fun join(value:RoomAddress,result:(String?)->Unit){
         if(active||connecting){result("room_leave_first");return};connecting=true;val expected=++generation;changed()
         io.execute{try{val welcome=gson.fromJson(RoomHttp(value).json("/join",RoomJoin(DeviceProfiles.load(context))),RoomWelcome::class.java)
             check(welcome.frame.protocol==1);require(welcome.peer.matches(Regex("[a-zA-Z0-9-]{1,80}"))&&welcome.credential.matches(Regex("[a-f0-9]{48}")))
             main.post{if(generation==expected&&!closed){address=value;peer=welcome.peer;credential=welcome.credential;http=RoomHttp(value,peer,credential);hosting=false;active=true;connecting=false;connected=true;frame=welcome.frame
-                canonical=null;revision=-1;baseline=store.lesson.copyDeep();resetSession();attach();persistRecovery();refreshPresence();schedule(0,expected);changed();result(null)}}
+                canonical=null;revision=-1;baseline=store.lesson.copy(pdf=null).copyForSave();resetSession();attach();persistRecovery();refreshPresence();schedule(0,expected);changed();result(null)}}
         }catch(e:Exception){main.post{if(generation==expected&&!closed){connecting=false;changed();result(e.message?:"connection_error")}}}}
     }
     fun resume(result:(String?)->Unit){
         if(active||connecting){result("room_leave_first");return}
         try{require(recovery.length()<=64L*1024*1024);val saved=gson.fromJson(recovery.readText(),RoomRecovery::class.java);require(saved.operations.size<=128)
             val target=RoomAddress.parse(saved.address);http=RoomHttp(target,saved.peer,saved.credential);address=target;peer=saved.peer;credential=saved.credential
-            synchronized(pending){pending.clear();saved.operations.forEach{pending[it.id]=it}};hosting=false;active=true;connected=false;frame=RoomFrame();canonical=null;revision=-1;baseline=store.lesson.copyDeep();generation++;resetSession();attach();refreshPresence();schedule(0,generation);changed();result(null)
+            synchronized(pending){pending.clear();saved.operations.forEach{pending[it.id]=it}};hosting=false;active=true;connected=false;frame=RoomFrame();canonical=null;revision=-1;baseline=store.lesson.copy(pdf=null).copyForSave();generation++;resetSession();attach();refreshPresence();schedule(0,generation);changed();result(null)
         }catch(_:Exception){result("room_resume_failed")}
     }
     private fun attach(){board.roomOverlay=overlay;board.selectionColor=profile.color
@@ -96,7 +96,7 @@ class RoomController(private val context:Context,private val store:Store,private
         if(canEdit)RoomDocuments.edit(baseline,store.lesson,revision)?.let{enqueue(it)}
         val page=store.page.id
         if(canEdit&&frame.role in listOf(RoomRoles.HOST,RoomRoles.CONTROL)&&lastPage!=page){lastPage=page;enqueue(RoomOperation(kind="navigate",baseRevision=revision,page=page))}
-        baseline=store.lesson.copyDeep();refreshPresence()
+        baseline=store.lesson.copy(pdf=null).copyForSave();refreshPresence()
     }
     private fun enqueue(op:RoomOperation){synchronized(pending){check(pending.size<128){"room_queue_full"};pending[op.id]=op};persistRecovery()}
     private fun history(kind:String){if(!active||!canEdit||board.hasActiveInteraction)return;historyTarget=null;enqueue(RoomOperation(kind=kind,baseRevision=revision))}
@@ -148,9 +148,10 @@ class RoomController(private val context:Context,private val store:Store,private
         finally{if(!ended)schedule(if(connected)140 else 1000,expected)}
     }
     private fun receive(incoming:RoomFrame,doc:Lesson?){
+        if(ended || incoming.revision<frame.revision)return
         val oldRole=frame.role;frame=incoming;board.sessionCanEdit=canEdit
         if(!canEdit||(board.selected.any{incoming.locks[RoomDocuments.key(store.page.id,it)] !in listOf(null,peer)})){board.abortPendingGesture();board.clearSelection()}
-        if(doc!=null){if(board.hasActiveInteraction)deferred=doc else applyDocument(doc)}
+        if(doc!=null){if(board.hasActiveInteraction)deferred=doc else {deferred=null;applyDocument(doc)}}
         if(incoming.approved&&incoming.role in listOf(RoomRoles.HOST,RoomRoles.CONTROL,RoomRoles.VIEW)&&!board.hasActiveInteraction&&synchronized(pending){pending.values.none{it.kind=="tools"}})applyTools(incoming.tools)
         if(incoming.receipts.any{!it.accepted}){message="room_conflict";messageUntil=System.currentTimeMillis()+6000}
         else if(System.currentTimeMillis()>messageUntil)message=if(!incoming.approved)"room_waiting"else""
@@ -174,14 +175,27 @@ class RoomController(private val context:Context,private val store:Store,private
             val old=local.pages.associateBy{it.id};doc.pages.forEach{p->old[p.id]?.let{v->p.panes.forEachIndexed{i,n->v.panes.getOrNull(i)?.let{o->n.zoom=o.zoom;n.tx=o.tx;n.ty=o.ty;n.color=o.color;n.penWidth=o.penWidth;n.penStyle=o.penStyle;n.dashLength=o.dashLength;n.dashGap=o.dashGap}}
                 if(p.layers.any{it.id==v.activeLayerId})p.activeLayerId=v.activeLayerId}}
             if(frame.role==RoomRoles.COLLAB||synchronized(pending){pending.values.any{it.kind=="navigate"}})doc.pages.indexOfFirst{it.id==current}.takeIf{it>=0}?.let{doc.current=it}
-            doc.validate();store.lesson=doc;baseline=doc.copyDeep();if(store.page.id!=current)board.clearSelection();board.reconcilePage();if(first)board.fit();store.changed()
+            doc.validate();store.lesson=doc;baseline=doc.copy(pdf=null).copyForSave();if(store.page.id!=current)board.clearSelection();board.reconcilePage();if(first)board.fit();store.changed()
         }finally{applying=false}
     }
     fun setRole(id:String,role:String){server?.engine?.setRole(id,role);changed()}
     fun remove(id:String){server?.engine?.remove(id);changed()}
     fun pauseDrawing(){board.abortPendingGesture();touching=false;board.clearSelection();refreshPresence()}
-    fun flushHostDocument(){if(active&&hosting&&!board.hasActiveInteraction)server?.engine?.snapshot()?.let{applyDocument(it)}}
-    fun endHostAndFlush(){if(active&&hosting){pauseDrawing();server?.end();flushHostDocument()}}
+    fun flushHostDocument(){
+        if(!active||!hosting||board.hasActiveInteraction)return
+        val engine=server?.engine?:return
+        // Commit the host's queued strokes before taking the final room snapshot.
+        var incoming:RoomFrame?=null
+        while(true){
+            val batch=synchronized(pending){pending.values.take(32)}
+            if(batch.isEmpty())break
+            val result=engine.poll(peer,RoomPoll(-1,batch))
+            synchronized(pending){result.receipts.forEach{pending.remove(it.id)}}
+            incoming=result
+        }
+        receive(incoming?:engine.frame(peer,-1),engine.snapshot())
+    }
+    fun endHostAndFlush(){if(active&&hosting&&!ended){pauseDrawing();flushHostDocument();ended=true;server?.end()}}
     private fun recoveryValue():RoomRecovery?=if(active&&!hosting)address?.let{RoomRecovery(it.url,peer,credential,synchronized(pending){pending.values.toList()})}else null
     private fun writeRecovery(value:RoomRecovery?,expected:Int){if(value==null)return;val temp=File(recovery.path+".part");try{val bytes=gson.toJson(value);synchronized(recovery){if(generation!=expected||closed)return;temp.writeText(bytes);check(temp.renameTo(recovery))}}finally{temp.delete()}}
     private fun persistRecovery(){
@@ -193,7 +207,7 @@ class RoomController(private val context:Context,private val store:Store,private
     fun leave(){
         if(!active){connecting=false;generation++;changed();return}
         val oldHttp=http;endHostAndFlush();active=false;hosting=false;connected=false;connecting=false;generation++;discovery.close();server=null;http=null;touching=false
-        synchronized(pending){pending.clear()};synchronized(recovery){recovery.delete()};detach();store.replace(store.lesson);baseline=store.lesson.copyDeep();changed()
+        synchronized(pending){pending.clear()};synchronized(recovery){recovery.delete()};detach();store.replace(store.lesson);baseline=store.lesson.copy(pdf=null).copyForSave();changed()
         if(oldHttp!=null)io.execute{runCatching{oldHttp.json("/leave",mapOf("ok" to true))}}
     }
     private fun detach(){board.abortPendingGesture();board.roomOverlay=null;board.canEditItem={true};board.sessionCanEdit=true;board.selectionColor=0xffe46d38.toInt();board.clearSelection();board.sceneChanged()

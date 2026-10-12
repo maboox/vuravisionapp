@@ -44,7 +44,7 @@ class Media(val context: Context) {
         override fun close(){renderer.close();fd.close()}
     }
     private val sessions=linkedMapOf<String,Session>()
-    private var closed=false
+    @Volatile private var closed=false
     private fun <T> withPdf(name:String, action:(PdfRenderer)->T):T = synchronized(sessions) {
         check(!closed){"Media is closed"}
         val session=sessions.remove(name)?:Session(file(name))
@@ -57,7 +57,7 @@ class Media(val context: Context) {
     var error: (String) -> Unit = {}
 
     fun file(name: String): File {
-        require(name.matches(Regex("[a-zA-Z0-9._-]+")))
+        require(AssetNames.valid(name))
         return File(dir, name)
     }
 
@@ -75,7 +75,8 @@ class Media(val context: Context) {
 
     fun save(bitmap: Bitmap): String {
         val name = "${newId()}.png"
-        file(name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        try { file(name).outputStream().use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) { "Image save failed" } } }
+        catch(e:Exception){file(name).delete();throw e}
         return name
     }
 
@@ -84,9 +85,10 @@ class Media(val context: Context) {
         require(pdf.pageCount in 1..1000){"PDF supports up to 1000 pages"}
         (0 until pdf.pageCount).map { i->pdf.openPage(i).use{it.width.toFloat() to it.height.toFloat()} }
     }
-    private fun quality(edge:Int)=when {edge<=768->768;edge<=1536->1536;else->2560}
+    private fun quality(edge:Int)=when {edge<=256->256;edge<=768->768;edge<=1536->1536;else->2560}
     fun image(item: Item, sync: Boolean = false, edge:Int=1600, priority:Int=0, retained:Bitmap?=null): Bitmap? {
-        val size=if(item.kind=="pdf")quality(edge) else 2048
+        if(closed)return null
+        val size=quality(edge)
         // A mounted PDF page keeps its last frame even when the shared LRU evicts it.
         val held=retained?.takeIf{item.kind=="pdf" && !sync && !it.isRecycled}
         if(held!=null && maxOf(held.width,held.height)>=size-1)return held
@@ -94,18 +96,22 @@ class Media(val context: Context) {
         val key=prefix+size
         cache.get(key)?.let{return it}
         if(sync)return load(item,size).also{cache.put(key,it)}
-        val fallback=if(item.kind=="pdf") (listOfNotNull(held)+listOf(2560,1536,768).mapNotNull{cache.get(prefix+it)}).maxByOrNull{maxOf(it.width,it.height)} else null
+        val fallback=(listOfNotNull(held)+listOf(2560,1536,768,256).mapNotNull{cache.get(prefix+it)}).maxByOrNull{maxOf(it.width,it.height)}
         if(fallback!=null && maxOf(fallback.width,fallback.height)>=size-1)return fallback
         if(failed.contains(key))return fallback
         if(pending.add(key)){
             val copy=item.copy()
-            val action={
-                try { cache.put(key,load(copy,size));assetReady(copy.asset) }
-                catch(e:Exception){failed.add(key);error(e.javaClass.simpleName)}
-                finally { pending.remove(key);ready() }
+            val action:()->Unit={
+                try {
+                    if(!closed){val bitmap=load(copy,size);if(!closed){cache.put(key,bitmap);assetReady(copy.asset)}else bitmap.recycle()}
+                } catch(e:Exception){if(!closed){failed.add(key);error(e.javaClass.simpleName)}}
+                catch(e:OutOfMemoryError){cache.evictAll();if(!closed){failed.add(key);error("Image memory limit")}}
+                finally { pending.remove(key);if(!closed)ready() }
             }
-            if(item.kind=="pdf")pdfWorker.execute(RenderJob(priority,sequence.getAndIncrement(),action))
-            else imageWorker.execute(action)
+            try {
+                if(item.kind=="pdf")pdfWorker.execute(RenderJob(priority,sequence.getAndIncrement(),action))
+                else imageWorker.execute(action)
+            }catch(_:java.util.concurrent.RejectedExecutionException){pending.remove(key)}
         }
         return fallback
     }
@@ -125,7 +131,7 @@ class Media(val context: Context) {
         BitmapFactory.decodeFile(file(item.asset).path, opt)
         require(opt.outWidth > 0 && opt.outHeight > 0) { "Invalid image" }
         var factor = 1
-        while (maxOf(opt.outWidth, opt.outHeight) / factor > 2048) factor *= 2
+        while (maxOf(opt.outWidth, opt.outHeight) / factor > edge) factor *= 2
         return requireNotNull(
             BitmapFactory.decodeFile(
                 file(item.asset).path,
@@ -135,10 +141,15 @@ class Media(val context: Context) {
     }
 
     fun close() {
-        imageWorker.shutdown()
-        pdfWorker.shutdown()
-        // Closing from a background thread avoids blocking the activity on a PDF render.
-        Executors.newSingleThreadExecutor().let{cleanup->cleanup.execute{synchronized(sessions){closed=true;sessions.values.forEach{it.close()};sessions.clear()};cache.evictAll()};cleanup.shutdown()}
+        if(closed)return
+        closed=true
+        assetReady={};ready={};error={}
+        imageWorker.shutdownNow();pdfWorker.shutdownNow();pending.clear()
+        // An in-flight render owns its session until it leaves withPdf.
+        Executors.newSingleThreadExecutor().let{cleanup->cleanup.execute{
+            synchronized(sessions){sessions.values.forEach{runCatching{it.close()}};sessions.clear()}
+            cache.evictAll()
+        };cleanup.shutdown()}
     }
 
     fun clear() {
@@ -152,7 +163,8 @@ class LessonFiles(private val media: Media) {
         check(file.length()>0){"Empty archive"}
         ZipFile(file).use{zip->
             val entry=requireNotNull(zip.getEntry("document.json")){"Missing document"}
-            val doc=zip.getInputStream(entry).bufferedReader().use{Gson().fromJson(it,Lesson::class.java)}
+            require(entry.size in 1..ArchiveLimits.DOCUMENT){"Invalid document size"}
+            val doc=zip.getInputStream(entry).bufferedReader().use{requireNotNull(Gson().fromJson(it,Lesson::class.java))}
             doc.validate()
             doc.allAssetItems().filter{it.asset.isNotEmpty()}.forEach{check(zip.getEntry("assets/${it.asset}")!=null){"Missing asset"}}
         }
@@ -166,7 +178,15 @@ class LessonFiles(private val media: Media) {
                 z.closeEntry()
             }
             entry("manifest.json", """{"format":"VuraVision","schema":3}""".toByteArray())
-            entry("document.json", Gson().toJson(doc).toByteArray())
+            z.putNextEntry(ZipEntry("document.json"))
+            val limited=LimitedOutputStream(z,ArchiveLimits.DOCUMENT)
+            val writer=OutputStreamWriter(limited,Charsets.UTF_8)
+            Gson().toJson(doc,writer);writer.flush();z.closeEntry()
+            var total=limited.count
+            val assetNames=doc.allAssetItems().map{it.asset}.filter{it.isNotEmpty()}.toSet()
+            require(assetNames.size<=4998){"Too many assets"}
+            assetNames.forEach{name->val file=media.file(name);require(file.isFile && file.length()<=ArchiveLimits.ASSET){"Missing or oversized asset"};total+=file.length()}
+            require(total+65536<=ArchiveLimits.TOTAL){"Archive too large"}
             doc.allAssetItems()
                 .map { it.asset }
                 .filter { it.isNotEmpty() }
@@ -181,88 +201,73 @@ class LessonFiles(private val media: Media) {
     }
 
     fun read(input: InputStream, keepSourceUris:Boolean=false): Lesson {
-        val staged = File(media.context.cacheDir, "import-${newId()}").apply { mkdirs() }
-        var json: String? = null
-        var total = 0L
-        val seen = mutableSetOf<String>()
-        val created = mutableListOf<File>()
+        val staged=File(media.context.cacheDir,"import-${newId()}").apply{check(mkdirs())}
+        val document=File(staged,"document.json")
+        val assets=File(staged,"assets").apply{check(mkdirs())}
+        var total=0L
+        val seen=mutableSetOf<String>()
+        val created=mutableListOf<File>()
         try {
-            ZipInputStream(BufferedInputStream(input)).use { z ->
-                while (true) {
-                    val e = z.nextEntry ?: break
-                    require(seen.add(e.name) && seen.size <= 5000) { "Invalid archive entries" }
-                    val out = ByteArrayOutputStream()
-                    total += boundedCopy(z, out, 64L * 1024 * 1024)
-                    require(total <= 128L * 1024 * 1024) { "Archive too large" }
+            ZipInputStream(BufferedInputStream(input)).use{zip->
+                while(true){
+                    val entry=zip.nextEntry?:break
+                    require(!entry.isDirectory && seen.add(entry.name) && seen.size<=5000){"Invalid archive entries"}
+                    val remaining=ArchiveLimits.TOTAL-total
                     when {
-                        e.name == "document.json" -> {
-                            require(out.size() <= 16 * 1024 * 1024)
-                            json = out.toString("UTF-8")
+                        entry.name=="document.json" -> document.outputStream().use{total+=boundedCopy(zip,it,minOf(ArchiveLimits.DOCUMENT,remaining))}
+                        entry.name=="manifest.json" -> {
+                            val bytes=ByteArrayOutputStream()
+                            total+=boundedCopy(zip,bytes,minOf(65536L,remaining))
+                            require(bytes.toString("UTF-8").contains("VuraVision")){"Invalid manifest"}
                         }
-                        e.name == "manifest.json" ->
-                            require(out.toString("UTF-8").contains("VuraVision"))
-                        e.name.startsWith("assets/") -> {
-                            val name = e.name.removePrefix("assets/")
-                            require(name.matches(Regex("[a-zA-Z0-9._-]+"))) {
-                                "Unsafe archive path"
-                            }
-                            File(staged, name).writeBytes(out.toByteArray())
+                        entry.name.startsWith("assets/") -> {
+                            val name=entry.name.removePrefix("assets/")
+                            require(AssetNames.valid(name)){"Unsafe archive path"}
+                            File(assets,name).outputStream().use{total+=boundedCopy(zip,it,minOf(ArchiveLimits.ASSET,remaining))}
                         }
                         else -> error("Unknown archive entry")
                     }
-                    z.closeEntry()
+                    zip.closeEntry()
                 }
             }
-            val doc =
-                Gson().fromJson(requireNotNull(json) { "Missing document" }, Lesson::class.java)
+            require(document.isFile){"Missing document"}
+            val doc=document.bufferedReader().use{requireNotNull(Gson().fromJson(it,Lesson::class.java)){"Missing document"}}
             doc.validate()
-            val names =
-                doc.allAssetItems().map { it.asset }.filter { it.isNotEmpty() }.toSet()
-            val mapping = mutableMapOf<String, String>()
-            names.forEach { name ->
-                val src = File(staged, name)
-                require(src.isFile) { "Missing lesson asset" }
-                val existing = media.file(name)
-                if (
-                    existing.isFile &&
-                        existing.length() == src.length() &&
-                        sha(existing) == sha(src)
-                )
-                    mapping[name] = name
+            val names=doc.allAssetItems().map{it.asset}.filter{it.isNotEmpty()}.toSet()
+            val mapping=mutableMapOf<String,String>()
+            names.forEach{name->
+                val source=File(assets,name);require(source.isFile){"Missing lesson asset"}
+                val existing=media.file(name)
+                if(existing.isFile && existing.length()==source.length() && sha(existing)==sha(source))mapping[name]=name
                 else {
-                    val n = media.import(src.inputStream(), src.extension)
-                    mapping[name] = n
-                    created.add(media.file(n))
+                    val next=media.import(source.inputStream(),source.extension)
+                    mapping[name]=next;created.add(media.file(next))
                 }
             }
-            doc.allAssetItems()
-                .filter { it.asset.isNotEmpty() }
-                .forEach { it.asset = mapping.getValue(it.asset) }
+            doc.allAssetItems().filter{it.asset.isNotEmpty()}.forEach{it.asset=mapping.getValue(it.asset)}
             doc.pdf?.let{it.asset=mapping.getValue(it.asset);if(!keepSourceUris){it.sourceUri="";it.originalHash=""}}
             return doc
-        } catch (e: Exception) {
-            created.forEach { it.delete() }
-            throw e
-        } finally {
-            staged.deleteRecursively()
-        }
+        }catch(e:Exception){created.forEach{it.delete()};throw e}
+        finally{staged.deleteRecursively()}
     }
 
     fun atomic(doc: Lesson, destination: File) {
         destination.parentFile?.mkdirs()
-        val tmp = File(destination.path + ".tmp")
-        tmp.outputStream().use { write(doc, it) }
-        verify(tmp)
-        RandomAccessFile(tmp, "rw").use { it.fd.sync() }
-        val backup = File(destination.path + ".bak")
-        if (destination.exists()) {
-            backup.delete()
-            check(destination.renameTo(backup)) { "Could not preserve previous save" }
-        }
-        if(!tmp.renameTo(destination)){
-            if(backup.exists() && !destination.exists())backup.renameTo(destination)
-            error("Could not commit save; previous version preserved")
-        }
+        val tmp=File(destination.path+".tmp")
+        val backup=File(destination.path+".bak")
+        try {
+            tmp.outputStream().use{write(doc,it)}
+            verify(tmp)
+            RandomAccessFile(tmp,"rw").use{it.fd.sync()}
+            if(destination.exists()){
+                check(!backup.exists()||backup.delete()){"Could not replace backup"}
+                check(destination.renameTo(backup)){"Could not preserve previous save"}
+            }
+            if(!tmp.renameTo(destination)){
+                if(backup.exists()&&!destination.exists())backup.renameTo(destination)
+                error("Could not commit save; previous version preserved")
+            }
+        }finally{tmp.delete()}
     }
 
     private fun sha(file: File): String {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.VoiceProvidersTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:52" hostname="033dd159fe3b" time="0.597">
+  <properties/>
+  <testcase name="openaiUsesGaEventsCorrectRatesAndImageDoesNotTriggerAnswer" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.027"/>
+  <testcase name="hiddenDefaultAndDisableCancelPendingAndActiveSession" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.385"/>
+  <testcase name="pcmStreamPreservesBytesAcrossOddNetworkChunksAndRejectsHeaders" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.039"/>
+  <testcase name="stoppingBeforeValidationCompletesCannotStartMicrophone" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.02"/>
+  <testcase name="routerRequiresAudioAndImagesAndSeparateSpeechCapability" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.019"/>
+  <testcase name="connectionsPersistIndependentlyAndBehaviorSaveDoesNotEnable" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.02"/>
+  <testcase name="silenceDoesNotSubmitAndSpeechHasBoundedEndpoint" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.039"/>
+  <testcase name="routerRejectsUncertainGuessGreetsOnceAndStopsEveryResource" classname="com.vuravision.classroom.VoiceProvidersTest" time="0.046"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

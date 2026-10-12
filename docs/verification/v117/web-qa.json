@@ -1,0 +1,19 @@
+{
+  "catalog": {
+    "cards": 68,
+    "subjectFilter": true,
+    "topicFilter": true,
+    "search": true,
+    "navigation": true
+  },
+  "catalogFa": {
+    "direction": "rtl",
+    "search": true
+  },
+  "runtime": "jsdom 26.1 + native Canvas; not an Android WebView or full browser layout test",
+  "labs": 204,
+  "labFailures": [],
+  "games": 49,
+  "gameFailures": [],
+  "errors": []
+}

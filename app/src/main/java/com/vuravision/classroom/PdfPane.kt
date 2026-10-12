@@ -62,6 +62,7 @@ class PdfPane(
                 if(!navigating){
                     val cancel=MotionEvent.obtain(e);cancel.action=MotionEvent.ACTION_CANCEL
                     super.dispatchTouchEvent(cancel);cancel.recycle();navigating=true
+                    lastY=(e.getY(0)+e.getY(1))/2
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
                 scale.onTouchEvent(e)
@@ -149,7 +150,7 @@ class PdfPane(
         val x=((horizontal.scrollX+focusX)*factor-focusX).toInt()
         pendingScroll=y to x;state.zoom=next;resize();viewChanged()
     }
-    fun fitWidth(){state.zoom=1f;resize();horizontal.scrollTo(0,0);viewChanged()}
+    fun fitWidth(){setZoom(1f);horizontal.scrollTo(0,0)}
     private fun resize(){
         if(disposed || resizing || horizontal.width==0)return
         resizing=true
@@ -180,7 +181,7 @@ class PdfPane(
         updateNumber()
         boards.keys.toList().filter{it !in visible}.forEach{i->
             val b=boards.getValue(i)
-            if(!b.isDrawing && b!==currentBoard()) {frames[i].removeView(b);b.releaseBacking();b.renderer.releasePdfFrame();boards.remove(i)}
+            if(!b.hasActiveInteraction && b!==currentBoard()) {frames[i].removeView(b);b.releaseBacking();b.renderer.releasePdfFrame();boards.remove(i)}
         }
         visible.forEach{i->
             if(i !in boards){
@@ -193,17 +194,17 @@ class PdfPane(
                 boards[i]=b;frames[i].addView(b,FrameLayout.LayoutParams(-1,-1))
             }
         }
-        if(currentBoard().pdfBaseId!=null && !currentBoard().isDrawing)activateVisible()
+        if(currentBoard().pdfBaseId!=null && !currentBoard().hasActiveInteraction)activateVisible()
         // Low-resolution neighbors do not block high-priority visible-page rendering.
         media.prefetchPdf(state.asset,state.current-1,state.sheets.size)
         media.prefetchPdf(state.asset,state.current+1,state.sheets.size)
     }
     fun beginResize(){interactiveResize=true;boards.values.forEach{it.interactiveResize=true;it.releaseBacking();it.invalidate()}}
     fun endResize(){interactiveResize=false;boards.values.forEach{it.finishResize()}}
-    fun mediaReady(asset:String){if(asset==state.asset)boards.values.forEach{it.sceneChanged()}}
+    fun mediaReady(asset:String){boards.forEach{(index,b)->if(asset==state.asset || state.sheets[index].page.items.any{it.asset==asset})b.sceneChanged()}}
     fun refreshText(){boards.values.forEach{it.sceneChanged()};Fonts.applyTree(this)}
     fun setHistoryLimit(value:Int){stores.values.forEach{it.historyLimit=value}}
-    fun dispose(){disposed=true;removeCallbacks(materializeTask);materializePosted=false;boards.values.forEach{it.reset();it.releaseBacking();it.renderer.releasePdfFrame()};boards.clear();stores.clear()}
+    fun dispose(){disposed=true;removeCallbacks(materializeTask);materializePosted=false;boards.values.forEach{it.abortPendingGesture();it.gestures.reset();it.releaseBacking();it.renderer.releasePdfFrame()};boards.clear();stores.clear()}
 }
 object PdfTouch {
     fun scrolls(profile:TouchProfile,tool:Int,major:Float):Boolean = tool!=MotionEvent.TOOL_TYPE_STYLUS && tool!=MotionEvent.TOOL_TYPE_ERASER && major>profile.thin

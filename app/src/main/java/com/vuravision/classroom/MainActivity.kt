@@ -46,7 +46,10 @@ class MainActivity : Activity() {
     private var pageSignature=""
     private var dockSignature=""
     private val handler = Handler(Looper.getMainLooper())
-    private val worker = Executors.newSingleThreadExecutor()
+    private val worker = ProjectIO.executor
+    private val saveQueue by lazy{ProjectSaveQueue(worker){doc,target->files.atomic(doc,target)}}
+    private var lastSaveTicket=0L
+    private var busyDialog:AlertDialog?=null
     private val recognition = Recognition()
     private val prefs by lazy { getSharedPreferences("vura", MODE_PRIVATE) }
     private var documentId = ""
@@ -59,7 +62,7 @@ class MainActivity : Activity() {
     private var dirty = false
     private var loading = false
     private var lastError = ""
-    private var destroyed = false
+    @Volatile private var destroyed = false
     private var voiceAssistant:VoiceConversation?=null
     private var googleSearch:GoogleSearchWindow?=null
     private var voiceScreen:VoiceScreen?=null
@@ -135,7 +138,7 @@ class MainActivity : Activity() {
             if(projectStore.page.items.any{it.asset==asset})whiteboard.sceneChanged()
             pdfPane?.mediaReady(asset)
         } } }
-        media.error = { message -> handler.post { status.text = s("error") + ": " + message } }
+        media.error = { message -> handler.post { if(!destroyed)status.text = s("error") + ": " + message } }
         whiteboard.onActivate={activateBoard(whiteboard)}
         board.onSelection = { refreshDock() }
         board.onObjectActions={editSelection()}
@@ -143,6 +146,7 @@ class MainActivity : Activity() {
         board.onSmart={processSmart(it)}
         bindBoardExtras(board)
         store.changed = {
+            if(whiteboard.activePane !in projectStore.page.visiblePaneIndices)whiteboard.applySharedPane(0)
             rooms?.localChange()
             dirty = true
             if(!whiteboard.isCommitting)whiteboard.sceneChanged() else whiteboard.invalidate()
@@ -207,8 +211,8 @@ class MainActivity : Activity() {
         val header=row().apply{pad(4)}
         header.addView(icon("menu",s("main_menu")){menu()}.apply{id=R.id.main_menu_button})
         header.addView(icon("files",s("files")){fileMenu()})
-        header.addView(icon("undo",s("undo")){store.undo();board.clearSelection()})
-        header.addView(icon("redo",s("redo")){store.redo();board.clearSelection()})
+        header.addView(icon("undo",s("undo")){board.undo()})
+        header.addView(icon("redo",s("redo")){board.redo()})
         header.addView(icon("share",s("share")){shareOptions()})
         val headerHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(header)}
         floating(headerHost,Gravity.BOTTOM or Gravity.RIGHT)
@@ -250,6 +254,18 @@ class MainActivity : Activity() {
         canvasHost.addView(voiceMuteButton,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),0,dp(12),dp(132))})
         roomBadge=icon("shared_room",s("shared_room")){sharedRoom()}.apply{visibility=View.GONE}
         surface(roomBadge);canvasHost.addView(roomBadge,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.TOP or Gravity.RIGHT).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
+        whiteboard.fitViewport={
+            val area=RectF(0f,0f,whiteboard.width.toFloat(),whiteboard.height.toFloat())
+            val origin=IntArray(2);whiteboard.getLocationInWindow(origin)
+            (chrome+listOf(focus,voiceButton,voiceMuteButton)).filter{it.visibility==View.VISIBLE&&it.width>0&&it.height>0}.forEach{v->
+                val at=IntArray(2);v.getLocationInWindow(at)
+                val r=RectF((at[0]-origin[0]).toFloat(),(at[1]-origin[1]).toFloat(),(at[0]-origin[0]+v.width).toFloat(),(at[1]-origin[1]+v.height).toFloat())
+                if(r.height()>whiteboard.height*.5f){
+                    if(r.centerX()<whiteboard.width/2f)area.left=maxOf(area.left,r.right+dp(12))else area.right=minOf(area.right,r.left-dp(12))
+                }else if(r.top>whiteboard.height*.55f)area.bottom=minOf(area.bottom,r.top-dp(12))
+            }
+            area
+        }
         prefs.registerOnSharedPreferenceChangeListener(voicePreferenceListener)
         canvasHost.addOnLayoutChangeListener{_,l,t,r,b,ol,ot,or,ob->if(r-l!=or-ol||b-t!=ob-ot){
             val narrow=r-l<dp(800)
@@ -292,7 +308,7 @@ class MainActivity : Activity() {
             dock.addView(icon(key,title,board.tool==key || key=="touch"&&board.touchMode){
                 when(key){
                     "layers"->layers();"split"->splitSettings();"text"->addText(false);"shape"->{pdfPane?.writingMode();shapes()};"smart"->{pdfPane?.writingMode();smart()}
-                    "touch"->{if(!board.isDrawing){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}}
+                    "touch"->{if(!board.hasActiveInteraction){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}}
                     "insert"->insert();"tools"->classroomTools()
                     else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="select")selectionSettings() else if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
                 }
@@ -397,11 +413,11 @@ class MainActivity : Activity() {
     }
     private fun switchPage(index:Int) {
         if(rooms?.active==true&&rooms?.frame?.role==RoomRoles.VIEW)return
-        if(index !in projectStore.lesson.pages.indices || board.isDrawing)return
+        if(index !in projectStore.lesson.pages.indices || board.hasActiveInteraction)return
         activateBoard(whiteboard);closeSidePanel();projectStore.lesson.current=index;whiteboard.clearSelection();whiteboard.reset();projectStore.changed()
     }
     private fun addPage() {
-        if(projectStore.lesson.pages.size>=200 || board.isDrawing)return
+        if(projectStore.lesson.pages.size>=200 || board.hasActiveInteraction)return
         activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,newBoardPage(projectStore.page));projectStore.lesson.current++}
         whiteboard.clearSelection();whiteboard.reset()
     }
@@ -573,7 +589,7 @@ class MainActivity : Activity() {
     private fun runShortcut(key:String){
         if(rooms?.active==true&&key in listOf("new","open","recent","language","ui_size")){toast(s("room_leave_first"));return}
         when(key){
-            "undo"->store.undo();"redo"->store.redo();"clear_page"->clearPageDialog()
+            "undo"->board.undo();"redo"->board.redo();"clear_page"->clearPageDialog()
             "pen","erase","select","pan"->{board.tool=key;board.clearSelection();refreshDock()}
             "shape"->shapes();"fill"->fillSettings()
             "color"->{val c=column().apply{pad(12)};val d=dialog(s("color"),c);val pane=store.page.panes[board.activePane];palette(c,if(store.page.visiblePaneCount>1)pane.color else board.inkColor){color->if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=color}else board.inkColor=color;savePens();d.dismiss()}}
@@ -615,28 +631,33 @@ class MainActivity : Activity() {
 
     private fun penSettings(){
         val c=column().apply{pad(16)};val body=column();var broad=false
-        fun tipStyle()=if(broad)board.profile.thickStyle else board.penStyle
+        fun panel()=store.page.panes.getOrNull(board.activePane)?.takeIf{store.page.visiblePaneCount>1}
+        fun penColor()=panel()?.color?:if(broad)board.profile.thickColor else board.penColor
+        fun penWidth()=panel()?.penWidth?:if(broad)board.profile.thickWidth else board.penWidth
+        fun dashLength()=panel()?.dashLength?:board.dashLength
+        fun dashGap()=panel()?.dashGap?:board.dashGap
+        fun tipStyle()=panel()?.penStyle?:if(broad)board.profile.thickStyle else board.penStyle
         val preview=object:View(this){override fun onDraw(canvas:Canvas){
-            val style=tipStyle();val color=if(broad)board.profile.thickColor else board.penColor;val width=if(broad)board.profile.thickWidth else board.penWidth
-            val o=Item(shape=style,color=color,width=width*resources.displayMetrics.density,alpha=board.penOpacity,dashLength=board.dashLength,dashGap=board.dashGap)
-            val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{this.color=color;strokeWidth=width*resources.displayMetrics.density*(if(style=="highlight")4f else if(style=="marker")1.8f else 1f);alpha=if(style=="highlight")75*board.penOpacity/255 else board.penOpacity;this.style=Paint.Style.STROKE;strokeCap=if(style in listOf("marker","highlight"))Paint.Cap.SQUARE else Paint.Cap.ROUND;if(style=="dashed")pathEffect=DashPathEffect(floatArrayOf(board.dashLength,board.dashGap),0f)}
+            val style=tipStyle();val color=penColor();val width=penWidth()
+            val o=Item(shape=style,color=color,width=width*resources.displayMetrics.density,alpha=board.penOpacity,dashLength=dashLength(),dashGap=dashGap())
+            val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{this.color=color;strokeWidth=width*resources.displayMetrics.density*(if(style=="highlight")4f else if(style=="marker")1.8f else 1f);alpha=if(style=="highlight")75*board.penOpacity/255 else board.penOpacity;this.style=Paint.Style.STROKE;strokeCap=if(style in listOf("marker","highlight"))Paint.Cap.SQUARE else Paint.Cap.ROUND;if(style=="dashed")pathEffect=DashPathEffect(floatArrayOf(dashLength(),dashGap()),0f)}
             PenStyles.apply(paint,o)
             val path=Path();path.moveTo(20f,height*.7f);path.cubicTo(this.width*.3f,0f,this.width*.55f,height.toFloat(),this.width-20f,height*.3f);canvas.drawPath(path,paint)
         }}.apply{background=rounded(PAPER,dp(10).toFloat())}
         c.addView(infoTitle(tr("Pen","قلم"),tr("Styles use fixed width and do not need pressure sensing. Set each tip independently.","حالت‌ها با عرض ثابت کار می‌کنند و به فشار قلم وابسته نیستند. هر سر قلم را جدا تنظیم کنید.")))
         c.addView(preview,LinearLayout.LayoutParams(-1,dp(44)))
         fun refresh(){
-            body.removeAllViews();palette(body,if(broad)board.profile.thickColor else board.penColor){if(broad)board.profile.thickColor=it else board.penColor=it;savePens();preview.invalidate()}
-            slider(body,tr("Thickness","ضخامت"),if(broad)board.profile.thickWidth else board.penWidth,80){if(broad)board.profile.thickWidth=it else board.penWidth=it;savePens();preview.invalidate()}
+            body.removeAllViews();palette(body,penColor()){color->val pane=panel();if(pane!=null)store.editMetadata{pane.color=color}else if(broad)board.profile.thickColor=color else board.penColor=color;savePens();preview.invalidate()}
+            slider(body,tr("Thickness","ضخامت"),penWidth(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.penWidth=value}else if(broad)board.profile.thickWidth=value else board.penWidth=value;savePens();preview.invalidate()}
             val styles=row();body.addView(scrollRow(styles))
-            PenStyles.selectable.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
+            PenStyles.selectable.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){val pane=panel();if(pane!=null)store.editMetadata{pane.penStyle=key}else if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
             slider(body,tr("Opacity","کدری"),board.penOpacity/255f*100,100){board.penOpacity=(it/100*255).toInt();savePens();preview.invalidate()}
             if(tipStyle()=="dashed"){
-                slider(body,tr("Dash length","طول خط‌چین"),board.dashLength,80){board.dashLength=it;savePens();preview.invalidate()}
-                slider(body,tr("Dash gap","فاصلهٔ خط‌چین"),board.dashGap,80){board.dashGap=it;savePens();preview.invalidate()}
+                slider(body,tr("Dash length","طول خط‌چین"),dashLength(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.dashLength=value}else board.dashLength=value;savePens();preview.invalidate()}
+                slider(body,tr("Dash gap","فاصلهٔ خط‌چین"),dashGap(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.dashGap=value}else board.dashGap=value;savePens();preview.invalidate()}
             }
         }
-        if(!board.touchMode)c.addView(row().apply{
+        if(!board.touchMode && panel()==null)c.addView(row().apply{
             addView(button(tr("Fine tip","سر باریک")){broad=false;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
             addView(button(tr("Broad tip","سر پهن")){broad=true;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
         })
@@ -880,7 +901,7 @@ class MainActivity : Activity() {
     }
 
     private fun <T> work(task: () -> T, done: (T) -> Unit) {
-        if (loading) return
+        if (loading || destroyed) return
         loading = true
         val progress =
             MaterialAlertDialogBuilder(this)
@@ -896,21 +917,22 @@ class MainActivity : Activity() {
                 )
                 .setCancelable(false)
                 .show()
+        busyDialog=progress
         worker.execute {
             try {
                 val result = task()
                 handler.post {
                     loading = false
                     if (!destroyed) {
-                        progress.dismiss()
-                        done(result)
+                        progress.dismiss();busyDialog=null
+                        try{done(result)}catch(e:Exception){error(e)}
                     }
                 }
             } catch (e: Exception) {
                 handler.post {
                     loading = false
                     if (!destroyed) {
-                        progress.dismiss()
+                        progress.dismiss();busyDialog=null
                         error(e)
                     }
                 }
@@ -922,22 +944,15 @@ class MainActivity : Activity() {
 
     private fun persist() {
         if(!dirty || destroyed)return
-        if(board.isDrawing){handler.postDelayed(autosave,1000);return}
-        dirty = false
-        val doc = projectStore.lesson.copyForSave()
-        val target = lessonFile()
-        worker.execute {
-            try {
-                files.atomic(doc, target)
-                handler.post { if (!dirty && !destroyed) status.text = s("saved") }
-            } catch (e: Exception) {
-                handler.post {
-                    dirty = true
-                    if (!destroyed) {
-                        lastError = e.message ?: ""
-                        status.text = s("save_error")
-                        toast(s("save_error"))
-                    }
+        if(whiteboard.hasActiveInteraction || board.hasActiveInteraction){handler.removeCallbacks(autosave);handler.postDelayed(autosave,1000);return}
+        val doc=projectStore.lesson.copyForSave()
+        val id=documentId
+        dirty=false
+        lastSaveTicket=saveQueue.submit(doc,lessonFile()){ticket,failure->
+            if(!destroyed)handler.post{
+                if(!destroyed && id==documentId && ticket==lastSaveTicket){
+                    if(failure==null){if(!dirty)status.text=s("saved")}
+                    else{dirty=true;lastError=failure.message.orEmpty();status.text=s("save_error");toast(s("save_error"))}
                 }
             }
         }
@@ -1406,7 +1421,7 @@ class MainActivity : Activity() {
     }
     private fun savePdf(overwrite:Boolean,then:(()->Unit)?=null){
         val live=projectStore.lesson.pdf?:return
-        if(board.isDrawing)return
+        if(board.hasActiveInteraction)return
         if(overwrite && live.sourceUri.isBlank()){
             MaterialAlertDialogBuilder(this).setTitle(tr("Original file is unavailable","فایل اصلی در دسترس نیست"))
                 .setMessage(tr("This project was imported or its original file permission is unavailable. Save a new PDF.","این پروژه وارد شده یا دسترسی به فایل اصلی موجود نیست. یک PDF جدید ذخیره کنید."))
@@ -1824,8 +1839,8 @@ class MainActivity : Activity() {
 
     private fun inputSettings(){
         val c=column().apply{pad(16)}
-        c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();dockSignature="";refreshDock()}}})
-        c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.isDrawing){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
+        c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();dockSignature="";refreshDock()}}})
+        c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
         c.addView(infoTitle(tr("History gesture","ژست تاریخچه"),tr("Double tap with two nearby fingers for Undo. Hold the second tap and slide left/right to browse Undo and Redo; release to keep that point.","دو بار با دو انگشت نزدیک به هم ضربه بزنید. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را مرور کنید؛ با برداشتن دست، همان مرحله حفظ می‌شود.")))
         c.addView(Switch(this).apply{text=tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی");isChecked=prefs.getBoolean("twoFingerUndo",true);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()}})
         dialog(s("input_controls"),c)
@@ -1901,7 +1916,7 @@ class MainActivity : Activity() {
         val dialog=dialog(s("fonts"),ScrollView(this).apply{addView(content)})
         refreshPreview()
         content.addView(button(s("apply"),true){
-            if(board.isDrawing)return@button
+            if(board.hasActiveInteraction)return@button
             Fonts.choose(this,fa,en)
             if(existing.isChecked){
                 val items=store.page.items.filter{it.kind in listOf("text","sticky") && !it.locked && store.page.editable(it)}
@@ -1962,7 +1977,7 @@ class MainActivity : Activity() {
                     dialog(s("report"), ScrollView(this).apply { addView(text) })
                 }
                 "stress" -> {
-                    if(board.isDrawing)return@choices
+                    if(board.hasActiveInteraction)return@choices
                     confirm(tr("Add 300 test strokes? Undo removes them.","۳۰۰ خط آزمایشی اضافه شود؟ با بازگردانی حذف می‌شوند.")) {
                     store.editMetadata {
                         repeat(300) { n ->
@@ -1994,7 +2009,7 @@ class MainActivity : Activity() {
     }
 
     private fun advancedBoard(){
-        if(board.isDrawing){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return}
+        if(board.hasActiveInteraction){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return}
         val c=column().apply{pad(20)}
         c.addView(label(tr("Behind the board","پشت پردهٔ تخته"),22f,NAVY,true))
         fun toggle(en:String,fa:String,initial:Boolean,change:(Boolean)->Unit){
@@ -2034,12 +2049,12 @@ class MainActivity : Activity() {
         val d=dialog(tr("The secret studio","آتلیهٔ مخفی"),ScrollView(this).apply{addView(c)})
         listOf("mona-vura" to tr("Mona × Vura · Renaissance remix","مونا × ویورا · برداشت رنسانسی"),"aurora" to tr("Aurora · anime portrait","آرورا · پرترهٔ انیمه")).forEach{(key,title)->
             c.addView(button(title){
-                if(board.isDrawing){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return@button}
+                if(board.hasActiveInteraction){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return@button}
                 try{val artwork=Artwork.load(this,key);d.dismiss();artPlayer?.stop();artPlayer=ArtPlayer(this,board,store,artwork).also{it.start()}}catch(e:Exception){error(e)}
             })
         }
         c.addView(button(tr("A tiny surprise: constellation","سورپرایز کوچک: صورت فلکی")){
-            if(board.isDrawing)return@button
+            if(board.hasActiveInteraction)return@button
             d.dismiss();val page=Page(background="plain",panes=mutableListOf(Pane(background=0xff152538.toInt())))
             val points=listOf(90f to 220f,210f to 140f,325f to 235f,425f to 150f,510f to 265f,410f to 360f,250f to 380f)
             store.editMetadata{
@@ -2121,7 +2136,7 @@ class MainActivity : Activity() {
         roomUi?.pause();rooms?.pauseDrawing()
         stopVoice()
         historyHud(-1,0)
-        if(::board.isInitialized)board.measurements.clear()
+        if(::board.isInitialized){board.abortPendingGesture();board.measurements.clear()}
         pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null
         if(::board.isInitialized)board.gestures.reset()
         googleSearch?.close();googleSearch=null
@@ -2173,7 +2188,7 @@ class MainActivity : Activity() {
                     voiceAssistant=assistant
                     assistant.setMuted(voiceMuted)
                     voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},
-                        {board.isDrawing || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
+                        {board.hasActiveInteraction || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
                     assistant.start();voiceScreen?.start()
                 }
             }catch(_:Exception){handler.post{if(!destroyed && voiceStarting && generation==voiceStartGeneration){voiceStarting=false;setVoiceState("voice_assistant");toast(s("voice_key_storage_error"))}}}
@@ -2209,6 +2224,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         rooms?.endHostAndFlush();persist();roomUi?.close();rooms?.close()
         destroyed = true
+        busyDialog?.dismiss();busyDialog=null
         menuDialogs.mapNotNull{it.get()}.forEach{it.dismiss()};menuDialogs.clear()
         prefs.unregisterOnSharedPreferenceChangeListener(voicePreferenceListener)
         googleSearch?.close();googleSearch=null
@@ -2219,9 +2235,8 @@ class MainActivity : Activity() {
         handler.removeCallbacksAndMessages(null)
         sharing?.stop()
         shareDialog?.dismiss()
-        worker.shutdown()
         pdfPane?.dispose()
-        media.close()
+        worker.execute{media.close()}
         super.onDestroy()
     }
 }

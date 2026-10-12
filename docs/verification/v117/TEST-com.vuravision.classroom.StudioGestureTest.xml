@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.StudioGestureTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:32" hostname="033dd159fe3b" time="0.357">
+  <properties/>
+  <testcase name="canceledCompassMoveRestoresPositionAndRedo" classname="com.vuravision.classroom.StudioGestureTest" time="0.021"/>
+  <testcase name="compassTurnDrawsOneArcAndUndoRestoresGuide" classname="com.vuravision.classroom.StudioGestureTest" time="0.028"/>
+  <testcase name="smoothPenFollowsWithLagAndFinishesAtTheTipWithoutPressure" classname="com.vuravision.classroom.StudioGestureTest" time="0.024"/>
+  <testcase name="compassStartHandleRotatesWithoutCreatingInk" classname="com.vuravision.classroom.StudioGestureTest" time="0.016"/>
+  <testcase name="bucketNeverPaintsPageOpenShapeLockedLayerOrCoveredObject" classname="com.vuravision.classroom.StudioGestureTest" time="0.017"/>
+  <testcase name="secondPairHoldBrowsesMultipleStepsAndReleaseKeepsChosenHistory" classname="com.vuravision.classroom.StudioGestureTest" time="0.03"/>
+  <testcase name="highlighterOpacityAffectsFixedWidthStroke" classname="com.vuravision.classroom.StudioGestureTest" time="0.019"/>
+  <testcase name="fiveFingerMenuIsOffByDefaultAndNeedsTwoQuickFiveFingerTaps" classname="com.vuravision.classroom.StudioGestureTest" time="0.034"/>
+  <testcase name="rotatedCompassKeepsStartHandleUnderTheFingerAndDrawsFromThere" classname="com.vuravision.classroom.StudioGestureTest" time="0.022"/>
+  <testcase name="pdfScrollContainerAllowsStationaryDoubleTapUndo" classname="com.vuravision.classroom.StudioGestureTest" time="0.096"/>
+  <testcase name="onlyTwoStationaryPairTapsUndoAndFirstTapPreservesRedo" classname="com.vuravision.classroom.StudioGestureTest" time="0.028"/>
+  <testcase name="movingPairAndPalmCannotUndo" classname="com.vuravision.classroom.StudioGestureTest" time="0.021"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

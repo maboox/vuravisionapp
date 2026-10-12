@@ -16,7 +16,7 @@ data class PdfWorkspaceState(
     fun copyForSave(): PdfWorkspaceState = copy(sheets=sheets.map{it.copy(page=Lesson(pages=mutableListOf(it.page)).copyForSave().pages.first())}.toMutableList())
     fun deepCopy(): PdfWorkspaceState = copy(sheets=sheets.map{it.deepCopy()}.toMutableList())
     fun validate() {
-        require(asset.matches(Regex("[a-zA-Z0-9._-]+")))
+        require(AssetNames.valid(asset))
         require(title.length<=1000 && sourceUri.length<=10000)
         require(sheets.size in 1..1000 && current in sheets.indices)
         require(ratio.isFinite() && ratio in .2f.. .8f && zoom.isFinite() && zoom in 1f..3f && scroll>=0)

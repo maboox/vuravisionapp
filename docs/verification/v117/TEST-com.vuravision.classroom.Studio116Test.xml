@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.vuravision.classroom.Studio116Test" tests="34" skipped="0" failures="0" errors="0" timestamp="2026-10-12T10:15:28" hostname="033dd159fe3b" time="2.939">
+  <properties/>
+  <testcase name="playerNameChangesAreLocalPersistentAndUsedByResults" classname="com.vuravision.classroom.Studio116Test" time="0.261"/>
+  <testcase name="coincidentSegmentsAreNotReportedAsHundredsOfIntersections" classname="com.vuravision.classroom.Studio116Test" time="0.039"/>
+  <testcase name="panelBackgroundRenderingUsesItsOwnPattern" classname="com.vuravision.classroom.Studio116Test" time="0.071"/>
+  <testcase name="returningToSoloRestoresTheOriginalInsteadOfMerging" classname="com.vuravision.classroom.Studio116Test" time="0.038"/>
+  <testcase name="graphAndFixedStyleGuidesHaveNoColorOrSmartActions" classname="com.vuravision.classroom.Studio116Test" time="0.361"/>
+  <testcase name="connectedPointSegmentsFindTheirCrossingWithoutExtraVertices" classname="com.vuravision.classroom.Studio116Test" time="0.017"/>
+  <testcase name="pointSegmentsIntersectFunctionsAndDoNotReportAsymptotes" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="compassDrawingCommitsItsAngleLabelWithTheArc" classname="com.vuravision.classroom.Studio116Test" time="0.033"/>
+  <testcase name="dormantImageAssetsArePackedWithTheLesson" classname="com.vuravision.classroom.Studio116Test" time="0.023"/>
+  <testcase name="fiftyHistoryStepsAreDefaultAndTheConfiguredLimitIsApplied" classname="com.vuravision.classroom.Studio116Test" time="0.019"/>
+  <testcase name="slopeAndGuideNumbersScaleWithToolSize" classname="com.vuravision.classroom.Studio116Test" time="0.018"/>
+  <testcase name="mindMapHasOnlyNamedBranchActionsAndNoSmartConversions" classname="com.vuravision.classroom.Studio116Test" time="0.263"/>
+  <testcase name="serializationAndSnapshotsKeepBothCanvasesIndependent" classname="com.vuravision.classroom.Studio116Test" time="0.019"/>
+  <testcase name="pieCatalogIncludesClearPageAndItsCommandUsesTheSlider" classname="com.vuravision.classroom.Studio116Test" time="0.179"/>
+  <testcase name="slideRequiresFullDragAndReleaseAndCancelDoesNothing" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="rulerRotationHandleRotatesWithoutDrawing" classname="com.vuravision.classroom.Studio116Test" time="0.018"/>
+  <testcase name="uiScaleChangesTheActualDrawableSize" classname="com.vuravision.classroom.Studio116Test" time="0.021"/>
+  <testcase name="constructionAndItsLabelUsePanelPenAndUndoTogether" classname="com.vuravision.classroom.Studio116Test" time="0.188"/>
+  <testcase name="snappedGuideMeasurementIsPersistentAndSharesUndo" classname="com.vuravision.classroom.Studio116Test" time="0.023"/>
+  <testcase name="connectedGraphAndIntersectionMarksSurviveSaving" classname="com.vuravision.classroom.Studio116Test" time="0.017"/>
+  <testcase name="changingAPanelPatternLeavesOtherPanelsUntouched" classname="com.vuravision.classroom.Studio116Test" time="0.205"/>
+  <testcase name="oldSplitDocumentsRecoverOnlyTheirFirstPanel" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="dormantInvalidObjectsAreValidatedToo" classname="com.vuravision.classroom.Studio116Test" time="0.017"/>
+  <testcase name="cornerStartChoosesTheEdgeFromItsFirstMovement" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="compassAndProtractorHandlesUseTheirOwnPanelPen" classname="com.vuravision.classroom.Studio116Test" time="0.027"/>
+  <testcase name="permanentLabelsRemainValidAtExtremeZoom" classname="com.vuravision.classroom.Studio116Test" time="0.036"/>
+  <testcase name="returningToSoloMakesGuideDrawingUseTheCurrentPen" classname="com.vuravision.classroom.Studio116Test" time="0.022"/>
+  <testcase name="triangleStrokeKeepsItsFirstEdgeAtACorner" classname="com.vuravision.classroom.Studio116Test" time="0.017"/>
+  <testcase name="periodicTableCanInsertACompleteBitmap" classname="com.vuravision.classroom.Studio116Test" time="0.363"/>
+  <testcase name="reducingPanelCountHidesAndRetainsTheOtherPanels" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="exportUsesFourVerticalPanels" classname="com.vuravision.classroom.Studio116Test" time="0.018"/>
+  <testcase name="pageActionsAreDirectAndDuplicatePreservesTheDormantCanvas" classname="com.vuravision.classroom.Studio116Test" time="0.242"/>
+  <testcase name="splitSwitchAndBothWorkspacesSurviveUndoRedo" classname="com.vuravision.classroom.Studio116Test" time="0.02"/>
+  <testcase name="clearSliderClearsOnlyTheActivePanelAndKeepsLocks" classname="com.vuravision.classroom.Studio116Test" time="0.261"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+Invalid ID 0x00000000.
+]]></system-err>
+</testsuite>

@@ -3,6 +3,7 @@ package com.vuravision.classroom
 import android.graphics.*
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import com.tom_roush.pdfbox.util.Matrix as PdfMatrix
@@ -19,7 +20,8 @@ object PdfExport {
     fun write(media:Media,state:PdfWorkspaceState,target:File){
         state.validate()
         PDFBoxResourceLoader.init(media.context.applicationContext)
-        PDDocument.load(media.file(state.asset)).use { doc ->
+        fun memory()=MemoryUsageSetting.setupMixed(32L*1024*1024).setTempDir(media.context.cacheDir)
+        PDDocument.load(media.file(state.asset),memory()).use { doc ->
             require(doc.numberOfPages==state.sheets.size){"PDF page count changed"}
             val renderer=Renderer(media)
             state.sheets.forEachIndexed { index,sheet ->
@@ -47,7 +49,7 @@ object PdfExport {
             target.parentFile?.mkdirs();doc.save(target)
         }
         require(target.length()>0){"Empty PDF export"}
-        PDDocument.load(target).use{require(it.numberOfPages==state.sheets.size){"Incomplete PDF export"}}
+        PDDocument.load(target,memory()).use{require(it.numberOfPages==state.sheets.size){"Incomplete PDF export"}}
     }
     /** Undo the display rotation, with the crop origin retained. */
     fun placement(rotation:Int,w:Float,h:Float,x:Float,y:Float):PdfMatrix = when((rotation%360+360)%360){

@@ -39,6 +39,10 @@ class Renderer(private val media: Media) {
 
     private val functions = object : android.util.LruCache<String, (Double) -> Double>(32) {}
 
+    private data class CurveKey(val expression:String,val width:Float,val height:Float,val domain:Float)
+    private val curves=object:android.util.LruCache<CurveKey,Path>(64){}
+    var curveBuilds=0;private set
+
     companion object {
         fun backgroundStep(pixelsPerUnit:Float):Float{
             var step=32f
@@ -191,21 +195,25 @@ class Renderer(private val media: Media) {
         o.text.split(';').take(3).forEachIndexed { index, s ->
             try {
                 val f = functions.get(s) ?: MathTools().compile(s).also { functions.put(s, it) }
-                val path = Path()
-                var last = Float.NaN
-                for (i in 0..600) {
-                    val px = o.w * i / 600
-                    val y =
-                        try {
-                            o.h / 2 - f(((px - o.w / 2) / sx).toDouble()).toFloat() * sy
-                        } catch (_: ArithmeticException) {
-                            Float.NaN
-                        }
-                    if (y.isFinite() && y in -o.h..o.h * 2) {
-                        if (last.isFinite() && abs(last - y) < o.h) path.lineTo(px, y)
-                        else path.moveTo(px, y)
-                        last = y
-                    } else last = Float.NaN
+                val curveKey=CurveKey(s,o.w,o.h,o.domain)
+                val path=curves.get(curveKey)?:run{
+                    val path = Path()
+                    var last = Float.NaN
+                    for (i in 0..600) {
+                        val px = o.w * i / 600
+                        val y =
+                            try {
+                                o.h / 2 - f(((px - o.w / 2) / sx).toDouble()).toFloat() * sy
+                            } catch (_: ArithmeticException) {
+                                Float.NaN
+                            }
+                        if (y.isFinite() && y in -o.h..o.h * 2) {
+                            if (last.isFinite() && abs(last - y) < o.h) path.lineTo(px, y)
+                            else path.moveTo(px, y)
+                            last = y
+                        } else last = Float.NaN
+                    }
+                    curveBuilds++;curves.put(curveKey,path);path
                 }
                 p.color = colors[index]
                 p.strokeWidth = 2.5f
@@ -232,7 +240,8 @@ class Renderer(private val media: Media) {
     fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null,exclude:Set<String> = emptySet()) {
         val visibleLayers=page.layers.filter { it.visible && it.opacity>0f }
         // Draw all branches first: a parent may occur before its child in item order.
-        val nodes=page.visibleItems().filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
+        val grouped=page.items.filter{it.pane in page.visiblePaneIndices && (pane==null||it.pane==pane)}.groupBy{it.layerId}
+        val nodes=visibleLayers.flatMap{grouped[it.id].orEmpty()}.filter{it.kind=="sticky"&&it.shape=="mindnode"}.associateBy{it.id}
         if(nodes.isNotEmpty()){
             val layerOpacity=visibleLayers.associate{it.id to it.opacity}
             nodes.values.forEach{child->
@@ -252,7 +261,8 @@ class Renderer(private val media: Media) {
         }
         visibleLayers.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
-            page.items.filter { it.pane in page.visiblePaneIndices && it.layerId==layer.id && (pane==null||it.pane==pane) && it.id !in exclude }.forEach { o ->
+            grouped[layer.id].orEmpty().forEach { o ->
+                if(o.id in exclude)return@forEach
                 if(region==null || RectF.intersects(itemBounds(o).apply { inset(-o.width*3f,-o.width*3f) },region))draw(c,o,sync)
             }
             c.restoreToCount(save)
