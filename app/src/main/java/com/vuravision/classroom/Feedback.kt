@@ -71,8 +71,11 @@ class GameFx {
     private val colors=listOf(0xfff8a529.toInt(),0xff0f716f.toInt(),0xff2563eb.toInt(),0xffdc2626.toInt(),0xff7c3aed.toInt(),0xff16a34a.toInt())
     private fun now()=SystemClock.uptimeMillis()
     /** A round ended: [winner] is 0 or 1, or -1 for a draw. */
+    private var popAt=0L
+    /** 1 right after a point, easing back to 0 over 450 ms. */
+    fun pop():Float{val e=now()-popAt;return if(popAt==0L||e>450)0f else (1f-e/450f).let{it*it}}
     fun round(winner:Int,panels:List<RectF>,match:Boolean){
-        val t=now()
+        val t=now();if(winner in 0..1)popAt=t
         if(winner in 0..1){flashAt[winner]=t;shakeAt[1-winner]=t}
         if(match&&winner in 0..1){confettiAt=t;burst(panels[winner],90)}
     }
@@ -99,5 +102,5 @@ class GameFx {
         pieces.removeAll{it.y>height+40}
     }
     /** True while anything is still moving, so the view keeps drawing frames. */
-    val busy get()=pieces.isNotEmpty()||(0..1).any{(flashAt[it]!=0L&&now()-flashAt[it]<600)||(shakeAt[it]!=0L&&now()-shakeAt[it]<350)}
+    val busy get()=pieces.isNotEmpty()||(popAt!=0L&&now()-popAt<450)||(0..1).any{(flashAt[it]!=0L&&now()-flashAt[it]<600)||(shakeAt[it]!=0L&&now()-shakeAt[it]<350)}
 }

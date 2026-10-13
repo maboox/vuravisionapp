@@ -146,7 +146,8 @@ class ArcadeView(context:Context,val key:String):View(context){
    if(key=="pong"){val dt=((now-last)/1000.0).coerceIn(0.0,.05);ballX+=ballVX*dt;ballY+=ballVY*dt;if(ballY<.03||ballY>.97){ballY=ballY.coerceIn(.03,.97);ballVY=-ballVY};if(ballX<.065&&ballVX<0&&abs(ballY-paddles[0])<.14){ballVX=abs(ballVX)*1.04;ballX=.065};if(ballX>.935&&ballVX>0&&abs(ballY-paddles[1])<.14){ballVX=-abs(ballVX)*1.04;ballX=.935};if(ballX<0)finish(1);if(ballX>1)finish(0)}
   }
   last=now
-  text(c,"${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round",width/2f,42f,28f)
+  // The score swells for a moment when it changes, so everyone notices the point.
+  val pop=fx.pop();text(c,"${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round",width/2f,42f+pop*6f,28f*(1f+pop*.45f))
   if(key in setOf("ttt","c4")){drawBoard(c);fx.confetti(c,height);if(fx.busy&&isAttachedToWindow)postInvalidateOnAnimation();return}
   if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);fx.confetti(c,height);if((active&&!clock.paused||fx.busy)&&isShown)postInvalidateOnAnimation();return}
   panels().forEachIndexed{player,r->c.save();c.clipRect(r);c.translate(fx.shake(player),0f);rect(c,r,if(player==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());
