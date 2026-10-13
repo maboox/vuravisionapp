@@ -304,6 +304,20 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
 
+    /** A Persian lab, mid-growth and finished, plus the galleries at panel width: for reviewing texts and layout by eye. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun persianLabAndGalleries(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a)
+            for(key in listOf("native_galton","native_pendulum","native_bayes")){
+                Labs.open(a,key){it.recycle()};idle(1500)
+                val d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"lab-${key.removePrefix("native_")}-fa");d.dismiss()
+            }
+            Labs.show(a,{it.recycle()},{},null);var d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"labs-gallery-fa");d.dismiss()
+            Games.show(a);d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"games-gallery-fa");d.dismiss()
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panel1080Persian()=run("fa","panel")
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun panel1080English()=run("en","panel")
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panelLargeUi()=run("fa","panel-large",1.4f)
