@@ -1836,7 +1836,7 @@ class MainActivity : Activity() {
 
     private fun inputSettings(){
         val c=column().apply{pad(16)}
-        c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();dockSignature="";refreshDock()}}})
+        c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();refreshDock()}}})
         c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
         c.addView(infoTitle(tr("History gesture","ژست تاریخچه"),tr("Double tap with two nearby fingers for Undo. Hold the second tap and slide left/right to browse Undo and Redo; release to keep that point.","دو بار با دو انگشت نزدیک به هم ضربه بزنید. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را مرور کنید؛ با برداشتن دست، همان مرحله حفظ می‌شود.")))
         c.addView(Switch(this).apply{text=tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی");isChecked=prefs.getBoolean("twoFingerUndo",true);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()}})
