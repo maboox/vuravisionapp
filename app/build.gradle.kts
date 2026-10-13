@@ -57,6 +57,17 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
         showCauses = true
         showStackTraces = true
     }
+    // A hung test must fail the build quickly and name itself, instead of running into the job timeout.
+    timeout.set(java.time.Duration.ofMinutes(20))
+    addTestListener(object : org.gradle.api.tasks.testing.TestListener {
+        override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) {}
+        override fun afterSuite(suite: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {}
+        override fun beforeTest(test: org.gradle.api.tasks.testing.TestDescriptor) { println("START ${test.className}.${test.name}") }
+        override fun afterTest(test: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {
+            val ms = result.endTime - result.startTime
+            if (ms > 20_000) println("SLOW TEST ${test.className}.${test.name}: ${ms / 1000}s")
+        }
+    })
 }
 
 // Customer releases must never silently use the development certificate.
