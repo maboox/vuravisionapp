@@ -20,8 +20,8 @@ class PatternPreview(context:Context,private val renderer:Renderer,val key:Strin
     override fun onDraw(c:Canvas){
         val r=context.dp(12).toFloat();clip.reset();clip.addRoundRect(RectF(0f,0f,width.toFloat(),height.toFloat()),r,r,Path.Direction.CW)
         c.save();c.clipPath(clip)
-        // About a third of a board's width, so the pattern looks as dense as it will on the panel.
-        val units=480f;val s=width/units;c.scale(s,s)
+        // One board unit per dp, as on the board at 100%: lines as crisp and as dense as the teacher will see them.
+        val s=context.resources.displayMetrics.density;val units=width/s;c.scale(s,s)
         val page=Page(background=key,panes=mutableListOf(Pane(background=color(),pattern=key)))
         renderer.background(c,page,RectF(0f,0f,units,height/s),color())
         c.restore()
