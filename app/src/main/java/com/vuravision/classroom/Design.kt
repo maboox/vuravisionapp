@@ -29,6 +29,9 @@ val OUTLINE = 0xffe4e2ef.toInt()
 val OUTLINE_STRONG = 0xffb9b4cf.toInt()
 val DANGER = 0xffb3261e.toInt()
 val SUCCESS = 0xff287d58.toInt()
+// Board colors (content, not chrome): the classic green chalkboard and a dark slate board.
+val CHALKBOARD = 0xff20392f.toInt()
+val DARK_BOARD = 0xff172a36.toInt()
 
 fun Context.s(key: String): String {
     val name = if (key == "new") "new_lesson" else key

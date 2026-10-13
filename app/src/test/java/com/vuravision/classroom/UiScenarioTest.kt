@@ -253,6 +253,22 @@ class UiScenarioTest {
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun settingsPanelEnglish()=settingsScenario("panel","en")
     @Test @Config(qualifiers="fa-w411dp-h891dp-port-xhdpi") fun settingsPhonePersian()=settingsScenario("phone","fa")
 
+    /** Board style: an empty page turns green with white chalk; a page with content keeps its color (its ink would vanish). */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun chalkboardStyleOnlyRecolorsAnEmptyPage(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);val apply=MainActivity::class.java.getDeclaredMethod("applyBoardStyle",String::class.java).apply{isAccessible=true}
+            views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="pen"}.performClick();settle(a)
+            apply.invoke(a,"chalk");settle(a)
+            assertEquals(CHALKBOARD,a.store.page.panes[0].background);assertEquals(0xfff4f4f0.toInt(),a.board.penColor)
+            shot(a,"chalkboard-style")
+            a.store.editMetadata{a.store.page.items.add(Item(kind="text",text="x",x=10f,y=10f,w=50f,h=30f))}
+            apply.invoke(a,"white");settle(a)
+            assertEquals("a page with content changed color",CHALKBOARD,a.store.page.panes[0].background)
+            assertEquals(NAVY,a.board.penColor)
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panel1080Persian()=run("fa","panel")
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun panel1080English()=run("en","panel")
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panelLargeUi()=run("fa","panel-large",1.4f)

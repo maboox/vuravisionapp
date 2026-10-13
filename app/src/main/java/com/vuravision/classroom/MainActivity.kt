@@ -863,8 +863,12 @@ class MainActivity : Activity() {
                 actions.addView(icon("up",tr("Move up","بالاتر")){val i=store.page.layers.indexOf(layer);if(i<store.page.layers.lastIndex){store.editMetadata{java.util.Collections.swap(store.page.layers,i,i+1)};refresh()}})
                 actions.addView(icon("down",tr("Move down","پایین‌تر")){val i=store.page.layers.indexOf(layer);if(i>0){store.editMetadata{java.util.Collections.swap(store.page.layers,i,i-1)};refresh()}})
                 actions.addView(icon("delete",tr("Delete layer","حذف لایه")){
-                    if(store.page.layers.size>1 && !isPdfBaseLayer)confirm(tr("Delete layer and its contents?","لایه و محتوایش حذف شود؟")){
+                    // No question first: it is deleted at once and the bar below offers Undo (rule 48: undo beats a confirmation step).
+                    if(store.page.layers.size>1 && !isPdfBaseLayer){
+                        val target=store
                         store.editMetadata{store.page.items.removeAll{it.layerId==layer.id};store.page.layers.remove(layer);if(store.page.activeLayerId==layer.id)store.page.activeLayerId=store.page.layers.last().id};board.clearSelection();refresh()
+                        com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Layer deleted","لایه حذف شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .setAction(tr("Undo","بازگردانی")){if(board.store===target){board.undo();refresh()}}.show()
                     }
                 }.apply{isEnabled=store.page.layers.size>1 && !isPdfBaseLayer;alpha=if(isEnabled)1f else .3f})
                 val opacity=label(tr("Opacity","میزان کدری")+" ${(layer.opacity*100).toInt()}%",13f,MUTED);card.addView(opacity)
@@ -2017,6 +2021,20 @@ class MainActivity : Activity() {
     }
 
 
+    /**
+     * Board style: page color for new pages plus a first pen that reads on it (white chalk on green or dark boards).
+     * The current page changes too, but only while it is empty: existing navy ink would vanish on a dark board.
+     */
+    private fun applyBoardStyle(style:String){
+        val background=when(style){"chalk"->CHALKBOARD;"dark"->DARK_BOARD;else->Color.WHITE}
+        val ink=if(style=="white")NAVY else 0xfff4f4f0.toInt();val second=if(style=="white")0xffdc2626.toInt() else 0xfffff176.toInt()
+        prefs.edit().putInt("defaultBackground",background).putInt("dockPen0Color",ink).putInt("dockPen1Color",second).apply()
+        if(store.page.visiblePaneCount==1&&board.tool=="pen"&&prefs.getInt("dockPen",0)<2){board.penColor=if(prefs.getInt("dockPen",0)==0)ink else second;savePens()}
+        val page=store.page
+        if(board===whiteboard&&page.items.none{it.pane in page.visiblePaneIndices})store.editMetadata{page.visiblePaneIndices.forEach{page.panes[it].background=background}}
+        else toast(tr("Applies to new pages; this page already has content","برای صفحه‌های جدید اعمال می‌شود؛ این صفحه محتوا دارد"))
+        board.sceneChanged();refreshDock()
+    }
     private var settingsScreen:SettingsScreen?=null
     private fun settings()=settingsAt(prefs.getString("settingsTab",null))
     /**
@@ -2049,6 +2067,8 @@ class MainActivity : Activity() {
                 page(s("calibration"),{tr("Pen tips, palm and real centimetres","سر قلم، کف دست و سانتی‌متر واقعی")}){calibrationSettings()},
             )),
             SettingsCategory("board",tr("Board","تخته"),"background",listOf(
+                SettingRow.Choice(tr("Board style","سبک تخته"),listOf("white" to tr("Whiteboard","وایت‌برد"),"chalk" to tr("Chalkboard","تخته‌سبز"),"dark" to tr("Dark","تیره")),
+                    {when(prefs.getInt("defaultBackground",Color.WHITE)){CHALKBOARD->"chalk";DARK_BOARD->"dark";else->"white"}}){applyBoardStyle(it)},
                 page(s("page_background"),{tr("For new pages","برای صفحه‌های جدید")}){defaultBackgroundSettings()},
                 page(s("history_settings"),{tr("${HistorySettings.load(this)} steps","${HistorySettings.load(this)} مرحله")}){historySettings()},
             )),

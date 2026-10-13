@@ -16,6 +16,20 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         return MaterialAlertDialogBuilder(activity).setCustomTitle(activity.navigationHeading(title,back?.let{action->{shown?.dismiss();action()}}))
             .setView(ScrollView(activity).apply{addView(body)}).setNegativeButton(activity.s("close"),null).setOnCancelListener{d->d.dismiss();back?.invoke()}.show().also{shown=it;Fonts.onShown(it)}
     }
+    /** A filterable list: OpenRouter alone lists hundreds of models. */
+    private fun pickModel(ids:List<String>,pick:(String)->Unit){
+        val box=activity.column().apply{setPadding(activity.dp(16),activity.dp(8),activity.dp(16),0)}
+        val filter=activity.field("").apply{hint=tr("Filter, e.g. audio, gemini, gpt-4o","فیلتر، مثلاً audio یا gemini");setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
+        val list=ListView(activity);val adapter=ArrayAdapter(activity,android.R.layout.simple_list_item_1,ids.toMutableList())
+        list.adapter=adapter;box.addView(filter);box.addView(list,LinearLayout.LayoutParams(-1,activity.dp(360)))
+        var dialog:Dialog?=null
+        list.setOnItemClickListener{_,_,i,_->adapter.getItem(i)?.let(pick);dialog?.dismiss()}
+        filter.addTextChangedListener(object:android.text.TextWatcher{
+            override fun beforeTextChanged(s:CharSequence?,a:Int,b:Int,c:Int){};override fun onTextChanged(s:CharSequence?,a:Int,b:Int,c:Int){}
+            override fun afterTextChanged(e:android.text.Editable?){val q=e?.toString().orEmpty().trim();adapter.clear();adapter.addAll(ids.filter{it.contains(q,true)})}
+        })
+        dialog=MaterialAlertDialogBuilder(activity).setTitle(tr("Models of this service","مدل‌های این سرویس")).setView(box).setNegativeButton(activity.s("cancel"),null).show().also{Fonts.onShown(it)}
+    }
     fun connection(keys:VoiceKeyStore,worker:Executor,changed:()->Unit)=connectionImpl({keys},worker,changed)
     fun connection(keys:VoiceKeys,worker:Executor,changed:()->Unit)=connectionImpl(keys::forProvider,worker,changed)
     private fun connectionImpl(keys:(String)->VoiceKeyStore,worker:Executor,changed:()->Unit){
@@ -45,6 +59,8 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         content.addView(activity.label(tr("Conversation model ID","شناسهٔ مدل مکالمه"),14f,NAVY,true))
         val model=activity.field("").apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR;layoutDirection=View.LAYOUT_DIRECTION_LTR};content.addView(model)
         val presets=activity.row();content.addView(activity.scrollRow(presets))
+        // Model IDs change often; typing them from memory is error-prone, so the service's own list is one tap away.
+        val listModels=activity.button(tr("Choose from the service's list","انتخاب از فهرست مدل‌های سرویس")){};content.addView(listModels)
         content.addView(activity.label(tr("Voice","صدا"),14f,NAVY,true))
         val voice=Spinner(activity);content.addView(voice)
         val speechGroup=activity.column()
@@ -66,6 +82,7 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
             model.setText(when(p){"openai"->initial.openaiModel;"openrouter"->initial.routerModel;"avalai"->initial.compatModel;else->initial.model})
             speechGroup.visibility=if(p=="openrouter")View.VISIBLE else View.GONE
             compatGroup.visibility=if(p=="avalai")View.VISIBLE else View.GONE;base.error=null;compatSpeech.error=null
+            listModels.visibility=if(p=="openrouter"||p=="avalai")View.VISIBLE else View.GONE
             note.text=when(p){
                 "openai"->tr("OpenAI Realtime: live voice and images. Enter your own OpenAI API key; API usage is billed separately from ChatGPT.","OpenAI Realtime: صدا و تصویر زنده. کلید API خودتان را وارد کنید؛ مصرف API از اشتراک ChatGPT جداست.")
                 "openrouter"->tr("Turn-based conversation: wait for Listening before speaking again. The model must accept audio + images. Recommended: google/gemini-3.5-flash-lite. Speech uses the separate model below; both requests use the OpenRouter key and may cost credit.","مکالمه نوبتی است؛ برای صحبت دوباره منتظر حالت شنیدن بمانید. مدل باید صدا و تصویر را دریافت کند. پیشنهاد: google/gemini-3.5-flash-lite. تولید صدا با مدل جداگانهٔ زیر است؛ هر دو درخواست از کلید OpenRouter استفاده می‌کنند و ممکن است اعتبار مصرف کنند.")
@@ -75,6 +92,30 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
             presets.removeAllViews()
             val ids=when(p){"openai"->listOf("gpt-realtime","gpt-realtime-2");"openrouter"->listOf("google/gemini-3.5-flash-lite","qwen/qwen3.8-omni-flash");"avalai"->listOf("gemini-2.5-flash","gpt-4o-audio-preview");else->listOf(VoiceSettings.DEFAULT_MODEL)}
             ids.forEach{id->presets.addView(activity.button(id){model.setText(id)})}
+        }
+        listModels.setOnClickListener{
+            val p=selected();val typed=VoiceApiKey.normalize(input.text?.toString().orEmpty())
+            val baseUrl=if(p=="avalai")base.text?.toString().orEmpty().trim().trimEnd('/').ifBlank{VoiceSettings.COMPAT_BASE}else RouterVoiceProtocol.BASE
+            if(!VoiceSettings.validCompatBase(baseUrl)){base.error=tr("Enter an https:// address","یک آدرس https:// وارد کنید");return@setOnClickListener}
+            listModels.isEnabled=false;status.text=tr("Reading the model list…","در حال خواندن فهرست مدل‌ها…")
+            worker.execute{
+                val result=runCatching{
+                    val key=typed.ifEmpty{keys(p).read()}
+                    require(key.isNotEmpty()){activity.s("voice_key_missing")}
+                    val c=(java.net.URL("$baseUrl/models").openConnection() as java.net.HttpURLConnection).apply{connectTimeout=10000;readTimeout=20000;setRequestProperty("Authorization","Bearer $key")}
+                    try{
+                        if(c.responseCode !in 200..299)error("HTTP ${c.responseCode}")
+                        val data=org.json.JSONObject(c.inputStream.bufferedReader().use{it.readText()}).getJSONArray("data")
+                        (0 until data.length()).map{data.getJSONObject(it).optString("id")}.filter{it.isNotBlank()}.distinct().sorted()
+                    }finally{c.disconnect()}
+                }
+                activity.runOnUiThread{
+                    if(activity.isDestroyed||activity.isFinishing)return@runOnUiThread
+                    listModels.isEnabled=true;status.text=activity.s(if(keys(p).hasKey())"voice_key_saved"else"voice_key_missing")
+                    result.onSuccess{ids->if(ids.isEmpty())status.text=tr("The service returned no models","سرویس هیچ مدلی برنگرداند")else pickModel(ids){model.setText(it)}}
+                        .onFailure{status.text=tr("Could not read the model list: ","فهرست مدل‌ها خوانده نشد: ")+(it.message?:it.javaClass.simpleName)}
+                }
+            }
         }
         provider.onItemSelectedListener=object:AdapterView.OnItemSelectedListener{
             override fun onItemSelected(parent:AdapterView<*>?,view:View?,position:Int,id:Long){refresh()}
