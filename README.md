@@ -1,38 +1,41 @@
-# VuraVision 1.17.0
+# VuraVision 3.1
 
-Full Android source, Gradle Wrapper and GitHub Actions for interactive touch panels.
+Android whiteboard and classroom suite for VuraVision 65–115 inch interactive displays. Persian and English, offline-first, built around a low-latency native ink canvas.
 
-1.17.0 audits project persistence, Undo/Redo, touch cancellation, split-panel tools, graphics memory, image/PDF rendering, shared-room synchronization and game timing. It preserves the controls delivered in 1.16 and adds regression coverage for the audit findings. See [release notes](RELEASE_1.17.0.md) and the [audit](docs/AUDIT_1.17.md).
+[فارسی](README.fa.md)
 
-The main Menu / Files / Undo / Redo / Share toolbar is at the bottom-right. Selected-object actions appear above or beside the object; ordinary dialogs are centered and nested menus use a top Back arrow. Lab/game actions stay at the bottom. Enable/configure Pie menu in **Settings → Pie menu**; open it with the five-finger double tap.
+## What is in the app
 
-Each split panel now has its own background pattern and color. Returning to one canvas restores the original solo board; split drawings are retained separately. Geometry drawings retain editable length/angle text, triangle snapping stays on its first edge, and ruler rotation/set-square slope controls are available.
+- **Board:** dual-tip pens and highlighter, area/stroke eraser, shapes with recognition, text and sticky notes, geometry tools, graphs, mind maps, layers, pages, split panels, Undo/Redo with history scrubbing.
+- **Files:** versioned `.vura` projects (ZIP + JSON + assets) with atomic autosave; image import with crop; PDF as a board object or as a scrollable workspace beside the board, with annotation export.
+- **Smart tools:** ML Kit handwriting and Latin OCR, shape conversion, arithmetic/equation solving, function plotting, unit conversion.
+- **Smart assistant:** voice conversation about the visible board through Google Gemini Live, OpenAI Realtime, OpenRouter, or AvalAI / any OpenAI-compatible HTTPS gateway. Off by default; each service keeps its own encrypted key. See [voice setup](docs/VOICE_ASSISTANT.md).
+- **Labs and games:** native simulations and two-player games, plus the bundled HTML catalogs.
+- **Shared rooms (experimental, hidden):** LAN collaboration with View / Control / Collaborate roles.
 
-New controls include connected graph points/intersections, slide-to-clear in Eraser and Pie shortcuts, direct page-row actions, a complete periodic-table image and editable game-player names. Icons scale with UI size. Undo defaults to 50 and is configurable in hidden Engineering. Selection settings open from the Select tool only. See [1.16 release details](docs/RELEASE_1.16.md) and [device checklist](docs/DEVICE_ACCEPTANCE_1.16.md).
+## Build
 
-## Experimental shared rooms
+GitHub Actions (`.github/workflows/android.yml`) runs unit tests, lint, a production-signed release build and APK checks on every push. Pull requests build a debug APK without signing secrets. The manual workflow run also executes instrumented tests on an Android 35 emulator.
 
-Set your name, color and emoji/photo in **Settings → Device profile**. To open rooms: **Settings → About VuraVision → double tap the logo → wait 1–3 seconds → double tap again → Shared room**.
+Required repository secrets for release signing: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 
-One device creates a room; others join by discovery, QR or manual invitation. Devices must share a local Wi-Fi/LAN/hotspot. QR transfers the room address; there is no cross-network relay.
+Locally, with JDK 17 and Android SDK 35:
 
-The host approves guests as View, Control or Collaborate. View follows the host without editing; Control shares host tools, page/camera and Undo; Collaborate has independent tools/views and per-user Undo. Profile-colored live strokes, selection leases and fading presence are included, along with conflict reconciliation, guest reconnect/recovery and image/PDF-object transfer. Rooms are experimental and need two-device acceptance testing. See [release details](docs/RELEASE_1.15.md) and [device checklist](docs/DEVICE_ACCEPTANCE_1.15.md).
+```bash
+./gradlew testDebugUnitTest lintDebug assembleDebug
+```
 
-## Build with GitHub Actions
+The app version lives in `app/build.gradle.kts`; CI names the APK artifact from it.
 
-Extract this ZIP directly into the repository root, including `.github`. Upload the extracted contents, not only the ZIP. Keep the existing secrets:
+## Repository layout
 
-| Secret | Value |
+| Path | Contents |
 | --- | --- |
-| ANDROID_KEYSTORE_BASE64 | Base64 of the production keystore |
-| ANDROID_KEYSTORE_PASSWORD | Keystore password |
-| ANDROID_KEY_ALIAS | Key alias |
-| ANDROID_KEY_PASSWORD | Key password |
+| `app/src/main/java/com/vuravision/classroom` | All app code |
+| `app/src/test`, `app/src/androidTest` | Robolectric unit tests, device tests |
+| `app/src/main/assets` | Fonts, guide, periodic table, HTML labs/games |
+| `docs/` | Current design, dependency, font, voice and device-acceptance notes |
+| `docs/archive/` | Release notes and verification records up to 1.17 |
+| `scripts/` | Source checks, APK alignment check, web smoke test |
 
-Push or manually run **Android APK**. After a successful signed build, download `VuraVision-1.17.0-<run>` containing the APK and SHA256SUMS.txt. Pull-request builds use debug signing. Application ID and production signing are unchanged.
-
-**Local verification:** all 316 unit tests passed (36 new regressions); Debug/Release Kotlin compilation and lint passed with no lint errors. Debug APK and instrumented-test APK assembled; debug signature, ZIP alignment and native ELF checks passed. Lint warnings remain and are recorded in the report.
-
-Current build/test evidence is in [VERIFICATION_1.17.0.json](docs/VERIFICATION_1.17.0.json), with raw reports in `docs/verification/v117/`. Physical-panel and two-device acceptance remain in [DEVICE_ACCEPTANCE_1.17.md](docs/DEVICE_ACCEPTANCE_1.17.md). GitHub Actions retains unit tests, lint, production signing, ZIP alignment and native ELF alignment checks. The manual workflow also runs Android 35 instrumented tests; the web smoke job runs on every workflow invocation.
-
-For optional voice services see [voice setup](docs/VOICE_ASSISTANT.md); for search see [Google search](docs/GOOGLE_SEARCH.md). Earlier release and verification documents are historical.
+Physical-panel behavior (pen latency, palm detection, two-device rooms) still needs on-device acceptance: see [device checklist](docs/DEVICE_ACCEPTANCE_1.17.md).
