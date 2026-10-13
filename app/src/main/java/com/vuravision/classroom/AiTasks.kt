@@ -14,6 +14,7 @@ object AiTasks {
     data class Question(val text:String,val options:List<String>,val answer:Int)
     data class Node(val title:String,val children:List<Node>)
     data class Summary(val title:String,val points:List<String>,val homework:String)
+    data class Group(val title:String,val notes:List<Int>)
 
     private fun persian(c:Context)=c.resources.configuration.locales[0].language=="fa"
     fun language(c:Context)=if(persian(c))"Persian (Farsi)" else "English"
@@ -56,6 +57,10 @@ object AiTasks {
         The image shows the pages of today's lesson board, in order. Summarize the lesson for students.
         Reply with JSON only: {"title": "...", "points": ["...", ...], "homework": "one suggested practice task"}. 3 to 6 points, each at most 18 words.
     """.trimIndent()
+    /** Text only: the notes' words are sent, never a picture of the board. */
+    fun groups(notes:List<String>)="Sort these sticky notes from a class brainstorm into 2 to 6 groups by meaning. "+
+        "Give each group a title of at most 3 words.\nNotes:\n"+notes.mapIndexed{i,t->"${i+1}. "+t.replace('\n',' ').trim().take(200)}.joinToString("\n")+
+        "\nReply with JSON only: {\"groups\": [{\"title\": \"...\", \"notes\": [note numbers]}]}. Every note number appears in exactly one group."
     fun lab(name:String,description:String,values:String)="""
         The image shows the "$name" simulation in a classroom. What it models: $description
         Current settings: $values.
@@ -103,6 +108,20 @@ object AiTasks {
         val root=node(o,0)
         if(root.title.isEmpty()||root.children.isEmpty())throw AiException("format")
         return root
+    }
+    /** Each note lands in one group only; notes the AI forgot go to a last, untitled group, so nothing is lost. */
+    fun parseGroups(o:JSONObject,count:Int):List<Group>{
+        val list=o.optJSONArray("groups")?:throw AiException("format")
+        val used=mutableSetOf<Int>()
+        val groups=(0 until list.length()).mapNotNull{i->
+            val g=list.optJSONObject(i)?:return@mapNotNull null
+            val a=g.optJSONArray("notes")?:g.optJSONArray("items")?:return@mapNotNull null
+            val notes=(0 until a.length()).map{a.optInt(it,0)-1}.filter{it in 0 until count&&used.add(it)}
+            if(notes.isEmpty())null else Group(g.optString("title").trim().take(40),notes)
+        }.take(8)
+        if(groups.isEmpty())throw AiException("format")
+        val rest=(0 until count).filter{it !in groups.flatMap{g->g.notes}}
+        return if(rest.isEmpty())groups else groups+Group("",rest)
     }
     fun parseSummary(o:JSONObject):Summary{
         val list=o.optJSONArray("points")?:throw AiException("format")

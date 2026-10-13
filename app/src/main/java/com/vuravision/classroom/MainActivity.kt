@@ -349,7 +349,9 @@ class MainActivity : Activity() {
             "smart"->{
                 back()
                 // AI first when a service is set up: it understands any handwriting, drawing or language.
+                val notes=groupableNotes(items)
                 if(smartAi.configured()){
+                    if(notes.size>=3)action("ai_group",tr("Group ideas","دسته‌بندی ایده‌ها"),tr("Sort the notes into groups by meaning (AI)","چیدن یادداشت‌ها در دسته‌های هم‌معنا (هوش)")){aiGroups()}
                     action("ai_explain",tr("Explain","توضیح")){aiExplain("explain")}
                     action("ai_check",tr("Check","غلط‌یابی")){aiCheck()}
                     action("ai_steps",tr("Steps","گام‌به‌گام")){aiSteps()}
@@ -357,6 +359,7 @@ class MainActivity : Activity() {
                     action("ai_mindmap",tr("Mind map","نقشهٔ ذهنی")){aiMindMap()}
                     action("more",tr("More","بیشتر")){open("smart_more")}
                 }else{
+                    if(notes.size>=3)action("group_color",tr("By color","بر اساس رنگ"),tr("Arrange the notes in columns by color","چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")){groupByColor(notes)}
                     offlineSmart(smart,ink){symbol,text,title,run->action(symbol,text,title){run()}}
                     action("ai_setup",tr("Set up AI","راه‌اندازی هوش")){aiSettings()}
                 }
@@ -368,6 +371,7 @@ class MainActivity : Activity() {
                 action("ai_translate",tr("Translate","ترجمه")){aiExplain("translate")}
                 if(ink)action("ai_cleanup",tr("Clean up","تمیز کن"),tr("Handwriting to typed text (AI)","دست‌خط به متن تایپی (هوش)")){aiCleanup()}
                 if(ink)action("ai_picture",tr("To picture","به تصویر"),tr("Turn the sketch into a clean picture (AI)","تبدیل طرح به تصویر تمیز (هوش)")){aiSketchToPicture()}
+                if(groupableNotes(items).size>=3)action("group_color",tr("By color","بر اساس رنگ"),tr("Arrange the notes in columns by color","چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")){groupByColor(groupableNotes(items))}
                 offlineSmart(smart,ink){symbol,text,title,run->action(symbol,text,title){run()}}
                 fillSelectionBar(actions);positionSelectionBar();return
             }
@@ -2260,6 +2264,47 @@ class MainActivity : Activity() {
                 bitmap.recycle();addAndSelect(listOf(item),bounds)
             }
         }
+    }
+    private fun groupableNotes(items:List<Item>)=items.filter{it.kind=="sticky"&&it.shape !in listOf("mindnode","element_card")&&!it.locked}
+    /** After a brainstorm: the notes' words go to the AI, which sorts them into titled groups; the notes then move into columns. */
+    private fun aiGroups(){
+        val notes=groupableNotes(board.chosen());if(notes.size<3)return
+        val texts=notes.map{it.text}
+        runAi(tr("Grouping ideas…","در حال دسته‌بندی ایده‌ها…"),{ai->AiTasks.parseGroups(ai.askJson(aiSystem(),AiTasks.groups(texts)),texts.size)}){groups->
+            arrangeGroups(groups.map{g->g.title.ifBlank{if(groups.size>1)tr("Other","سایر")else ""} to g.notes.map{notes[it]}})
+        }
+    }
+    /** Offline: one column per note color, in the order the colors first appear. */
+    private fun groupByColor(notes:List<Item>){
+        val byColor=notes.groupBy{it.noteColor}.values.toList()
+        // A single color would make one tall column: tidy into a near-square grid instead.
+        val columns=if(byColor.size>1)byColor else notes.chunked(kotlin.math.ceil(kotlin.math.sqrt(notes.size.toDouble())).toInt())
+        arrangeGroups(columns.map{"" to it})
+    }
+    /**
+     * Moves the notes into one column per group, from the selection's reading-start corner, each under a bold title;
+     * the notes themselves are kept as they are (text, color, size). One Undo puts everything back.
+     */
+    private fun arrangeGroups(groups:List<Pair<String,List<Item>>>){
+        val notes=groups.flatMap{it.second}.filter{n->store.page.items.any{it===n}}
+        if(notes.isEmpty())return
+        val bounds=contentBounds(notes);val rtl=resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL
+        val column=notes.maxOf{it.w}+48f;val gap=20f
+        val titles=mutableListOf<Item>()
+        store.editMetadata{
+            groups.filter{g->g.second.any{it in notes}}.forEachIndexed{i,(title,members)->
+                val x=if(rtl)bounds.right-(i+1)*column+48f else bounds.left+i*column
+                var y=bounds.top
+                if(title.isNotBlank()){
+                    val t=Item(kind="text",text=title,color=NAVY,width=28f,x=x,y=y,w=column-48f,h=56f,layerId=store.page.activeLayerId,pane=board.activePane)
+                    Fonts.stamp(t,true);TextLayout.fit(t);titles.add(t);y+=t.h+16f
+                }
+                members.filter{it in notes}.forEach{n->n.x=x;n.y=y;y+=n.h+gap}
+            }
+            store.page.items.addAll(titles)
+        }
+        board.selected.clear();board.selected.addAll((notes+titles).map{it.id});board.tool="select"
+        board.reveal(contentBounds(notes+titles));board.sceneChanged();refreshSelectionBar();refreshDock()
     }
     /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */
     private fun aiQuiz(){

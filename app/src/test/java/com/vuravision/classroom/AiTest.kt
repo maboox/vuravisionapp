@@ -180,4 +180,39 @@ class AiTest {
             assertThrows(Exception::class.java){broken.validate()}
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
+
+    /** Brainstorm notes sorted by the AI into titled columns (one Undo), and offline by color; nothing is rewritten. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun stickyNotesGroupIntoColumns(){
+        context.getSharedPreferences("vura",0).edit().putString("language","fa").putString("aiProvider","openai").commit()
+        reply={_,_->openAi("""{"groups":[{"title":"میوه","notes":[1,3]},{"title":"حیوان","notes":[2,4,9]}]}""")}
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        try{
+            val words=listOf("سیب","گربه","موز","سگ","هویج")
+            val notes=words.mapIndexed{i,t->Item(kind="sticky",text=t,x=200f+i*70f,y=150f+(i%2)*90f,w=200f,h=120f,noteColor=if(i%2==0)0xffffe8b2.toInt() else 0xffdcfce7.toInt())}
+            a.store.editMetadata{a.store.page.items.addAll(notes)}
+            a.board.tool="select";a.board.selected.clear();a.board.selected.addAll(notes.map{it.id});a.board.onSelection();idle()
+            fun tap(symbol:String){views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().first{it.symbol==symbol}.performClick();idle()}
+            tap("smart");tap("ai_group");waitFor{a.store.page.items.any{it.kind=="text"&&it.text=="میوه"}}
+            assertTrue("only the notes' words are sent",sent.last().second.contains("سیب")&&!sent.last().second.contains("image_url"))
+            val byText=a.store.page.items.associateBy{it.text}
+            assertEquals("fruit in one column",byText["سیب"]!!.x,byText["موز"]!!.x,0.1f)
+            assertEquals("animals in one column",byText["گربه"]!!.x,byText["سگ"]!!.x,0.1f)
+            assertTrue("Persian columns run right to left",byText["سیب"]!!.x>byText["گربه"]!!.x)
+            assertTrue("the forgotten note goes to Other",a.store.page.items.any{it.text==a.tr("Other","سایر")})
+            val columns=a.store.page.items.filter{it.kind=="sticky"}.map{contentBounds(listOf(it))}
+            columns.forEach{x->columns.filter{it!==x}.forEach{y->assertFalse("notes overlap after grouping",RectF.intersects(x,y))}}
+            shot(a,"grouped")
+            a.store.undo();assertEquals("one Undo restores the notes",200f,a.store.page.items.first{it.text=="سیب"}.x,0.1f)
+            assertTrue(a.store.page.items.none{it.kind=="text"})
+            val all=a.store.page.items.filter{it.kind=="sticky"}
+            MainActivity::class.java.getDeclaredMethod("groupByColor",List::class.java).apply{isAccessible=true}.invoke(a,all);idle()
+            val after=a.store.page.items.filter{it.kind=="sticky"}.groupBy{it.noteColor}
+            after.values.forEach{same->assertEquals("one column per color",1,same.map{it.x}.distinct().size)}
+            assertEquals(2,after.values.map{it.first().x}.distinct().size)
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+    }
+    @Test fun groupParserKeepsEveryNoteOnce(){
+        val g=AiTasks.parseGroups(JSONObject("""{"groups":[{"title":"A","notes":[1,2,2]},{"title":"B","notes":[2,7,0]},{"title":"C","notes":[]}]}"""),4)
+        assertEquals(listOf(0,1),g[0].notes);assertEquals("B had only duplicates and bad numbers",2,g.size);assertEquals(listOf(2,3),g[1].notes);assertEquals("",g[1].title)
+    }
 }
