@@ -1,3 +1,4 @@
+import java.time.Duration
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "com.vuravision.classroom"
@@ -58,7 +59,7 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
         showStackTraces = true
     }
     // A hung test must fail the build quickly and name itself, instead of running into the job timeout.
-    timeout.set(java.time.Duration.ofMinutes(20))
+    timeout.set(Duration.ofMinutes(20))
 }
 
 // Customer releases must never silently use the development certificate.
