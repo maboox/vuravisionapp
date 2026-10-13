@@ -26,7 +26,7 @@ class VoiceUiTest {
     @Test fun englishVoiceControlsRenderAndRemainVisibleInFocusMode(){render("en")}
     @Test fun persianVoiceControlsRenderAndRemainVisibleInFocusMode(){render("fa")}
     @Test fun newProviderControlsRenderWithoutExposingBehavior(){
-        for(language in listOf("en","fa"))for(provider in listOf("openai","openrouter")){
+        for(language in listOf("en","fa"))for(provider in listOf("openai","openrouter","avalai")){
             context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
             VoiceSettings(provider=provider).save(context)
             val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
@@ -39,8 +39,9 @@ class VoiceUiTest {
                 val all=views(dialog.window!!.decorView)
                 assertFalse(all.filterIsInstance<TextView>().any{it.text.toString()==a.s("voice_behavior")})
                 val model=all.filterIsInstance<EditText>().first{it.hint==null || !it.hint.toString().contains("API")}
-                assertEquals(if(provider=="openai")"gpt-realtime"else"google/gemini-3.5-flash-lite",model.text.toString())
-                assertEquals(if(provider=="openai")2 else 3,all.filterIsInstance<Spinner>().count{it.isShown})
+                assertEquals(when(provider){"openai"->"gpt-realtime";"avalai"->"gemini-2.5-flash";else->"google/gemini-3.5-flash-lite"},model.text.toString())
+                assertEquals(if(provider=="openrouter")3 else 2,all.filterIsInstance<Spinner>().count{it.isShown})
+                assertEquals(provider=="avalai",all.filterIsInstance<EditText>().any{it.isShown && it.text.toString()==VoiceSettings.COMPAT_BASE})
                 dialog.dismiss()
             }finally{controller.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
         }

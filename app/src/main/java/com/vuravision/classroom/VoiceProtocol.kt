@@ -18,9 +18,6 @@ object VoiceProtocol {
             .put("realtimeInputConfig",JSONObject().put("automaticActivityDetection",JSONObject().put("silenceDurationMs",700)))
         return JSONObject().put("setup",config).toString()
     }
-    fun greeting()=JSONObject().put("clientContent",JSONObject().put("turns",JSONArray().put(JSONObject().put("role","user")
-        .put("parts",JSONArray().put(JSONObject().put("text","با سلام کوتاه بگو دستیار آموزشی هستم و بپرس چطور می‌توانی کمک کنی. نام برند، شرکت یا مدل را نگو. سپس منتظر صحبت من بمان.")))))
-        .put("turnComplete",true)).toString()
     fun audio(bytes:ByteArray,count:Int=bytes.size)=media("audio","audio/pcm;rate=16000",Base64.encodeToString(bytes,0,count,Base64.NO_WRAP))
     fun image(jpeg:ByteArray)=media("video","image/jpeg",Base64.encodeToString(jpeg,Base64.NO_WRAP))
     private fun media(kind:String,mime:String,data:String)=JSONObject().put("realtimeInput",JSONObject().put(kind,JSONObject().put("mimeType",mime).put("data",data))).toString()

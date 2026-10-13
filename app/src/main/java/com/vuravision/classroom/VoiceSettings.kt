@@ -51,15 +51,20 @@ data class VoiceSettings(
     val provider:String="gemini", val openaiModel:String="gpt-realtime", val openaiVoice:String="marin",
     val routerModel:String="google/gemini-3.5-flash-lite",
     val routerSpeechModel:String="google/gemini-3.8-flash-lite-tts", val routerVoice:String="Kore",
+    val compatBase:String=COMPAT_BASE, val compatModel:String="gemini-2.5-flash",
+    val compatSpeechModel:String="gpt-4o-mini-tts", val compatVoice:String="coral",
 ) {
     companion object {
         const val DEFAULT_MODEL="gemini-3.8-live"
+        /** AvalAI is the default OpenAI-compatible gateway; administrators may point to another HTTPS one. */
+        const val COMPAT_BASE="https://api.avalai.ir/v1"
         val tones=listOf("warm","formal","calm")
         val lengths=listOf("short","medium","detailed")
         val voices=listOf("Kore","Aoede","Puck","Charon","Fenrir")
-        val providers=listOf("gemini","openai","openrouter")
+        val providers=listOf("gemini","openai","openrouter","avalai")
         val openaiVoices=listOf("marin","cedar","alloy","ash","ballad","coral","echo","sage","shimmer","verse")
         val routerVoices=voices
+        val compatVoices=listOf("coral","alloy","ash","ballad","echo","fable","nova","onyx","sage","shimmer","verse")
         val routerSpeechModels=listOf("google/gemini-3.8-flash-lite-tts","google/gemini-3.8-flash-tts","google/gemini-3.1-flash-tts-preview")
         fun enabled(context:Context)=context.getSharedPreferences("vura",Context.MODE_PRIVATE).getBoolean("voiceEnabled",false)
         fun setEnabled(context:Context,value:Boolean){context.getSharedPreferences("vura",Context.MODE_PRIVATE).edit().putBoolean("voiceEnabled",value).apply()}
@@ -76,29 +81,40 @@ data class VoiceSettings(
                 p.getString("voiceOpenaiName","marin").orEmpty().takeIf{it in openaiVoices}?:"marin",
                 p.getString("voiceRouterModel","google/gemini-3.5-flash-lite").orEmpty().takeIf{validRouterModel(it)}?:"google/gemini-3.5-flash-lite",
                 p.getString("voiceRouterSpeechModel","google/gemini-3.8-flash-lite-tts").orEmpty().takeIf{it in routerSpeechModels}?:"google/gemini-3.8-flash-lite-tts",
-                p.getString("voiceRouterName","Kore").orEmpty().takeIf{it in routerVoices}?:"Kore")
+                p.getString("voiceRouterName","Kore").orEmpty().takeIf{it in routerVoices}?:"Kore",
+                p.getString("voiceCompatBase",COMPAT_BASE).orEmpty().takeIf{validCompatBase(it)}?:COMPAT_BASE,
+                p.getString("voiceCompatModel","gemini-2.5-flash").orEmpty().takeIf{validCompatModel(it)}?:"gemini-2.5-flash",
+                p.getString("voiceCompatSpeech","gpt-4o-mini-tts").orEmpty().takeIf{validCompatModel(it)}?:"gpt-4o-mini-tts",
+                p.getString("voiceCompatName","coral").orEmpty().takeIf{it in compatVoices}?:"coral")
         }
         fun validModel(value:String)=value.matches(Regex("gemini-[a-zA-Z0-9._-]{1,100}"))
         fun validOpenaiModel(value:String)=value.matches(Regex("gpt-realtime[a-zA-Z0-9._-]{0,100}"))
         fun validRouterModel(value:String)=value.matches(Regex("[a-zA-Z0-9._-]{1,60}/[a-zA-Z0-9._:-]{1,120}")) && !value.endsWith(":batch")
+        fun validCompatModel(value:String)=value.matches(Regex("[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,159}")) && !value.contains("//")
+        /** The key is sent here, so only a plain HTTPS origin and path are accepted. */
+        fun validCompatBase(value:String)=value.length<=200 && try{
+            val uri=java.net.URI(value)
+            uri.scheme=="https" && !uri.host.isNullOrBlank() && uri.rawUserInfo==null && uri.rawQuery==null && uri.rawFragment==null && !value.endsWith("/")
+        }catch(_:Exception){false}
     }
     fun save(context:Context){
         require(tone in tones && length in lengths && voice in voices && validModel(model))
         require(provider in providers && validOpenaiModel(openaiModel) && openaiVoice in openaiVoices && validRouterModel(routerModel) && routerSpeechModel in routerSpeechModels && routerVoice in routerVoices)
+        require(validCompatBase(compatBase) && validCompatModel(compatModel) && validCompatModel(compatSpeechModel) && compatVoice in compatVoices)
         context.getSharedPreferences("vura",Context.MODE_PRIVATE).edit()
             .putString("voiceTone",tone).putString("voiceLength",length).putString("voiceExtra",extra.take(6000))
             .putString("voicePanel",panelNotes.take(4000)).putString("voiceModel",model).putString("voiceName",voice)
             .putString("voiceProvider",provider).putString("voiceOpenaiModel",openaiModel).putString("voiceOpenaiName",openaiVoice)
             .putString("voiceRouterModel",routerModel).putString("voiceRouterSpeechModel",routerSpeechModel).putString("voiceRouterName",routerVoice)
+            .putString("voiceCompatBase",compatBase).putString("voiceCompatModel",compatModel).putString("voiceCompatSpeech",compatSpeechModel).putString("voiceCompatName",compatVoice)
             .putInt("voiceFrameSeconds",frameSeconds.coerceIn(2,10)).putInt("voiceSessionMinutes",sessionMinutes.coerceIn(1,60)).apply()
     }
     fun instruction(knowledge:String):String = """
-        شما یک دستیار آموزشی هستید و برای کمک اینجا هستید. برای معرفی فقط بگویید «دستیار آموزشی هستم». در معرفی نام برند نرم‌افزار را نگویید. نام شرکت ارائه‌دهنده، مدل، سرویس، کلید API و جزئیات فنی اتصال را در پاسخ‌ها بیان نکنید؛ حتی اگر کاربر مستقیم دربارهٔ آنها پرسید، بگویید «من دستیار آموزشی هستم؛ برای راهنمایی دربارهٔ درس و نرم‌افزار اینجام.» شرکت یا هویت ساختگی هم نسبت ندهید.
+        شما «دستیار هوشمند» این کلاس هستید. فقط اگر کاربر پرسید شما کیستید، بگویید «دستیار هوشمند هستم». هرگز خودتان را «هوش مصنوعی»، «دستگاه»، «ربات» یا «مدل زبانی» معرفی نکنید. در معرفی نام برند نرم‌افزار را نگویید. نام شرکت ارائه‌دهنده، مدل، سرویس، کلید API و جزئیات فنی اتصال را در پاسخ‌ها بیان نکنید؛ حتی اگر کاربر مستقیم دربارهٔ آنها پرسید، بگویید «من دستیار هوشمند هستم؛ برای راهنمایی دربارهٔ درس و نرم‌افزار اینجام.» شرکت یا هویت ساختگی هم نسبت ندهید.
         همیشه به فارسی پاسخ صوتی بدهید؛ حتی اگر سؤال به زبان دیگری باشد. نام‌ها و اصطلاحات ضروری را می‌توانید به زبان اصلی تلفظ کنید.
         گرم، مؤدب، صبور و محترم باشید. هرگز عصبانی، تحقیرآمیز یا سرزنش‌کننده نشوید؛ در برابر توهین هم آرام بمانید.
-        در اولین شروع مکالمه بگویید: «سلام، دستیار آموزشی هستم. چطور می‌تونم کمکتون کنم؟» سپس منتظر سؤال بمانید.
         اگر صدا، واژه یا منظور کاربر را نفهمیدید، به‌جای حدس‌زدن یا بازگویی چیزی که احتمالاً اشتباه شنیده‌اید، فقط بگویید «متوجه نشدم، لطفاً دوباره بگید.» نگویید «من این رو فهمیدم» و برداشت نامطمئن را کامل تکرار نکنید. برای صدای نامفهوم، سکوت، موسیقی یا سروصدای محیط سؤال و متن ساختگی نسازید.
-        پس از معرفی، فقط در پاسخ به سؤال یا درخواست کاربر صحبت کنید؛ تغییر تصویر یا اسکرول به‌تنهایی موجب توضیح خودکار نشود.
+        سلام یا معرفی خودکار نکنید؛ ساکت بمانید تا کاربر صحبت کند و فقط در پاسخ به سؤال یا درخواست کاربر صحبت کنید؛ تغییر تصویر یا اسکرول به‌تنهایی موجب توضیح خودکار نشود.
         برای پرسش‌های آموزشی و تمرین‌ها، ابتدا یک راهنمایی کوتاه و مفید بدهید و فرصت فکرکردن بدهید؛ جواب نهایی را فوراً لو ندهید. اگر کاربر صریحاً جواب نهایی یا حل کامل را خواست، همان را توضیح بدهید. برای سؤال دربارهٔ استفاده از نرم‌افزار یا پنل، مستقیم و کاربردی راهنمایی کنید.
         لحن انتخابی: ${when(tone){"formal"->"رسمی، مؤدب و روشن";"calm"->"آرام، شمرده و دلگرم‌کننده";else->"گرم و صمیمی، با حفظ احترام"}}.
         طول پاسخ: ${when(length){"detailed"->"با جزئیات لازم و مثال، بدون تکرار";"medium"->"چند جملهٔ روشن و یک مثال در صورت نیاز";else->"کوتاه، معمولاً یک تا سه جمله؛ فقط با درخواست کاربر توضیح طولانی‌تر بدهید"}}.
@@ -119,7 +135,7 @@ object VoiceKnowledge {
         val display="Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}; ${Build.MANUFACTURER} ${Build.MODEL}; رزولوشن گزارش‌شدهٔ رابط ${metrics.widthPixels}×${metrics.heightPixels}. این اعداد مشخصات اندازهٔ فیزیکی، وضوح واقعی پنل یا تعداد لمس هم‌زمان را ثابت نمی‌کنند."
         val guide=org.json.JSONArray(context.assets.open("guide/topics.json").bufferedReader().use{it.readText()})
         val lines=StringBuilder("VuraVision ${BuildConfig.VERSION_NAME}\nاین برنامه برای نمایشگر لمسی آموزشی اندرویدی و استفاده در کلاس است.\n$display\n")
-        lines.append("دستیار صوتی پیش‌فرض پنهان و خاموش است؛ مدیر از تنظیمات مخفی ← رفتار دستیار، فعال‌سازی را روشن می‌کند. سپس دکمهٔ مستقل پایین سمت راست شروع/پایان می‌دهد. سرویس و کلید اتصال در تنظیمات ← دستیار صوتی انتخاب می‌شوند. دید دستیار فقط محتوای نمایان تخته و PDF همین برنامه است. اینترنت و میکروفن لازم‌اند؛ در خروج از برنامه مکالمه پایان می‌یابد. مسیر OpenRouter نوبتی است؛ هنگام پاسخ دوباره منتظر حالت شنیدن بمانید.\n")
+        lines.append("دستیار هوشمند پیش‌فرض پنهان و خاموش است؛ مدیر از تنظیمات مخفی ← رفتار دستیار، فعال‌سازی را روشن می‌کند. سپس دکمهٔ مستقل پایین سمت راست شروع/پایان می‌دهد. سرویس و کلید اتصال در تنظیمات ← دستیار هوشمند انتخاب می‌شوند. دید دستیار فقط محتوای نمایان تخته و PDF همین برنامه است. اینترنت و میکروفن لازم‌اند؛ در خروج از برنامه مکالمه پایان می‌یابد. مسیر OpenRouter نوبتی است؛ هنگام پاسخ دوباره منتظر حالت شنیدن بمانید.\n")
         lines.append("در مکالمه دکمهٔ میوت، فقط میکروفن و ارسال صدای کاربر را متوقف می‌کند و پخش صدای دستیار ادامه دارد. ژست دو بار ضربهٔ دو انگشتی در کنترل ورودی تنظیم می‌شود. منوی پنج‌انگشتی پیش‌فرض خاموش است و فقط از بخش مخفی فعال می‌شود.\n")
         lines.append("حل‌گر آفلاین فعلی فقط معادلهٔ یک‌مجهولی خطی و درجهٔ دوم دارد؛ دستگاه دو مجهولی جزء حل‌گر آفلاین نیست.\n")
         for(i in 0 until guide.length()){

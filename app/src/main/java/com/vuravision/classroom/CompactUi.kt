@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat
 
 object IconCatalog {
     fun resource(key:String)=when(key){
-        "pen","rename","pencil","edit"->R.drawable.feather_edit_2
+        "pen","rename","pencil","edit"->R.drawable.feather_edit_2;"highlight"->R.drawable.feather_edit_3
         "erase","clear_page"->R.drawable.vura_eraser;"select"->R.drawable.feather_mouse_pointer
         "touch","input_controls","touch_test"->R.drawable.vura_touch
         "pan","drag"->R.drawable.feather_move;"shape","set_square"->R.drawable.feather_triangle

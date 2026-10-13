@@ -51,9 +51,17 @@ class RouterVoiceTurns {
     }
 }
 
+/** Turn-based endpoint: OpenRouter, or an OpenAI-compatible gateway such as AvalAI. */
+data class RouterEndpoint(val base:String,val model:String,val speechModel:String,val voice:String,val openRouter:Boolean){
+    companion object {
+        fun of(settings:VoiceSettings)=if(settings.provider=="avalai")
+            RouterEndpoint(settings.compatBase,settings.compatModel,settings.compatSpeechModel,settings.compatVoice,false)
+        else RouterEndpoint(RouterVoiceProtocol.BASE,settings.routerModel,settings.routerSpeechModel,settings.routerVoice,true)
+    }
+}
+
 object RouterVoiceProtocol {
     const val BASE="https://openrouter.ai/api/v1"
-    const val GREETING="سلام، دستیار آموزشی هستم. چطور می‌تونم کمکتون کنم؟"
     data class Reply(val user:String,val text:String)
     fun wav(pcm:ByteArray):ByteArray {
         require(pcm.size%2==0 && pcm.size<=650000)
@@ -81,7 +89,7 @@ object RouterVoiceProtocol {
         jpeg?.let{parts.put(JSONObject().put("type","image_url").put("image_url",JSONObject().put("url","data:image/jpeg;base64,"+Base64.encodeToString(it,Base64.NO_WRAP))))}
         parts.put(JSONObject().put("type","input_audio").put("input_audio",JSONObject().put("data",Base64.encodeToString(wav(pcm),Base64.NO_WRAP)).put("format","wav")))
         messages.put(JSONObject().put("role","user").put("content",parts))
-        return JSONObject().put("model",settings.routerModel).put("messages",messages).put("stream",false)
+        return JSONObject().put("model",RouterEndpoint.of(settings).model).put("messages",messages).put("stream",false)
             .put("max_tokens",when(settings.length){"detailed"->1200;"medium"->600;else->350})
             .put("response_format",JSONObject().put("type","json_object")).toString()
     }
@@ -94,9 +102,12 @@ object RouterVoiceProtocol {
         return Reply(data.optString("user_text").take(1500),text)
     }
     fun speech(settings:VoiceSettings,text:String):String {
-        val request=JSONObject().put("model",settings.routerSpeechModel).put("input",text).put("voice",settings.routerVoice).put("response_format","pcm")
-        if(settings.routerSpeechModel.startsWith("google/gemini-3.8-"))request.put("provider",JSONObject().put("options",JSONObject().put("google-ai-studio",JSONObject()
-            .put("speech_metadata",JSONObject().put("style",when(settings.tone){"formal"->"Polite, formal and clear. Speak Persian.";"calm"->"Calm, patient and measured. Speak Persian.";else->"Warm, friendly and respectful. Speak Persian."})))))
+        val endpoint=RouterEndpoint.of(settings)
+        val style=when(settings.tone){"formal"->"Polite, formal and clear. Speak Persian.";"calm"->"Calm, patient and measured. Speak Persian.";else->"Warm, friendly and respectful. Speak Persian."}
+        val request=JSONObject().put("model",endpoint.speechModel).put("input",text).put("voice",endpoint.voice).put("response_format","pcm")
+        if(!endpoint.openRouter)request.put("instructions",style)
+        else if(endpoint.speechModel.startsWith("google/gemini-3.8-"))request.put("provider",JSONObject().put("options",JSONObject().put("google-ai-studio",JSONObject()
+            .put("speech_metadata",JSONObject().put("style",style)))))
         return request.toString()
     }
     fun readPcm(stream:InputStream,chunk:(ByteArray)->Unit){
@@ -128,14 +139,15 @@ interface RouterVoiceService {
 class RouterVoiceException(val reason:String):Exception(reason)
 
 /** Only fixed HTTPS endpoints. Redirects and automatic retries cannot forward a credential. */
-class RouterVoiceHttp(private val key:String):RouterVoiceService {
+class RouterVoiceHttp(private val key:String,private val endpoint:RouterEndpoint=RouterEndpoint.of(VoiceSettings(provider="openrouter"))):RouterVoiceService {
     private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(60,TimeUnit.SECONDS)
         .callTimeout(120,TimeUnit.SECONDS).retryOnConnectionFailure(false).followRedirects(false).followSslRedirects(false).build()
     private val lock=Any()
     private var closed=false
     private var call:Call?=null
     private fun execute(path:String,body:String?=null):Response {
-        val request=Request.Builder().url(RouterVoiceProtocol.BASE+path).header("Authorization","Bearer $key").header("X-Title","VuraVision")
+        val request=Request.Builder().url(endpoint.base+path).header("Authorization","Bearer $key")
+        if(endpoint.openRouter)request.header("X-Title","VuraVision")
         if(body!=null)request.post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))
         val next=synchronized(lock){if(closed)throw RouterVoiceException("voice_network_error");client.newCall(request.build()).also{call=it}}
         val response=next.execute()
@@ -149,13 +161,18 @@ class RouterVoiceHttp(private val key:String):RouterVoiceService {
         buffer.toString("UTF-8")
     }
     override fun validate(settings:VoiceSettings){
+        // Gateway catalogs do not describe modalities; an unsupported model surfaces as voice_model_error on the first turn.
+        if(!endpoint.openRouter)return
         if(!RouterVoiceProtocol.compatible(readJson("/models"),settings.routerModel))throw RouterVoiceException("voice_router_model_error")
         if(!RouterVoiceProtocol.compatible(readJson("/models?output_modalities=speech"),settings.routerSpeechModel,true))throw RouterVoiceException("voice_router_speech_error")
     }
     override fun answer(body:String)=readJson("/chat/completions",body)
     override fun speak(body:String,chunk:(ByteArray)->Unit){
         execute("/audio/speech",body).use{response->
-            if(response.body?.contentType()?.let{it.type=="audio" && it.subtype=="pcm"}!=true)throw RouterVoiceException("voice_protocol_error")
+            val type=response.body?.contentType()
+            // OpenRouter labels raw PCM exactly; gateways may use octet-stream. readPcm still rejects containers and JSON.
+            val raw=if(endpoint.openRouter)type?.let{it.type=="audio" && it.subtype=="pcm"}==true else type==null || type.type=="audio" || type.subtype=="octet-stream"
+            if(!raw)throw RouterVoiceException("voice_protocol_error")
             val stream=response.body?.byteStream()?:throw RouterVoiceException("voice_protocol_error")
             RouterVoiceProtocol.readPcm(stream,chunk)
         }
@@ -191,7 +208,6 @@ class RouterVoiceAssistant(
             ui{
                 try{audio.start(::input,{ui{stop("voice_audio_error")}})}catch(_:Exception){stop("voice_audio_error");return@ui}
                 ready=true;connected()
-                work{speak(RouterVoiceProtocol.GREETING)}
             }
         }
     }

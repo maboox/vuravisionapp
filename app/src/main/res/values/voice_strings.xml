@@ -1,5 +1,5 @@
 <resources>
-    <string name="voice_assistant">Voice assistant</string>
+    <string name="voice_assistant">Smart assistant</string>
     <string name="voice_behavior">Assistant behavior</string>
     <string name="voice_stop">End conversation</string>
     <string name="voice_connecting">Connecting…</string>

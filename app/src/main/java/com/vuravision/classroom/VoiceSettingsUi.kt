@@ -23,7 +23,7 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         val content=activity.column().apply{setPadding(activity.dp(16),activity.dp(8),activity.dp(16),activity.dp(8))}
         content.addView(activity.label(tr("Talk in Persian about the visible board and PDF. The assistant only observes and speaks. While active, microphone audio and workspace images go to your selected service. Each service has its own encrypted key. Internet, model access and quota/credit are required.","دربارهٔ تخته و PDF نمایان فارسی صحبت کنید. دستیار فقط می‌بیند و صحبت می‌کند. هنگام فعال‌بودن، صدا و تصویر فضای کار به سرویس انتخابی ارسال می‌شود. کلید هر سرویس جدا و رمزگذاری‌شده ذخیره می‌شود. اینترنت، دسترسی مدل و سهمیه یا اعتبار کافی لازم است."),14f,MUTED))
         content.addView(activity.label(tr("Service","سرویس"),14f,NAVY,true))
-        val provider=Spinner(activity).apply{adapter=OptionAdapter(activity,listOf("Google Gemini","OpenAI","OpenRouter"));setSelection(VoiceSettings.providers.indexOf(initial.provider))};content.addView(provider)
+        val provider=Spinner(activity).apply{adapter=OptionAdapter(activity,listOf("Google Gemini","OpenAI","OpenRouter",tr("AvalAI / OpenAI-compatible","AvalAI / سازگار با OpenAI")));setSelection(VoiceSettings.providers.indexOf(initial.provider))};content.addView(provider)
         val status=activity.label("",14f);content.addView(status)
         val note=activity.label("",13f,MUTED);content.addView(note)
         content.addView(activity.label(tr("API key","کلید API"),14f,NAVY,true))
@@ -46,22 +46,30 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         val speechGroup=activity.column()
         speechGroup.addView(activity.label(tr("Speech model (OpenRouter)","مدل تولید صدا (OpenRouter)"),14f,NAVY,true))
         val speech=Spinner(activity).apply{adapter=OptionAdapter(activity,VoiceSettings.routerSpeechModels);setSelection(VoiceSettings.routerSpeechModels.indexOf(initial.routerSpeechModel).coerceAtLeast(0))};speechGroup.addView(speech);content.addView(speechGroup)
+        val compatGroup=activity.column()
+        compatGroup.addView(activity.label(tr("Service address (HTTPS)","آدرس سرویس (HTTPS)"),14f,NAVY,true))
+        val base=activity.field(initial.compatBase).apply{hint=VoiceSettings.COMPAT_BASE;setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR;layoutDirection=View.LAYOUT_DIRECTION_LTR};compatGroup.addView(base)
+        compatGroup.addView(activity.label(tr("Speech model ID","شناسهٔ مدل تولید صدا"),14f,NAVY,true))
+        val compatSpeech=activity.field(initial.compatSpeechModel).apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR;layoutDirection=View.LAYOUT_DIRECTION_LTR};compatGroup.addView(compatSpeech)
+        content.addView(compatGroup)
         fun selected()=VoiceSettings.providers[provider.selectedItemPosition]
         fun refresh(){
             val p=selected();input.setText("");input.error=null;model.error=null
             status.text=activity.s(if(keys(p).hasKey())"voice_key_saved"else"voice_key_missing")
-            val voices=when(p){"openai"->VoiceSettings.openaiVoices;"openrouter"->VoiceSettings.routerVoices;else->VoiceSettings.voices}
+            val voices=when(p){"openai"->VoiceSettings.openaiVoices;"openrouter"->VoiceSettings.routerVoices;"avalai"->VoiceSettings.compatVoices;else->VoiceSettings.voices}
             voice.adapter=OptionAdapter(activity,voices)
-            voice.setSelection(voices.indexOf(when(p){"openai"->initial.openaiVoice;"openrouter"->initial.routerVoice;else->initial.voice}).coerceAtLeast(0))
-            model.setText(when(p){"openai"->initial.openaiModel;"openrouter"->initial.routerModel;else->initial.model})
+            voice.setSelection(voices.indexOf(when(p){"openai"->initial.openaiVoice;"openrouter"->initial.routerVoice;"avalai"->initial.compatVoice;else->initial.voice}).coerceAtLeast(0))
+            model.setText(when(p){"openai"->initial.openaiModel;"openrouter"->initial.routerModel;"avalai"->initial.compatModel;else->initial.model})
             speechGroup.visibility=if(p=="openrouter")View.VISIBLE else View.GONE
+            compatGroup.visibility=if(p=="avalai")View.VISIBLE else View.GONE;base.error=null;compatSpeech.error=null
             note.text=when(p){
                 "openai"->tr("OpenAI Realtime: live voice and images. Enter your own OpenAI API key; API usage is billed separately from ChatGPT.","OpenAI Realtime: صدا و تصویر زنده. کلید API خودتان را وارد کنید؛ مصرف API از اشتراک ChatGPT جداست.")
                 "openrouter"->tr("Turn-based conversation: wait for Listening before speaking again. The model must accept audio + images. Recommended: google/gemini-3.5-flash-lite. Speech uses the separate model below; both requests use the OpenRouter key and may cost credit.","مکالمه نوبتی است؛ برای صحبت دوباره منتظر حالت شنیدن بمانید. مدل باید صدا و تصویر را دریافت کند. پیشنهاد: google/gemini-3.5-flash-lite. تولید صدا با مدل جداگانهٔ زیر است؛ هر دو درخواست از کلید OpenRouter استفاده می‌کنند و ممکن است اعتبار مصرف کنند.")
+                "avalai"->tr("Turn-based conversation through AvalAI or another OpenAI-compatible HTTPS service: wait for Listening before speaking again. The conversation model must accept audio + images; speech uses the speech model below. Both requests use this service's key.","مکالمهٔ نوبتی از طریق AvalAI یا سرویس HTTPS سازگار با OpenAI؛ برای صحبت دوباره منتظر «در حال شنیدن» بمانید. مدل مکالمه باید صدا و تصویر را بپذیرد و صدا با مدل تولید صدای زیر ساخته می‌شود. هر دو درخواست با کلید همین سرویس است.")
                 else->tr("Google Gemini Live: live voice and images. Use your Google AI Studio API key.","Google Gemini Live: صدا و تصویر زنده. کلید API از Google AI Studio وارد کنید.")
             }
             presets.removeAllViews()
-            val ids=when(p){"openai"->listOf("gpt-realtime","gpt-realtime-2");"openrouter"->listOf("google/gemini-3.5-flash-lite","qwen/qwen3.8-omni-flash");else->listOf(VoiceSettings.DEFAULT_MODEL)}
+            val ids=when(p){"openai"->listOf("gpt-realtime","gpt-realtime-2");"openrouter"->listOf("google/gemini-3.5-flash-lite","qwen/qwen3.8-omni-flash");"avalai"->listOf("gemini-2.5-flash","gpt-4o-audio-preview");else->listOf(VoiceSettings.DEFAULT_MODEL)}
             ids.forEach{id->presets.addView(activity.button(id){model.setText(id)})}
         }
         provider.onItemSelectedListener=object:AdapterView.OnItemSelectedListener{
@@ -74,8 +82,11 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         save.setOnClickListener{
             val p=selected();val keyStore=keys(p);val pasted=input.text?.toString().orEmpty();val value=VoiceApiKey.normalize(pasted)
             val id=model.text?.toString().orEmpty().trim().removePrefix("models/")
-            val valid=when(p){"openai"->VoiceSettings.validOpenaiModel(id);"openrouter"->VoiceSettings.validRouterModel(id);else->VoiceSettings.validModel(id)}
+            val valid=when(p){"openai"->VoiceSettings.validOpenaiModel(id);"openrouter"->VoiceSettings.validRouterModel(id);"avalai"->VoiceSettings.validCompatModel(id);else->VoiceSettings.validModel(id)}
             if(!valid){model.error=activity.s("voice_model_error");return@setOnClickListener}
+            val baseUrl=base.text?.toString().orEmpty().trim().trimEnd('/');val speechId=compatSpeech.text?.toString().orEmpty().trim()
+            if(p=="avalai" && !VoiceSettings.validCompatBase(baseUrl)){base.error=tr("Enter an https:// address","یک آدرس https:// وارد کنید");return@setOnClickListener}
+            if(p=="avalai" && !VoiceSettings.validCompatModel(speechId)){compatSpeech.error=activity.s("voice_model_error");return@setOnClickListener}
             if(value.isEmpty() && !keyStore.hasKey()){input.error=activity.s("voice_key_missing");return@setOnClickListener}
             if(value.isNotEmpty() && !VoiceApiKey.isAcceptable(value)){input.error=activity.s("voice_key_invalid");return@setOnClickListener}
             input.error=null;model.error=null
@@ -83,6 +94,7 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
             val updated=when(p){
                 "openai"->initial.copy(provider=p,openaiModel=id,openaiVoice=chosenVoice)
                 "openrouter"->initial.copy(provider=p,routerModel=id,routerVoice=chosenVoice,routerSpeechModel=VoiceSettings.routerSpeechModels[speech.selectedItemPosition])
+                "avalai"->initial.copy(provider=p,compatBase=baseUrl,compatModel=id,compatSpeechModel=speechId,compatVoice=chosenVoice)
                 else->initial.copy(provider=p,model=id,voice=chosenVoice)
             }
             changed();save.isEnabled=false;remove.isEnabled=false;provider.isEnabled=false
@@ -101,7 +113,7 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         val initial=VoiceSettings.load(activity)
         val content=activity.column().apply{setPadding(activity.dp(16),activity.dp(8),activity.dp(16),activity.dp(8))}
         content.addView(Switch(activity).apply{
-            text=tr("Enable educational assistant","فعال‌سازی دستیار آموزشی")
+            text=tr("Enable smart assistant","فعال‌سازی دستیار هوشمند")
             isChecked=VoiceSettings.enabled(activity)
             setOnCheckedChangeListener{_,value->VoiceSettings.setEnabled(activity,value);changed()}
         })

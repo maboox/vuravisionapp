@@ -1,6 +1,6 @@
 <resources>
-    <string name="voice_assistant">دستیار صوتی</string>
-    <string name="voice_behavior">رفتار دستیار صوتی</string>
+    <string name="voice_assistant">دستیار هوشمند</string>
+    <string name="voice_behavior">رفتار دستیار هوشمند</string>
     <string name="voice_stop">پایان مکالمه</string>
     <string name="voice_connecting">در حال اتصال…</string>
     <string name="voice_reconnecting">اتصال دوباره…</string>

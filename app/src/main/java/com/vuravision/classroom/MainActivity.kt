@@ -297,6 +297,7 @@ class MainActivity : Activity() {
         rooms?.refreshPresence()
         if(!::dock.isInitialized)return
         syncPdfWorkspace()
+        pdfPane?.refreshTools()
         if(sidePanelPage!=null && sidePanelPage!==store.page)closeSidePanel()
         if(splitControlsPage!==store.page)refreshSplitControls()
         refreshSelectionBar()
@@ -589,7 +590,7 @@ class MainActivity : Activity() {
     private fun runShortcut(key:String){
         if(rooms?.active==true&&key in listOf("new","open","recent","language","ui_size")){toast(s("room_leave_first"));return}
         when(key){
-            "undo"->board.undo();"redo"->board.redo();"clear_page"->clearPageDialog()
+            "undo"->board.undo();"redo"->board.redo();"clear_page"->clearPageNow()
             "pen","erase","select","pan"->{board.tool=key;board.clearSelection();refreshDock()}
             "shape"->shapes();"fill"->fillSettings()
             "color"->{val c=column().apply{pad(12)};val d=dialog(s("color"),c);val pane=store.page.panes[board.activePane];palette(c,if(store.page.visiblePaneCount>1)pane.color else board.inkColor){color->if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=color}else board.inkColor=color;savePens();d.dismiss()}}
@@ -1349,13 +1350,14 @@ class MainActivity : Activity() {
         (whiteboard.parent as? ViewGroup)?.removeView(whiteboard)
         workspaceHost.removeAllViews()
         if(state==null){workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1));return}
-        val reader=PdfPane(this,state,media,{board},{activateBoard(it)},{projectChanged()},{projectChanged()},{pdfMenu()})
+        val reader=PdfPane(this,state,media,{board},{activateBoard(it)},{projectChanged()},{projectChanged()},{pdfMenu()},{savePens();refreshDock()})
         pdfPane=reader
         val split=PdfSplitLayout(this,state,whiteboard,reader){projectChanged()}
         workspaceHost.addView(split,FrameLayout.LayoutParams(-1,-1).apply{setMargins(dp(78),dp(76),dp(12),dp(76))})
     }
     private fun refreshPdfPresentation(){
         (pdfPane?.parent as? PdfSplitLayout)?.applyPresentation()
+        workspaceHost.post{if(!destroyed){pdfPane?.redraw();whiteboard.sceneChanged()}}
     }
     private fun choosePdfImport(){
         navigationBuilder(tr("Open PDF","بازکردن PDF"))
@@ -1939,17 +1941,28 @@ class MainActivity : Activity() {
         val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,values.map{it.toString()});setSelection(values.indexOf(HistorySettings.load(this@MainActivity)).coerceAtLeast(0))};c.addView(pick)
         val d=dialog(s("history_settings"),c);c.addView(button(s("apply"),true){val value=values[pick.selectedItemPosition];prefs.edit().putInt("historyLimit",value).apply();projectStore.historyLimit=value;board.store.historyLimit=value;pdfPane?.setHistoryLimit(value);rooms?.setHistoryLimit(value);d.dismiss()})
     }
+    /** Clear unlocked, editable items in the active panel; Undo restores them. */
+    private fun clearActivePane():Boolean{
+        val page=store.page;val pane=board.activePane
+        if(board.hasActiveInteraction||!board.sessionCanEdit)return false
+        val ids=page.items.filter{it.pane==pane&&!it.locked&&page.editable(it)&&board.canEditItem(it)}.map{it.id}.toSet()
+        if(ids.isNotEmpty())store.editMetadata{page.items.removeAll{it.id in ids};page.items.filter{it.parentNode in ids}.forEach{it.parentNode=""}}
+        board.clearSelection();return ids.isNotEmpty()
+    }
     private fun addClearSlider(c:LinearLayout,done:()->Unit){
         val targetBoard=board;val targetStore=store;val page=store.page;val pane=board.activePane
         val title=if(page.visiblePaneCount>1)tr("Slide to clear this panel","برای پاک کردن این بخش بکشید")else tr("Slide to clear page","برای پاک کردن صفحه بکشید")
         c.addView(SlideToClearView(this,title){
-            if(board!==targetBoard||targetStore.page!==page||board.activePane!=pane||board.hasActiveInteraction||!board.sessionCanEdit)return@SlideToClearView
-            val ids=page.items.filter{it.pane==pane&&!it.locked&&page.editable(it)&&board.canEditItem(it)}.map{it.id}.toSet()
-            if(ids.isNotEmpty())targetStore.editMetadata{page.items.removeAll{it.id in ids};page.items.filter{it.parentNode in ids}.forEach{it.parentNode=""}}
-            board.clearSelection();done()
-        },LinearLayout.LayoutParams(-1,dp(64)))
+            if(board!==targetBoard||targetStore.page!==page||board.activePane!=pane)return@SlideToClearView
+            clearActivePane();done()
+        },LinearLayout.LayoutParams(dp(320),dp(64)).apply{gravity=Gravity.CENTER_HORIZONTAL})
     }
-    private fun clearPageDialog(){val c=column().apply{pad(16)};val d=dialog(s("clear_page"),c);addClearSlider(c){d.dismiss()}}
+    /** Pie/shortcut clear acts immediately; the undo action replaces a confirmation step. */
+    private fun clearPageNow(){
+        if(!clearActivePane())return
+        com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Page cleared","صفحه پاک شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+            .setAction(tr("Undo","بازگردانی")){board.undo()}.show()
+    }
 
     private fun engineering() {
         val keys=listOf("shared_room","history_settings","report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
@@ -2183,7 +2196,7 @@ class MainActivity : Activity() {
                         if(reason!=null)toast(s(reason))
                     }
                     val audio=VoiceAudio(this,if(settings.provider=="openai")24000 else 16000)
-                    val assistant:VoiceConversation=if(settings.provider=="openrouter")RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
+                    val assistant:VoiceConversation=if(settings.provider in listOf("openrouter","avalai"))RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key,RouterEndpoint.of(settings)),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
                         else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
                     voiceAssistant=assistant
                     assistant.setMuted(voiceMuted)

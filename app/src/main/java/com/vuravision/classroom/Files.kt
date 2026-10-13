@@ -38,6 +38,8 @@ class Media(val context: Context) {
     private val imageWorker=Executors.newSingleThreadExecutor()
     private val pending = java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val failed = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    // Memory failures are transient (for example after leaving fullscreen); retry them after a pause instead of forever showing a blank page.
+    private val memoryFailed = java.util.concurrent.ConcurrentHashMap<String,Long>()
     private class Session(file:File):java.io.Closeable {
         private val fd=ParcelFileDescriptor.open(file,ParcelFileDescriptor.MODE_READ_ONLY)
         val renderer=try{PdfRenderer(fd)}catch(e:Exception){fd.close();throw e}
@@ -99,13 +101,15 @@ class Media(val context: Context) {
         val fallback=(listOfNotNull(held)+listOf(2560,1536,768,256).mapNotNull{cache.get(prefix+it)}).maxByOrNull{maxOf(it.width,it.height)}
         if(fallback!=null && maxOf(fallback.width,fallback.height)>=size-1)return fallback
         if(failed.contains(key))return fallback
+        memoryFailed[key]?.let{if(android.os.SystemClock.uptimeMillis()-it<2000)return fallback else memoryFailed.remove(key)}
         if(pending.add(key)){
             val copy=item.copy()
             val action:()->Unit={
                 try {
                     if(!closed){val bitmap=load(copy,size);if(!closed){cache.put(key,bitmap);assetReady(copy.asset)}else bitmap.recycle()}
                 } catch(e:Exception){if(!closed){failed.add(key);error(e.javaClass.simpleName)}}
-                catch(e:OutOfMemoryError){cache.evictAll();if(!closed){failed.add(key);error("Image memory limit")}}
+                catch(e:OutOfMemoryError){cache.evictAll();if(!closed){memoryFailed[key]=android.os.SystemClock.uptimeMillis();error("Image memory limit")
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({if(!closed)assetReady(copy.asset)},2100)}}
                 finally { pending.remove(key);if(!closed)ready() }
             }
             try {

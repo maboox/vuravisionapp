@@ -57,7 +57,7 @@ class VoiceAssistant(
     @Volatile private var connection=0
     private var handle:String?=null
     private var failures=0
-    private var greeted=false
+    private var sessionStarted=false
     @Volatile private var micStarted=false
     private var reconnecting=false
     private var reconnectRequested=false
@@ -116,7 +116,7 @@ class VoiceAssistant(
                                 }catch(_:Exception){stop("voice_audio_error");return@ui}
                             }
                             notifyState("voice_listening")
-                            if(!greeted){greeted=true;if(!next.send(codec.greeting()))stop("voice_network_error")}
+                            sessionStarted=true
                         }
                         if(packet.interrupted || packet.complete)notifyState("voice_listening")
                         else if(packet.audio.isNotEmpty())notifyState("voice_speaking")
@@ -136,7 +136,7 @@ class VoiceAssistant(
     private fun reconnect(){
         if(!active || reconnecting)return
         // OpenAI does not resume a dropped WebSocket session; do not silently lose lesson context.
-        if(settings.provider=="openai" && greeted){stop("voice_network_error");return}
+        if(settings.provider=="openai" && sessionStarted){stop("voice_network_error");return}
         if(failures++>=2){stop("voice_network_error");return}
         reconnecting=true;ready=false;++connection
         wire?.close();wire=null;audio.interrupt();notifyState("voice_reconnecting")

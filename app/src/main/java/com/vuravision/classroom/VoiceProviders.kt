@@ -24,7 +24,6 @@ interface VoiceConversation {
 
 interface LiveVoiceCodec {
     fun setup(settings:VoiceSettings,knowledge:String,resume:String?):String
-    fun greeting():String
     fun audio(bytes:ByteArray,count:Int):String
     fun image(jpeg:ByteArray):String
     fun parse(message:String):VoiceProtocol.Packet
@@ -32,7 +31,6 @@ interface LiveVoiceCodec {
 
 object GeminiVoiceCodec:LiveVoiceCodec {
     override fun setup(settings:VoiceSettings,knowledge:String,resume:String?)=VoiceProtocol.setup(settings,knowledge,resume)
-    override fun greeting()=VoiceProtocol.greeting()
     override fun audio(bytes:ByteArray,count:Int)=VoiceProtocol.audio(bytes,count)
     override fun image(jpeg:ByteArray)=VoiceProtocol.image(jpeg)
     override fun parse(message:String)=VoiceProtocol.parse(message)
@@ -50,8 +48,6 @@ object OpenaiVoiceCodec:LiveVoiceCodec {
                 .put("output",JSONObject().put("format",format).put("voice",settings.openaiVoice)))
         return JSONObject().put("type","session.update").put("session",session).toString()
     }
-    override fun greeting()=JSONObject().put("type","response.create").put("response",JSONObject()
-        .put("instructions","با سلام کوتاه بگو دستیار آموزشی هستم و بپرس چطور می‌توانی کمک کنی؛ بعد منتظر سؤال بمان. نام برند، شرکت یا مدل را نگو.")).toString()
     override fun audio(bytes:ByteArray,count:Int)=JSONObject().put("type","input_audio_buffer.append")
         .put("audio",Base64.encodeToString(bytes,0,count,Base64.NO_WRAP)).toString()
     override fun image(jpeg:ByteArray)=JSONObject().put("type","conversation.item.create")

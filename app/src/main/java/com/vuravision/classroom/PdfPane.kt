@@ -14,7 +14,12 @@ class PdfPane(
     private val edited:()->Unit,
     private val viewChanged:()->Unit,
     private val menu:()->Unit,
+    private val toolsChanged:()->Unit={},
 ):LinearLayout(context) {
+    private val inkStrip=PdfInkStrip(context,currentBoard){toolsChanged()}
+    fun refreshTools()=inkStrip.refresh()
+    /** After fullscreen/split changes, re-render mounted sheets once the new geometry is laid out. */
+    fun redraw(){if(disposed)return;boards.values.forEach{it.sceneChanged()};scheduleMaterialize()}
     private val sheets=LinearLayout(context).apply{orientation=VERTICAL;layoutDirection=View.LAYOUT_DIRECTION_LTR}
     private val scroll=ScrollView(context).apply{isFillViewport=false;addView(sheets);setBackgroundColor(0xffe1e5eb.toInt())}
     private val horizontal=object:HorizontalScrollView(context){
@@ -115,6 +120,7 @@ class PdfPane(
         bar.addView(context.button("›"){goTo(state.current+1)})
         bar.addView(context.button("−"){setZoom((state.zoom-.25f).coerceAtLeast(1f))})
         bar.addView(context.button("＋"){setZoom((state.zoom+.25f).coerceAtMost(3f))})
+        bar.addView(inkStrip,LayoutParams(-2,-2).apply{marginStart=context.dp(12)})
         addView(HorizontalScrollView(context).apply{addView(bar);isFillViewport=true;isHorizontalScrollBarEnabled=false})
         pageNumber.setOnClickListener {
             val input=context.field((state.current+1).toString()).apply{inputType=android.text.InputType.TYPE_CLASS_NUMBER}

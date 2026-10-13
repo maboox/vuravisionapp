@@ -47,7 +47,8 @@ class VoiceAssistantTest {
         val defaults=VoiceSettings.load(context)
         assertEquals("warm",defaults.tone);assertEquals("short",defaults.length)
         val prompt=defaults.instruction("guide test")
-        listOf("دستیار آموزشی هستم","متوجه نشدم، لطفاً دوباره بگید.","همیشه به فارسی","هرگز عصبانی","جواب نهایی","هیچ ابزار تغییر","guide test").forEach{assertTrue(it,prompt.contains(it))}
+        listOf("دستیار هوشمند هستم","هرگز خودتان را «هوش مصنوعی»","سلام یا معرفی خودکار نکنید","متوجه نشدم، لطفاً دوباره بگید.","همیشه به فارسی","هرگز عصبانی","جواب نهایی","هیچ ابزار تغییر","guide test").forEach{assertTrue(it,prompt.contains(it))}
+        assertFalse(prompt.contains("در اولین شروع مکالمه"))
         val updated=defaults.copy(tone="formal",length="detailed",extra="برای پایهٔ پنجم توضیح بده",panelNotes="پنل ۷۵ اینچ",frameSeconds=5,sessionMinutes=30)
         updated.save(context);assertEquals(updated,VoiceSettings.load(context))
         assertFalse(VoiceSettings.validModel("gemini-live?key=secret"))

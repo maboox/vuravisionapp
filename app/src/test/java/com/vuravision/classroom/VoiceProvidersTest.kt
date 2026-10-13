@@ -115,6 +115,21 @@ class VoiceProvidersTest {
         assertEquals(listOf("text","image_url","input_audio"),(0 until content.length()).map{content.getJSONObject(it).getString("type")})
         assertFalse(request.has("tools"));assertEquals("wav",content.getJSONObject(2).getJSONObject("input_audio").getString("format"))
     }
+    @Test fun avalaiUsesCompatibleGatewaySettingsAndOwnKey(){
+        val settings=VoiceSettings(provider="avalai",compatModel="gpt-4o-audio-preview",compatSpeechModel="gpt-4o-mini-tts",compatVoice="nova")
+        settings.save(context);assertEquals(settings,VoiceSettings.load(context))
+        val endpoint=RouterEndpoint.of(settings)
+        assertEquals("https://api.avalai.ir/v1",endpoint.base);assertFalse(endpoint.openRouter)
+        assertEquals("gpt-4o-audio-preview",JSONObject(RouterVoiceProtocol.request(settings,"guide",emptyList(),byteArrayOf(1,2),null)).getString("model"))
+        val speech=JSONObject(RouterVoiceProtocol.speech(settings,"سلام"))
+        assertEquals("gpt-4o-mini-tts",speech.getString("model"));assertEquals("nova",speech.getString("voice"));assertEquals("pcm",speech.getString("response_format"))
+        assertTrue(speech.has("instructions"));assertFalse(speech.has("provider"))
+        assertTrue(RouterEndpoint.of(VoiceSettings(provider="openrouter")).openRouter)
+        assertTrue(VoiceSettings.validCompatBase("https://gateway.example/v1"))
+        for(bad in listOf("http://api.avalai.ir/v1","https://user@api.avalai.ir/v1","https://api.avalai.ir/v1?x=1","https://api.avalai.ir/v1/","ftp://x","https://"))assertFalse(bad,VoiceSettings.validCompatBase(bad))
+        assertFalse(VoiceSettings.validCompatModel("https://evil.test/model"));assertTrue(VoiceSettings.validCompatModel("gemini-2.5-flash"))
+        val keys=VoiceKeys(context);assertNotSame(keys.forProvider("openrouter"),keys.forProvider("avalai"))
+    }
     @Test fun silenceDoesNotSubmitAndSpeechHasBoundedEndpoint(){
         val turns=RouterVoiceTurns();repeat(100){assertNull(turns.push(frame(0),1280))}
         var result:ByteArray?=null

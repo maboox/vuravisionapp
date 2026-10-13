@@ -207,9 +207,11 @@ class Studio116Test {
         call(a,"eraserSettings");dragClear(dialogViews().filterIsInstance<SlideToClearView>().single())
         assertEquals(setOf(locked.id,other.id),a.store.page.items.map{it.id}.toSet());assertEquals(count+1,a.store.undoCount);a.store.undo();assertEquals(3,a.store.page.items.size)
     }}
-    @Test fun pieCatalogIncludesClearPageAndItsCommandUsesTheSlider(){withActivity{a->
+    @Test fun pieClearPageActsDirectlyAndUndoRestores(){withActivity{a->
+        val locked=Item(kind="shape",locked=true);val local=Item(kind="shape");a.store.page.items.addAll(listOf(locked,local));val count=a.store.undoCount
         assertTrue("clear_page" in ShortcutCatalog.keys);MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"clear_page")
-        assertEquals(1,dialogViews().filterIsInstance<SlideToClearView>().size);ShadowDialog.getLatestDialog().dismiss()
+        ShadowDialog.getLatestDialog()?.let{d->assertTrue(views(d.window!!.decorView).none{it is SlideToClearView})};assertEquals(setOf(locked.id),a.store.page.items.map{it.id}.toSet());assertEquals(count+1,a.store.undoCount)
+        a.store.undo();assertEquals(2,a.store.page.items.size)
     }}
     @Test fun pageActionsAreDirectAndDuplicatePreservesTheDormantCanvas(){withActivity{a->
         a.board.split(2);a.store.page.items.add(Item(kind="shape",pane=1));a.board.split(1);val old=a.store.page.alternateCanvas!!.items.single().id;call(a,"pages")
