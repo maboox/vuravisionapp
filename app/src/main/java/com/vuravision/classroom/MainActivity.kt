@@ -405,6 +405,7 @@ class MainActivity : Activity() {
             .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.visiblePaneCount-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show().also{shown(it)}
     }
     private fun refreshSplitControls(){
+        closePaneBar()
         splitControls?.let{canvasHost.removeView(it)};splitControls=null;splitControlsPage=store.page
         val n=store.page.visiblePaneCount;if(n==1||focusMode||canvasHost.width==0)return
         val overlay=FrameLayout(this);splitControls=overlay
@@ -412,26 +413,59 @@ class MainActivity : Activity() {
         val columns=n
         store.page.panes.take(n).forEachIndexed{i,pane->
             val actions=row().apply{pad(2)};surface(actions)
-            actions.addView(icon("pen",tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")){
-                val c=column().apply{pad(12)};palette(c,pane.color){color->store.editMetadata{pane.color=color}}
-                slider(c,tr("Thickness","ضخامت"),pane.penWidth,undoable=true){width->pane.penWidth=width}
-                val styles=row();c.addView(scrollRow(styles))
-                PenStyles.selectable.forEach{key->val title=PenStyles.name(this,key)
-                    styles.addView(button(title){store.editMetadata{pane.penStyle=key};toast(title)})
-                }
-                slider(c,tr("Dash length","طول خط‌چین"),pane.dashLength,80,undoable=true){v->pane.dashLength=v}
-                slider(c,tr("Dash gap","فاصلهٔ خط‌چین"),pane.dashGap,80,undoable=true){v->pane.dashGap=v}
-                dialog(tr("Panel ${i+1}: pen","بخش ${i+1}: قلم"),ScrollView(this).apply{addView(c)})
-            })
-            actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){
-                backgroundSettings(i)
-            })
+            actions.addView(icon("pen",tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")){paneBar(i,true)})
+            actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){paneBar(i,false)})
             val controlWidth=min(dp(100),(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
             overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,dp(52)).apply{
-                leftMargin=(i+1)*canvasHost.width/columns-controlWidth-dp(6)
+                val (freeLeft,freeRight)=freeSpan()
+                leftMargin=((i+1)*canvasHost.width/columns-controlWidth-dp(6)).coerceAtMost(freeRight-controlWidth).coerceAtLeast(maxOf(freeLeft,i*canvasHost.width/columns))
                 topMargin=(canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)).coerceAtLeast(dp(12))
             })
         }
+    }
+    private var paneBarView:View?=null
+    private var paneBarKey=""
+    private fun closePaneBar(){paneBarView?.let{(it.parent as? ViewGroup)?.removeView(it)};paneBarView=null;paneBarKey=""}
+    /**
+     * A small bar inside the split panel itself, just above its controls: the teacher at that panel sees the
+     * change in place, and other panels stay untouched (a centered dialog covered every panel).
+     */
+    private fun paneBar(index:Int,pen:Boolean){
+        val key="$index:$pen";val reopen=paneBarKey!=key;closePaneBar();if(!reopen)return
+        val page=store.page;val pane=page.panes[index];val n=page.visiblePaneCount
+        board.applySharedPane(index)
+        val bar=column().apply{setPadding(dp(10),dp(8),dp(10),dp(10));background=rounded(SURFACE,dp(18).toFloat(),OUTLINE);elevation=dp(8).toFloat();isClickable=true}
+        bar.addView(label(if(pen)tr("Panel ${index+1} · pen","بخش ${index+1} · قلم")else tr("Panel ${index+1} · background","بخش ${index+1} · پس‌زمینه"),14f,MUTED,true).apply{gravity=Gravity.CENTER})
+        fun chip(title:String,active:Boolean,run:()->Unit)=label(title,14f,if(active)Color.WHITE else NAVY,true).apply{
+            gravity=Gravity.CENTER;setPadding(dp(12),0,dp(12),0);minHeight=dp(40);isClickable=true
+            background=rounded(if(active)NAVY else SURFACE_VARIANT,dp(20).toFloat());setOnClickListener{run()}
+        }
+        fun chips(items:List<Pair<String,String>>,current:String,pick:(String)->Unit)=FlowRow(this,dp(6)).apply{items.forEach{(k,t)->addView(chip(t,k==current){pick(k);paneBarKey="";paneBar(index,pen)},ViewGroup.LayoutParams(-2,-2))}}
+        if(pen){
+            // The dock's ink grid works on the active panel, so the same 6 colors and 3 widths apply here.
+            bar.addView(InkStrip(this,{board},showTools=false,grid=true){refreshDock()},LinearLayout.LayoutParams(-2,-2).apply{gravity=Gravity.CENTER_HORIZONTAL;topMargin=dp(6)})
+            bar.addView(chips(PenStyles.selectable.map{it to PenStyles.name(this,it)},pane.penStyle){k->store.editMetadata{pane.penStyle=k}},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
+        }else{
+            val patterns=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"))
+            bar.addView(chips(patterns,page.pattern(index)){k->store.editMetadata{if(page.pattern(index)=="dark"&&pane.background==Color.WHITE)pane.background=0xff172a36.toInt();pane.pattern=k}},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
+            // White, paper, soft blue, soft green, chalkboard green, dark slate.
+            val colors=listOf(Color.WHITE,0xfffaf6ea.toInt(),0xffeef4ff.toInt(),0xffeaf6ee.toInt(),0xff20392f.toInt(),0xff172a36.toInt())
+            bar.addView(FlowRow(this,dp(8)).apply{colors.forEach{c->addView(View(this@MainActivity).apply{
+                background=rounded(c,dp(18).toFloat(),if(c==pane.background)NAVY else OUTLINE_STRONG);isClickable=true;contentDescription=tr("Background color","رنگ پس‌زمینه")
+                setOnClickListener{store.editMetadata{if(page.pattern(index)=="dark")pane.pattern="plain";pane.background=c};paneBarKey="";paneBar(index,false)}
+            },ViewGroup.LayoutParams(dp(40),dp(40)))}},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
+        }
+        // Inside this panel and, where the panel meets the dock, beside the dock rather than under it.
+        val paneWidth=canvasHost.width/n;val (freeLeft,freeRight)=freeSpan()
+        val left0=maxOf(index*paneWidth+dp(8),freeLeft);val right0=minOf((index+1)*paneWidth-dp(8),freeRight)
+        val width=(right0-left0).coerceAtMost(dp(320)).coerceAtLeast(dp(160))
+        bar.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.UNSPECIFIED)
+        val controlsTop=canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)
+        canvasHost.addView(bar,FrameLayout.LayoutParams(width,-2,Gravity.TOP or Gravity.LEFT).apply{
+            leftMargin=(left0+(right0-left0-width)/2).coerceAtLeast(left0)
+            topMargin=(controlsTop-bar.measuredHeight-dp(8)).coerceAtLeast(dp(12))
+        })
+        paneBarView=bar;paneBarKey=key
     }
     private fun refreshPages() {
         if(!::pageStrip.isInitialized)return
@@ -1384,7 +1418,9 @@ class MainActivity : Activity() {
         pdfPane?.dispose();pdfPane=null
         (whiteboard.parent as? ViewGroup)?.removeView(whiteboard)
         workspaceHost.removeAllViews()
-        if(state==null){workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1));return}
+        // PDF fullscreen hides the board (GONE) inside the split layout; it must be visible again on its own.
+        whiteboard.visibility=View.VISIBLE
+        if(state==null){workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1));whiteboard.sceneChanged();return}
         val reader=PdfPane(this,state,media,{board},{activateBoard(it)},{projectChanged()},{projectChanged()},{pdfMenu()},{savePens();refreshDock()})
         pdfPane=reader
         val split=PdfSplitLayout(this,state,whiteboard,reader){projectChanged()}
@@ -1885,7 +1921,8 @@ class MainActivity : Activity() {
 
     private fun settings() {
         val keys=mutableListOf("device_profile","language","fonts","google_search_settings","ui_size","models","input_controls","pie_settings","page_background","calibration","cache","about")
-        if(VoiceSettings.enabled(this))keys.add(2,"voice_assistant")
+        // Always listed: turning the assistant on, choosing the service and changing its key all live here.
+        keys.add(2,"voice_assistant")
         // Engineering is intentionally only reachable through the hidden About logo gesture.
         choices(s("settings"),keys){index->
             if(rooms?.active==true&&keys[index] in listOf("language","ui_size")){toast(s("room_leave_first"));return@choices}
@@ -2194,6 +2231,12 @@ class MainActivity : Activity() {
     override fun dispatchTouchEvent(event:MotionEvent):Boolean {
         lastUserTouch=SystemClock.uptimeMillis()
         if(event.actionMasked==MotionEvent.ACTION_DOWN && ::toolDock.isInitialized)toolDock.touchedAt(event.rawX,event.rawY)
+        // A touch outside the panel bar closes it, except on the panel buttons, which toggle it themselves.
+        paneBarView?.let{bar->if(event.actionMasked==MotionEvent.ACTION_DOWN){
+            fun hit(v:View):Boolean{val p=IntArray(2);v.getLocationOnScreen(p);return event.rawX>=p[0]&&event.rawX<p[0]+v.width&&event.rawY>=p[1]&&event.rawY<p[1]+v.height}
+            val onControls=splitControls?.let{o->(0 until o.childCount).any{hit(o.getChildAt(it))}}==true
+            if(!hit(bar)&&!onControls)handler.post{if(paneBarView===bar)closePaneBar()}
+        }}
         return super.dispatchTouchEvent(event)
     }
 

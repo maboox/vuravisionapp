@@ -8,8 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 
-/** One saved pen: ink or highlighter with its own color and width. */
-data class PenPreset(val highlight:Boolean,val color:Int,val width:Float)
+/** One saved pen: ink or highlighter with its own color, width and line style (round, dashed, ...). */
+data class PenPreset(val highlight:Boolean,val color:Int,val width:Float,val style:String="round")
 
 /**
  * Side dock for large panels: three pen presets, eraser, select, the most recent inserted tool,
@@ -29,7 +29,8 @@ class ToolDock(
         val defaults=listOf(PenPreset(false,NAVY,4f),PenPreset(false,0xffdc2626.toInt(),8f),PenPreset(true,0xffffcf40.toInt(),6f))
         /** Tools that can occupy the "recent" slot after being used from the Add panel. */
         val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill")
-        fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f))}
+        fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f),
+            prefs.getString("dockPen${i}Style",d.style)?.takeIf{it in PenStyles.keys}?:d.style)}
     }
     // Centered children: icons and dividers share one vertical axis whatever the button size.
     private val column=context.column().apply{gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6))}
@@ -112,7 +113,7 @@ class ToolDock(
         if(already){stripShown=!stripShown;refresh();post{place()};return}
         prefs.edit().putInt("dockPen",i).apply()
         b.tool=if(preset.highlight)"highlight" else "pen";b.clearSelection()
-        if(b.store.page.visiblePaneCount==1){if(preset.highlight){b.highlightColor=preset.color;b.highlightWidth=preset.width}else{b.penColor=preset.color;b.penWidth=preset.width}}
+        if(b.store.page.visiblePaneCount==1){if(preset.highlight){b.highlightColor=preset.color;b.highlightWidth=preset.width}else{b.penColor=preset.color;b.penWidth=preset.width;b.penStyle=preset.style}}
         stripShown=true;changed();refresh();post{place()}
     }
     private fun tool(key:String){
@@ -130,7 +131,9 @@ class ToolDock(
     private fun savePreset(){
         val b=board();val i=activePreset();if(b.store.page.visiblePaneCount>1)return
         val highlight=b.tool=="highlight";if(highlight!=defaults[i].highlight)return
-        prefs.edit().putInt("dockPen${i}Color",if(highlight)b.highlightColor else b.penColor).putFloat("dockPen${i}Width",if(highlight)b.highlightWidth else b.penWidth).apply()
+        val edit=prefs.edit().putInt("dockPen${i}Color",if(highlight)b.highlightColor else b.penColor).putFloat("dockPen${i}Width",if(highlight)b.highlightWidth else b.penWidth)
+        if(!highlight)edit.putString("dockPen${i}Style",b.penStyle)
+        edit.apply()
     }
     private fun toggleAdd(){
         if(addPanel!=null){closeAdd();return}
@@ -195,6 +198,8 @@ class ToolDock(
         if(!visible){closeAdd();stripHost.visibility=View.GONE}else refresh()
     }
     fun refresh(){
+        // Changes made in full pen settings (style, color, width) belong to the active preset only.
+        if(board().tool==(if(defaults[activePreset()].highlight)"highlight" else "pen"))savePreset()
         val b=board();val editable=b.sessionCanEdit;val presets=presets(prefs);val active=activePreset()
         penButtons.forEachIndexed{i,button->
             val on=i==active && b.tool==(if(presets[i].highlight)"highlight" else "pen")

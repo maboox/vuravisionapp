@@ -120,7 +120,6 @@ class PdfPane(
         bar.addView(context.button("›"){goTo(state.current+1)})
         bar.addView(context.button("−"){setZoom((state.zoom-.25f).coerceAtLeast(1f))})
         bar.addView(context.button("＋"){setZoom((state.zoom+.25f).coerceAtMost(3f))})
-        bar.addView(inkStrip,LayoutParams(-2,-2).apply{marginStart=context.dp(12)})
         addView(HorizontalScrollView(context).apply{addView(bar);isFillViewport=true;isHorizontalScrollBarEnabled=false})
         pageNumber.setOnClickListener {
             val input=context.field((state.current+1).toString()).apply{inputType=android.text.InputType.TYPE_CLASS_NUMBER}
@@ -128,6 +127,8 @@ class PdfPane(
                 .setPositiveButton(context.s("apply")){_,_->input.text.toString().toIntOrNull()?.let{goTo(it-1)}}.setNegativeButton(context.s("cancel"),null).show()
         }
         addView(horizontal,LayoutParams(-1,0,1f))
+        // Ink tools get their own bar at the bottom: always fully visible, also in fullscreen, never scrolled away.
+        addView(inkStrip.apply{setPadding(context.dp(8),context.dp(6),context.dp(8),context.dp(6));setBackgroundColor(SURFACE);elevation=context.dp(2).toFloat()},LayoutParams(-1,-2))
         state.sheets.forEachIndexed{i,_->
             val frame=FrameLayout(context).apply{setBackgroundColor(Color.WHITE);contentDescription="PDF ${i+1}"}
             frame.addView(context.label("${i+1}",20f,MUTED).apply{gravity=Gravity.CENTER},FrameLayout.LayoutParams(-1,-1))

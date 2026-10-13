@@ -113,6 +113,59 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
 
+    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun open(language:String="fa"):org.robolectric.android.controller.ActivityController<MainActivity>{
+        context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
+        return Robolectric.buildActivity(MainActivity::class.java).setup()
+    }
+
+    /** Device report: PDF fullscreen, then Close PDF workspace, left an empty board (it stayed hidden). */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun closingFullscreenPdfShowsTheBoard(){
+        val ctl=open();val a=ctl.get()
+        try{
+            val board=a.board;val state=PdfWorkspaceState(asset="source.pdf",sheets=mutableListOf(PdfSheet(page=Page())))
+            a.store.editMetadata{a.store.lesson.pdf=state};call(a,"syncPdfWorkspace");settle(a)
+            state.fullscreen=true;call(a,"refreshPdfPresentation");settle(a);assertFalse("board should hide in PDF fullscreen",board.isShown)
+            a.store.editMetadata{a.store.lesson.pdf=null};call(a,"syncPdfWorkspace");settle(a)
+            assertTrue("board must be visible after closing the PDF workspace",board.isShown)
+            assertTrue(board.width>0&&board.height>0);shot(a,"pdf-closed-after-fullscreen")
+        }finally{ctl.pause().stop().destroy()}
+    }
+
+    /** Device report: setting one pen to dashed changed the others. Each preset keeps its own style. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun penPresetsKeepTheirOwnStyle(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);val pens=views(dock(a)).filterIsInstance<WorkspaceIcon>().filter{it.key=="pen"}
+            pens[0].performClick();settle(a);a.board.penStyle="dashed";a.board.onSelection();settle(a)
+            pens[1].performClick();settle(a);assertEquals("second pen took the first pen's style","round",a.board.penStyle)
+            pens[0].performClick();settle(a);assertEquals("first pen lost its style","dashed",a.board.penStyle)
+        }finally{ctl.pause().stop().destroy()}
+    }
+
+    /** Device report: split-panel pen/background settings opened a dialog over every panel. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun splitPanelSettingsOpenInsideThatPanel(){
+        val ctl=open();val a=ctl.get()
+        try{
+            a.board.split(3);a.board.onSelection();settle(a)
+            val area=canvas(a)
+            for(i in 0 until 3)for(pen in listOf(true,false)){
+                val title=if(pen)a.tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")else a.tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")
+                views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.contentDescription==title}.performClick();settle(a)
+                assertNull("panel ${i+1}: a dialog opened",org.robolectric.shadows.ShadowDialog.getLatestDialog()?.takeIf{it.isShowing})
+                val bar=views(a.window.decorView).first{v->v is TextView&&v.text.toString().startsWith(a.tr("Panel ${i+1} ·","بخش ${i+1} ·"))}.parent as View
+                val r=rect(bar);val paneLeft=area.left+i*area.width()/3;val paneRight=area.left+(i+1)*area.width()/3
+                assertTrue("panel ${i+1} bar leaves its panel $r",r.left>=paneLeft&&r.right<=paneRight&&area.contains(r))
+                assertFalse("panel ${i+1} bar under the dock",Rect.intersects(r,rect(dock(a))))
+                views(a.window.decorView).filterIsInstance<WorkspaceIcon>().filter{it.contentDescription.toString().startsWith(a.tr("Panel","بخش"))}.forEach{assertFalse("panel button under the dock",Rect.intersects(rect(it),rect(dock(a))))}
+                if(pen)assertEquals("panel ${i+1}: ink options",9,views(bar).count{it.contentDescription==a.tr("Ink color","رنگ قلم")||it.contentDescription==a.tr("Ink width","ضخامت قلم")})
+                shot(a,"split-panel-${i+1}-${if(pen)"pen" else "background"}")
+                val tap=MotionEvent.obtain(0,0,MotionEvent.ACTION_DOWN,area.left+5f,area.top+5f,0);a.dispatchTouchEvent(tap);tap.recycle();settle(a)
+                assertFalse("panel ${i+1}: bar stayed open after touching elsewhere",bar.isAttachedToWindow)
+            }
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panel1080Persian()=run("fa","panel")
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun panel1080English()=run("en","panel")
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panelLargeUi()=run("fa","panel-large",1.4f)

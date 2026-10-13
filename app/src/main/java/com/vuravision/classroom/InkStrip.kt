@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 
 /**
  * One-tap ink color and width.
- * - Row form (PDF header): optional pen/highlighter/eraser, then colors and widths in one scrollable row.
+ * - Bar form (bottom of the PDF view): optional pen/highlighter/eraser, then colors and widths; wraps when narrow.
  * - Grid form (beside the dock): 3×3 — six colors, three widths — plus "More pen settings". About 150dp wide,
  *   so it fits beside the dock even on a phone in portrait, and every option is visible without scrolling.
  */
@@ -39,9 +39,12 @@ class InkStrip(context:Context,private val board:()->Board,showTools:Boolean=tru
                 background=rounded(SURFACE_VARIANT,context.dp(10).toFloat());setOnClickListener{more()}
             },LayoutParams(-1,-2).apply{topMargin=context.dp(6)})
         }else{
-            orientation=HORIZONTAL
-            tools.forEach{addView(it,LayoutParams(context.dp(48),context.dp(48)).apply{marginEnd=context.dp(4)})}
-            (swatches+widths).forEachIndexed{i,v->addView(v,LayoutParams(context.dp(44),context.dp(52)).apply{if((i==0&&showTools)||i==swatches.size)marginStart=context.dp(10)})}
+            // Bar form: one centered line that wraps instead of scrolling, so every option stays visible.
+            orientation=VERTICAL
+            val flow=FlowRow(context)
+            tools.forEach{flow.addView(it,LayoutParams(context.dp(48),context.dp(48)))}
+            (swatches+widths).forEach{flow.addView(it,LayoutParams(context.dp(44),context.dp(48)))}
+            addView(flow,LayoutParams(-1,-2))
         }
         refresh()
     }

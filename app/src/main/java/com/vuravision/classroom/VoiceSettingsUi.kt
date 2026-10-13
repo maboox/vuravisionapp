@@ -22,6 +22,10 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         val initial=VoiceSettings.load(activity)
         val content=activity.column().apply{setPadding(activity.dp(16),activity.dp(8),activity.dp(16),activity.dp(8))}
         content.addView(activity.label(tr("Talk in Persian about the visible board and PDF. The assistant only observes and speaks. While active, microphone audio and workspace images go to your selected service. Each service has its own encrypted key. Internet, model access and quota/credit are required.","دربارهٔ تخته و PDF نمایان فارسی صحبت کنید. دستیار فقط می‌بیند و صحبت می‌کند. هنگام فعال‌بودن، صدا و تصویر فضای کار به سرویس انتخابی ارسال می‌شود. کلید هر سرویس جدا و رمزگذاری‌شده ذخیره می‌شود. اینترنت، دسترسی مدل و سهمیه یا اعتبار کافی لازم است."),14f,MUTED))
+        content.addView(Switch(activity).apply{
+            text=tr("Smart assistant on","دستیار هوشمند روشن باشد");textSize=16f;isChecked=VoiceSettings.enabled(activity);minHeight=activity.dp(48)
+            setOnCheckedChangeListener{_,value->VoiceSettings.setEnabled(activity,value);changed()}
+        })
         content.addView(activity.label(tr("Service","سرویس"),14f,NAVY,true))
         val provider=Spinner(activity).apply{adapter=OptionAdapter(activity,listOf("Google Gemini","OpenAI","OpenRouter",tr("AvalAI / OpenAI-compatible","AvalAI / سازگار با OpenAI")));setSelection(VoiceSettings.providers.indexOf(initial.provider))};content.addView(provider)
         val status=activity.label("",14f);content.addView(status)
@@ -79,6 +83,8 @@ class VoiceSettingsUi(private val activity:Activity,private val back:(()->Unit)?
         val dialog=show(activity.s("voice_assistant"),content)
         val save=activity.button(tr("Save key","ذخیرهٔ کلید")){}
         val remove=activity.button(tr("Delete key","حذف کلید")){};content.addView(save);content.addView(remove)
+        // Behavior (tone, answer length, extra instructions) is no longer hidden behind the engineering menu.
+        content.addView(activity.button(activity.s("voice_behavior")){dialog.dismiss();advanced(changed)})
         save.setOnClickListener{
             val p=selected();val keyStore=keys(p);val pasted=input.text?.toString().orEmpty();val value=VoiceApiKey.normalize(pasted)
             val id=model.text?.toString().orEmpty().trim().removePrefix("models/")

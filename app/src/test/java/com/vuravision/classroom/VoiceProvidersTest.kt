@@ -48,7 +48,7 @@ class VoiceProvidersTest {
         override fun close(){closed=true}
     }
     private fun frame(value:Int)=ByteBuffer.allocate(1280).order(ByteOrder.LITTLE_ENDIAN).apply{repeat(640){putShort(value.toShort())}}.array()
-    @Test fun hiddenDefaultAndDisableCancelPendingAndActiveSession(){
+    @Test fun offByDefaultListedInSettingsAndDisableCancelsSession(){
         assertFalse(VoiceSettings.enabled(context))
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
         try{
@@ -57,7 +57,7 @@ class VoiceProvidersTest {
             val settings=MainActivity::class.java.getDeclaredMethod("settings").apply{isAccessible=true}
             settings.invoke(a);val hiddenMenu=ShadowDialog.getLatestDialog()
             val hiddenList=(hiddenMenu as androidx.appcompat.app.AlertDialog).listView.adapter
-            assertFalse((0 until hiddenList.count).map{hiddenList.getItem(it).toString()}.contains(a.s("voice_assistant")));hiddenMenu.dismiss()
+            assertTrue((0 until hiddenList.count).map{hiddenList.getItem(it).toString()}.contains(a.s("voice_assistant")));hiddenMenu.dismiss()
             VoiceSettings.setEnabled(a,true);idle();assertEquals(View.VISIBLE,button.visibility)
             settings.invoke(a);val enabledMenu=ShadowDialog.getLatestDialog()
             val enabledList=(enabledMenu as androidx.appcompat.app.AlertDialog).listView.adapter

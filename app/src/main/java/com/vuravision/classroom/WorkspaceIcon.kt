@@ -12,10 +12,15 @@ import androidx.appcompat.widget.AppCompatImageButton
 open class WorkspaceIcon(context:Context,val key:String,title:String,active:Boolean=false,action:()->Unit):AppCompatImageButton(context){
     /** Square size in dp before the UI scale; the side dock uses larger buttons. */
     var sizeDp=48
-        set(value){field=value;val p=context.dp((value*.26f).toInt());setPadding(p,p,p,p);requestLayout()}
-    /** Optional ink color shown as a dot under the icon (pen presets). */
+        set(value){field=value;pad();requestLayout()}
+    /** Optional ink color shown as a dot under the icon (pen presets). The icon moves up to make room. */
     var dotColor:Int?=null
-        set(value){field=value;invalidate()}
+        set(value){val changed=(field==null)!=(value==null);field=value;if(changed)pad();invalidate()}
+    /** With a dot: smaller top padding, larger bottom padding, so icon and dot never touch (≥4dp apart). */
+    private fun pad(){
+        val p=context.dp((sizeDp*.26f).toInt())
+        if(dotColor==null)setPadding(p,p,p,p)else setPadding(p,(p*.6f).toInt(),p,(p*1.6f).toInt()+context.dp(2))
+    }
     var active=active
         private set
     private val dotPaint=Paint(Paint.ANTI_ALIAS_FLAG)

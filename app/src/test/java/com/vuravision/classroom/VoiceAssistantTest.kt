@@ -137,14 +137,14 @@ class VoiceAssistantTest {
         second.start();stoppedWires[0].events.failed(null);idle();second.stop()
         Shadows.shadowOf(Looper.getMainLooper()).idleFor(2,TimeUnit.SECONDS);assertEquals(1,stoppedWires.size)
     }
-    @Test fun independentButtonAndConnectionSettingsDoNotExposeHiddenBehavior(){
+    @Test fun independentButtonAndConnectionSettingsOfferBehavior(){
         val controller=Robolectric.buildActivity(MainActivity::class.java).setup()
         try{
             val a=controller.get();VoiceSettings.setEnabled(a,true);idle();val button=a.findViewById<Button>(R.id.voice_assistant_button)
             assertNotNull(button);assertEquals(a.s("voice_assistant"),button.text.toString())
             button.performClick();val dialog=ShadowDialog.getLatestDialog()
             val text=views(dialog.window!!.decorView).filterIsInstance<TextView>().joinToString("\n"){it.text.toString()}
-            assertTrue(text.contains("API"));assertFalse(text.contains(a.s("voice_behavior")))
+            assertTrue(text.contains("API"));assertTrue(text.contains(a.s("voice_behavior")))
             dialog.dismiss()
             val hidden=VoiceSettingsUi(a);hidden.advanced{}
             val admin=ShadowDialog.getLatestDialog()

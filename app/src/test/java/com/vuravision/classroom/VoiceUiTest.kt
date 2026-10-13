@@ -25,7 +25,7 @@ class VoiceUiTest {
     }
     @Test fun englishVoiceControlsRenderAndRemainVisibleInFocusMode(){render("en")}
     @Test fun persianVoiceControlsRenderAndRemainVisibleInFocusMode(){render("fa")}
-    @Test fun newProviderControlsRenderWithoutExposingBehavior(){
+    @Test fun newProviderControlsRenderWithBehaviorAndSwitch(){
         for(language in listOf("en","fa"))for(provider in listOf("openai","openrouter","avalai")){
             context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
             VoiceSettings(provider=provider).save(context)
@@ -37,7 +37,7 @@ class VoiceUiTest {
                 val dialog=ShadowDialog.getLatestDialog()
                 capture(dialog.window!!.decorView,"voice-$provider-$language",1000,1000)
                 val all=views(dialog.window!!.decorView)
-                assertFalse(all.filterIsInstance<TextView>().any{it.text.toString()==a.s("voice_behavior")})
+                assertTrue(all.filterIsInstance<TextView>().any{it.text.toString()==a.s("voice_behavior")})
                 val model=all.filterIsInstance<EditText>().first{it.hint==null || !it.hint.toString().contains("API")}
                 assertEquals(when(provider){"openai"->"gpt-realtime";"avalai"->"gemini-2.5-flash";else->"google/gemini-3.5-flash-lite"},model.text.toString())
                 assertEquals(if(provider=="openrouter")3 else 2,all.filterIsInstance<Spinner>().count{it.isShown})
