@@ -106,6 +106,7 @@ class PdfPane(
     private var pendingScroll:Pair<Int,Int>?=null
     private var disposed=false
     private var materializePosted=false
+    private var materializeWaits=0
     private val materializeTask=Runnable{materializePosted=false;materialize()}
     private fun scheduleMaterialize(){if(!disposed && !materializePosted){materializePosted=true;postOnAnimation(materializeTask)}}
     var hand=false
@@ -180,7 +181,10 @@ class PdfPane(
     private fun materialize(){
         if(disposed || scroll.height==0)return
         // Do not evict/create page views using temporary geometry during a layout pass.
-        if(sheets.isLayoutRequested || horizontal.isLayoutRequested || frames.firstOrNull()?.height==0){scheduleMaterialize();return}
+        // Waiting on layout retries for a few frames only; the sheets' layout listener schedules the next pass.
+        // An unbounded retry spun every frame while the geometry could not settle (and hung the test looper).
+        if(sheets.isLayoutRequested || horizontal.isLayoutRequested || frames.firstOrNull()?.height==0){if(materializeWaits++<10)scheduleMaterialize();return}
+        materializeWaits=0
         if(!restored){restored=true;scroll.scrollTo(0,restoreScroll)}
         val top=scroll.scrollY;val bottom=top+scroll.height
         val visible=frames.indices.filter{frames[it].bottom>=top-scroll.height/2 && frames[it].top<=bottom+scroll.height/2}

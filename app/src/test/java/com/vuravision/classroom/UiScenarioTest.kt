@@ -133,7 +133,7 @@ class UiScenarioTest {
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun closingFullscreenPdfShowsTheBoard(){
         val ctl=open();val a=ctl.get()
         try{
-            val board=a.board;val state=PdfWorkspaceState(asset="source.pdf",sheets=mutableListOf(PdfSheet(page=Page())))
+            val board=a.board;val state=PdfWorkspaceState(asset="source.pdf",sheets=mutableListOf(PdfSheet(595f,842f,Page(background="plain",items=mutableListOf(Item(kind="pdf",asset="source.pdf",pdfPage=0,pageCount=1,w=595f,h=842f,locked=true))))))
             a.store.editMetadata{a.store.lesson.pdf=state};call(a,"syncPdfWorkspace");settle(a)
             state.fullscreen=true;call(a,"refreshPdfPresentation");settle(a);assertFalse("board should hide in PDF fullscreen",board.isShown)
             a.store.editMetadata{a.store.lesson.pdf=null};call(a,"syncPdfWorkspace");settle(a)

@@ -272,6 +272,13 @@ class MainActivity : Activity() {
             positionSelectionBar()
             refreshSplitControls()
         }}
+        // The dock can change width (1 or 2 columns) or side after the split controls were placed: keep them,
+        // and an open panel bar, clear of it.
+        toolDock.addOnLayoutChangeListener{_,l,_,r,_,ol,_,or,_->if((l!=ol||r!=or)&&splitControls!=null)handler.post{
+            if(destroyed)return@post
+            val open=paneBarKey;refreshSplitControls()
+            if(open.isNotEmpty()){val (i,pen)=open.split(":");paneBar(i.toInt(),pen.toBoolean())}
+        }}
         refreshDock();refreshPages()
     }
     private fun closeSidePanel(){sidePanel?.let{canvasHost.removeView(it)};sidePanel=null;sidePanelPage=null}
