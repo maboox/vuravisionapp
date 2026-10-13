@@ -91,7 +91,7 @@ class SettingsScreen(private val activity:Activity,private val categories:List<S
                 setPadding(c.dp(12),0,c.dp(12),0);minimumHeight=c.dp(52);isClickable=true;isFocusable=true;contentDescription=cat.title
                 background=rounded(if(active)PRIMARY_CONTAINER else Color.TRANSPARENT,c.dp(14).toFloat())
                 addView(ImageView(c).apply{setImageResource(IconCatalog.resource(cat.icon,active));setColorFilter(NAVY)},LinearLayout.LayoutParams(c.dp(24),c.dp(24)))
-                addView(c.label(cat.title,16f,NAVY,active).apply{setPadding(c.dp(12),0,0,0)})
+                addView(c.label(cat.title,16f,NAVY,active).apply{setPaddingRelative(c.dp(12),0,0,0)})
                 setOnClickListener{select(cat.key)}
             },LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=c.dp(4)})
         }

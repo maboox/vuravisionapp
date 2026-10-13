@@ -399,6 +399,8 @@ class MainActivity : Activity() {
         colors.forEach{color->actions.add(InkStrip.Swatch(this,color,null){applyColor(color);refreshSelectionBar()}.apply{
             chosen=color==current;contentDescription=tr("Color","رنگ");layoutParams=LinearLayout.LayoutParams(dp(48),dp(64))})}
         if(!notes&&targets.any{it.kind=="ink"||it.kind=="shape"}){
+            // A thin divider: colors on one side, thicknesses on the other, so the dots are not read as more colors.
+            actions.add(View(this).apply{setBackgroundColor(OUTLINE);layoutParams=LinearLayout.LayoutParams(dp(1),dp(40)).apply{setMargins(dp(6),dp(12),dp(6),dp(12))}})
             val width=targets.first().width
             InkStrip.penWidths.forEachIndexed{i,w->actions.add(InkStrip.Swatch(this,null,i){board.edit{o->if(o.kind=="ink"||o.kind=="shape")o.width=w};refreshSelectionBar()}.apply{
                 chosen=kotlin.math.abs(width-w)<.01f;ink=current?:NAVY;contentDescription=tr("Thickness","ضخامت")})}
@@ -429,9 +431,12 @@ class MainActivity : Activity() {
         val limit=if(canvasHost.width==0)Int.MAX_VALUE else (maxRight-minLeft-dp(8)).coerceAtLeast(dp(64))
         var line=row();var used=0
         actions.forEach{v->
-            v.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
-            if(used>0&&used+v.measuredWidth>limit){selectionBar.addView(line);line=row();used=0}
-            line.addView(v,LinearLayout.LayoutParams(-2,dp(64)));used+=v.measuredWidth
+            // Views that bring their own size (swatches, the color/width divider) keep it; actions wrap their content.
+            val lp=(v.layoutParams as? LinearLayout.LayoutParams)?:LinearLayout.LayoutParams(-2,dp(64))
+            v.measure(if(lp.width>0)View.MeasureSpec.makeMeasureSpec(lp.width,View.MeasureSpec.EXACTLY)else View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
+            val w=v.measuredWidth+lp.leftMargin+lp.rightMargin
+            if(used>0&&used+w>limit){selectionBar.addView(line);line=row();used=0}
+            line.addView(v,lp);used+=w
         }
         selectionBar.addView(line)
     }
@@ -1330,7 +1335,7 @@ class MainActivity : Activity() {
     private fun moreActions(items:List<Item>,action:(String,String,()->Unit)->Unit){
         val shown=mainBarKeys(items)
         selectionKeys(items).filter{it !in shown}.forEach{key->
-            val label=if(key=="lock"&&items.all{it.locked})tr("Unlock","باز کردن قفل")else s(key)
+            val label=if(key=="lock")(if(items.all{it.locked})tr("Unlock","باز کردن قفل")else tr("Lock","قفل کردن"))else s(key)
             action(if(key=="lock"&&items.all{it.locked})"unlock" else key,label){runSelectionKey(key,board.chosen());refreshSelectionBar()}
         }
     }
@@ -2038,7 +2043,7 @@ class MainActivity : Activity() {
                 SettingRow.Toggle(s("multi_touch_short"),null,{board.profile.multiTouch}){v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}},
                 SettingRow.Toggle(tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی"),tr("Hold the second tap and slide to browse history","ضربهٔ دوم را نگه دارید و بکشید تا تاریخچه را مرور کنید"),{prefs.getBoolean("twoFingerUndo",true)}){v->
                     prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()},
-                SettingRow.Toggle(tr("Five-finger pie menu","منوی دایره‌ای پنج‌انگشتی"),tr("Double tap with five fingers to open your shortcuts","با پنج انگشت دو بار ضربه بزنید تا میان‌برهایتان باز شود"),{prefs.getBoolean("pieEnabled",false)}){v->
+                SettingRow.Toggle(tr("Pie menu (five fingers)","منوی شعاعی (پنج انگشت)"),tr("Double tap with five fingers to open your shortcuts","با پنج انگشت دو بار ضربه بزنید تا میان‌برهایتان باز شود"),{prefs.getBoolean("pieEnabled",false)}){v->
                     prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v},
                 page(s("pie_settings")){pieSettings()},
                 page(s("calibration"),{tr("Pen tips, palm and real centimetres","سر قلم، کف دست و سانتی‌متر واقعی")}){calibrationSettings()},
@@ -2054,7 +2059,7 @@ class MainActivity : Activity() {
             )),
             SettingsCategory("class",tr("Class","کلاس"),"users",listOf(
                 page(s("device_profile"),{DeviceProfiles.load(this).name}){roomUi?.profile(menuReturn)},
-                page(s("shared_room"),{tr("Experimental · share this board with devices on the same network","آزمایشی · اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
+                page(s("shared_room"),{tr("Share this board with devices on the same network","اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
             )),
             SettingsCategory("about",tr("About","درباره"),"info",listOf(
                 page(s("cache"),{tr("Frees memory used by images and PDF pages","حافظهٔ تصاویر و صفحه‌های PDF را آزاد می‌کند")}){media.clear();board.sceneChanged();toast(s("done"))},
