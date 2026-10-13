@@ -2154,19 +2154,39 @@ class MainActivity : Activity() {
         val (bitmap,bounds)=board.snapshotItems(items)
         runAi(label,{ai->try{ask(ai,bitmap)}finally{bitmap.recycle()}}){done(it,bounds)}
     }
-    private fun aiNote(bounds:RectF,text:String,color:Int=0xfffff6c7.toInt()):Item{
-        val note=Item(kind="sticky",text=text,width=22f,w=380f,h=160f,x=bounds.right+32f,y=bounds.top,noteColor=color,layerId=store.page.activeLayerId,pane=board.activePane)
-        Fonts.stamp(note,true);TextLayout.fit(note);return note
+    /**
+     * A free place for a [w]×[h] block near [near]: to its side first (or below when [below]), then the other options,
+     * each nudged past anything already there, so AI answers never land on the teacher's own work.
+     */
+    private fun freeSpot(near:RectF,w:Float,h:Float,below:Boolean=false,extra:List<RectF> =emptyList()):PointF{
+        val others=store.page.items.filter{it.pane==board.activePane}.map{contentBounds(listOf(it))}+extra
+        val gap=32f;val start=layoutDirection(near,w,gap)
+        val options=if(below)listOf(PointF(near.left,near.bottom+gap),start,PointF(near.left,near.top-gap-h))else listOf(start,PointF(near.left,near.bottom+gap),PointF(near.left,near.top-gap-h))
+        for(o in options){var y=o.y;repeat(16){
+            val r=RectF(o.x,y,o.x+w,y+h);val hit=others.filter{RectF.intersects(it,r)}.maxByOrNull{it.bottom}
+            if(hit==null)return PointF(o.x,y);y=hit.bottom+gap}}
+        return options.first()
     }
-    private fun addAndSelect(items:List<Item>){
+    /** Beside the work toward the reading direction's end: right in English, left in Persian. */
+    private fun layoutDirection(near:RectF,w:Float,gap:Float)=if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)PointF(near.left-gap-w,near.top)else PointF(near.right+gap,near.top)
+    private fun aiNote(bounds:RectF,text:String,color:Int=0xfffff6c7.toInt(),extra:List<RectF> =emptyList()):Item{
+        val note=Item(kind="sticky",text=text,width=22f,w=380f,h=160f,noteColor=color,layerId=store.page.activeLayerId,pane=board.activePane)
+        Fonts.stamp(note,true);TextLayout.fit(note)
+        freeSpot(bounds,note.w,note.h,extra=extra).let{note.x=it.x;note.y=it.y}
+        return note
+    }
+    /** Adds the AI's result as one Undo step, selects its first part and brings it into view with the work it is about. */
+    private fun addAndSelect(items:List<Item>,about:RectF?=null){
         if(items.isEmpty())return
         store.editMetadata{store.page.items.addAll(items)}
-        board.selected.clear();board.selected.add(items.first().id);board.tool="select";board.sceneChanged();refreshDock()
+        board.selected.clear();board.selected.add(items.first().id);board.tool="select"
+        val area=contentBounds(items);about?.let{area.union(it)};board.reveal(area)
+        board.sceneChanged();refreshDock()
     }
     private fun aiExplain(kind:String){
         val prompt=when(kind){"simplify"->AiTasks.simplify();"translate"->AiTasks.translate(this);else->AiTasks.explain()}
         val label=when(kind){"simplify"->tr("Simplifying…","در حال ساده‌سازی…");"translate"->tr("Translating…","در حال ترجمه…");else->tr("Explaining…","در حال توضیح…")}
-        aiOnSelection(label,{ai,b->ai.ask(aiSystem(),prompt,b)}){text,bounds->addAndSelect(listOf(aiNote(bounds,text)))}
+        aiOnSelection(label,{ai,b->ai.ask(aiSystem(),prompt,b)}){text,bounds->addAndSelect(listOf(aiNote(bounds,text)),bounds)}
     }
     /** Mistakes are circled in red on the work itself, each with a short fix beside it; one Undo removes them all. */
     private fun aiCheck(){
@@ -2176,25 +2196,32 @@ class MainActivity : Activity() {
                 val x=bounds.left+r.left*bounds.width()-10f;val y=bounds.top+r.top*bounds.height()-10f
                 val w=r.width()*bounds.width()+20f;val h=r.height()*bounds.height()+20f
                 added.add(Item(kind="shape",shape="ellipse",x=x,y=y,w=w,h=h,color=red,width=4f,layerId=store.page.activeLayerId,pane=board.activePane))
-                if(note.isNotBlank())added.add(Item(kind="text",text=note,color=red,width=20f,x=x+w+12f,y=y,w=320f,h=60f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)})
+                // The fix goes beside the work, in a free spot, numbered to match its circle.
+                if(note.isNotBlank()){
+                    val n=check.mistakes.indexOfFirst{it.first===r}+1
+                    added.add(Item(kind="text",text=n.toString(),color=red,width=22f,x=x+w-8f,y=y-30f,w=40f,h=40f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)})
+                    val fix=Item(kind="text",text="$n. $note",color=red,width=22f,w=360f,h=60f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
+                    freeSpot(bounds,fix.w,fix.h,extra=added.filter{it.kind=="text"}.map{contentBounds(listOf(it))}).let{fix.x=it.x;fix.y=it.y};added.add(fix)
+                }
             }
             if(check.mistakes.isEmpty())added.add(aiNote(bounds,(if(check.correct)"✓ " else "")+check.summary.ifBlank{tr("No mistakes found","اشتباهی پیدا نشد")},0xffdcfce7.toInt()))
             else Sounds.play(this,Sounds.Cue.TICK)
-            addAndSelect(added);if(check.summary.isNotBlank())toast(check.summary)
+            addAndSelect(added,bounds);if(check.summary.isNotBlank())toast(check.summary)
         }
     }
     /** Steps appear on the board one at a time, under the work, when the teacher taps Next. */
     private fun aiSteps(){
         aiOnSelection(tr("Solving…","در حال حل…"),{ai,b->AiTasks.parseSteps(ai.askJson(aiSystem(),AiTasks.steps(),b))}){steps,bounds->
             stepReveal?.let{canvasHost.removeView(it)}
-            var y=bounds.bottom+24f;val page=store.page
+            val start=freeSpot(bounds,maxOf(bounds.width(),420f),60f*(steps.steps.size+1),below=true)
+            var y=start.y;val page=store.page
             val lines=steps.steps.mapIndexed{i,t->"${i+1}. $t"}+listOfNotNull(steps.answer.takeIf{it.isNotBlank()}?.let{"= $it"})
             stepReveal=StepReveal(this,lines,{i->
                 // Only onto the page the steps belong to; switching pages pauses the reveal.
                 if(store.page===page){
-                val item=Item(kind="text",text=lines[i],color=if(i==lines.lastIndex&&steps.answer.isNotBlank())TEAL else NAVY,width=26f,x=bounds.left,y=y,w=maxOf(bounds.width(),420f),h=60f,
+                val item=Item(kind="text",text=lines[i],color=if(i==lines.lastIndex&&steps.answer.isNotBlank())TEAL else NAVY,width=26f,x=start.x,y=y,w=maxOf(bounds.width(),420f),h=60f,
                     layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
-                y+=item.h+10f;store.editMetadata{store.page.items.add(item)};board.sceneChanged()
+                y+=item.h+10f;store.editMetadata{store.page.items.add(item)};board.reveal(contentBounds(listOf(item)));board.sceneChanged()
                 }
             }){stepReveal?.let{canvasHost.removeView(it)};stepReveal=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{bottomMargin=dp(96)})}
         }
@@ -2234,7 +2261,9 @@ class MainActivity : Activity() {
             }
             addAndSelect(items)
         }
-        if(board.chosen().isNotEmpty())aiOnSelection(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai,b->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMap(),b))}){root,bounds->build(root,PointF(bounds.right+60f,bounds.centerY()))}
+        // The whole tree needs about 800 × (110 per leaf): find that much free room beside or below the selection.
+        fun spot(root:AiTasks.Node,near:RectF):PointF{val h=maxOf(1,root.children.sumOf{maxOf(1,it.children.size)})*110f;val p=freeSpot(near,820f,h);return PointF(p.x,p.y+h/2)}
+        if(board.chosen().isNotEmpty())aiOnSelection(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai,b->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMap(),b))}){root,bounds->build(root,spot(root,bounds))}
         else input(tr("Mind map topic","موضوع نقشهٔ ذهنی"),""){topic->require(topic.isNotBlank())
             runAi(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMapFromTopic(topic)))}){root->val c=board.center();build(root,PointF(c.x-400f,c.y))}}
     }

@@ -340,6 +340,23 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         invalidate()
     }
 
+    /**
+     * Pans so [r] is fully visible in the free area beside the toolbars, when it is not already; zooms out only as much
+     * as needed (never below 40%). Used when something is added next to the selection, e.g. an AI answer.
+     */
+    fun reveal(r:RectF){
+        val panel=paneRect(activePane);val viewport=RectF(panel)
+        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
+        val visible=RectF(((viewport.left-panel.left)/density-tx)/zoom,((viewport.top-panel.top)/density-ty)/zoom,
+            ((viewport.right-panel.left)/density-tx)/zoom,((viewport.bottom-panel.top)/density-ty)/zoom)
+        if(visible.contains(r))return
+        val needed=min(viewport.width()/density/(r.width()+60),viewport.height()/density/(r.height()+60))
+        if(needed<zoom)zoom=needed.coerceAtLeast(.4f)
+        tx=(viewport.centerX()-panel.left)/density-r.centerX()*zoom
+        ty=(viewport.centerY()-panel.top)/density-r.centerY()*zoom
+        backingDirty=true;invalidate()
+    }
+
     fun insert(o: Item) {
         if(!sessionCanEdit||!store.editAllowed()||!store.page.canDraw())return
         o.layerId=store.page.activeLayerId

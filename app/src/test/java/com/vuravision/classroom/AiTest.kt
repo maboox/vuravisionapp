@@ -107,11 +107,17 @@ class AiTest {
             assertEquals(before+1,a.store.page.items.size);shot(a,"steps")
             select();tap("smart");tap("ai_mindmap");waitFor{a.store.page.items.count{it.shape=="mindnode"}==6}
             shot(a,"mindmap")
+            // Nothing the AI added may cover the teacher's work or another answer (circles on the work aside).
+            val added=a.store.page.items.filter{it.id!=ink.id&&it.shape!="ellipse"&&!(it.kind=="text"&&it.text.length<=2)}
+            added.forEach{x->val r=contentBounds(listOf(x));assertFalse("${x.text} covers the work",RectF.intersects(r,contentBounds(listOf(ink))))
+                added.filter{it!==x}.forEach{y->assertFalse("'${x.text}' overlaps '${y.text}'",RectF.intersects(r,contentBounds(listOf(y))).also{if(it){val i=RectF(r);i.intersect(contentBounds(listOf(y)));if(i.width()<2||i.height()<2)return@forEach}})}}
             select();tap("smart");tap("ai_quiz");waitFor{ShadowDialog.getLatestDialog()?.isShowing==true}
             val quiz=ShadowDialog.getLatestDialog()
             val m=a.resources.displayMetrics;val decor=quiz.window!!.decorView
             decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)
             views(decor).first{it.contentDescription?.toString()?.startsWith("B")==true}.performClick()
+            // The cards are rebuilt on reveal: lay out again before drawing.
+            decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)
             val b=Bitmap.createBitmap(m.widthPixels,m.heightPixels,Bitmap.Config.ARGB_8888);decor.draw(Canvas(b))
             File("build/qa/ai-quiz.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)};b.recycle()
             assertTrue(views(decor).filterIsInstance<TextView>().any{it.text.toString()==a.tr("Correct!","درست است!")})
