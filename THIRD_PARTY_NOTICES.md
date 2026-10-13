@@ -10,7 +10,7 @@ The complete Apache 2.0 text and NanoHTTPD license are in `docs/licenses`. Build
 
 The packaged lab.html and arcade.html are adapted from the two HTML reference documents supplied by the user for this project. Their authorship and distribution rights remain with their respective rights holders; no blanket open-source license is asserted for those documents. Changes include local packaging, branding, navigation, accessibility and selected runtime/scientific fixes. Bundled Latin ML Kit OCR has Google SDK/model terms, not an open-source model license.
 
-Toolbar and layer controls use Feather icons by Cole Bemis, with Android path adaptations, under the MIT license (`docs/licenses/Feather-MIT.txt`). The eraser and pen/touch glyphs (`vura_eraser`, `vura_touch`) are project-specific additions using the same stroke and sizing conventions. The Miro images supplied by the user informed spacing and hierarchy; no Miro logo or image assets are shipped.
+Application icons are generated from Phosphor Icons 2.1.1 (Bold and Fill weights) by `scripts/generate-icons.py`, under the MIT license (`docs/licenses/Phosphor-MIT.txt`). The protractor glyph (`vura_protractor`) is a project-specific addition in the same style.
 
 ## PDFBox-Android
 

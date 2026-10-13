@@ -81,7 +81,7 @@ class Studio112Test {
         val circle=GeometryTools.construction(old);assertEquals(radius*2,circle.w,1e-5f)
     }
     @Test fun shortcutIconsAreRelatedAndFixedWidthStylesIgnorePressure(){
-        ShortcutCatalog.keys.forEach{assertNotEquals(it,R.drawable.feather_more_horizontal,IconCatalog.resource(it))}
+        ShortcutCatalog.keys.forEach{assertNotEquals(it,R.drawable.ph_more,IconCatalog.resource(it))}
         assertNotEquals(IconCatalog.resource("tools"),IconCatalog.resource("timer"));assertNotEquals(IconCatalog.resource("color"),IconCatalog.resource("fill"))
         val a=Item(width=7f,shape="pencil",points=mutableListOf(Point(pressure=.1f)));val b=a.copy(points=mutableListOf(Point(pressure=1f)))
         val p=Paint().apply{strokeWidth=7f;alpha=255};val q=Paint().apply{strokeWidth=7f;alpha=255};PenStyles.apply(p,a);PenStyles.apply(q,b)

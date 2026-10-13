@@ -10,43 +10,62 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 
 object IconCatalog {
-    fun resource(key:String)=when(key){
-        "pen","rename","pencil","edit"->R.drawable.feather_edit_2;"highlight"->R.drawable.feather_edit_3
-        "erase","clear_page"->R.drawable.vura_eraser;"select"->R.drawable.feather_mouse_pointer
-        "touch","input_controls","touch_test"->R.drawable.vura_touch
-        "pan","drag"->R.drawable.feather_move;"shape","set_square"->R.drawable.feather_triangle
-        "text","fonts","text_size"->R.drawable.feather_type;"layers","new_layer"->R.drawable.feather_layers
-        "smart","evaluate","solve","math","formula"->R.drawable.feather_zap
-        "tools"->R.drawable.vura_toolbox;"timer","stopwatch"->R.drawable.feather_clock;"split"->R.drawable.feather_columns
-        "shared_room","device_profile"->R.drawable.vura_people;"menu"->R.drawable.feather_menu;"insert","new","new_lesson","new_page","add_branch"->R.drawable.feather_plus
-        "rotate"->R.drawable.feather_rotate_cw;"undo"->R.drawable.feather_rotate_ccw;"redo"->R.drawable.feather_rotate_cw
-        "share","share_pdf"->R.drawable.feather_share_2;"previous","move_left"->R.drawable.feather_chevron_left
-        "next","move_right"->R.drawable.feather_chevron_right;"close"->R.drawable.feather_x
-        "visible"->R.drawable.feather_eye;"hidden"->R.drawable.feather_eye_off
-        "lock"->R.drawable.feather_lock;"unlock","unlock_all"->R.drawable.feather_unlock
-        "delete","clear"->R.drawable.feather_trash_2;"background","page_background"->R.drawable.vura_background
-        "fullscreen","stress"->R.drawable.feather_maximize;"fit"->R.drawable.feather_minimize
-        "files","open","recent"->R.drawable.feather_folder
-        "pages","export_pdf","export_png","export_jpg","pdf","page_picker"->R.drawable.feather_file
-        "save"->R.drawable.vura_save;"up","front","thicker","move_up"->R.drawable.feather_arrow_up
-        "down","back","thinner","move_down"->R.drawable.feather_arrow_down
-        "convert","restore_erased","cache"->R.drawable.feather_refresh_cw
-        "color","palette"->R.drawable.vura_palette;"fill"->R.drawable.vura_bucket;"search","google_search_settings"->R.drawable.vura_search
-        "graph","coordinates"->R.drawable.vura_graph;"measure","ruler","calibration","thresholds"->R.drawable.vura_ruler
-        "compass"->R.drawable.vura_compass;"protractor"->R.drawable.vura_protractor
-        "voice_assistant","voice_behavior"->R.drawable.feather_mic;"mute"->R.drawable.vura_mic_off
-        "help","about","info","report"->R.drawable.vura_info
-        "lab","periodic"->R.drawable.vura_atom;"games","dice"->R.drawable.vura_dice
-        "settings","engineering","advanced_board","ui_size","history_settings","guide_slope"->R.drawable.vura_settings
-        "language","models"->R.drawable.vura_globe;"copy"->R.drawable.vura_copy;"duplicate"->R.drawable.vura_duplicate
-        "bold"->R.drawable.vura_bold;"italic"->R.drawable.vura_italic
-        "align_start"->R.drawable.vura_align_start;"align_center"->R.drawable.vura_align_center;"align_end"->R.drawable.vura_align_end
-        "pie_settings"->R.drawable.vura_pie;"selection_settings","selection_free","selection_box"->R.drawable.feather_mouse_pointer;"menu_back"->R.drawable.feather_chevron_left
-        "image"->R.drawable.vura_image;"sticky"->R.drawable.vura_sticky;"mind_map"->R.drawable.vura_mind_map
-        "paste"->R.drawable.vura_clipboard;"crop","pdf_crop"->R.drawable.vura_crop
-        "domain"->R.drawable.vura_graph;"scoreboard"->R.drawable.vura_scoreboard
-        "periodic_table"->R.drawable.vura_atom;"secret_studio","maboox"->R.drawable.vura_settings
-        else->R.drawable.feather_more_horizontal
+    /** Phosphor Bold for idle controls; [filled] selects the Fill weight used for active tools. */
+    fun resource(key:String,filled:Boolean=false):Int=if(filled)FILLED[name(key)]?:resource(key) else when(name(key)){
+        "pen"->R.drawable.ph_pen;"highlighter"->R.drawable.ph_highlighter;"eraser"->R.drawable.ph_eraser;"cursor"->R.drawable.ph_cursor
+        "hand_tap"->R.drawable.ph_hand_tap;"hand"->R.drawable.ph_hand;"move"->R.drawable.ph_move;"shapes"->R.drawable.ph_shapes
+        "triangle"->R.drawable.ph_triangle;"text"->R.drawable.ph_text;"fonts"->R.drawable.ph_fonts;"layers"->R.drawable.ph_layers
+        "sparkle"->R.drawable.ph_sparkle;"toolbox"->R.drawable.ph_toolbox;"timer"->R.drawable.ph_timer;"columns"->R.drawable.ph_columns
+        "users"->R.drawable.ph_users;"menu"->R.drawable.ph_menu;"plus"->R.drawable.ph_plus;"rotate"->R.drawable.ph_rotate
+        "undo"->R.drawable.ph_undo;"redo"->R.drawable.ph_redo;"share"->R.drawable.ph_share
+        "caret_left"->R.drawable.ph_caret_left;"caret_right"->R.drawable.ph_caret_right;"close"->R.drawable.ph_close
+        "eye"->R.drawable.ph_eye;"eye_off"->R.drawable.ph_eye_off;"lock"->R.drawable.ph_lock;"unlock"->R.drawable.ph_unlock
+        "trash"->R.drawable.ph_trash;"background"->R.drawable.ph_background;"expand"->R.drawable.ph_expand;"fit"->R.drawable.ph_fit
+        "folder"->R.drawable.ph_folder;"file"->R.drawable.ph_file;"file_pdf"->R.drawable.ph_file_pdf;"save"->R.drawable.ph_save
+        "arrow_up"->R.drawable.ph_arrow_up;"arrow_down"->R.drawable.ph_arrow_down;"convert"->R.drawable.ph_convert
+        "palette"->R.drawable.ph_palette;"bucket"->R.drawable.ph_bucket;"search"->R.drawable.ph_search;"graph"->R.drawable.ph_graph
+        "ruler"->R.drawable.ph_ruler;"compass"->R.drawable.ph_compass;"protractor"->R.drawable.vura_protractor
+        "mic"->R.drawable.ph_mic;"mic_off"->R.drawable.ph_mic_off;"info"->R.drawable.ph_info;"atom"->R.drawable.ph_atom
+        "dice"->R.drawable.ph_dice;"settings"->R.drawable.ph_settings;"globe"->R.drawable.ph_globe;"copy"->R.drawable.ph_copy
+        "duplicate"->R.drawable.ph_duplicate;"bold"->R.drawable.ph_bold;"italic"->R.drawable.ph_italic
+        "align_left"->R.drawable.ph_align_left;"align_center"->R.drawable.ph_align_center;"align_right"->R.drawable.ph_align_right
+        "pie"->R.drawable.ph_pie;"image"->R.drawable.ph_image;"sticky"->R.drawable.ph_sticky;"mind_map"->R.drawable.ph_mind_map
+        "paste"->R.drawable.ph_paste;"crop"->R.drawable.ph_crop;"trophy"->R.drawable.ph_trophy;"stop"->R.drawable.ph_stop
+        "swap"->R.drawable.ph_swap;"content"->R.drawable.ph_content;"flask"->R.drawable.ph_flask;"game"->R.drawable.ph_game
+        "spotlight"->R.drawable.ph_spotlight;"table"->R.drawable.ph_table
+        else->R.drawable.ph_more
+    }
+    private val FILLED=mapOf("pen" to R.drawable.ph_pen_fill,"highlighter" to R.drawable.ph_highlighter_fill,"eraser" to R.drawable.ph_eraser_fill,
+        "cursor" to R.drawable.ph_cursor_fill,"hand" to R.drawable.ph_hand_fill,"hand_tap" to R.drawable.ph_hand_tap_fill,"shapes" to R.drawable.ph_shapes_fill,
+        "text" to R.drawable.ph_text_fill,"sparkle" to R.drawable.ph_sparkle_fill,"layers" to R.drawable.ph_layers_fill,"columns" to R.drawable.ph_columns_fill,
+        "ruler" to R.drawable.ph_ruler_fill,"triangle" to R.drawable.ph_triangle_fill,"mic" to R.drawable.ph_mic_fill)
+    /** Feature keys → icon names. Unknown keys fall back to "more". */
+    fun name(key:String)=when(key){
+        "pen","rename","pencil","edit"->"pen";"highlight"->"highlighter"
+        "erase","clear_page"->"eraser";"select","selection_settings","selection_free","selection_box"->"cursor"
+        "touch","input_controls","touch_test"->"hand_tap";"pan"->"hand";"drag"->"move"
+        "shape"->"shapes";"set_square"->"triangle";"text","text_size"->"text";"fonts"->"fonts";"layers","new_layer"->"layers"
+        "smart","evaluate","solve","math","formula"->"sparkle";"tools"->"toolbox";"timer","stopwatch"->"timer";"split"->"columns"
+        "shared_room","device_profile"->"users";"menu"->"menu";"insert","new","new_lesson","new_page","add_branch"->"plus"
+        "rotate"->"rotate";"undo"->"undo";"redo"->"redo";"share","share_pdf"->"share"
+        "previous","move_left","menu_back"->"caret_left";"next","move_right"->"caret_right";"close"->"close"
+        "visible"->"eye";"hidden"->"eye_off";"lock"->"lock";"unlock","unlock_all"->"unlock"
+        "delete","clear"->"trash";"background","page_background"->"background"
+        "fullscreen","stress"->"expand";"fit"->"fit";"files","open","recent"->"folder"
+        "pages","export_png","export_jpg","page_picker"->"file";"export_pdf","pdf","pdf_crop_page"->"file_pdf";"save"->"save"
+        "up","front","thicker","move_up"->"arrow_up";"down","back","thinner","move_down"->"arrow_down"
+        "convert","restore_erased","cache"->"convert";"color","palette"->"palette";"fill"->"bucket"
+        "search","google_search_settings"->"search";"graph","coordinates","domain"->"graph"
+        "measure","ruler","calibration","thresholds"->"ruler";"compass"->"compass";"protractor"->"protractor"
+        "voice_assistant","voice_behavior"->"mic";"mute"->"mic_off";"help","about","info","report"->"info"
+        "lab","periodic","periodic_table"->"atom";"games"->"game";"dice"->"dice"
+        "settings","engineering","advanced_board","ui_size","history_settings","guide_slope","secret_studio","maboox"->"settings"
+        "language","models"->"globe";"copy"->"copy";"duplicate"->"duplicate";"bold"->"bold";"italic"->"italic"
+        "align_start"->"align_left";"align_center"->"align_center";"align_end"->"align_right"
+        "pie_settings"->"pie";"image"->"image";"sticky"->"sticky";"mind_map"->"mind_map";"paste"->"paste"
+        "crop","pdf_crop"->"crop";"scoreboard"->"trophy";"stop"->"stop";"swap"->"swap";"content"->"content"
+        "spotlight"->"spotlight";"table"->"table"
+        else->key
     }
     fun drawable(c:Context,key:String):Drawable?=ContextCompat.getDrawable(c,resource(key))?.mutate()?.apply{setTint(NAVY)}
 }

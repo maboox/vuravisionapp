@@ -13,18 +13,20 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 
-// Semantic VuraVision tokens. Feature code should use these rather than ad-hoc colors.
-val NAVY = 0xff24262e.toInt()
-val ORANGE = 0xffd97800.toInt()
-val PAPER = 0xfff6f7f9.toInt()
-val MUTED = 0xff625f6b.toInt()
+// Semantic VuraVision tokens from the logo. Feature code should use these rather than ad-hoc colors.
+// Calm chrome: NAVY marks the active tool and primary action; ORANGE marks selection and emphasis.
+val NAVY = 0xff20194f.toInt()
+val ORANGE = 0xffc76f00.toInt() // Text-safe brand orange; BRAND_ORANGE is for fills and the logo.
+val BRAND_ORANGE = 0xfff8a529.toInt()
+val PAPER = 0xfff6f5fa.toInt()
+val MUTED = 0xff625e85.toInt()
 val TEAL = 0xff0f716f.toInt()
 val SURFACE = Color.WHITE
-val SURFACE_VARIANT = 0xfff4f5f7.toInt()
-val PRIMARY_CONTAINER = 0xffe9ecff.toInt()
+val SURFACE_VARIANT = 0xfff1f0f8.toInt()
+val PRIMARY_CONTAINER = 0xffeceaf7.toInt()
 val SECONDARY_CONTAINER = 0xffcdeeeB.toInt()
-val OUTLINE = 0xffe3e5e9.toInt()
-val OUTLINE_STRONG = 0xffb9b4c7.toInt()
+val OUTLINE = 0xffe4e2ef.toInt()
+val OUTLINE_STRONG = 0xffb9b4cf.toInt()
 val DANGER = 0xffb3261e.toInt()
 val SUCCESS = 0xff287d58.toInt()
 
@@ -86,21 +88,21 @@ fun Context.button(value: String, active: Boolean = false, action: () -> Unit) =
         rippleColor = ColorStateList.valueOf(if (active) 0x33ffffff else 0x1f2d2463)
         elevation = dp(if (active) 3 else 0).toFloat()
         val icon = when(value.firstOrNull()) {
-            '✎' -> R.drawable.feather_edit_3
-            '▱' -> R.drawable.feather_edit_2
-            '↖' -> R.drawable.feather_mouse_pointer
-            '✥' -> R.drawable.feather_move
-            '△' -> R.drawable.feather_triangle
-            '＋' -> R.drawable.feather_plus
-            '✦' -> R.drawable.feather_zap
-            '◷' -> R.drawable.feather_clock
-            '☰' -> R.drawable.feather_menu
-            '↶' -> R.drawable.feather_rotate_ccw
-            '↷' -> R.drawable.feather_rotate_cw
-            '‹' -> R.drawable.feather_chevron_left
-            '›' -> R.drawable.feather_chevron_right
-            '⋯' -> R.drawable.feather_more_horizontal
-            '⇧' -> R.drawable.feather_share_2
+            '✎' -> R.drawable.ph_highlighter
+            '▱' -> R.drawable.ph_pen
+            '↖' -> R.drawable.ph_cursor
+            '✥' -> R.drawable.ph_move
+            '△' -> R.drawable.ph_triangle
+            '＋' -> R.drawable.ph_plus
+            '✦' -> R.drawable.ph_sparkle
+            '◷' -> R.drawable.ph_timer
+            '☰' -> R.drawable.ph_menu
+            '↶' -> R.drawable.ph_undo
+            '↷' -> R.drawable.ph_redo
+            '‹' -> R.drawable.ph_caret_left
+            '›' -> R.drawable.ph_caret_right
+            '⋯' -> R.drawable.ph_more
+            '⇧' -> R.drawable.ph_share
             else -> null
         }
         if(icon!=null){

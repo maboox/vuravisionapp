@@ -70,10 +70,10 @@ class Studio113Test {
         val result=HandFill.create(page,0,170f,170f,Color.RED,255);assertNotNull(result);assertTrue(ShapeFill.contains(result!!.item,170f,170f))
         assertNull(HandFill.create(page,0,60f,180f,Color.RED,255))
     }
-    @Test fun defaultsUseKahrobaAndRubikAndPreserveExplicitChoice(){
-        assertEquals("kahroba",Fonts.persianId);assertEquals("rubik",Fonts.englishId)
-        Fonts.choose(context,"vazirmatn","montserrat");Fonts.initialize(context)
-        assertEquals("vazirmatn",Fonts.persianId);assertEquals("montserrat",Fonts.englishId)
+    @Test fun defaultsUseVazirmatnAndRubikAndPreserveExplicitChoice(){
+        assertEquals("vazirmatn",Fonts.persianId);assertEquals("rubik",Fonts.englishId)
+        Fonts.choose(context,"kahroba","montserrat");Fonts.initialize(context)
+        assertEquals("kahroba",Fonts.persianId);assertEquals("montserrat",Fonts.englishId)
     }
     @Test fun timingPrecisionRulerSpacingAndHistorySeekAreBounded(){
         assertEquals("1.3",DisplayNumbers.one(1.26));assertEquals("0",DisplayNumbers.one(-.004));assertEquals("123",DisplayNumbers.one(123.0))

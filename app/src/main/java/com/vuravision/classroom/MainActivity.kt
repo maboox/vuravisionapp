@@ -242,7 +242,7 @@ class MainActivity : Activity() {
         canvasHost.addView(focus,FrameLayout.LayoutParams(dp(48),dp(48),Gravity.BOTTOM or Gravity.RIGHT).apply{setMargins(dp(12),dp(12),dp(12),dp(12))})
         voiceButton=button(s("voice_assistant")){toggleVoice()}.apply{
             id=R.id.voice_assistant_button
-            setIconResource(R.drawable.feather_mic);iconSize=dp(20)
+            setIconResource(R.drawable.ph_mic);iconSize=dp(20)
             maxWidth=dp(300);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END
             contentDescription=s("voice_assistant")
             visibility=if(VoiceSettings.enabled(this@MainActivity))View.VISIBLE else View.GONE
@@ -2213,7 +2213,7 @@ class MainActivity : Activity() {
         voiceButton.text=s(value)
         refreshMute()
         val active=value!="voice_assistant"
-        voiceButton.setIconResource(if(active)R.drawable.feather_square else R.drawable.feather_mic)
+        voiceButton.setIconResource(if(active)R.drawable.ph_stop else R.drawable.ph_mic)
         voiceButton.contentDescription=if(active)s(value)+". "+s("voice_stop")else s("voice_assistant")
         voiceButton.backgroundTintList=android.content.res.ColorStateList.valueOf(if(active)PRIMARY_CONTAINER else SURFACE)
     }
