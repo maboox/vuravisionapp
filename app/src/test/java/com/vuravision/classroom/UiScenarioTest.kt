@@ -280,13 +280,14 @@ class UiScenarioTest {
             val r=rect(a.board);val x=r.left+300f;val y=r.top+300f
             fun touch(action:Int,dx:Float,t:Long){val e=MotionEvent.obtain(0,t,action,x+dx-r.left,y-r.top,0);a.board.onTouchEvent(e);e.recycle()}
             touch(MotionEvent.ACTION_DOWN,0f,0);val afterDown=a.board.livePoints;touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);val afterMove=a.board.livePoints;touch(MotionEvent.ACTION_UP,200f,48)
-            diag("laser: afterDown=$afterDown afterMove=$afterMove")
             assertTrue("laser stroke recorded no movement ($afterDown, $afterMove)",afterMove>=3)
             assertEquals("laser stroke was stored",before,a.store.page.items.size);assertEquals("laser stroke entered Undo",undo,a.store.undoCount)
-            assertEquals(1,a.board.laserStrokes);a.board.invalidate();shot(a,"laser-stroke")
+            assertEquals(1,a.board.laserStrokes)
+            // Captured at once: shot() waits for layout, by which time the stroke has faded (as designed).
             val bmp=Bitmap.createBitmap(a.board.width,a.board.height,Bitmap.Config.ARGB_8888);a.board.draw(Canvas(bmp))
-            var lit=0;for(px in 0 until bmp.width step 2)for(py in 0 until bmp.height step 2){val c=bmp.getPixel(px,py);if(Color.red(c)>200&&Color.green(c)<120)lit++}
-            bmp.recycle();diag("laser: points=${a.board.laserPoints} litPixels=$lit board=${a.board.width}x${a.board.height}")
+            var lit=0;for(px in 0 until bmp.width step 2)for(py in 0 until bmp.height step 2){val c=bmp.getPixel(px,py);if(Color.red(c)>200&&Color.green(c)<120&&Color.blue(c)>60)lit++}
+            File("build/qa/scenario-laser-stroke.png").apply{parentFile!!.mkdirs()}.outputStream().use{bmp.compress(Bitmap.CompressFormat.PNG,100,it)};bmp.recycle()
+            assertTrue("laser stroke not drawn ($lit pixels)",lit>20)
             idle(2600);a.board.invalidate();settle(a);a.board.draw(Canvas(Bitmap.createBitmap(10,10,Bitmap.Config.ARGB_8888)))
             assertEquals("laser stroke did not fade",0,a.board.laserStrokes)
         }finally{ctl.pause().stop().destroy()}
