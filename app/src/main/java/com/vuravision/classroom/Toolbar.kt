@@ -1,0 +1,202 @@
+package com.vuravision.classroom
+
+import android.content.Context
+import android.content.SharedPreferences
+import android.graphics.Color
+import android.view.Gravity
+import android.view.View
+import android.widget.*
+
+/** One saved pen: ink or highlighter with its own color and width. */
+data class PenPreset(val highlight:Boolean,val color:Int,val width:Float)
+
+/**
+ * Side dock for large panels: three pen presets, eraser, select, the most recent inserted tool,
+ * Add, Undo/Redo and a switch that moves the dock to the other edge.
+ * Everything else lives one tap away in [AddPanel].
+ */
+class ToolDock(
+    context:Context,
+    private val host:FrameLayout,
+    private val prefs:SharedPreferences,
+    private val board:()->Board,
+    private val perform:(String)->Unit,
+    private val toolSettings:(String)->Unit,
+    private val changed:()->Unit,
+):FrameLayout(context) {
+    companion object {
+        val defaults=listOf(PenPreset(false,NAVY,4f),PenPreset(false,0xffdc2626.toInt(),8f),PenPreset(true,0xffffcf40.toInt(),6f))
+        /** Tools that can occupy the "recent" slot after being used from the Add panel. */
+        val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill")
+        fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f))}
+    }
+    private val column=context.column().apply{setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6))}
+    private val penButtons=defaults.indices.map{i->icon(if(defaults[i].highlight)"highlight" else "pen",penTitle(i)){pen(i)}}
+    private val eraser=icon("erase",context.s("erase")){tool("erase")}
+    private val select=icon("select",context.s("select")){tool("select")}
+    private var recentButton=icon(recent(),context.s(recent())){useRecent()}
+    private val add=icon("insert",context.s("insert")){toggleAdd()}
+    private val strip=InkStrip(context,board,showTools=false){savePreset();changed();refresh()}
+    private val stripHost=FrameLayout(context).apply{addView(strip);background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(8),context.dp(4),context.dp(8),context.dp(4));visibility=View.GONE}
+    private val handle=View(context).apply{
+        background=rounded(OUTLINE_STRONG,context.dp(6).toFloat());contentDescription=context.tr("Bring the toolbar to this side","آوردن نوار ابزار به این سمت")
+        isClickable=true;setOnClickListener{swap()}
+    }
+    private var addPanel:AddPanel?=null
+    private var bottomGap=140
+    private var stripShown=false
+    var end=prefs.getBoolean("dockEnd",false)
+        private set
+    init {
+        background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat()
+        id=R.id.tool_dock
+        addView(column)
+        penButtons.forEach{column.addView(it)}
+        column.addView(eraser);column.addView(select);column.addView(recentButton);column.addView(add)
+        column.addView(divider())
+        column.addView(icon("undo",context.s("undo")){board().undo()})
+        column.addView(icon("redo",context.s("redo")){board().redo()})
+        column.addView(divider())
+        column.addView(icon("swap",context.tr("Move toolbar to the other side","انتقال نوار به سمت دیگر")){swap()}.apply{sizeDp=48})
+        host.addView(this,FrameLayout.LayoutParams(-2,-2))
+        host.addView(stripHost,FrameLayout.LayoutParams(-2,-2))
+        host.addView(handle,FrameLayout.LayoutParams(context.dp(10),context.dp(72)))
+        host.addOnLayoutChangeListener{_,_,t,_,b,_,ot,_,ob->if(b-t!=ob-ot)fit(b-t)}
+        place();refresh()
+    }
+    /** Shrink buttons (60→40dp) and the bottom gap so the whole dock fits short panels. */
+    private fun fit(height:Int){
+        val buttons=penButtons+listOf(eraser,select,recentButton,add)+column.children().filterIsInstance<WorkspaceIcon>().filter{it.key=="undo"||it.key=="redo"}
+        fun size(gap:Int)=((height-context.dp(12+gap+48+30))/buttons.size.coerceAtLeast(1)/(context.dp(100)/100f)).toInt()
+        bottomGap=if(size(140)>=44)140 else 76
+        val dp=size(bottomGap).coerceIn(40,60)
+        buttons.forEach{if(it.sizeDp!=dp)it.sizeDp=dp}
+        post{place()}
+    }
+    private fun LinearLayout.children()=(0 until childCount).map{getChildAt(it)}
+    private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=(column.children().firstOrNull() as? WorkspaceIcon)?.sizeDp?:60}
+    private fun divider()=View(context).apply{setBackgroundColor(OUTLINE);layoutParams=LinearLayout.LayoutParams(-1,context.dp(1)).apply{setMargins(context.dp(8),context.dp(4),context.dp(8),context.dp(4))}}
+    private fun penTitle(i:Int)=if(defaults[i].highlight)context.tr("Highlighter","هایلایتر")else context.tr("Pen ${i+1}","قلم ${i+1}")
+    private fun activePreset()=prefs.getInt("dockPen",0).coerceIn(0,defaults.lastIndex)
+    private fun recent()=prefs.getString("dockRecent","shape")?.takeIf{it in recentable}?:"shape"
+
+    private fun pen(i:Int){
+        val b=board();val preset=presets(prefs)[i]
+        val already=activePreset()==i && b.tool==(if(preset.highlight)"highlight" else "pen")
+        if(already){stripShown=!stripShown;refresh();return}
+        prefs.edit().putInt("dockPen",i).apply()
+        b.tool=if(preset.highlight)"highlight" else "pen";b.clearSelection()
+        if(b.store.page.visiblePaneCount==1){if(preset.highlight){b.highlightColor=preset.color;b.highlightWidth=preset.width}else{b.penColor=preset.color;b.penWidth=preset.width}}
+        stripShown=true;changed();refresh()
+    }
+    private fun tool(key:String){
+        val b=board()
+        if(b.tool==key){toolSettings(key);return}
+        b.tool=key;b.clearSelection();stripShown=false;changed();refresh()
+    }
+    private fun useRecent(){stripShown=false;perform(recent());refresh()}
+    /** The Add panel reports what was used so the dock can offer it again with one tap. */
+    fun used(key:String){
+        if(key !in recentable || key==recent())return
+        prefs.edit().putString("dockRecent",key).apply()
+        val index=column.indexOfChild(recentButton);column.removeView(recentButton)
+        recentButton=icon(key,context.s(key)){useRecent()};column.addView(recentButton,index)
+    }
+    private fun savePreset(){
+        val b=board();val i=activePreset();if(b.store.page.visiblePaneCount>1)return
+        val highlight=b.tool=="highlight";if(highlight!=defaults[i].highlight)return
+        prefs.edit().putInt("dockPen${i}Color",if(highlight)b.highlightColor else b.penColor).putFloat("dockPen${i}Width",if(highlight)b.highlightWidth else b.penWidth).apply()
+    }
+    private fun toggleAdd(){
+        if(addPanel!=null){closeAdd();return}
+        stripShown=false
+        addPanel=AddPanel(context,host,end,{closeAdd()}){key->closeAdd();used(key);perform(key)}
+        refresh()
+    }
+    fun closeAdd(){addPanel?.close();addPanel=null;refresh()}
+    fun swap(){
+        end=!end;prefs.edit().putBoolean("dockEnd",end).apply()
+        closeAdd();place()
+        if(!isLaidOut)return
+        // A short slide from the old edge makes the move easy to follow on a large panel.
+        translationX=(if(end==(layoutDirection==LAYOUT_DIRECTION_RTL))-1 else 1)*context.dp(48).toFloat();alpha=.4f
+        animate().translationX(0f).alpha(1f).setDuration(260).start()
+    }
+    private fun place(){
+        val side=if(end)Gravity.END else Gravity.START
+        (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.BOTTOM or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(bottomGap))}
+        (handle.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or(if(end)Gravity.START else Gravity.END);setMargins(context.dp(3),0,context.dp(3),0)}
+        (stripHost.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.BOTTOM or side;val beside=context.dp(12+84+12);setMargins(beside,context.dp(12),beside,context.dp(bottomGap))}
+        if(end){(stripHost.layoutParams as FrameLayout.LayoutParams).apply{marginStart=0;marginEnd=context.dp(12+84+12)}}else{(stripHost.layoutParams as FrameLayout.LayoutParams).apply{marginStart=context.dp(12+84+12);marginEnd=0}}
+        requestLayout();handle.requestLayout();stripHost.requestLayout()
+    }
+    /** Hide or show with the rest of the canvas chrome (focus mode). */
+    fun setChromeVisible(visible:Boolean){
+        visibility=if(visible)View.VISIBLE else View.GONE;handle.visibility=visibility
+        if(!visible){closeAdd();stripHost.visibility=View.GONE}else refresh()
+    }
+    fun refresh(){
+        val b=board();val editable=b.sessionCanEdit;val presets=presets(prefs);val active=activePreset()
+        penButtons.forEachIndexed{i,button->
+            val on=i==active && b.tool==(if(presets[i].highlight)"highlight" else "pen")
+            if(button.active!=on)button.showActive(on);button.dotColor=presets[i].color
+        }
+        listOf(eraser to "erase",select to "select").forEach{(button,key)->if(button.active!=(b.tool==key))button.showActive(b.tool==key)}
+        if(add.active!=(addPanel!=null))add.showActive(addPanel!=null)
+        (penButtons+listOf(eraser,select,recentButton,add)).forEach{it.isEnabled=editable;it.alpha=if(editable)1f else .35f}
+        val inking=b.tool=="pen"||b.tool=="highlight"
+        if(!inking)stripShown=false
+        stripHost.visibility=if(stripShown && visibility==View.VISIBLE)View.VISIBLE else View.GONE
+        if(stripShown)strip.refresh()
+    }
+}
+
+/** Everything that is not on the dock, grouped the way a teacher looks for it. */
+class AddPanel(private val context:Context,private val host:FrameLayout,end:Boolean,private val dismiss:()->Unit,private val pick:(String)->Unit) {
+    companion object {
+        val groups=listOf(
+            "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
+            "geometry" to listOf("ruler","set_square","protractor","compass"),
+            "smart" to listOf("smart","layers","split","fill","background","touch"),
+            "class" to listOf("timer","stopwatch","dice","scoreboard","periodic","lab","games"),
+        )
+    }
+    private val scrim=FrameLayout(context).apply{isClickable=true;setOnClickListener{dismiss()}}
+    private val panel=context.column().apply{
+        setPadding(context.dp(14),context.dp(12),context.dp(14),context.dp(14))
+        background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(8).toFloat();isClickable=true
+    }
+    init {
+        id(panel)
+        groups.forEach{(group,keys)->
+            panel.addView(context.label(title(group),15f,MUTED,true).apply{setPadding(context.dp(4),context.dp(8),context.dp(4),context.dp(4))})
+            val grid=GridLayout(context).apply{columnCount=4}
+            keys.forEach{key->grid.addView(tile(key))}
+            panel.addView(grid)
+        }
+        val scroll=ScrollView(context).apply{addView(panel);isVerticalScrollBarEnabled=false}
+        scrim.addView(scroll,FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM or(if(end)Gravity.END else Gravity.START)).apply{
+            val beside=context.dp(12+84+12);if(end)marginEnd=beside else marginStart=beside;setMargins(if(end)0 else beside,context.dp(12),if(end)beside else 0,context.dp(140))
+            if(end){marginStart=0;marginEnd=beside}else{marginStart=beside;marginEnd=0}
+        })
+        host.addView(scrim,FrameLayout.LayoutParams(-1,-1))
+        panel.alpha=0f;panel.translationY=context.dp(12).toFloat();panel.animate().alpha(1f).translationY(0f).setDuration(180).start()
+    }
+    private fun id(v:View){v.id=R.id.add_panel}
+    private fun title(group:String)=when(group){
+        "board"->context.tr("On the board","روی تخته");"geometry"->context.tr("Geometry","هندسه")
+        "smart"->context.tr("Smart and page","هوشمند و صفحه");else->context.tr("Class","کلاس")
+    }
+    private fun label(key:String)=when(key){
+        "split"->context.tr("Split board","تقسیم تخته");"layers"->context.tr("Layers","لایه‌ها");"touch"->context.tr("Touch mode","حالت لمس")
+        else->context.s(key)
+    }
+    private fun tile(key:String)=context.column().apply{
+        gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(4),context.dp(4),context.dp(4),context.dp(6))
+        val icon=WorkspaceIcon(context,key,label(key)){pick(key)}.apply{sizeDp=56}
+        addView(icon)
+        addView(context.label(label(key),14f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},LinearLayout.LayoutParams(context.dp(92),-2))
+        layoutParams=GridLayout.LayoutParams().apply{width=context.dp(96)}
+    }
+    fun close(){host.removeView(scrim)}
+}

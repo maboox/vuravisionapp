@@ -36,7 +36,7 @@ class MainActivity : Activity() {
     private lateinit var root: LinearLayout
     private lateinit var titleView: TextView
     private lateinit var status: TextView
-    private lateinit var dock: LinearLayout
+    private lateinit var toolDock: ToolDock
     private lateinit var pageLabel: TextView
     private lateinit var pageStrip:LinearLayout
     private lateinit var canvasHost:FrameLayout
@@ -44,7 +44,6 @@ class MainActivity : Activity() {
     private lateinit var selectionBar:LinearLayout
     private lateinit var selectionHost:HorizontalScrollView
     private var pageSignature=""
-    private var dockSignature=""
     private val handler = Handler(Looper.getMainLooper())
     private val worker = ProjectIO.executor
     private val saveQueue by lazy{ProjectSaveQueue(worker){doc,target->files.atomic(doc,target)}}
@@ -211,17 +210,14 @@ class MainActivity : Activity() {
         val header=row().apply{pad(4)}
         header.addView(icon("menu",s("main_menu")){menu()}.apply{id=R.id.main_menu_button})
         header.addView(icon("files",s("files")){fileMenu()})
-        header.addView(icon("undo",s("undo")){board.undo()})
-        header.addView(icon("redo",s("redo")){board.redo()})
         header.addView(icon("share",s("share")){shareOptions()})
         val headerHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(header)}
         floating(headerHost,Gravity.BOTTOM or Gravity.RIGHT)
         (headerHost.layoutParams as FrameLayout.LayoutParams).rightMargin=dp(72)
         // Titles/status remain available in the document menu; canvas chrome uses icons.
         titleView=label("");status=label("");pageLabel=label("")
-        dock=column().apply{pad(4)}
-        val dockScroll=ScrollView(this).apply{isVerticalScrollBarEnabled=false;addView(dock)}
-        floating(dockScroll,Gravity.TOP or Gravity.BOTTOM or Gravity.START,12,140,dp(56),-1)
+        toolDock=ToolDock(this,canvasHost,prefs,{board},{dockAction(it)},{key->when(key){"pen"->penSettings();"erase"->eraserSettings();"select"->selectionSettings()}}){savePens();refreshDock()}
+        chrome.add(toolDock)
         pageStrip=row().apply{pad(4)}
         pageStrip.layoutDirection=View.LAYOUT_DIRECTION_LTR
         pageLabel=label("",14f,NAVY,true).apply{gravity=Gravity.CENTER;minWidth=dp(72);layoutDirection=View.LAYOUT_DIRECTION_LTR}
@@ -235,6 +231,7 @@ class MainActivity : Activity() {
             focusMode=!focusMode
             window.decorView.systemUiVisibility=if(focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
             chrome.forEach{it.visibility=if(focusMode)View.GONE else View.VISIBLE}
+            toolDock.setChromeVisible(!focusMode)
             if(focusMode){closeSidePanel();selectionHost.visibility=View.GONE}else refreshSelectionBar()
             refreshSplitControls()
         }
@@ -295,26 +292,24 @@ class MainActivity : Activity() {
 
     private fun refreshDock() {
         rooms?.refreshPresence()
-        if(!::dock.isInitialized)return
+        if(!::toolDock.isInitialized)return
         syncPdfWorkspace()
         pdfPane?.refreshTools()
         if(sidePanelPage!=null && sidePanelPage!==store.page)closeSidePanel()
         if(splitControlsPage!==store.page)refreshSplitControls()
         refreshSelectionBar()
-        val signature="${board.sessionCanEdit}:${board.tool}:${store.page.id}:${board.touchMode}:${board.selected.joinToString()}:${board.chosen().joinToString{it.pdfPage.toString()}}"
-        if(signature==dockSignature)return
-        dockSignature=signature;dock.removeAllViews()
-        listOf("select","pen","erase","pan","shape","text","smart","layers","split","touch","insert","tools").forEach { key ->
-            val title=when(key){"layers"->tr("Layers","لایه‌ها");"split"->tr("Split board","تقسیم تخته");"touch"->if(board.touchMode)tr("Pen + touch","قلم + لمس")else tr("Two tips","دو سر قلم");else->s(key)}
-            dock.addView(icon(key,title,board.tool==key || key=="touch"&&board.touchMode){
-                when(key){
-                    "layers"->layers();"split"->splitSettings();"text"->addText(false);"shape"->{pdfPane?.writingMode();shapes()};"smart"->{pdfPane?.writingMode();smart()}
-                    "touch"->{if(!board.hasActiveInteraction){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();dockSignature="";refreshDock()}}
-                    "insert"->insert();"tools"->classroomTools()
-                    else->{if(key!="pan")pdfPane?.writingMode();if(board.tool==key && key=="select")selectionSettings() else if(board.tool==key && key=="pen")penSettings() else if(board.tool==key && key=="erase")eraserSettings() else {board.tool=key;board.clearSelection();refreshDock()}}
-                }
-            }.apply{isEnabled=board.sessionCanEdit||key=="pan";alpha=if(isEnabled)1f else .35f},LinearLayout.LayoutParams(dp(48),dp(48)))
+        toolDock.refresh()
+    }
+    /** Actions from the dock and its Add panel; most reuse the Pie/shortcut commands. */
+    private fun dockAction(key:String){
+        if(key in listOf("shape","smart","text","sticky"))pdfPane?.writingMode()
+        when(key){
+            "split"->splitSettings();"lab"->openExplorer(true);"games"->openExplorer(false)
+            "smart"->smart();"text"->addText(false)
+            "touch"->if(!board.hasActiveInteraction){board.touchMode=!board.touchMode;prefs.edit().putBoolean("touchMode",board.touchMode).apply();toast(if(board.touchMode)tr("Pen + touch","قلم + لمس")else tr("Two tips","دو سر قلم"))}
+            else->runShortcut(key)
         }
+        refreshDock()
     }
     private fun refreshSelectionBar(){
         if(!::selectionBar.isInitialized)return
@@ -1334,7 +1329,7 @@ class MainActivity : Activity() {
         target.onObjectActions={editSelection()}
         target.onSmart={processSmart(it)}
         target.onMindAdd={node,sibling->mindNode(node,sibling)}
-        dockSignature="";refreshDock()
+        refreshDock()
     }
     private fun projectChanged(){
         dirty=true;status.text=s("saving")

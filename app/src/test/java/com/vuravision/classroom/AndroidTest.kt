@@ -243,6 +243,10 @@ class AndroidTest {
         a.store.replace(Lesson())
         views(a.window.decorView)
             .filterIsInstance<WorkspaceIcon>()
+            .single { it.contentDescription == a.s("insert") }
+            .performClick()
+        views(a.window.decorView)
+            .filterIsInstance<WorkspaceIcon>()
             .single { it.contentDescription == a.s("text") }
             .performClick()
         val input = org.robolectric.shadows.ShadowDialog.getLatestDialog()

@@ -16,7 +16,7 @@ class PdfPane(
     private val menu:()->Unit,
     private val toolsChanged:()->Unit={},
 ):LinearLayout(context) {
-    private val inkStrip=PdfInkStrip(context,currentBoard){toolsChanged()}
+    private val inkStrip=InkStrip(context,currentBoard){toolsChanged()}
     fun refreshTools()=inkStrip.refresh()
     /** After fullscreen/split changes, re-render mounted sheets once the new geometry is laid out. */
     fun redraw(){if(disposed)return;boards.values.forEach{it.sceneChanged()};scheduleMaterialize()}

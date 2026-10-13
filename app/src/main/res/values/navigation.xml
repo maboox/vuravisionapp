@@ -3,5 +3,7 @@
     <item name="menu_back_button" type="id" />
     <item name="selection_toolbar" type="id" />
     <item name="main_menu_button" type="id" />
+    <item name="tool_dock" type="id" />
+    <item name="add_panel" type="id" />
     <string name="main_menu">Main menu</string>
 </resources>

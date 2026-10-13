@@ -5,14 +5,14 @@ import android.graphics.*
 import android.view.View
 import android.widget.LinearLayout
 
-/** One-tap pen, highlighter, eraser, color and width for the PDF workspace, including fullscreen. */
-class PdfInkStrip(context:Context,private val board:()->Board,private val changed:()->Unit):LinearLayout(context){
+/** One-tap color and width (and optionally pen/highlighter/eraser) beside the dock and in the PDF workspace. */
+class InkStrip(context:Context,private val board:()->Board,showTools:Boolean=true,private val changed:()->Unit):LinearLayout(context){
     companion object {
         val colors=listOf(0xff1f2430.toInt(),0xff2563eb.toInt(),0xffdc2626.toInt(),0xff16a34a.toInt(),0xfff59e0b.toInt(),0xff7c3aed.toInt())
         val penWidths=listOf(2f,4f,8f)
         val highlightWidths=listOf(4f,6f,10f)
     }
-    private val tools=listOf("pen","highlight","erase").map{key->
+    private val tools=(if(showTools)listOf("pen","highlight","erase")else emptyList()).map{key->
         ActionIcon(context,key,when(key){"pen"->context.tr("Pen","قلم");"highlight"->context.tr("Highlighter","هایلایتر");else->context.tr("Eraser","پاک‌کن")}){
             board().apply{tool=key;clearSelection()};changed();refresh()
         }
@@ -22,7 +22,7 @@ class PdfInkStrip(context:Context,private val board:()->Board,private val change
     init{
         orientation=HORIZONTAL;layoutDirection=View.LAYOUT_DIRECTION_LTR
         tools.forEach{addView(it,LayoutParams(context.dp(48),context.dp(48)).apply{marginEnd=context.dp(4)})}
-        (swatches+widths).forEachIndexed{i,v->addView(v,LayoutParams(context.dp(40),context.dp(48)).apply{if(i==0||i==swatches.size)marginStart=context.dp(10)})}
+        (swatches+widths).forEachIndexed{i,v->addView(v,LayoutParams(context.dp(44),context.dp(52)).apply{if((i==0&&showTools)||i==swatches.size)marginStart=context.dp(10)})}
         refresh()
     }
     fun refresh(){
