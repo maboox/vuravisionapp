@@ -2305,7 +2305,7 @@ class MainActivity : Activity() {
                 val x=if(rtl)bounds.right-(i+1)*column+48f else bounds.left+i*column
                 var y=bounds.top
                 if(title.isNotBlank()){
-                    val t=Item(kind="text",text=title,color=NAVY,width=28f,x=x,y=y,w=column-48f,h=56f,layerId=store.page.activeLayerId,pane=board.activePane)
+                    val t=Item(kind="text",text=title,bold=true,width=28f,x=x,y=y,w=column-48f,h=56f,layerId=store.page.activeLayerId,pane=board.activePane)
                     Fonts.stamp(t,true);TextLayout.fit(t);titles.add(t);y+=t.h+16f
                 }
                 members.filter{it in notes}.forEach{n->n.x=x;n.y=y;y+=n.h+gap}
