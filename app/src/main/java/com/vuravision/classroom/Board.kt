@@ -95,6 +95,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private val fading=mutableListOf<Pair<Item,Long>>()
     val laserStrokes get()=fading.size
     val laserPoints get()=fading.sumOf{it.first.points.size}
+    val livePoints get()=live.values.sumOf{it.points.size}
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
     private var tappedSelected=false
     private val eraseLast=mutableMapOf<Int,PointF>()
@@ -603,8 +604,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                         )
                 } else if (tool == "laser") {
                     // Laser pen: for pointing while explaining. The line fades by itself and never enters the page or Undo.
-                    live[id]=Item(layerId=store.page.activeLayerId,pane=pointerPanes[id]?:activePane,w=1f,h=1f,color=LASER_COLOR,width=5f,shape="round",points=mutableListOf())
-                    sampleGuidedInk(id,live.getValue(id),Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex)))
+                    // Points are recorded directly: no ruler snapping, smoothing or hold-to-shape for a pointer that vanishes.
+                    live[id]=Item(layerId=store.page.activeLayerId,pane=pointerPanes[id]?:activePane,w=1f,h=1f,color=LASER_COLOR,width=5f,shape="round",
+                        points=mutableListOf(Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex))))
                 } else if (tool in listOf("pen", "highlight", "smart")) {
                     if(tool!="smart" || smartMode=="shape")checkpoint()
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
@@ -670,6 +672,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                                     o.x=if(dx<0)start.x-o.w else start.x
                                     o.y=if(dy<0)start.y-o.h else start.y
                                 }
+                            } else if (tool == "laser") {
+                                o.points.add(Point(point.x,point.y,e.eventTime,e.getPressure(i)))
                             } else {
                                 val paneIndex=pointerPanes[pid]?:activePane
                                 val rect=paneRect(paneIndex)

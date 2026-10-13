@@ -279,7 +279,9 @@ class UiScenarioTest {
             val before=a.store.page.items.size;val undo=a.store.undoCount
             val r=rect(a.board);val x=r.left+300f;val y=r.top+300f
             fun touch(action:Int,dx:Float,t:Long){val e=MotionEvent.obtain(0,t,action,x+dx-r.left,y-r.top,0);a.board.onTouchEvent(e);e.recycle()}
-            touch(MotionEvent.ACTION_DOWN,0f,0);touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);touch(MotionEvent.ACTION_UP,200f,48)
+            touch(MotionEvent.ACTION_DOWN,0f,0);val afterDown=a.board.livePoints;touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);val afterMove=a.board.livePoints;touch(MotionEvent.ACTION_UP,200f,48)
+            diag("laser: afterDown=$afterDown afterMove=$afterMove")
+            assertTrue("laser stroke recorded no movement ($afterDown, $afterMove)",afterMove>=3)
             assertEquals("laser stroke was stored",before,a.store.page.items.size);assertEquals("laser stroke entered Undo",undo,a.store.undoCount)
             assertEquals(1,a.board.laserStrokes);a.board.invalidate();shot(a,"laser-stroke")
             val bmp=Bitmap.createBitmap(a.board.width,a.board.height,Bitmap.Config.ARGB_8888);a.board.draw(Canvas(bmp))
