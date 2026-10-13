@@ -110,7 +110,7 @@ class UiScenarioTest {
             search.setText(a.s("protractor").take(4));settle(a)
             assertTrue("$tag: search did not find the protractor",views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().any{it.key=="protractor"})
             shot(a,"$tag-3b-search");checkChrome(a,"$tag search")
-            search.setText("zzzz");settle(a);assertTrue("$tag: no 'nothing found'",views(a.findViewById(R.id.add_panel)).filterIsInstance<TextView>().any{it.text==a.tr("Nothing found","چیزی پیدا نشد")})
+            search.setText("zzzz");settle(a);assertTrue("$tag: no 'nothing found'",views(a.findViewById(R.id.add_panel)).filterIsInstance<TextView>().any{it.text.toString()==a.tr("Nothing found","چیزی پیدا نشد")})
             search.setText("");settle(a)
             // Long press pins a tool to the dock; again unpins it.
             views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first{it.key=="ruler"}.performLongClick();settle(a)
