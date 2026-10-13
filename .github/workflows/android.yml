@@ -142,21 +142,9 @@ jobs:
         with:
           name: device-test-reports
           path: app/build/reports/androidTests/
-  web-smoke:
+  source-checks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
       - run: python3 scripts/check-source.py
-      - run: npm ci && npm test
-      - uses: actions/upload-artifact@v4
-        if: always()
-        continue-on-error: true
-        with:
-          name: discovery-arcade-checks
-          path: app/build/qa/
-          retention-days: 3

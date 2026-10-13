@@ -267,6 +267,7 @@ object Games {
         fun gameNow()=(namePause?:SystemClock.elapsedRealtime())-pausedDuration
         val nameLabels=mutableListOf<TextView>()
         var redraw:()->Unit={}
+        var soundedRound=-1
         fun rename(i:Int){namePause=SystemClock.elapsedRealtime();GamePlayers.edit(context,i){pausedDuration+=SystemClock.elapsedRealtime()-(namePause?:SystemClock.elapsedRealtime());namePause=null;redraw()}}
         val root =
             context.column().apply {
@@ -316,6 +317,8 @@ object Games {
             action.text =
                 context.s(if (game.finished) "restart" else if (game.resolved) "next" else "reset")
             if (game.resolved) {
+                // One sound per finished round: the class hears who got it without reading the screen.
+                if(soundedRound!=game.round){soundedRound=game.round;Sounds.play(context,if(game.finished)Sounds.Cue.WIN else if(game.result=="tie")Sounds.Cue.TICK else Sounds.Cue.CORRECT)}
                 area.addView(
                     context
                         .label(
@@ -403,7 +406,8 @@ object Games {
                         else -> context.s(game.question)
                     }
                 col.addView(
-                    context.label(prompt, if(prompt.length>32)19f else 26f, NAVY, true).apply {
+                    // Read from the back of the room: the question is the largest text on screen.
+                    context.label(prompt, if(prompt.length>32)24f else 34f, NAVY, true).apply {
                         gravity = Gravity.CENTER
                         prompts.add(this)
                     }
@@ -433,11 +437,11 @@ object Games {
                                 isEnabled =
                                     !game.resolved && game.answers[player] == null ||
                                         key == "tap_race" && !game.resolved
-                                minHeight = context.dp(56)
+                                minHeight = context.dp(64);textSize=22f*context.uiScale()
                             },
-                        (if (verticalOptions) LinearLayout.LayoutParams(-1, context.dp(56))
-                        else LinearLayout.LayoutParams(0, context.dp(78), 1f)).apply {
-                            setMargins(context.dp(3), 0, context.dp(3), 0)
+                        (if (verticalOptions) LinearLayout.LayoutParams(-1, context.dp(72))
+                        else LinearLayout.LayoutParams(0, context.dp(96), 1f)).apply {
+                            setMargins(context.dp(4), context.dp(4), context.dp(4), context.dp(4))
                         },
                     )
                 }
@@ -493,7 +497,8 @@ object Games {
             }
         redraw=::render
         render()
-        root.addView(context.scrollRow(header))
+        // Layout and Close on top, next to the title (they were below the answers, where a hand reaching for an answer hits them).
+        root.addView(context.scrollRow(header),1)
         d.setContentView(root)
         d.show()
         handler.post(tick)
