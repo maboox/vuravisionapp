@@ -29,9 +29,11 @@ class UiScenarioTest {
     /** Lay out at the real display size and let posted rebuilds and animations finish. */
     private fun settle(a:MainActivity){
         val m=a.resources.displayMetrics;val decor=a.window.decorView
-        repeat(3){
+        // Like frames on a device: keep laying out until nothing posted asks for another pass.
+        for(pass in 0 until 8){
             decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY))
             decor.layout(0,0,m.widthPixels,m.heightPixels);idle()
+            if(pass>=2&&views(decor).none{it.isLayoutRequested})break
         }
     }
     private fun shot(a:MainActivity,name:String){
