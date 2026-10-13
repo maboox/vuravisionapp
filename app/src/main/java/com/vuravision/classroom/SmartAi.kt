@@ -25,6 +25,9 @@ import java.util.concurrent.TimeUnit
 data class AiSettings(val provider:String,val model:String,val dailyLimit:Int,val grade:String){
     companion object {
         val defaults=mapOf("gemini" to "gemini-2.5-flash","openai" to "gpt-4o-mini","openrouter" to "google/gemini-2.5-flash","avalai" to "gpt-4o-mini")
+        val imageDefaults=mapOf("gemini" to "gemini-2.5-flash-image","openai" to "gpt-image-1","openrouter" to "google/gemini-2.5-flash-image-preview","avalai" to "gpt-image-1")
+        fun imageModel(c:Context,provider:String)=c.getSharedPreferences("vura",0).getString("aiImageModel_$provider",null)?.takeIf{VoiceSettings.validCompatModel(it)}?:imageDefaults.getValue(provider)
+        fun saveImageModel(c:Context,provider:String,model:String){require(VoiceSettings.validCompatModel(model));c.getSharedPreferences("vura",0).edit().putString("aiImageModel_$provider",model).apply()}
         val grades=listOf("primary","middle","high")
         fun load(c:Context):AiSettings{
             val p=c.getSharedPreferences("vura",0)
@@ -134,6 +137,55 @@ class SmartAi(private val context:Context,keySource:(String)->String,transportSo
         if(answer.isEmpty())throw AiException("format")
         cache.put(id,answer)
         return answer
+    }
+    /**
+     * A picture for the board: from a description, or from a teacher's sketch. Services without sketch input get the
+     * sketch described first (one vision request), then drawn from that description, so every service can do both.
+     */
+    fun picture(description:String,sketch:Bitmap?=null):Bitmap{
+        val s=settings;val secret=try{key(s.provider)}catch(_:Exception){""}
+        if(secret.isBlank())throw AiException("no_key")
+        if(!online())throw AiException("offline")
+        val prefs=context.getSharedPreferences("vura",0);val count=usedToday()
+        if(count>=s.dailyLimit)throw AiException("limit")
+        prefs.edit().putInt("aiCount_${today()}",count+1).apply()
+        val model=AiSettings.imageModel(context,s.provider)
+        val safe="A clear, child-safe educational illustration for a classroom board, plain background, no text unless asked. "
+        fun decode(b64:String):Bitmap=Base64.decode(b64.substringAfter("base64,"),Base64.DEFAULT).let{android.graphics.BitmapFactory.decodeByteArray(it,0,it.size)}?:throw AiException("format")
+        val sketch64=sketch?.let{b->Base64.encodeToString(ByteArrayOutputStream().also{b.compress(Bitmap.CompressFormat.PNG,100,it)}.toByteArray(),Base64.NO_WRAP)}
+        return when(s.provider){
+            "gemini"->{
+                val parts=JSONArray().put(JSONObject().put("text",safe+(if(sketch!=null)"Redraw this sketch as a clean illustration: " else "")+description))
+                if(sketch64!=null)parts.put(JSONObject().put("inline_data",JSONObject().put("mime_type","image/png").put("data",sketch64)))
+                val body=JSONObject().put("contents",JSONArray().put(JSONObject().put("role","user").put("parts",parts)))
+                    .put("generationConfig",JSONObject().put("responseModalities",JSONArray().put("TEXT").put("IMAGE")))
+                val raw=transport.post("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent",mapOf("x-goog-api-key" to secret),body.toString())
+                try{
+                    val p=JSONObject(raw).getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
+                    val image=(0 until p.length()).map{p.getJSONObject(it)}.firstNotNullOfOrNull{it.optJSONObject("inline_data")?:it.optJSONObject("inlineData")}?:throw AiException("format")
+                    decode(image.getString("data"))
+                }catch(e:AiException){throw e}catch(e:Exception){throw AiException("format",raw.take(200))}
+            }
+            "openrouter"->{
+                val content=JSONArray().put(JSONObject().put("type","text").put("text",safe+(if(sketch!=null)"Redraw this sketch as a clean illustration: " else "")+description))
+                if(sketch64!=null)content.put(JSONObject().put("type","image_url").put("image_url",JSONObject().put("url","data:image/png;base64,$sketch64")))
+                val body=JSONObject().put("model",model).put("modalities",JSONArray().put("image").put("text"))
+                    .put("messages",JSONArray().put(JSONObject().put("role","user").put("content",content)))
+                val raw=transport.post(base(s.provider,context)+"/chat/completions",mapOf("Authorization" to "Bearer $secret","X-Title" to "VuraVision"),body.toString())
+                try{decode(JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getJSONArray("images").getJSONObject(0).getJSONObject("image_url").getString("url"))}
+                catch(e:AiException){throw e}catch(e:Exception){throw AiException("format",raw.take(200))}
+            }
+            else->{
+                val text=if(sketch!=null)ask("Describe this classroom sketch precisely for an illustrator: objects, layout, labels. At most 60 words.",description.ifBlank{"Describe the sketch."},sketch)+". "+description else description
+                val body=JSONObject().put("model",model).put("prompt",safe+text).put("n",1).put("size","1024x1024")
+                val raw=transport.post(base(s.provider,context)+"/images/generations",mapOf("Authorization" to "Bearer $secret"),body.toString())
+                try{
+                    val item=JSONObject(raw).getJSONArray("data").getJSONObject(0)
+                    if(item.has("b64_json"))decode(item.getString("b64_json"))
+                    else{val url=item.getString("url");java.net.URL(url).openStream().use{android.graphics.BitmapFactory.decodeStream(it)}?:throw AiException("format")}
+                }catch(e:AiException){throw e}catch(e:Exception){throw AiException("format",raw.take(200))}
+            }
+        }
     }
     fun askJson(system:String,prompt:String,image:Bitmap?=null):JSONObject{
         val text=ask(system,prompt,image,json=true)

@@ -367,6 +367,7 @@ class MainActivity : Activity() {
                 action("ai_simplify",tr("Simpler","ساده‌تر")){aiExplain("simplify")}
                 action("ai_translate",tr("Translate","ترجمه")){aiExplain("translate")}
                 if(ink)action("ai_cleanup",tr("Clean up","تمیز کن"),tr("Handwriting to typed text (AI)","دست‌خط به متن تایپی (هوش)")){aiCleanup()}
+                if(ink)action("ai_picture",tr("To picture","به تصویر"),tr("Turn the sketch into a clean picture (AI)","تبدیل طرح به تصویر تمیز (هوش)")){aiSketchToPicture()}
                 offlineSmart(smart,ink){symbol,text,title,run->action(symbol,text,title){run()}}
                 fillSelectionBar(actions);positionSelectionBar();return
             }
@@ -772,7 +773,7 @@ class MainActivity : Activity() {
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings()
+            "ai_quiz"->aiQuiz();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2099,11 +2100,13 @@ class MainActivity : Activity() {
     private fun aiSettings(){
         val c=column().apply{pad(16)};var s=AiSettings.load(this)
         val model=field(s.model).apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
+        val imageModel=field("").apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
         val keyState=label("",13f,MUTED)
         val key=field("",tr("API key","کلید API")).apply{setSingleLine(true);inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;textDirection=View.TEXT_DIRECTION_LTR}
         val presets=FlowRow(this,dp(6))
         fun refresh(){
             model.setText(AiSettings.load(this).let{if(it.provider==s.provider)it.model else AiSettings.defaults.getValue(s.provider)})
+            imageModel.setText(AiSettings.imageModel(this,s.provider))
             keyState.text=if(voiceKeys.forProvider(s.provider).hasKey())tr("A key is saved for this service (also used by the smart assistant). Leave empty to keep it.","برای این سرویس کلید ذخیره شده است (دستیار هوشمند هم از آن استفاده می‌کند). برای حفظ آن خالی بگذارید.")
                 else tr("No key yet for this service.","هنوز کلیدی برای این سرویس نیست.")
             presets.removeAllViews()
@@ -2114,6 +2117,7 @@ class MainActivity : Activity() {
         c.addView(segmented(listOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI"),s.provider){s=s.copy(provider=it);refresh()})
         c.addView(label(tr("AvalAI's address is the one set in the smart assistant page.","آدرس AvalAI همان است که در صفحهٔ دستیار هوشمند تنظیم شده."),12f,MUTED))
         c.addView(sectionTitle(tr("Model","مدل")));c.addView(model);c.addView(presets)
+        c.addView(sectionTitle(tr("Picture model","مدل تصویر")));c.addView(imageModel)
         c.addView(sectionTitle(tr("Key","کلید")));c.addView(keyState);c.addView(key)
         c.addView(sectionTitle(tr("Write answers for","پاسخ‌ها برای")))
         c.addView(segmented(listOf("primary" to tr("Primary","دبستان"),"middle" to tr("Grades 7–9","متوسطهٔ اول"),"high" to tr("Grades 10–12","متوسطهٔ دوم")),s.grade){s=s.copy(grade=it)})
@@ -2127,7 +2131,9 @@ class MainActivity : Activity() {
             val pasted=key.text.toString()
             if(pasted.isNotBlank()){val v=VoiceApiKey.normalize(pasted);if(!VoiceApiKey.isAcceptable(v)){key.error=s("voice_key_invalid");return false}
                 try{voiceKeys.forProvider(s.provider).save(pasted)}catch(_:Exception){key.error=s("voice_key_invalid");return false}}
-            s=s.copy(model=id);s.save(this);SmartAi.clearCache();key.setText("");refresh();return true
+            val picture=imageModel.text.toString().trim()
+            if(!VoiceSettings.validCompatModel(picture)){imageModel.error=s("voice_model_error");return false}
+            s=s.copy(model=id);s.save(this);AiSettings.saveImageModel(this,s.provider,picture);SmartAi.clearCache();key.setText("");refresh();return true
         }
         val d=dialog(tr("AI service","سرویس هوش"),ScrollView(this).apply{addView(c)})
         c.addView(row().apply{
@@ -2237,6 +2243,22 @@ class MainActivity : Activity() {
                 layerId=ink.first().layerId,pane=ink.first().pane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
             store.editMetadata{store.page.items.removeAll(ink.toSet());store.page.items.add(item)}
             board.selected.clear();board.selected.add(item.id);board.sceneChanged();refreshDock()
+        }
+    }
+    /** A picture from a description (Add panel), placed in the free middle of the board. */
+    private fun aiPicture(){
+        input(tr("Describe the picture","تصویر را توصیف کنید"),""){text->require(text.isNotBlank())
+            runAi(tr("Drawing…","در حال کشیدن…"),{ai->ai.picture(text)}){bitmap->insertBitmap(bitmap)}}
+    }
+    /** The teacher's rough sketch becomes a clean illustration beside it; the sketch stays. */
+    private fun aiSketchToPicture(){
+        aiOnSelection(tr("Drawing from the sketch…","در حال کشیدن از روی طرح…"),{ai,b->ai.picture("",b)}){bitmap,bounds->
+            work({media.save(bitmap)}){name->
+                val w=maxOf(bounds.width(),420f);val h=w*bitmap.height/bitmap.width
+                val item=Item(kind="image",asset=name,w=w,h=h,layerId=store.page.activeLayerId,pane=board.activePane)
+                freeSpot(bounds,w,h).let{item.x=it.x;item.y=it.y}
+                bitmap.recycle();addAndSelect(listOf(item),bounds)
+            }
         }
     }
     /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */

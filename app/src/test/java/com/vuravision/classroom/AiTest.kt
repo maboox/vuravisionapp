@@ -44,6 +44,23 @@ class AiTest {
         assertTrue(sent.last().first.endsWith("/chat/completions")&&sent.last().second.contains("image_url"))
         bitmap.recycle()
     }
+    @Test fun picturesFromEveryServiceFormat(){
+        val png=java.io.ByteArrayOutputStream().also{Bitmap.createBitmap(8,6,Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG,100,it)}.toByteArray()
+        val b64=android.util.Base64.encodeToString(png,android.util.Base64.NO_WRAP)
+        val prefs=context.getSharedPreferences("vura",0)
+        prefs.edit().putString("aiProvider","gemini").commit()
+        reply={_,_->JSONObject().put("candidates",org.json.JSONArray().put(JSONObject().put("content",JSONObject().put("parts",org.json.JSONArray().put(JSONObject().put("text","here")).put(JSONObject().put("inlineData",JSONObject().put("mimeType","image/png").put("data",b64))))))).toString()}
+        assertEquals(8,SmartAi(context,{""}).picture("a cell").width)
+        prefs.edit().putString("aiProvider","openai").commit()
+        reply={url,_->if(url.endsWith("/images/generations"))JSONObject().put("data",org.json.JSONArray().put(JSONObject().put("b64_json",b64))).toString() else openAi("a tree on a hill")}
+        val sketch=Bitmap.createBitmap(20,20,Bitmap.Config.ARGB_8888)
+        assertEquals(6,SmartAi(context,{""}).picture("",sketch).height)
+        assertTrue("a sketch is described first where the service cannot take it directly",sent.any{it.first.endsWith("/chat/completions")})
+        assertTrue(sent.last().second.contains("a tree on a hill"))
+        prefs.edit().putString("aiProvider","openrouter").commit()
+        reply={_,_->openAi("").replace("\"content\":\"\"","\"content\":\"\",\"images\":[{\"image_url\":{\"url\":\"data:image/png;base64,$b64\"}}]")}
+        assertEquals(8,SmartAi(context,{""}).picture("x",sketch).width);sketch.recycle()
+    }
     @Test fun cachesAndCapsRequests(){
         context.getSharedPreferences("vura",0).edit().putString("aiProvider","openai").putInt("aiDailyLimit",10).commit()
         reply={_,_->openAi("same")}

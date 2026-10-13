@@ -308,4 +308,5 @@
 <string name="ai_quiz">AI quiz</string>
 <string name="ai_mindmap">AI mind map</string>
 <string name="ai_summary">Lesson summary</string>
+<string name="ai_image">AI picture</string>
 </resources>
