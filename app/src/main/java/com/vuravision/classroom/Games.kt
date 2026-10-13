@@ -497,8 +497,8 @@ object Games {
             }
         redraw=::render
         render()
-        // Layout and Close on top, next to the title (they were below the answers, where a hand reaching for an answer hits them).
-        root.addView(context.scrollRow(header),1)
+        // Layout and Close stay at the bottom: on a tall panel the top edge is out of reach.
+        root.addView(context.scrollRow(header))
         d.setContentView(root)
         d.show()
         handler.post(tick)

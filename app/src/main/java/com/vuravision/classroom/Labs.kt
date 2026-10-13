@@ -153,7 +153,7 @@ object Labs {
                         object : SeekBar.OnSeekBarChangeListener {
                             override fun onProgressChanged(s: SeekBar?, p: Int, u: Boolean) {
                                 var v = control.min + (control.max - control.min) * p / 1000
-                                if (control.label in listOf("n", "N")) v = round(v)
+                                if (integral(control)) v = round(v)
                                 view.values[i] = v
                                 label.text = "${LabText.t(context,control.label)} = ${fmt(v)}"
                                 if(u)view.time=0.0
@@ -172,12 +172,21 @@ object Labs {
         sliders.addView(context.label(context.s("ex_$key"), 13f, MUTED))
         c.addView(ScrollView(context).apply{addView(sliders);isFillViewport=false},LinearLayout.LayoutParams(-1,context.dp(if(context.resources.configuration.screenWidthDp<620)190 else 235)))
         val r = context.row()
-        r.addView(
-            context.button(context.s("pause")) {
-                view.running = !view.running
-                view.invalidate()
-            }
-        )
+        // Play/pause names what a tap will do; slow motion lets the class follow fast motion (a collision, a falling ball).
+        lateinit var pause:android.widget.Button
+        pause=context.button(context.s("pause")) {
+            view.running = !view.running
+            pause.text=if(view.running)context.s("pause")else context.tr("Play","پخش")
+            view.invalidate()
+        }
+        r.addView(pause)
+        val speeds=listOf(1.0 to "1×",.5 to "½×",.25 to "¼×")
+        lateinit var speed:android.widget.Button
+        speed=context.button(context.tr("Speed 1×","سرعت 1×")){
+            val next=speeds[(speeds.indexOfFirst{it.first==view.speed}+1)%speeds.size]
+            view.speed=next.first;speed.text=context.tr("Speed ","سرعت ")+next.second
+        }
+        r.addView(speed)
         r.addView(
             context.button(context.s("reset")) {
                 view.time=0.0
@@ -187,13 +196,18 @@ object Labs {
             }
         )
         c.addView(context.scrollRow(r))
+        // Add to board and Close stay at the bottom: on a tall panel the top edge is out of reach.
         c.addView(context.scrollRow(header))
         d.setContentView(c)
         d.show()
         d.setOnDismissListener { view.running = false }
     }
 
-    private fun fmt(v: Float) = "%.2f".format(java.util.Locale.US, v)
+    private fun fmt(v: Float) = if(v==round(v)&&kotlin.math.abs(v)<1e6)v.toInt().toString() else "%.2f".format(java.util.Locale.US, v)
+    /** Counts and numbered choices move in whole steps (the lab rounds them anyway; the label showed 12.37 balls). */
+    private val counts=setOf("n","N","Z","Rows","Balls","Trials","Throws","Points","Steps","Samples","Sample size","People","Terms","Sides","Turns",
+        "Initial atoms","Bars","Depth","Odd harmonics","Start integer","Multiplier","Leading digit","Initial capital")
+    private fun integral(control:LabControl)=control.label in counts||Regex("\\b1 .*/ 2 ").containsMatchIn(control.label)
 }
 
 class LabView(context: Context, val key: String, val values: FloatArray) : View(context) {
@@ -208,6 +222,8 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
     override fun onWindowFocusChanged(hasWindowFocus:Boolean){super.onWindowFocusChanged(hasWindowFocus);last=0;if(::frame.isInitialized)removeCallbacks(frame);if(hasWindowFocus)invalidate()}
     override fun onDetachedFromWindow(){removeCallbacks(frame);last=0;super.onDetachedFromWindow()}
     var time = 0.0
+    /** 1 = real time; ½ and ¼ for slow motion. */
+    var speed = 1.0
     private var last = 0L
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private var sampleSeed=42
@@ -226,7 +242,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
 
     override fun onDraw(c: Canvas) {
         val now = SystemClock.elapsedRealtime()
-        if (last != 0L && canAnimate()) time += (now - last).coerceAtMost(50) / 1000.0
+        if (last != 0L && canAnimate()) time += (now - last).coerceAtMost(50) / 1000.0 * speed
         last = now
         render(c, width, height)
         if(canAnimate()&&((key.removePrefix("native_") in NativeLabs.growing&&time<NativeLabs.GROW_SECONDS+.2)||key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postDelayed(frame,16)}

@@ -11,8 +11,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 
 /**
- * The catalog screen shared by Labs and Games: title, result count and Close on top (it used to sit at the bottom),
- * search, filter chips, then a grid of cards that reflows as filters change, so no gaps are left where cards were hidden.
+ * The catalog screen shared by Labs and Games: title and result count on top, search, filter chips, a grid of cards
+ * that reflows as filters change (no gaps where cards were hidden), and Close at the bottom, within reach on a tall panel.
  * Why one shared screen: both catalogs answer the same question ("what can I show the class now?") and should
  * look and behave the same.
  */
@@ -34,12 +34,13 @@ class Gallery(private val context:Context,title:String,intro:String,back:(()->Un
             id=R.id.menu_back_button;scaleX=if(context.resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)-1f else 1f})
         header.addView(context.label(title,26f,NAVY,true))
         header.addView(count,LinearLayout.LayoutParams(0,-2,1f).apply{marginStart=context.dp(12)})
-        header.addView(WorkspaceIcon(context,"close",context.s("close")){dialog.dismiss()})
         root.addView(header)
         root.addView(context.label(intro,14f,MUTED).apply{maxLines=2})
         root.addView(search,LinearLayout.LayoutParams(-1,context.dp(48)).apply{setMargins(0,context.dp(8),0,context.dp(6))})
         root.addView(filters)
         root.addView(ScrollView(context).apply{addView(grid);isFillViewport=true},LinearLayout.LayoutParams(-1,0,1f))
+        root.addView(context.row().apply{gravity=android.view.Gravity.END;setPadding(0,context.dp(6),0,context.dp(10))
+            addView(context.button(context.s("close")){dialog.dismiss()},LinearLayout.LayoutParams(context.dp(160),context.dp(52)))})
         dialog.setContentView(root)
     }
     /** A row of choices; the current one is filled. Rebuild it after a pick with the new current value. */
