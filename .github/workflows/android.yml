@@ -12,6 +12,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -70,7 +72,21 @@ jobs:
           cp "$APK" "artifacts/$OUTPUT"
           cd artifacts
           sha256sum "$OUTPUT" > SHA256SUMS.txt
+      # Every signed build gets a pre-release with a stable APK download link.
+      # Release files do not count against the Actions artifact storage quota.
+      - name: Publish APK as a pre-release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${APP_VERSION}-build${{ github.run_number }}"
+          gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt \
+            --repo "${{ github.repository }}" --target "${{ github.sha }}" --prerelease \
+            --title "VuraVision ${APP_VERSION} · build ${{ github.run_number }}" \
+            --notes "Branch: ${{ github.ref_name }} · Commit: ${{ github.sha }}"
+          echo "APK: https://github.com/${{ github.repository }}/releases/download/$TAG/VuraVision-${APP_VERSION}.apk" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: VuraVision-${{ env.APP_VERSION }}-${{ github.run_number }}
           path: artifacts/
@@ -78,6 +94,7 @@ jobs:
           retention-days: 7
       - name: Reports
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: verification-${{ github.run_number }}
@@ -119,6 +136,7 @@ jobs:
           script: bash ./gradlew --no-daemon connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: device-test-reports
           path: app/build/reports/androidTests/
@@ -135,6 +153,7 @@ jobs:
       - run: npm ci && npm test
       - uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: discovery-arcade-checks
           path: app/build/qa/
