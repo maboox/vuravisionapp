@@ -122,9 +122,9 @@
 <string name="evaluate">Calculate</string>
 <string name="solve_help">Linear equations such as 2x+4=12. Complex handwritten formula OCR is not included.</string>
 <string name="lab">Learning lab</string>
-<string name="lab_intro">16 interactive labs • Change values, predict, then test • Ideal-model assumptions are shown in each lab</string>
+<string name="lab_intro">Change values, predict, then test • Ideal-model assumptions are shown in each lab</string>
 <string name="games">Play together</string>
-<string name="games_intro">32 classroom games and challenges • Two players • Offline • Read the rule before starting</string>
+<string name="games_intro">Two-player duels and whole-class math challenges • Offline • Tap a card to see its rule and start</string>
 <string name="add_board">Add to whiteboard</string>
 <string name="start">Start</string>
 <string name="pause">Pause</string>

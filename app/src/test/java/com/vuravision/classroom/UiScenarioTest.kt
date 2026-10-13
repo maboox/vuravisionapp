@@ -280,7 +280,7 @@ class UiScenarioTest {
             fun touch(action:Int,dx:Float,t:Long){val e=MotionEvent.obtain(0,t,action,x+dx-r.left,y-r.top,0);a.board.onTouchEvent(e);e.recycle()}
             touch(MotionEvent.ACTION_DOWN,0f,0);touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);touch(MotionEvent.ACTION_UP,200f,48)
             assertEquals("laser stroke was stored",before,a.store.page.items.size);assertEquals("laser stroke entered Undo",undo,a.store.undoCount)
-            assertEquals(1,a.board.laserStrokes);shot(a,"laser-stroke")
+            assertEquals(1,a.board.laserStrokes);a.board.invalidate();shot(a,"laser-stroke")
             idle(2600);a.board.invalidate();settle(a);a.board.draw(Canvas(Bitmap.createBitmap(10,10,Bitmap.Config.ARGB_8888)))
             assertEquals("laser stroke did not fade",0,a.board.laserStrokes)
         }finally{ctl.pause().stop().destroy()}

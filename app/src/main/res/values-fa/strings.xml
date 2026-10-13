@@ -122,9 +122,9 @@
 <string name="evaluate">محاسبه</string>
 <string name="solve_help">معادلات خطی مانند 2x+4=12. این بتا ریاضی دست‌نویس پیچیده را تشخیص نمی‌دهد.</string>
 <string name="lab">آزمایشگاه</string>
-<string name="lab_intro">۱۶ آزمایش تعاملی • مقدارها را تغییر دهید، پیش‌بینی و آزمایش کنید • فرض‌های مدل در هر آزمایش مشخص است</string>
+<string name="lab_intro">مقدارها را تغییر دهید، پیش‌بینی و آزمایش کنید • فرض‌های مدل در هر آزمایش مشخص است</string>
 <string name="games">بازی دونفره</string>
-<string name="games_intro">۳۲ بازی و چالش کلاسی • دو بازیکن • آفلاین • پیش از شروع راهنما را بخوانید</string>
+<string name="games_intro">رقابت دونفره و چالش ریاضی برای کل کلاس • آفلاین • روی کارت بزنید تا قانون بازی را ببینید و شروع کنید</string>
 <string name="add_board">افزودن به تخته</string>
 <string name="start">شروع</string>
 <string name="pause">مکث</string>
