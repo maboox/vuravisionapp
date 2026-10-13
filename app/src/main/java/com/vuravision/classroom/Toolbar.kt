@@ -63,7 +63,8 @@ class ToolDock(
         host.addView(this,FrameLayout.LayoutParams(-2,-2))
         host.addView(stripHost,FrameLayout.LayoutParams(-2,-2))
         host.addView(handle,FrameLayout.LayoutParams(context.dp(10),context.dp(72)))
-        host.addOnLayoutChangeListener{_,_,t,_,b,_,ot,_,ob->if(b-t!=ob-ot)fit(b-t)}
+        // Every host layout: the bottom bars can move (narrow screens) without the host changing size.
+        host.addOnLayoutChangeListener{_,_,t,_,b,_,_,_,_->fit(b-t)}
         place();refresh()
     }
     private fun buttons()=penButtons+listOf(eraser,select,recentButton,add,undo,redo,swapButton)
@@ -91,10 +92,12 @@ class ToolDock(
         // it must also leave the bottom bars' height free at both ends.
         val reserved=(height-bottomObstacle())/px
         val available=minOf(heightDp*.72f,heightDp-2*reserved-24)-16
-        val single=(available-20)/buttons().size
-        val (cols,size)=if(single>=44)1 to single.coerceAtMost(60f) else 2 to (available/((buttons().size+1)/2)).coerceIn(36f,56f)
+        // Overheads: 12dp padding plus 13dp per divider (two in one column, one in two columns).
+        val single=(available-38)/buttons().size
+        val (cols,size)=if(single>=44)1 to single.coerceAtMost(60f) else 2 to ((available-25)/((buttons().size+1)/2)).coerceIn(36f,56f)
         // Rebuild after the current layout pass; adding views inside it leaves them unmeasured.
-        post{if(cols!=columns || size.toInt()!=buttonDp){columns=cols;buttonDp=size.toInt();arrange()};place()}
+        // Only a real change rebuilds (posting unconditionally would loop: place() requests another layout).
+        if(cols!=columns || size.toInt()!=buttonDp)post{if(cols!=columns || size.toInt()!=buttonDp){columns=cols;buttonDp=size.toInt();arrange();place()}}
     }
     private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=52}
     // Dividers are as wide as the icon area (button minus its rounded padding), centered under the buttons.
