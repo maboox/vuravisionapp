@@ -272,13 +272,8 @@ class MainActivity : Activity() {
             positionSelectionBar()
             refreshSplitControls()
         }}
-        // The dock can change width (1 or 2 columns) or side after the split controls were placed: keep them,
-        // and an open panel bar, clear of it.
-        toolDock.addOnLayoutChangeListener{_,l,_,r,_,ol,_,or,_->if((l!=ol||r!=or)&&splitControls!=null)handler.post{
-            if(destroyed)return@post
-            val open=paneBarKey;refreshSplitControls()
-            if(open.isNotEmpty()){val (i,pen)=open.split(":");paneBar(i.toInt(),pen.toBoolean())}
-        }}
+        // The dock can change width (1 or 2 columns) or side after the split controls were placed: keep them clear of it.
+        canvasHost.viewTreeObserver.addOnGlobalLayoutListener{if(!destroyed)positionSplitControls()}
         refreshDock();refreshPages()
     }
     private fun closeSidePanel(){sidePanel?.let{canvasHost.removeView(it)};sidePanel=null;sidePanelPage=null}
@@ -425,11 +420,20 @@ class MainActivity : Activity() {
             // As wide as both buttons really are: a narrower scrolling box let the second button stick out under the dock.
             actions.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
             val controlWidth=min(actions.measuredWidth,(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
-            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,maxOf(dp(52),actions.measuredHeight)).apply{
-                val (freeLeft,freeRight)=freeSpan()
-                leftMargin=((i+1)*canvasHost.width/columns-controlWidth-dp(6)).coerceAtMost(freeRight-controlWidth).coerceAtLeast(maxOf(freeLeft,i*canvasHost.width/columns))
-                topMargin=(canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)).coerceAtLeast(dp(12))
-            })
+            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,maxOf(dp(52),actions.measuredHeight)))
+        }
+        positionSplitControls()
+    }
+    /** Bottom corner of each panel, never under the dock; re-run on every layout because the dock moves and resizes. */
+    private fun positionSplitControls(){
+        val overlay=splitControls?:return;val n=overlay.childCount;if(n==0||canvasHost.width==0)return
+        val (freeLeft,freeRight)=freeSpan()
+        for(i in 0 until n){
+            val v=overlay.getChildAt(i);val lp=v.layoutParams as FrameLayout.LayoutParams;val w=lp.width
+            val left=((i+1)*canvasHost.width/n-w-dp(6)).coerceAtMost(freeRight-w).coerceAtLeast(maxOf(freeLeft,i*canvasHost.width/n))
+            val top=(canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)).coerceAtLeast(dp(12))
+            // Only on change, so this layout listener cannot trigger itself forever.
+            if(lp.leftMargin!=left||lp.topMargin!=top){lp.leftMargin=left;lp.topMargin=top;v.layoutParams=lp}
         }
     }
     private var paneBarView:View?=null
