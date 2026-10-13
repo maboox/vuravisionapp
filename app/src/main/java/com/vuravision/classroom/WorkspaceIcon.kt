@@ -12,7 +12,7 @@ import androidx.appcompat.widget.AppCompatImageButton
 open class WorkspaceIcon(context:Context,val key:String,title:String,active:Boolean=false,action:()->Unit):AppCompatImageButton(context){
     /** Square size in dp before the UI scale; the side dock uses larger buttons. */
     var sizeDp=48
-        set(value){field=value;requestLayout()}
+        set(value){field=value;val p=context.dp((value*.26f).toInt());setPadding(p,p,p,p);requestLayout()}
     /** Optional ink color shown as a dot under the icon (pen presets). */
     var dotColor:Int?=null
         set(value){field=value;invalidate()}

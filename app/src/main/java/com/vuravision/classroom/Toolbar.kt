@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 
 /** One saved pen: ink or highlighter with its own color and width. */
@@ -36,45 +37,57 @@ class ToolDock(
     private val select=icon("select",context.s("select")){tool("select")}
     private var recentButton=icon(recent(),context.s(recent())){useRecent()}
     private val add=icon("insert",context.s("insert")){toggleAdd()}
+    private val undo=icon("undo",context.s("undo")){board().undo()}
+    private val redo=icon("redo",context.s("redo")){board().redo()}
+    private val swapButton=icon("swap",context.tr("Move toolbar to the other side","انتقال نوار به سمت دیگر")){swap()}
     private val strip=InkStrip(context,board,showTools=false){savePreset();changed();refresh()}
-    private val stripHost=FrameLayout(context).apply{addView(strip);background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(8),context.dp(4),context.dp(8),context.dp(4));visibility=View.GONE}
+    private val stripHost=FrameLayout(context).apply{addView(strip,FrameLayout.LayoutParams(-2,-2));background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(8),context.dp(4),context.dp(8),context.dp(4));visibility=View.GONE}
     private val handle=View(context).apply{
         background=rounded(OUTLINE_STRONG,context.dp(6).toFloat());contentDescription=context.tr("Bring the toolbar to this side","آوردن نوار ابزار به این سمت")
         isClickable=true;setOnClickListener{swap()}
     }
     private var addPanel:AddPanel?=null
     private var bottomGap=140
+    private var columns=1
+    private var buttonDp=52
     private var stripShown=false
     var end=prefs.getBoolean("dockEnd",false)
         private set
     init {
         background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat()
         id=R.id.tool_dock
-        addView(column)
-        penButtons.forEach{column.addView(it)}
-        column.addView(eraser);column.addView(select);column.addView(recentButton);column.addView(add)
-        column.addView(divider())
-        column.addView(icon("undo",context.s("undo")){board().undo()})
-        column.addView(icon("redo",context.s("redo")){board().redo()})
-        column.addView(divider())
-        column.addView(icon("swap",context.tr("Move toolbar to the other side","انتقال نوار به سمت دیگر")){swap()}.apply{sizeDp=48})
+        addView(column,FrameLayout.LayoutParams(-2,-2))
+        arrange()
         host.addView(this,FrameLayout.LayoutParams(-2,-2))
         host.addView(stripHost,FrameLayout.LayoutParams(-2,-2))
         host.addView(handle,FrameLayout.LayoutParams(context.dp(10),context.dp(72)))
         host.addOnLayoutChangeListener{_,_,t,_,b,_,ot,_,ob->if(b-t!=ob-ot)fit(b-t)}
         place();refresh()
     }
-    /** Shrink buttons (60→40dp) and the bottom gap so the whole dock fits short panels. */
+    private fun buttons()=penButtons+listOf(eraser,select,recentButton,add,undo,redo,swapButton)
+    /** One column on tall panels; two columns when one would exceed the space beside the canvas. */
+    private fun arrange(){
+        column.removeAllViews()
+        buttons().forEach{(it.parent as? ViewGroup)?.removeView(it);it.sizeDp=buttonDp}
+        if(columns==1){
+            penButtons.forEach{column.addView(it)}
+            listOf(eraser,select,recentButton,add).forEach{column.addView(it)}
+            column.addView(divider());column.addView(undo);column.addView(redo);column.addView(divider());column.addView(swapButton)
+        }else buttons().chunked(2).forEach{pair->column.addView(context.row().apply{pair.forEach{addView(it)}})}
+    }
+    /** Keep the dock inside about two thirds of the panel height, whatever the density or UI size. */
     private fun fit(height:Int){
-        val buttons=penButtons+listOf(eraser,select,recentButton,add)+column.children().filterIsInstance<WorkspaceIcon>().filter{it.key=="undo"||it.key=="redo"}
-        fun size(gap:Int)=((height-context.dp(12+gap+48+30))/buttons.size.coerceAtLeast(1)/(context.dp(100)/100f)).toInt()
-        bottomGap=if(size(140)>=44)140 else 76
-        val dp=size(bottomGap).coerceIn(40,60)
-        buttons.forEach{if(it.sizeDp!=dp)it.sizeDp=dp}
+        if(height<=0)return
+        val px=context.dp(100)/100f
+        val heightDp=height/px
+        bottomGap=if(heightDp>=640)140 else 76
+        val available=minOf(heightDp-12-bottomGap,heightDp*.68f)-16
+        val single=(available-20)/buttons().size
+        val (cols,size)=if(single>=44)1 to single.coerceAtMost(60f) else 2 to (available/((buttons().size+1)/2)).coerceIn(36f,56f)
+        if(cols!=columns || size.toInt()!=buttonDp){columns=cols;buttonDp=size.toInt();arrange()}
         post{place()}
     }
-    private fun LinearLayout.children()=(0 until childCount).map{getChildAt(it)}
-    private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=(column.children().firstOrNull() as? WorkspaceIcon)?.sizeDp?:60}
+    private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=52}
     private fun divider()=View(context).apply{setBackgroundColor(OUTLINE);layoutParams=LinearLayout.LayoutParams(-1,context.dp(1)).apply{setMargins(context.dp(8),context.dp(4),context.dp(8),context.dp(4))}}
     private fun penTitle(i:Int)=if(defaults[i].highlight)context.tr("Highlighter","هایلایتر")else context.tr("Pen ${i+1}","قلم ${i+1}")
     private fun activePreset()=prefs.getInt("dockPen",0).coerceIn(0,defaults.lastIndex)
@@ -99,8 +112,7 @@ class ToolDock(
     fun used(key:String){
         if(key !in recentable || key==recent())return
         prefs.edit().putString("dockRecent",key).apply()
-        val index=column.indexOfChild(recentButton);column.removeView(recentButton)
-        recentButton=icon(key,context.s(key)){useRecent()};column.addView(recentButton,index)
+        recentButton=icon(key,context.s(key)){useRecent()};arrange();refresh()
     }
     private fun savePreset(){
         val b=board();val i=activePreset();if(b.store.page.visiblePaneCount>1)return
@@ -110,7 +122,7 @@ class ToolDock(
     private fun toggleAdd(){
         if(addPanel!=null){closeAdd();return}
         stripShown=false
-        addPanel=AddPanel(context,host,end,{closeAdd()}){key->closeAdd();used(key);perform(key)}
+        addPanel=AddPanel(context,host,end,beside(),context.dp(bottomGap),{closeAdd()}){key->closeAdd();used(key);perform(key)}
         refresh()
     }
     fun closeAdd(){addPanel?.close();addPanel=null;refresh()}
@@ -122,12 +134,16 @@ class ToolDock(
         translationX=(if(end==(layoutDirection==LAYOUT_DIRECTION_RTL))-1 else 1)*context.dp(48).toFloat();alpha=.4f
         animate().translationX(0f).alpha(1f).setDuration(260).start()
     }
+    /** Distance from the panel edge to just past the dock, for the strip and Add panel. */
+    private fun beside()=context.dp(12)+(if(width>0)width else context.dp(buttonDp*columns+14))+context.dp(12)
     private fun place(){
         val side=if(end)Gravity.END else Gravity.START
         (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.BOTTOM or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(bottomGap))}
         (handle.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or(if(end)Gravity.START else Gravity.END);setMargins(context.dp(3),0,context.dp(3),0)}
-        (stripHost.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.BOTTOM or side;val beside=context.dp(12+84+12);setMargins(beside,context.dp(12),beside,context.dp(bottomGap))}
-        if(end){(stripHost.layoutParams as FrameLayout.LayoutParams).apply{marginStart=0;marginEnd=context.dp(12+84+12)}}else{(stripHost.layoutParams as FrameLayout.LayoutParams).apply{marginStart=context.dp(12+84+12);marginEnd=0}}
+        (stripHost.layoutParams as FrameLayout.LayoutParams).apply{
+            gravity=Gravity.BOTTOM or side;topMargin=context.dp(12);bottomMargin=context.dp(bottomGap)
+            if(end){marginStart=0;marginEnd=beside()}else{marginStart=beside();marginEnd=0}
+        }
         requestLayout();handle.requestLayout();stripHost.requestLayout()
     }
     /** Hide or show with the rest of the canvas chrome (focus mode). */
@@ -152,7 +168,7 @@ class ToolDock(
 }
 
 /** Everything that is not on the dock, grouped the way a teacher looks for it. */
-class AddPanel(private val context:Context,private val host:FrameLayout,end:Boolean,private val dismiss:()->Unit,private val pick:(String)->Unit) {
+class AddPanel(private val context:Context,private val host:FrameLayout,end:Boolean,beside:Int,bottom:Int,private val dismiss:()->Unit,private val pick:(String)->Unit) {
     companion object {
         val groups=listOf(
             "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
@@ -176,7 +192,7 @@ class AddPanel(private val context:Context,private val host:FrameLayout,end:Bool
         }
         val scroll=ScrollView(context).apply{addView(panel);isVerticalScrollBarEnabled=false}
         scrim.addView(scroll,FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM or(if(end)Gravity.END else Gravity.START)).apply{
-            val beside=context.dp(12+84+12);if(end)marginEnd=beside else marginStart=beside;setMargins(if(end)0 else beside,context.dp(12),if(end)beside else 0,context.dp(140))
+            topMargin=context.dp(12);bottomMargin=bottom
             if(end){marginStart=0;marginEnd=beside}else{marginStart=beside;marginEnd=0}
         })
         host.addView(scrim,FrameLayout.LayoutParams(-1,-1))
