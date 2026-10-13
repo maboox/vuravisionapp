@@ -259,7 +259,9 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
         gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(4),context.dp(4),context.dp(4),context.dp(6))
         val icon=WorkspaceIcon(context,key,label(key)){pick(key)}.apply{sizeDp=56}
         addView(icon,LinearLayout.LayoutParams(-2,-2))
-        addView(context.label(label(key),14f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},LinearLayout.LayoutParams(context.dp(84),-2))
+        // Two lines, shrinking to 10sp for a single long word (e.g. "Background") instead of clipping it.
+        addView(context.label(label(key),13f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            setAutoSizeTextTypeUniformWithConfiguration(10,13,1,android.util.TypedValue.COMPLEX_UNIT_SP)},LinearLayout.LayoutParams(context.dp(84),context.dp(40)))
         layoutParams=GridLayout.LayoutParams().apply{width=context.dp(88)}
     }
     fun close(){host.removeView(scrim)}
