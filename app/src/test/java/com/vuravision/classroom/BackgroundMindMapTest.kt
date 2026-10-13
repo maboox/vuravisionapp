@@ -34,8 +34,7 @@ class BackgroundMindMapTest {
             MainActivity::class.java.getDeclaredMethod("backgroundSettings",Int::class.javaPrimitiveType)
                 .apply{isAccessible=true}.invoke(activity,0)
             val background=ShadowDialog.getLatestDialog()
-            val buttons=views(background.window!!.decorView).filterIsInstance<MaterialButton>()
-            buttons.single{it.text.toString()=="Hatched"}.performClick()
+            views(background.window!!.decorView).single{it.contentDescription=="Hatched"&&it.isClickable}.performClick()
             assertEquals("hatch",activity.store.page.pattern(0))
             views(background.window!!.decorView).single{it.contentDescription=="Add color to this lesson"}.performClick()
             val picker=ShadowDialog.getLatestDialog() as AlertDialog

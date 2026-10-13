@@ -626,26 +626,20 @@ class MainActivity : Activity() {
         val c=column().apply{pad(16)}
         c.addView(label(tr("Page pattern","الگوی صفحه"),17f,NAVY,true))
         c.addView(infoTitle(tr("Background scope","محدودهٔ پس‌زمینه"),tr("Pattern and color apply only to this panel.","طرح و رنگ فقط برای همین بخش اعمال می‌شوند.")))
-        val patterns=patternChoices()
-        val patternRows=column();c.addView(patternRows)
-        fun refreshPattern(){patternRows.removeAllViews();patterns.chunked(3).forEach{chunk->
-            patternRows.addView(row().apply{chunk.forEach{(key,title)->
-                addView(button(title,if(page.pattern(paneIndex) in listOf("white","dark"))key=="plain" else page.pattern(paneIndex)==key){
-                    store.editMetadata{
-                        if(page.pattern(paneIndex)=="dark" && pane.background==Color.WHITE)pane.background=0xff172a36.toInt()
-                        pane.pattern=key
-                    }
-                    refreshPattern()
-                },LinearLayout.LayoutParams(0,dp(52),1f).apply{setMargins(dp(2),dp(4),dp(2),dp(4))})
-            }})
-        }}
-        refreshPattern()
-        c.addView(label(tr("Background color","رنگ پس‌زمینه"),17f,NAVY,true))
         val initial=if(page.pattern(paneIndex)=="dark"&&pane.background==Color.WHITE)0xff172a36.toInt() else pane.background
-        palette(c,initial,background=true){color->store.editMetadata{
+        var color=initial
+        val grid=PatternGrid(this,board.renderer,patternChoices(),page.pattern(paneIndex).let{if(it in listOf("white","dark"))"plain" else it},3,{color}){key->
+            store.editMetadata{
+                if(page.pattern(paneIndex)=="dark" && pane.background==Color.WHITE)pane.background=0xff172a36.toInt()
+                pane.pattern=key
+            }
+        }
+        c.addView(grid)
+        c.addView(label(tr("Background color","رنگ پس‌زمینه"),17f,NAVY,true))
+        palette(c,initial,background=true){picked->color=picked;store.editMetadata{
             if(page.pattern(paneIndex)=="dark")pane.pattern="plain"
-            pane.background=color
-        }}
+            pane.background=picked
+        };grid.refresh()}
         toolSheet(tr("Background · page ${store.lesson.current+1}","پس‌زمینه · صفحهٔ ${store.lesson.current+1}"),ScrollView(this).apply{addView(c)})
     }
     private fun slider(c:LinearLayout,name:String,value:Float,maxValue:Int=40,undoable:Boolean=false,changed:(Float)->Unit){
@@ -683,14 +677,19 @@ class MainActivity : Activity() {
         if(pattern=="dark"&&color==Color.WHITE)color=0xff172a36.toInt()
         return Page(background=if(pattern in listOf("white","dark"))"plain"else pattern,panes=mutableListOf(Pane(background=color)))
     }
+    /** Defaults for new pages; every choice applies at once (no Apply button), like the rest of Settings. */
     private fun defaultBackgroundSettings(){
         val c=column().apply{pad(16)}
-        val choices=patternChoices();val patterns=choices.map{it.first}
-        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,choices.map{it.second});setSelection(patterns.indexOf(prefs.getString("defaultPattern","dots")).coerceAtLeast(0))};c.addView(pick)
-        var color=prefs.getInt("defaultBackground",Color.WHITE);palette(c,color,true){color=it}
-        val inherit=Switch(this).apply{text=tr("New page uses current page background","صفحهٔ جدید از پس‌زمینهٔ صفحهٔ فعلی استفاده کند");isChecked=prefs.getBoolean("inheritBackground",false)};c.addView(inherit)
-        c.addView(infoTitle(tr("New pages","صفحات جدید"),tr("Only the color and pattern are copied. Existing pages are unchanged. The first page of a new lesson uses these defaults.","فقط رنگ و طرح کپی می‌شوند. صفحات موجود تغییر نمی‌کنند. صفحهٔ اول فایل جدید از پیش‌فرض استفاده می‌کند.")))
-        val d=dialog(s("page_background"),c);c.addView(button(s("apply"),true){prefs.edit().putString("defaultPattern",patterns[pick.selectedItemPosition]).putInt("defaultBackground",color).putBoolean("inheritBackground",inherit.isChecked).apply();d.dismiss()})
+        var color=prefs.getInt("defaultBackground",Color.WHITE)
+        c.addView(sectionTitle(tr("Pattern","الگو")))
+        val current=(prefs.getString("defaultPattern","dots")?:"dots").let{if(it in listOf("white","dark"))"plain" else it}
+        val grid=PatternGrid(this,board.renderer,patternChoices(),current,4,{color}){prefs.edit().putString("defaultPattern",it).apply()}
+        c.addView(grid)
+        c.addView(sectionTitle(tr("Color","رنگ")))
+        palette(c,color,true){color=it;prefs.edit().putInt("defaultBackground",it).apply();grid.refresh()}
+        c.addView(switchRow(tr("New page uses the current page's background","صفحهٔ جدید از پس‌زمینهٔ صفحهٔ فعلی استفاده کند"),prefs.getBoolean("inheritBackground",false),
+            tr("Only the color and pattern are copied. Existing pages are unchanged. The first page of a new lesson uses the defaults above.","فقط رنگ و طرح کپی می‌شوند. صفحه‌های موجود تغییر نمی‌کنند. صفحهٔ اول درس جدید از پیش‌فرض بالا استفاده می‌کند.")){prefs.edit().putBoolean("inheritBackground",it).apply()})
+        dialog(s("page_background"),ScrollView(this).apply{addView(c)})
     }
     private fun calibrationSettings(){
         val c=column().apply{pad(16)}

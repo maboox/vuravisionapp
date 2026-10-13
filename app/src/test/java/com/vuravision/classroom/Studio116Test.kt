@@ -72,7 +72,7 @@ class Studio116Test {
     }
     @Test fun changingAPanelPatternLeavesOtherPanelsUntouched(){withActivity{a->
         a.board.split(2);MainActivity::class.java.getDeclaredMethod("backgroundSettings",Int::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,1)
-        dialogViews().filterIsInstance<Button>().single{it.text.toString()=="Hatched"}.performClick()
+        dialogViews().single{it.contentDescription=="Hatched"&&it.isClickable}.performClick()
         assertEquals("hatch",a.store.page.pattern(1));assertEquals("dots",a.store.page.pattern(0));ShadowDialog.getLatestDialog().dismiss()
     }}
     @Test fun panelBackgroundRenderingUsesItsOwnPattern(){

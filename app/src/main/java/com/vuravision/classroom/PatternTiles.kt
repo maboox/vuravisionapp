@@ -1,0 +1,55 @@
+package com.vuravision.classroom
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Path
+import android.graphics.RectF
+import android.view.Gravity
+import android.view.View
+import android.widget.GridLayout
+import android.widget.LinearLayout
+
+/**
+ * Page patterns picked by sight: each tile is a small live preview in the chosen background color, with its name below.
+ * Names like "isometric" or "staff" mean little to many teachers; the picture does.
+ */
+@SuppressLint("ViewConstructor")
+class PatternPreview(context:Context,private val renderer:Renderer,val key:String,private val color:()->Int):View(context){
+    private val clip=Path()
+    override fun onDraw(c:Canvas){
+        val r=context.dp(12).toFloat();clip.reset();clip.addRoundRect(RectF(0f,0f,width.toFloat(),height.toFloat()),r,r,Path.Direction.CW)
+        c.save();c.clipPath(clip)
+        // About a third of a board's width, so the pattern looks as dense as it will on the panel.
+        val units=480f;val s=width/units;c.scale(s,s)
+        val page=Page(background=key,panes=mutableListOf(Pane(background=color(),pattern=key)))
+        renderer.background(c,page,RectF(0f,0f,units,height/s),color())
+        c.restore()
+    }
+}
+
+/** A grid of pattern tiles; [pick] gets the key. Call [PatternGrid.refresh] after the color changes. */
+class PatternGrid(context:Context,renderer:Renderer,choices:List<Pair<String,String>>,selected:String,columns:Int,color:()->Int,pick:(String)->Unit):GridLayout(context){
+    private val previews=mutableListOf<PatternPreview>()
+    private val frames=mutableListOf<Pair<String,LinearLayout>>()
+    var selected=selected
+        private set
+    init{
+        columnCount=columns
+        choices.forEach{(key,title)->
+            val preview=PatternPreview(context,renderer,key,color);previews.add(preview)
+            val frame=context.column().apply{
+                gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(4),context.dp(4),context.dp(4),context.dp(6));isClickable=true;isFocusable=true
+                contentDescription=title
+                addView(preview,LinearLayout.LayoutParams(-1,context.dp(64)))
+                addView(context.label(title,13f,NAVY).apply{gravity=Gravity.CENTER;maxLines=1},LinearLayout.LayoutParams(-1,-2).apply{topMargin=context.dp(4)})
+                setOnClickListener{this@PatternGrid.selected=key;mark();pick(key)}
+            }
+            frames.add(key to frame)
+            addView(frame,LayoutParams(spec(UNDEFINED,1f),spec(UNDEFINED,1f)).apply{width=0;setMargins(context.dp(3),context.dp(3),context.dp(3),context.dp(3))})
+        }
+        mark()
+    }
+    private fun mark(){frames.forEach{(key,frame)->frame.background=rounded(if(key==selected)0xffe2f2f0.toInt() else SURFACE,context.dp(16).toFloat(),if(key==selected)TEAL else OUTLINE);frame.isSelected=key==selected}}
+    fun refresh()=previews.forEach{it.invalidate()}
+}
