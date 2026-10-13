@@ -23,7 +23,9 @@ class PatternPreview(context:Context,private val renderer:Renderer,val key:Strin
         // One board unit per dp, as on the board at 100%: lines as crisp and as dense as the teacher will see them.
         val s=context.resources.displayMetrics.density;val units=width/s;c.scale(s,s)
         val page=Page(background=key,panes=mutableListOf(Pane(background=color(),pattern=key)))
-        renderer.background(c,page,RectF(0f,0f,units,height/s),color())
+        // Centered on the origin, so "Axes" shows its cross and not just a corner.
+        val h=height/s;c.translate(units/2,h/2)
+        renderer.background(c,page,RectF(-units/2,-h/2,units/2,h/2),color())
         c.restore()
     }
 }
