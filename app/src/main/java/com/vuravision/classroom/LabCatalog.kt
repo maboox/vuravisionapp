@@ -20,6 +20,15 @@ object LabCatalog {
         Topic("random","stats","Random processes","فرایندهای تصادفی","galton walk markov".split(" ").toSet())
     )
     val subjects=listOf("physics","chem","math","stats")
+    /**
+     * Rough school level, for the gallery filter: "middle" (grades 7-9: one quantity at a time, no trigonometry or
+     * calculus) or "high" (grades 10-12). Anything not listed is high school. A guide for finding things, not a syllabus.
+     */
+    private val middle=("states density ph atom buoyancy pressure heat circuit lens diffusion flame electrolysis solubility " +
+        "pythagoras primes coins dice median collatz modcircle sorting fractal golden polypi streaks freefall periodic periodic_table " +
+        "osmosis energy triangle_area statistics koch").split(" ").toSet()
+    fun level(key:String)=if(key.removePrefix("native_") in middle)"middle" else "high"
+    fun levelName(context:Context,level:String)=if(level=="middle")context.tr("Grades 7–9","پایهٔ هفتم تا نهم")else context.tr("Grades 10–12","پایهٔ دهم تا دوازدهم")
     fun topic(key:String)=topics.first{key.removePrefix("native_") in it.ids}
     fun name(context:Context,subject:String)=when(subject){
         "physics"->context.tr("Physics","فیزیک")

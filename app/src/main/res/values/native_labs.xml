@@ -1,138 +1,138 @@
 <resources>
-<string name="native_orbit">Orbit</string>
-<string name="ex_native_orbit">Adjust the controls and compare the displayed quantities. Orbit.</string>
+<string name="native_orbit">Gravity and orbits</string>
+<string name="ex_native_orbit">Two masses pull on each other with F = G·M·m / r². Raise gravity and orbits tighten; lower it and planets escape! Closer planets go round faster: Kepler\'s third law.</string>
 <string name="native_pendulum">Pendulum</string>
-<string name="ex_native_pendulum">Adjust the controls and compare the displayed quantities. Pendulum.</string>
+<string name="ex_native_pendulum">The period is T = 2π √(L/g): it does not depend on the bob\'s mass! Make the string 4 times longer and the period doubles. Galileo\'s discovery made pendulum clocks possible.</string>
 <string name="native_projectile">Projectile</string>
-<string name="ex_native_projectile">Adjust the controls and compare the displayed quantities. Projectile.</string>
-<string name="native_spring">Spring</string>
-<string name="ex_native_spring">Adjust the controls and compare the displayed quantities. Spring.</string>
-<string name="native_collision">Collision</string>
-<string name="ex_native_collision">Adjust the controls and compare the displayed quantities. Collision.</string>
-<string name="native_standing">Standing</string>
-<string name="ex_native_standing">Adjust the controls and compare the displayed quantities. Standing.</string>
-<string name="native_gas">Gas</string>
-<string name="ex_native_gas">Adjust the controls and compare the displayed quantities. Gas.</string>
-<string name="native_molecule">Molecule</string>
-<string name="ex_native_molecule">Adjust the controls and compare the displayed quantities. Molecule.</string>
-<string name="native_states">States</string>
-<string name="ex_native_states">Adjust the controls and compare the displayed quantities. States.</string>
-<string name="native_ph">Ph</string>
-<string name="ex_native_ph">Adjust the controls and compare the displayed quantities. Ph.</string>
-<string name="native_reaction">Reaction</string>
-<string name="ex_native_reaction">Adjust the controls and compare the displayed quantities. Reaction.</string>
-<string name="native_atom">Atom</string>
-<string name="ex_native_atom">Adjust the controls and compare the displayed quantities. Atom.</string>
+<string name="ex_native_projectile">Range R = v² sin(2θ) / g. Why does 45° throw farthest? Because sin(2×45°) = 1 is the maximum. 30° and 60° give the same range. Try it!</string>
+<string name="native_spring">Spring and oscillation</string>
+<string name="ex_native_spring">Hooke\'s law: F = −k·x, and the frequency is f = √(k/m) / 2π. A stiffer spring oscillates faster; a heavier mass, slower. Car shock absorbers and seismographs use the same idea.</string>
+<string name="native_collision">Collisions and momentum</string>
+<string name="ex_native_collision">In every collision the total momentum p = m₁v₁ + m₂v₂ stays the same. In an elastic collision kinetic energy is kept too; in a sticky one part of it turns into heat. Compare the energy before and after.</string>
+<string name="native_standing">Standing waves</string>
+<string name="ex_native_standing">On a guitar string only waves with fₙ = n·f₁ stay put. Points that never move are nodes; points that swing most are antinodes. Every musical note is a mix of these harmonics.</string>
+<string name="native_gas">Ideal gas</string>
+<string name="ex_native_gas">PV = NkT: pressure comes from billions of particles hitting the wall. Values are shown in relative units with k = 1, so PV ÷ NT equals one. Pressure is computed from the law; the particle motion is illustrative.</string>
+<string name="native_molecule">3D molecules</string>
+<string name="ex_native_molecule">Electron pairs push each other apart, and that sets a molecule\'s shape: CO₂ is linear (180°), water is bent (104.5°), ammonia is a pyramid (107°) and methane a perfect tetrahedron (109.5°).</string>
+<string name="native_states">States of matter</string>
+<string name="ex_native_states">Temperature is molecular motion. In a solid, molecules vibrate in a lattice; in a liquid they slide past each other; in a gas they fly freely. Melting and boiling happen at exact temperatures.</string>
+<string name="native_ph">pH scale</string>
+<string name="ex_native_ph">pH = −log[H⁺]. One step of pH means ten times more or less hydrogen ion! Lemon juice (pH ≈ 2) is 100,000 times more acidic than pure water. Colors follow a universal indicator.</string>
+<string name="native_reaction">Reaction rate</string>
+<string name="ex_native_reaction">Particles react only when they collide with enough energy (more than the activation energy Eₐ). Hotter means more energetic collisions and a faster reaction. That is why food lasts longer in the fridge!</string>
+<string name="native_atom">Atomic structure</string>
+<string name="ex_native_atom">Electrons fill shells: at most 2 in the first, 8 in the second, 8 in the third. Elements with a full outer shell (neon, argon) are stable and unreactive, and the others react to reach that arrangement!</string>
 <string name="native_solubility">Solubility</string>
-<string name="ex_native_solubility">Adjust the controls and compare the displayed quantities. Solubility.</string>
-<string name="native_halflife">Halflife</string>
-<string name="ex_native_halflife">Adjust the controls and compare the displayed quantities. Halflife.</string>
-<string name="native_waves">Waves</string>
-<string name="ex_native_waves">Adjust the controls and compare the displayed quantities. Waves.</string>
-<string name="native_circle">Circle</string>
-<string name="ex_native_circle">Adjust the controls and compare the displayed quantities. Circle.</string>
-<string name="native_fractal">Fractal</string>
-<string name="ex_native_fractal">Adjust the controls and compare the displayed quantities. Fractal.</string>
-<string name="native_golden">Golden</string>
-<string name="ex_native_golden">Adjust the controls and compare the displayed quantities. Golden.</string>
-<string name="native_quadratic">Quadratic</string>
-<string name="ex_native_quadratic">Adjust the controls and compare the displayed quantities. Quadratic.</string>
-<string name="native_tangent">Tangent</string>
-<string name="ex_native_tangent">Adjust the controls and compare the displayed quantities. Tangent.</string>
-<string name="native_fourier">Fourier</string>
-<string name="ex_native_fourier">Adjust the controls and compare the displayed quantities. Fourier.</string>
-<string name="native_galton">Galton</string>
-<string name="ex_native_galton">Adjust the controls and compare the displayed quantities. Galton.</string>
-<string name="native_coins">Coins</string>
-<string name="ex_native_coins">Adjust the controls and compare the displayed quantities. Coins.</string>
-<string name="native_dice">Dice</string>
-<string name="ex_native_dice">Adjust the controls and compare the displayed quantities. Dice.</string>
-<string name="native_montecarlo">Montecarlo</string>
-<string name="ex_native_montecarlo">Adjust the controls and compare the displayed quantities. Montecarlo.</string>
-<string name="native_walk">Walk</string>
-<string name="ex_native_walk">Adjust the controls and compare the displayed quantities. Walk.</string>
-<string name="native_clt">Clt</string>
-<string name="ex_native_clt">Adjust the controls and compare the displayed quantities. Clt.</string>
-<string name="native_regression">Regression</string>
-<string name="ex_native_regression">Adjust the controls and compare the displayed quantities. Regression.</string>
-<string name="native_incline">Incline</string>
-<string name="ex_native_incline">Adjust the controls and compare the displayed quantities. Incline.</string>
-<string name="native_lens">Lens</string>
-<string name="ex_native_lens">Adjust the controls and compare the displayed quantities. Lens.</string>
-<string name="native_circuit">Circuit</string>
-<string name="ex_native_circuit">Adjust the controls and compare the displayed quantities. Circuit.</string>
-<string name="native_doppler">Doppler</string>
-<string name="ex_native_doppler">Adjust the controls and compare the displayed quantities. Doppler.</string>
+<string name="ex_native_solubility">Water can dissolve only so much salt. Once the solution is saturated, extra salt settles at the bottom. Warmer water usually dissolves more, so heat it and watch the solid dissolve again!</string>
+<string name="native_halflife">Radioactive half-life</string>
+<string name="ex_native_halflife">Each atom decays at random, yet the group behaves precisely: after every half-life, half remain: N = N₀ · (½)^(t/T½). Carbon-14 dating of fossils works exactly this way.</string>
+<string name="native_waves">Wave superposition</string>
+<string name="ex_native_waves">When two waves meet, their heights add: y = A₁sin(ω₁x) + A₂sin(ω₂x + φ). Make the frequencies equal and the phase 180° to see destructive interference: the waves cancel! Noise-cancelling headphones use this.</string>
+<string name="native_circle">Unit circle</string>
+<string name="ex_native_circle">On a circle of radius 1, a point\'s horizontal shadow is cos and its vertical shadow is sin. As the point turns, sin traces a wave: the link between circles and waves behind every periodic signal.</string>
+<string name="native_fractal">Fractal tree</string>
+<string name="ex_native_fractal">One simple rule, \"each branch grows two smaller ones\", repeated, makes a whole tree. Ferns, cauliflower, lungs and river networks are fractals. The number of branches doubles with each level: 2ⁿ − 1.</string>
+<string name="native_golden">Golden spiral</string>
+<string name="ex_native_golden">In the Fibonacci sequence each number is the sum of the previous two: 1, 1, 2, 3, 5, 8, 13… The ratio of neighbours tends to the golden ratio φ ≈ 1.618, the same ratio seen in snail shells and sunflower seeds.</string>
+<string name="native_quadratic">Parabola and roots</string>
+<string name="ex_native_quadratic">y = ax² + bx + c draws a parabola. The roots are where it crosses the x-axis, and the discriminant Δ = b² − 4ac tells how many: positive, two; zero, one; negative, none.</string>
+<string name="native_tangent">Derivative and tangent line</string>
+<string name="ex_native_tangent">The derivative at a point is the slope of the tangent line. Positive slope: rising; negative: falling; zero: a peak or a valley! Move the point and find where the slope becomes zero.</string>
+<string name="native_fourier">Fourier series</string>
+<string name="ex_native_fourier">Fourier showed that every periodic signal, even a sharp square wave, is a sum of sines: y = Σ (4/π)(1/k)·sin(kx) for odd k. Add terms to improve the fit. MP3 and JPEG compression rest on this idea.</string>
+<string name="native_galton">Galton board</string>
+<string name="ex_native_galton">Adding many small random events always gives the normal (bell) curve, whatever each event looks like. That is why heights and measurement errors are bell-shaped.</string>
+<string name="native_coins">Law of large numbers</string>
+<string name="ex_native_coins">After a few tosses the share of heads may be 80% or 20%; with more tosses it settles near 50%. Casinos and insurers rely on exactly this law!</string>
+<string name="native_dice">Sum of two dice</string>
+<string name="ex_native_dice">A sum of 7 has six combinations (1+6, 2+5, …) but a sum of 2 only one (1+1), so the distribution is a triangle. Counting cases is the basis of probability, and the secret of backgammon!</string>
+<string name="native_montecarlo">Estimating π</string>
+<string name="ex_native_montecarlo">Throw random points into a square: the share that lands inside the circle tends to π/4. Physicists design reactors and banks measure risk with the same random simulation.</string>
+<string name="native_walk">Random walk</string>
+<string name="ex_native_walk">Each path steps up or down by chance. The average position stays at zero, but the spread grows like √t (dashed lines). Scents in the air, molecules and even share prices behave like this.</string>
+<string name="native_clt">Central limit theorem</string>
+<string name="ex_native_clt">One die is flat, but the average of several dice is bell-shaped, and its spread shrinks as σ/√k. That is why a poll with a bigger sample is more accurate.</string>
+<string name="native_regression">Correlation and regression</string>
+<string name="ex_native_regression">The correlation r, from −1 to +1, shows how strong a straight-line relation is, and the regression line is the best straight-line prediction. Remember: correlation is not causation!</string>
+<string name="native_incline">Inclined plane</string>
+<string name="ex_native_incline">A block slides once the weight along the slope beats friction: tanθ &gt; μ. Its acceleration is a = g(sinθ − μcosθ). That is why snowy roads (small μ) are dangerous!</string>
+<string name="native_lens">Converging lens</string>
+<string name="ex_native_lens">1/f = 1/u + 1/v. An object beyond the focus gives a real, upside-down image (camera, eye). Closer than the focus, the image is virtual and enlarged: a magnifying glass!</string>
+<string name="native_circuit">Ohm\'s law</string>
+<string name="ex_native_circuit">I = V / R: current rises with voltage and falls with resistance. Bulb power: P = V·I. Watch the electrons: more current, faster flow and a brighter bulb.</string>
+<string name="native_doppler">Doppler effect</string>
+<string name="ex_native_doppler">When a sound source moves, waves bunch up in front (higher pitch) and spread out behind (lower): f′ = f / (1 ∓ v/c). Astronomers used the same effect on light to discover that galaxies move apart!</string>
 <string name="native_buoyancy">Buoyancy</string>
-<string name="ex_native_buoyancy">Adjust the controls and compare the displayed quantities. Buoyancy.</string>
-<string name="native_heat">Heat</string>
-<string name="ex_native_heat">Adjust the controls and compare the displayed quantities. Heat.</string>
-<string name="native_periodic">Periodic</string>
-<string name="ex_native_periodic">Adjust the controls and compare the displayed quantities. Periodic.</string>
+<string name="ex_native_buoyancy">The buoyant force equals the weight of the fluid pushed aside. An object less dense than the fluid floats, with the fraction ρ object / ρ fluid under water. A steel ship floats because, being hollow, it is less dense on average than water!</string>
+<string name="native_heat">Heat conduction</string>
+<string name="ex_native_heat">Heat always flows by itself from hot to cold until temperatures match (the second law of thermodynamics). Metals conduct well; wood and air insulate. That is why pan handles are wooden!</string>
+<string name="native_periodic">Periodic table</string>
+<string name="ex_native_periodic">Mendeleev ordered the elements by repeating properties. Elements in a column (group) have similar outer electrons and behave alike: alkali metals react strongly, noble gases hardly at all.</string>
 <string name="native_titration">Titration</string>
-<string name="ex_native_titration">Adjust the controls and compare the displayed quantities. Titration.</string>
-<string name="native_electrolysis">Electrolysis</string>
-<string name="ex_native_electrolysis">Adjust the controls and compare the displayed quantities. Electrolysis.</string>
-<string name="native_diffusion">Diffusion</string>
-<string name="ex_native_diffusion">Adjust the controls and compare the displayed quantities. Diffusion.</string>
-<string name="native_flame">Flame</string>
-<string name="ex_native_flame">Adjust the controls and compare the displayed quantities. Flame.</string>
-<string name="native_equilibrium">Equilibrium</string>
-<string name="ex_native_equilibrium">Adjust the controls and compare the displayed quantities. Equilibrium.</string>
-<string name="native_primes">Primes</string>
-<string name="ex_native_primes">Adjust the controls and compare the displayed quantities. Primes.</string>
-<string name="native_pythagoras">Pythagoras</string>
-<string name="ex_native_pythagoras">Adjust the controls and compare the displayed quantities. Pythagoras.</string>
-<string name="native_polypi">Polypi</string>
-<string name="ex_native_polypi">Adjust the controls and compare the displayed quantities. Polypi.</string>
-<string name="native_lissajous">Lissajous</string>
-<string name="ex_native_lissajous">Adjust the controls and compare the displayed quantities. Lissajous.</string>
-<string name="native_series">Series</string>
-<string name="ex_native_series">Adjust the controls and compare the displayed quantities. Series.</string>
-<string name="native_pascal">Pascal</string>
-<string name="ex_native_pascal">Adjust the controls and compare the displayed quantities. Pascal.</string>
-<string name="native_monty">Monty</string>
-<string name="ex_native_monty">Adjust the controls and compare the displayed quantities. Monty.</string>
-<string name="native_birthday">Birthday</string>
-<string name="ex_native_birthday">Adjust the controls and compare the displayed quantities. Birthday.</string>
-<string name="native_bayes">Bayes</string>
-<string name="ex_native_bayes">Adjust the controls and compare the displayed quantities. Bayes.</string>
-<string name="native_benford">Benford</string>
-<string name="ex_native_benford">Adjust the controls and compare the displayed quantities. Benford.</string>
-<string name="native_median">Median</string>
-<string name="ex_native_median">Adjust the controls and compare the displayed quantities. Median.</string>
-<string name="native_streaks">Streaks</string>
-<string name="ex_native_streaks">Adjust the controls and compare the displayed quantities. Streaks.</string>
-<string name="native_freefall">Freefall</string>
-<string name="ex_native_freefall">Adjust the controls and compare the displayed quantities. Freefall.</string>
-<string name="native_interference">Interference</string>
-<string name="ex_native_interference">Adjust the controls and compare the displayed quantities. Interference.</string>
-<string name="native_pressure">Pressure</string>
-<string name="ex_native_pressure">Adjust the controls and compare the displayed quantities. Pressure.</string>
-<string name="native_lightclock">Lightclock</string>
-<string name="ex_native_lightclock">Adjust the controls and compare the displayed quantities. Lightclock.</string>
-<string name="native_bonding">Bonding</string>
-<string name="ex_native_bonding">Adjust the controls and compare the displayed quantities. Bonding.</string>
-<string name="native_catalyst">Catalyst</string>
-<string name="ex_native_catalyst">Adjust the controls and compare the displayed quantities. Catalyst.</string>
+<string name="ex_native_titration">Base is added drop by drop to an acid. Near the equivalence point (here 25 mL) the pH jumps and the indicator turns pink: the standard laboratory way to measure a concentration.</string>
+<string name="native_electrolysis">Electrolysis of water</string>
+<string name="ex_native_electrolysis">2H₂O → 2H₂ + O₂: hydrogen forms at the cathode, oxygen at the anode, exactly twice as much hydrogen! This 2:1 ratio confirms the formula H₂O. Green hydrogen is made this way.</string>
+<string name="native_diffusion">Diffusion of gases</string>
+<string name="ex_native_diffusion">Gases mix by themselves and never unmix by themselves, because mixed is far more likely (higher entropy). Heat speeds it up: perfume spreads faster in a warm room!</string>
+<string name="native_flame">Flame test</string>
+<string name="ex_native_flame">Heat lifts electrons to a higher shell; when they fall back, they give off light of a colour unique to the element: its fingerprint! Fireworks and the analysis of starlight rest on this.</string>
+<string name="native_equilibrium">Chemical equilibrium</string>
+<string name="ex_native_equilibrium">At equilibrium the reaction does not stop: forward and backward run at the same rate. The concentration ratio settles at K = k forward / k backward, wherever you start!</string>
+<string name="native_primes">Sieve of primes</string>
+<string name="ex_native_primes">Start at 2 and cross out its multiples; the next number left is prime. Primes are the building blocks of all numbers, and internet security (RSA) rests on how hard it is to factor big numbers.</string>
+<string name="native_pythagoras">Pythagorean theorem</string>
+<string name="ex_native_pythagoras">In a right triangle, the square on the hypotenuse equals the two other squares together. Try 3-4-5: 9 + 16 = 25! Ancient Egyptian builders made right angles with a 12-knot rope.</string>
+<string name="native_polypi">π from polygons</string>
+<string name="ex_native_polypi">Two thousand years ago Archimedes used inscribed and circumscribed 96-sided polygons to show 3.1408 &lt; π &lt; 3.1429. More sides, closer to the circle: the idea of a limit that later became calculus!</string>
+<string name="native_lissajous">Lissajous curves</string>
+<string name="ex_native_lissajous">A point swinging in two perpendicular directions at once draws a Lissajous curve. Its shape depends on the frequency ratio; engineers read signal ratios and phase from these patterns on an oscilloscope.</string>
+<string name="native_series">Geometric series</string>
+<string name="ex_native_series">If |r| &lt; 1: 1 + r + r² + … = 1/(1−r). For example 1 + ½ + ¼ + ⅛ + … = 2. Zeno\'s paradox (Achilles and the tortoise) is resolved by this idea.</string>
+<string name="native_pascal">Khayyam–Pascal triangle</string>
+<string name="ex_native_pascal">Each cell is the sum of the two above it. The triangle gives binomial coefficients and combinations; each row adds up to 2ⁿ, and colouring the odd numbers reveals the Sierpiński fractal! Khayyam knew it centuries before Pascal.</string>
+<string name="native_monty">Monty Hall</string>
+<string name="ex_native_monty">Your first pick is right only ⅓ of the time, so ⅔ of the time the prize is elsewhere. When the host opens an empty door, that ⅔ moves to the remaining door. Switch and double your chances!</string>
+<string name="native_birthday">Birthday paradox</string>
+<string name="ex_native_birthday">In a group of 23 people, the chance that two share a birthday is over 50%! The number of pairs grows fast: 23 people make 253 pairs. Our intuition is weak against combinatorial growth.</string>
+<string name="native_bayes">Medical test and Bayes</string>
+<string name="ex_native_bayes">When a disease is rare, most positive results are false positives! Bayes: P(sick | positive) = TP / (TP + FP). Each dot is one person in 1,000; compare the dark red dots with the orange ones.</string>
+<string name="native_benford">Benford\'s law</string>
+<string name="ex_native_benford">In much real data (city populations, bills, river lengths) the first digit is d with probability log₁₀(1 + 1/d): about 30% start with 1! Auditors catch fraud this way, because made-up numbers don\'t follow it. Uniform random data doesn\'t either. Try it!</string>
+<string name="native_median">Mean or median?</string>
+<string name="ex_native_median">One billionaire walking into a café sends the mean income sky-high, but the median barely moves. That is why income and house prices are reported as medians. Drag the points and see the difference!</string>
+<string name="native_streaks">Lucky streaks</string>
+<string name="ex_native_streaks">In 100 coin tosses a run of 6–7 heads or tails is perfectly normal (about log₂100 ≈ 7), yet our brain sees a pattern or a hot hand. Real randomness is clumpy, not even!</string>
+<string name="native_freefall">Free fall and air resistance</string>
+<string name="ex_native_freefall">Air resistance grows with the square of speed until it equals the weight; from then on speed stays constant: v terminal = √(g/k). In a vacuum everything falls together, as astronauts showed with a hammer and a feather on the Moon!</string>
+<string name="native_interference">Two-wave interference</string>
+<string name="ex_native_interference">Where two crests meet the wave grows (constructive); where a crest meets a trough it vanishes (destructive). Young\'s double slit proved light is a wave this way, and noise-cancelling headphones use destructive interference!</string>
+<string name="native_pressure">Pressure at depth</string>
+<string name="ex_native_pressure">Liquid pressure depends only on depth: P = ρgh. That is why the lowest hole in a tank squirts farthest and dams are thickest at the bottom. Raise and lower the water level!</string>
+<string name="native_lightclock">Time dilation (relativity)</string>
+<string name="ex_native_lightclock">In a moving clock the photon travels a longer zigzag, but light speed is the same for everyone, so the moving clock runs slow: Δt = γΔt₀. GPS satellites correct for this every day, or positions would be kilometres off!</string>
+<string name="native_bonding">Chemical bonds</string>
+<string name="ex_native_bonding">In an ionic bond an electron moves over completely and the + and − ions attract. In a covalent bond two atoms share electrons fairly; in a polar bond the greedier (more electronegative) atom holds them closer, making partial charges δ+ and δ−. That is why water dissolves so much!</string>
+<string name="native_catalyst">Catalysts and activation energy</string>
+<string name="ex_native_catalyst">A catalyst is not used up; it opens a path with a lower energy barrier so more particles get over it. Car catalytic converters and the enzymes in your body do this every second!</string>
 <string name="native_osmosis">Osmosis</string>
-<string name="ex_native_osmosis">Adjust the controls and compare the displayed quantities. Osmosis.</string>
-<string name="native_density">Density</string>
-<string name="ex_native_density">Adjust the controls and compare the displayed quantities. Density.</string>
-<string name="native_collatz">Collatz</string>
-<string name="ex_native_collatz">Adjust the controls and compare the displayed quantities. Collatz.</string>
-<string name="native_modcircle">Modcircle</string>
-<string name="ex_native_modcircle">Adjust the controls and compare the displayed quantities. Modcircle.</string>
-<string name="native_koch">Koch</string>
-<string name="ex_native_koch">Adjust the controls and compare the displayed quantities. Koch.</string>
-<string name="native_sorting">Sorting</string>
-<string name="ex_native_sorting">Adjust the controls and compare the displayed quantities. Sorting.</string>
-<string name="native_sampling">Sampling</string>
-<string name="ex_native_sampling">Adjust the controls and compare the displayed quantities. Sampling.</string>
-<string name="native_ruin">Ruin</string>
-<string name="ex_native_ruin">Adjust the controls and compare the displayed quantities. Ruin.</string>
-<string name="native_simpson">Simpson</string>
-<string name="ex_native_simpson">Adjust the controls and compare the displayed quantities. Simpson.</string>
-<string name="native_markov">Markov</string>
-<string name="ex_native_markov">Adjust the controls and compare the displayed quantities. Markov.</string>
+<string name="ex_native_osmosis">A semi-permeable membrane lets water through, not salt. Water moves toward the saltier side until concentrations balance. That is why pickles shrivel, flowers revive in water and roots draw water from the soil!</string>
+<string name="native_density">Density column</string>
+<string name="ex_native_density">Denser liquids sink and lighter ones float: honey (1.4), water (1), oil (0.9). Each object rests on the first liquid denser than itself. You can try this at home!</string>
+<string name="native_collatz">Collatz sequence</string>
+<string name="ex_native_collatz">Rule: if even, halve it; if odd, triple it and add one. The Collatz conjecture says every number reaches 1, but nobody has proved it yet! Try 27: it climbs to 9232 before falling.</string>
+<string name="native_modcircle">Times tables on a circle</string>
+<string name="ex_native_modcircle">Put 120 points on a circle and join each point i to i×m (mod 120). m = 2 draws a heart (cardioid), m = 3 a three-petal shape… the same curves light draws inside a teacup!</string>
+<string name="native_koch">Koch snowflake</string>
+<string name="ex_native_koch">At each step a triangular bump grows on every side and the perimeter becomes 4/3 as long, forever! Yet the area never passes a fixed limit. Real coastlines are like this: the smaller the ruler, the longer the coast!</string>
+<string name="native_sorting">Sorting, visible</string>
+<string name="ex_native_sorting">Bubble sort swaps neighbours that are out of order so big values rise like bubbles; selection sort finds the smallest each time and puts it in place. Compare the number of comparisons: that is why engineers built smarter methods such as merge sort for millions of items.</string>
+<string name="native_sampling">Polls and sampling error</string>
+<string name="ex_native_sampling">With a small sample, estimates scatter. The margin of error shrinks as ±1.96 √(p(1−p)/n), but halving it takes four times the sample! That is why good polls ask about 1,000 people, not 100,000.</string>
+<string name="native_ruin">Gambler\'s ruin</string>
+<string name="ex_native_ruin">Each gambler starts with 10 coins and aims for 20. Even in a perfectly fair game half go broke; with the slightest house edge, ruin quickly becomes almost everyone\'s fate. The maths is merciless!</string>
+<string name="native_simpson">Simpson\'s paradox</string>
+<string name="ex_native_simpson">The overall trend rises, yet within each group it falls! Because the groups differ, combining them reverses the relation. Berkeley was once accused of gender bias; split by department, the opposite was true. Always ask how the data was grouped.</string>
+<string name="native_markov">Weather Markov chain</string>
+<string name="ex_native_markov">In a Markov chain the future depends only on today, not the past. This simple model predicts the long-run share of sunny days: π = (1−p rr)/((1−p ss)+(1−p rr)). The same maths is behind Google\'s PageRank and your phone\'s text prediction!</string>
 </resources>

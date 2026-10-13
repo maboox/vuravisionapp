@@ -2,17 +2,13 @@ package com.vuravision.classroom
 
 import android.app.Dialog
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.*
 import android.view.Gravity
 import android.view.View
 import android.widget.*
-import android.text.TextWatcher
-import android.text.Editable
 import kotlin.math.*
 import kotlin.random.Random
-import com.google.android.material.button.MaterialButton
 
 class GameEngine(val key: String, private val random: Random = Random.Default) {
     val scores = IntArray(2)
@@ -225,96 +221,39 @@ object Games {
         NativeGames.keys + QuizCatalog.keys
 
     fun show(context: Context, back:(()->Unit)?=null) {
-        val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
-        val root =
-            context.column().apply {
-                setBackgroundColor(PAPER)
-                fitsSystemWindows = true
-                pad(20)
-            }
-        val head = context.row()
-        head.addView(
-            context.label(context.s("games"), 28f, NAVY, true),
-            LinearLayout.LayoutParams(0, -2, 1f),
-        )
-        head.addView(context.button(context.s("close")) { d.dismiss() })
-        root.addView(context.navigationHeading(context.s("games"),back?.let{action->{d.dismiss();action()}}))
-        head.removeViewAt(0)
-        root.addView(context.label(context.s("games_intro"), 15f, MUTED))
-        val search=EditText(context).apply{
-            hint=context.tr("Search games","جست‌وجوی بازی‌ها")
-            inputType=android.text.InputType.TYPE_CLASS_TEXT
-            setSingleLine(true)
-            background=rounded(SURFACE,context.dp(14).toFloat(),OUTLINE)
-            setPadding(context.dp(16),context.dp(10),context.dp(16),context.dp(10))
-        }
-        root.addView(search,LinearLayout.LayoutParams(-1,context.dp(52)).apply{setMargins(0,context.dp(12),0,context.dp(8))})
-        val filters=context.row();root.addView(context.scrollRow(filters))
-        val list = context.column()
-        val cards=mutableListOf<Pair<String,View>>()
-        keys.forEachIndexed { i, key ->
-            val cardContent = context.row().apply { pad(14) }
-            val number = context.label("${i+1}", 16f, NAVY, true).apply {
-                gravity=Gravity.CENTER
-                background=rounded(PRIMARY_CONTAINER,context.dp(12).toFloat())
-            }
-            cardContent.addView(number,LinearLayout.LayoutParams(context.dp(48),context.dp(48)).apply{marginEnd=context.dp(14)})
-            val words = context.column()
-            words.addView(context.label(context.s(key), 20f, NAVY, true))
-            words.addView(
-                context.label(
-                    context.s(
-                        "rule_" +
-                            when (key) {
-                                "tap_race" -> "tap"
-                                "math_race" -> "math"
-                                "even_odd" -> "evenodd"
-                                else -> if(key in QuizCatalog.keys) "math" else key
-                            }
-                    ),
-                    13f,
-                    MUTED,
-                )
-            )
-            if(key in QuizCatalog.keys || key=="math_race") { val example=GameEngine(key,Random(42)).apply{next(0)};words.addView(context.label(example.question,16f,TEAL,true)) }
-            cardContent.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
-            cardContent.addView(WorkspaceIcon(context,"next",context.s("start")){d.dismiss();open(context,key){show(context,back)}})
-            val card=context.card(cardContent,cornerRadius=20,elevation=1).apply{
-                isClickable=true;isFocusable=true;contentDescription=context.s(key)
-                setOnClickListener{d.dismiss();open(context,key){show(context,back)}}
-            }
-            cards.add(key to card)
-            list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, context.dp(6), 0, context.dp(6)) })
-        }
+        val g=Gallery(context,context.s("games"),context.s("games_intro"),back)
+        g.search.hint=context.tr("Search games","جستجوی بازی‌ها")
         var category="all"
-        val filterButtons=mutableListOf<Pair<String,MaterialButton>>()
-        fun refresh(){val query=search.text.toString().trim().lowercase()
-            cards.forEach{(key,card)->
-                val matching=category=="all" || (category=="duel" && key in NativeGames.keys) || (category=="quiz" && key in QuizCatalog.keys)
-                card.visibility=if(matching&&(context.s(key)+" "+context.s("rule_${key.removePrefix("arc_" )}")).lowercase().contains(query))View.VISIBLE else View.GONE
-            }
-            filterButtons.forEach{(id,button)->val active=id==category
-                button.backgroundTintList=ColorStateList.valueOf(if(active)NAVY else SURFACE)
-                button.strokeColor=ColorStateList.valueOf(if(active)NAVY else OUTLINE)
-                button.setTextColor(if(active)Color.WHITE else NAVY)
-            }
+        val cards=keys.mapIndexed{i,key->key to card(context,key){g.dialog.dismiss();open(context,key){show(context,back)}}}
+        val filter=g.chipRow()
+        lateinit var refresh:()->Unit
+        refresh={
+            val q=g.query.lowercase()
+            val shown=cards.filter{(key,_)->
+                (category=="all"||(category=="duel"&&key in NativeGames.keys)||(category=="quiz"&&key in QuizCatalog.keys))&&
+                    (context.s(key)+" "+context.s(rule(key))).lowercase().contains(q)
+            }.map{it.second}
+            g.show(shown);g.count.text=context.tr("${shown.size} games","${shown.size} بازی")
+            g.chips(filter,listOf("all" to context.tr("All","همه"),"duel" to context.tr("Two-player","دونفره"),"quiz" to context.tr("Math & puzzles","ریاضی و معما")),category){category=it;refresh()}
         }
-        listOf("all" to context.tr("All","همه"),"duel" to context.tr("Two-player","دونفره"),"quiz" to context.tr("Math & puzzles","ریاضی و معما")).forEach{(id,title)->
-            val button=context.button(title,id==category){category=id;refresh()}
-            filterButtons.add(id to button);filters.addView(button)
+        g.onSearch{refresh()};refresh();g.dialog.show()
+    }
+    private fun rule(key:String)="rule_"+when(key){"tap_race"->"tap";"math_race"->"math";"even_odd"->"evenodd";else->if(key in QuizCatalog.keys)"math" else key}
+    /** A card per game: who plays (two players or the class), the name, the rule in short, and a sample question for quizzes. */
+    private fun card(context:Context,key:String,open:()->Unit):View{
+        val duel=key in NativeGames.keys
+        val content=context.column().apply{
+            setPadding(context.dp(16),context.dp(14),context.dp(16),context.dp(16))
+            addView(context.row().apply{
+                addView(android.widget.ImageView(context).apply{setImageResource(IconCatalog.resource(if(duel)"games" else "math",true));setColorFilter(Color.WHITE)
+                    background=rounded(if(duel)TEAL else NAVY,context.dp(14).toFloat());setPadding(context.dp(10),context.dp(10),context.dp(10),context.dp(10))},LinearLayout.LayoutParams(context.dp(48),context.dp(48)))
+                addView(context.label(if(duel)context.tr("Two players","دو نفره")else context.tr("Whole class","کل کلاس"),12f,if(duel)TEAL else NAVY,true).apply{setPaddingRelative(context.dp(10),0,0,0)})
+            })
+            addView(context.label(context.s(key),19f,NAVY,true).apply{setPadding(context.dp(4),context.dp(10),context.dp(4),0)})
+            addView(context.label(context.s(rule(key)),13f,MUTED).apply{maxLines=3;ellipsize=android.text.TextUtils.TruncateAt.END})
+            if(key in QuizCatalog.keys||key=="math_race"){val example=GameEngine(key,Random(42)).apply{next(0)};addView(context.label(example.question,16f,TEAL,true))}
         }
-        search.addTextChangedListener(object:TextWatcher{
-            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){refresh()}
-            override fun afterTextChanged(s:Editable?){}
-        })
-        root.addView(
-            ScrollView(context).apply { addView(list) },
-            LinearLayout.LayoutParams(-1, 0, 1f),
-        )
-        root.addView(head)
-        d.setContentView(root)
-        d.show()
+        return context.card(content,cornerRadius=20,elevation=1).apply{isClickable=true;isFocusable=true;contentDescription=context.s(key);setOnClickListener{open()}}
     }
 
     fun open(context: Context, key: String, back:(()->Unit)?=null) {

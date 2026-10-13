@@ -6,8 +6,6 @@ import android.graphics.*
 import android.os.SystemClock
 import android.view.*
 import android.widget.*
-import android.text.Editable
-import android.text.TextWatcher
 import kotlin.math.*
 
 object Physics {
@@ -34,98 +32,46 @@ object Labs {
     fun show(context: Context, insert: (Bitmap) -> Unit) = show(context,insert,{})
     fun show(context:Context,insert:(Bitmap)->Unit,insertItem:(Item)->Unit)=show(context,insert,insertItem,null)
     fun show(context: Context, insert: (Bitmap) -> Unit, insertItem:(Item)->Unit, back:(()->Unit)?) {
-        val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
-        val root =
-            context.column().apply {
-                setBackgroundColor(PAPER)
-                fitsSystemWindows = true
-                pad(20)
-            }
-        val header = context.row()
-        header.addView(
-            context.label(context.s("lab"), 28f, NAVY, true),
-            LinearLayout.LayoutParams(0, -2, 1f),
-        )
-        header.addView(context.button(context.s("close")) { d.dismiss() })
-        root.addView(context.navigationHeading(context.s("lab"),back?.let{action->{d.dismiss();action()}}))
-        header.removeViewAt(0)
-        root.addView(context.label(context.s("lab_intro"), 15f, MUTED))
-        val search=context.field(hintValue=context.tr("Search experiments","جست‌وجوی آزمایش‌ها")).apply{setSingleLine(true)}
-        root.addView(search)
-        val filters=context.row();root.addView(context.scrollRow(filters))
-        val topicPicker=Spinner(context)
-        val topicNames=listOf(context.tr("All lesson topics","همهٔ موضوع‌های درس"))+LabCatalog.topics.map{LabCatalog.topicName(context,it)}
-        topicPicker.adapter=OptionAdapter(context,topicNames)
-        topicPicker.contentDescription=context.tr("Lesson topic","موضوع درس");root.addView(topicPicker)
-        val count=context.label("",13f,MUTED);root.addView(count)
-        val cards=mutableListOf<Pair<String,View>>()
-        var subject="all"
-        fun applyFilter(){
-            val query=search.text.toString().trim()
-            val chosen=topicPicker.selectedItemPosition-1
-            var found=0
-            cards.forEach{(key,card)->
-                val topic=LabCatalog.topic(key)
-                val matches=(subject=="all" || topic.subject==subject) && (chosen<0 || topic===LabCatalog.topics[chosen]) &&
-                    (query.isEmpty() || listOf(context.s(key),context.s("ex_$key"),key,topic.en,topic.fa,LabCatalog.name(context,topic.subject)).any{it.contains(query,true)})
-                card.visibility=if(matches)View.VISIBLE else View.GONE;if(matches)found++
-            }
-            count.text=context.tr("$found experiments","$found آزمایش")
-            for(i in 0 until filters.childCount){val b=filters.getChildAt(i);b.alpha=if(b.tag==subject)1f else .55f}
+        val g=Gallery(context,context.s("lab"),context.s("lab_intro"),back)
+        g.search.hint=context.tr("Search experiments: pendulum, pH, probability…","جستجوی آزمایش: آونگ، pH، احتمال…")
+        var subject="all";var topic="all";var level="all"
+        val cards=keys.map{key->key to card(context,key){
+            g.dialog.dismiss()
+            if(key=="periodic_table")PeriodicTable.show(context,insertItem){show(context,insert,insertItem,back)}else open(context,key,insert){show(context,insert,insertItem,back)}
+        }}
+        val subjects=g.chipRow();val topics=g.chipRow();val levels=g.chipRow()
+        lateinit var refresh:()->Unit
+        refresh={
+            val q=g.query
+            val shown=cards.filter{(key,_)->
+                val t=LabCatalog.topic(key)
+                (subject=="all"||t.subject==subject)&&(topic=="all"||t.id==topic)&&(level=="all"||LabCatalog.level(key)==level)&&
+                    (q.isEmpty()||listOf(context.s(key),context.s("ex_$key"),key,t.en,t.fa,LabCatalog.name(context,t.subject)).any{it.contains(q,true)})
+            }.map{it.second}
+            g.show(shown);g.count.text=context.tr("${shown.size} experiments","${shown.size} آزمایش")
+            g.chips(subjects,listOf("all" to context.tr("All subjects","همهٔ درس‌ها"))+LabCatalog.subjects.map{it to LabCatalog.name(context,it)},subject){subject=it;topic="all";refresh()}
+            // Topics only for the chosen subject: a few chips instead of a 14-item dropdown.
+            topics.visibility=if(subject=="all")View.GONE else View.VISIBLE
+            if(subject!="all")g.chips(topics,listOf("all" to context.tr("All topics","همهٔ موضوع‌ها"))+LabCatalog.topics.filter{it.subject==subject}.map{it.id to LabCatalog.topicName(context,it)},topic){topic=it;refresh()}
+            g.chips(levels,listOf("all" to context.tr("All grades","همهٔ پایه‌ها"),"middle" to LabCatalog.levelName(context,"middle"),"high" to LabCatalog.levelName(context,"high")),level){level=it;refresh()}
         }
-        (listOf("all")+LabCatalog.subjects).forEach{key->
-            filters.addView(context.button(if(key=="all")context.tr("All subjects","همهٔ درس‌ها")else LabCatalog.name(context,key)){subject=key;applyFilter()}.apply{tag=key})
+        g.onSearch{refresh()};refresh();g.dialog.show()
+    }
+    /** One catalog card: subject, topic and grade on top, a preview of the experiment, its name and what it teaches. */
+    private fun card(context:Context,key:String,open:()->Unit):View{
+        val topic=LabCatalog.topic(key)
+        val content=context.column().apply{
+            setPadding(context.dp(16),context.dp(14),context.dp(16),context.dp(16))
+            addView(context.row().apply{
+                addView(context.label(LabCatalog.name(context,topic.subject)+" · "+LabCatalog.topicName(context,topic),12f,TEAL,true),LinearLayout.LayoutParams(0,-2,1f))
+                addView(context.label(LabCatalog.levelName(context,LabCatalog.level(key)),11f,MUTED).apply{background=rounded(SURFACE_VARIANT,context.dp(10).toFloat());setPadding(context.dp(8),context.dp(2),context.dp(8),context.dp(2))})
+            })
+            addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},
+                LinearLayout.LayoutParams(-1,context.dp(132)).apply{topMargin=context.dp(8);bottomMargin=context.dp(8)})
+            addView(context.label(context.s(key),20f,NAVY,true))
+            addView(context.label(context.s("ex_$key"),13f,MUTED).apply{maxLines=3;ellipsize=android.text.TextUtils.TruncateAt.END})
         }
-        val list = context.column()
-        val columns=when{context.resources.configuration.screenWidthDp<620->1;context.resources.configuration.screenWidthDp<1200->2;else->3}
-        keys.chunked(columns).forEach { chunk ->
-            val row = context.row()
-            chunk.forEachIndexed { i, key ->
-                val cardContent =
-                    context.column().apply {
-                        pad(18)
-                        addView(context.label("${keys.indexOf(key)+1}".padStart(2,'0') + "  /  LAB", 11f, TEAL, true))
-                        addView(LabView(context,key,controls(key).map{it.value}.toFloatArray()).apply{running=false},LinearLayout.LayoutParams(-1,context.dp(108)))
-                        val topic=LabCatalog.topic(key)
-                        addView(context.label(LabCatalog.name(context,topic.subject)+" · "+LabCatalog.topicName(context,topic),12f,TEAL))
-                        addView(context.label(context.s(key), 21f, NAVY, true))
-                        addView(context.label(context.s("ex_$key"), 13f, MUTED).apply{maxLines=3})
-                    }
-                val card = context.card(cardContent, cornerRadius=20, elevation=2).apply {
-                    isClickable=true
-                    isFocusable=true
-                    setOnClickListener {
-                        d.dismiss()
-                        if(key=="periodic_table")PeriodicTable.show(context,insertItem){show(context,insert,insertItem,back)}else open(context,key,insert){show(context,insert,insertItem,back)}
-                    }
-                }
-                cards.add(key to card)
-                row.addView(
-                    card,
-                    LinearLayout.LayoutParams(0,-2,1f).apply {
-                        setMargins(context.dp(7), context.dp(7), context.dp(7), context.dp(7))
-                    },
-                )
-            }
-            list.addView(row)
-        }
-        root.addView(
-            ScrollView(context).apply { addView(list) },
-            LinearLayout.LayoutParams(-1, 0, 1f),
-        )
-        search.addTextChangedListener(object:TextWatcher{
-            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int){}
-            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){applyFilter()}
-            override fun afterTextChanged(s:Editable?){}
-        })
-        topicPicker.onItemSelectedListener=object:AdapterView.OnItemSelectedListener{
-            override fun onItemSelected(parent:AdapterView<*>?,v:View?,position:Int,id:Long){applyFilter()}
-            override fun onNothingSelected(parent:AdapterView<*>?){}
-        }
-        applyFilter()
-        root.addView(header)
-        d.setContentView(root)
-        d.show()
+        return context.card(content,cornerRadius=20,elevation=2).apply{isClickable=true;isFocusable=true;contentDescription=context.s(key);setOnClickListener{open()}}
     }
 
     fun controls(key: String) =
