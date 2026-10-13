@@ -138,8 +138,46 @@ class AiTest {
             val b=Bitmap.createBitmap(m.widthPixels,m.heightPixels,Bitmap.Config.ARGB_8888);decor.draw(Canvas(b))
             File("build/qa/ai-quiz.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)};b.recycle()
             assertTrue(views(decor).filterIsInstance<TextView>().any{it.text.toString()==a.tr("Correct!","درست است!")})
+            views(decor).filterIsInstance<Button>().first{it.text.toString()==a.tr("Save to lesson","ذخیره در درس")}.performClick()
+            assertEquals("the AI quiz should be kept in the lesson",2,a.store.lesson.quizzes!!.single().questions.size)
             quiz.dismiss()
             assertTrue("only the selection should be sent, never the whole board",sent.all{it.second.length<2_000_000})
         }finally{ctl.pause().stop().destroy()}
+    }
+
+    /** A teacher writes a quiz by hand: half-filled questions are refused, a good one is kept in the lesson and survives saving. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun quizBuilderWritesKeepsAndPlays(){
+        context.getSharedPreferences("vura",0).edit().putString("language","fa").commit()
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        fun layout(d:android.app.Dialog):View{val m=a.resources.displayMetrics;val decor=d.window!!.decorView
+            decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.AT_MOST));decor.layout(0,0,decor.measuredWidth,decor.measuredHeight);return decor}
+        fun capture(d:android.app.Dialog,name:String){val decor=layout(d);val b=Bitmap.createBitmap(decor.width.coerceAtLeast(1),decor.height.coerceAtLeast(1),Bitmap.Config.ARGB_8888)
+            try{Canvas(b).apply{drawColor(Color.DKGRAY);decor.draw(this)};File("build/qa/ai-$name.png").apply{parentFile!!.mkdirs()}.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}}
+        fun button(d:android.app.Dialog,text:String)=views(layout(d)).filterIsInstance<Button>().first{it.text.toString()==text}
+        try{
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"class_quiz");idle()
+            val manager=ShadowDialog.getLatestDialog();capture(manager,"quiz-manager-empty")
+            button(manager,a.tr("New quiz","آزمونک جدید")).performClick();idle()
+            val editor=ShadowDialog.getLatestDialog();assertNotSame(manager,editor)
+            val fields=views(layout(editor)).filterIsInstance<EditText>()
+            assertEquals("title plus two question cards of five fields",11,fields.size)
+            fields[0].setText("جمع");fields[1].setText("۲ + ۳ = ?");fields[2].setText("۵")
+            button(editor,a.tr("Save","ذخیره")).performClick();idle()
+            assertTrue("a question with one answer must not be saved",editor.isShowing);assertNull(a.store.lesson.quizzes)
+            fields[3].setText("۶");fields[4].setText("۴")
+            capture(editor,"quiz-editor")
+            button(editor,a.tr("Save","ذخیره")).performClick();idle()
+            assertFalse(editor.isShowing)
+            val saved=a.store.lesson.quizzes!!.single()
+            assertEquals("جمع",saved.title);assertEquals(listOf("۵","۶","۴"),saved.questions.single().options);assertEquals(0,saved.questions.single().answer)
+            capture(manager,"quiz-manager")
+            val loaded=com.google.gson.Gson().fromJson(com.google.gson.Gson().toJson(a.store.lesson),Lesson::class.java);loaded.validate()
+            assertEquals(saved,loaded.quizzes!!.single())
+            button(manager,a.tr("Play","اجرا")).performClick();idle()
+            val play=ShadowDialog.getLatestDialog();assertTrue(views(layout(play)).filterIsInstance<TextView>().any{it.text.toString()=="۲ + ۳ = ?"})
+            play.dismiss()
+            val broken=Lesson(quizzes=mutableListOf(SavedQuiz(questions=listOf(SavedQuestion("q",listOf("a"),0)))))
+            assertThrows(Exception::class.java){broken.validate()}
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
 }

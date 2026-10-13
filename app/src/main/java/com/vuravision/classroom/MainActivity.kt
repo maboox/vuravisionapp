@@ -543,7 +543,7 @@ class MainActivity : Activity() {
             bar.addView(InkStrip(this,{board},showTools=false,grid=true){refreshDock()},LinearLayout.LayoutParams(-2,-2).apply{gravity=Gravity.CENTER_HORIZONTAL;topMargin=dp(6)})
             bar.addView(chips(PenStyles.selectable.map{it to PenStyles.name(this,it)},pane.penStyle){k->store.editMetadata{pane.penStyle=k}},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
         }else{
-            val patterns=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"))
+            val patterns=patternChoices()
             bar.addView(chips(patterns,page.pattern(index)){k->store.editMetadata{if(page.pattern(index)=="dark"&&pane.background==Color.WHITE)pane.background=0xff172a36.toInt();pane.pattern=k}},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
             // White, paper, soft blue, soft green, chalkboard green, dark slate.
             val colors=listOf(Color.WHITE,0xfffaf6ea.toInt(),0xffeef4ff.toInt(),0xffeaf6ee.toInt(),0xff20392f.toInt(),0xff172a36.toInt())
@@ -613,7 +613,7 @@ class MainActivity : Activity() {
         val c=column().apply{pad(16)}
         c.addView(label(tr("Page pattern","الگوی صفحه"),17f,NAVY,true))
         c.addView(infoTitle(tr("Background scope","محدودهٔ پس‌زمینه"),tr("Pattern and color apply only to this panel.","طرح و رنگ فقط برای همین بخش اعمال می‌شوند.")))
-        val patterns=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"))
+        val patterns=patternChoices()
         val patternRows=column();c.addView(patternRows)
         fun refreshPattern(){patternRows.removeAllViews();patterns.chunked(3).forEach{chunk->
             patternRows.addView(row().apply{chunk.forEach{(key,title)->
@@ -672,8 +672,8 @@ class MainActivity : Activity() {
     }
     private fun defaultBackgroundSettings(){
         val c=column().apply{pad(16)}
-        val patterns=listOf("plain","dots","grid","ruled","hatch")
-        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,patterns.map{s(it)});setSelection(patterns.indexOf(prefs.getString("defaultPattern","dots")).coerceAtLeast(0))};c.addView(pick)
+        val choices=patternChoices();val patterns=choices.map{it.first}
+        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,choices.map{it.second});setSelection(patterns.indexOf(prefs.getString("defaultPattern","dots")).coerceAtLeast(0))};c.addView(pick)
         var color=prefs.getInt("defaultBackground",Color.WHITE);palette(c,color,true){color=it}
         val inherit=Switch(this).apply{text=tr("New page uses current page background","صفحهٔ جدید از پس‌زمینهٔ صفحهٔ فعلی استفاده کند");isChecked=prefs.getBoolean("inheritBackground",false)};c.addView(inherit)
         c.addView(infoTitle(tr("New pages","صفحات جدید"),tr("Only the color and pattern are copied. Existing pages are unchanged. The first page of a new lesson uses these defaults.","فقط رنگ و طرح کپی می‌شوند. صفحات موجود تغییر نمی‌کنند. صفحهٔ اول فایل جدید از پیش‌فرض استفاده می‌کند.")))
@@ -773,7 +773,7 @@ class MainActivity : Activity() {
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2263,10 +2263,16 @@ class MainActivity : Activity() {
     }
     /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */
     private fun aiQuiz(){
-        if(board.chosen().isNotEmpty())aiOnSelection(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai,b->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quiz(5),b))}){q,_->ClassQuiz.show(this,tr("Quiz","آزمونک"),q)}
+        if(board.chosen().isNotEmpty())aiOnSelection(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai,b->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quiz(5),b))}){q,_->ClassQuiz.show(this,tr("Quiz","آزمونک"),q,{keepQuiz(tr("Quiz","آزمونک"),q)})}
         else input(tr("Quiz topic","موضوع آزمونک"),""){topic->require(topic.isNotBlank())
-            runAi(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quizFromTopic(topic,5)))}){q->ClassQuiz.show(this,topic,q)}}
+            runAi(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quizFromTopic(topic,5)))}){q->ClassQuiz.show(this,topic,q,{keepQuiz(topic,q)})}}
     }
+    /** Quizzes live in the lesson file: written by hand or kept from the AI, and played again next lesson. */
+    private fun saveQuiz(quiz:SavedQuiz){projectStore.editMetadata{val list=projectStore.lesson.quizzes?:mutableListOf<SavedQuiz>().also{projectStore.lesson.quizzes=it}
+        val at=list.indexOfFirst{it.id==quiz.id};if(at>=0)list[at]=quiz else if(list.size<50)list.add(quiz)}}
+    private fun keepQuiz(title:String,questions:List<AiTasks.Question>)=saveQuiz(SavedQuiz(title=title.take(200),questions=questions.take(100).map{SavedQuestion(it.text.take(1000),it.options.map{o->o.take(300)},it.answer)}))
+    private fun classQuizzes()=QuizBuilder.manager(this,{projectStore.lesson.quizzes.orEmpty().toList()},{saveQuiz(it)},
+        {id->projectStore.editMetadata{projectStore.lesson.quizzes?.removeAll{it.id==id}}},if(smartAi.configured())({aiQuiz()})else null)
     /** A mind map of real mind-map nodes (editable, movable), beside the selection or in the middle of the board. */
     private fun aiMindMap(){
         fun build(root:AiTasks.Node,at:PointF){
@@ -2316,6 +2322,9 @@ class MainActivity : Activity() {
         spotlight?.let{canvasHost.removeView(it)}
         spotlight=Spotlight(this){spotlight?.let{canvasHost.removeView(it)};spotlight=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
     }
+    /** Every page background, named for teachers: also staff paper for music, four-line paper for first writing, axes for graphs. */
+    private fun patternChoices()=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"),
+        "isometric" to tr("Isometric","ایزومتریک"),"axes" to tr("Axes","محور مختصات"),"staff" to tr("Music staff","حامل موسیقی"),"handwriting" to tr("Handwriting","خط‌نویسی"))
     private var settingsScreen:SettingsScreen?=null
     private fun settings()=settingsAt(prefs.getString("settingsTab",null))
     /**

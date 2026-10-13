@@ -163,10 +163,12 @@ data class Lesson(
     var pages: MutableList<Page> = mutableListOf(Page()),
     var pdf: PdfWorkspaceState? = null,
     var customColors: MutableList<Int>? = mutableListOf(),
+    /** Class quizzes kept with this lesson (written by the teacher or made by the AI), ready to play again. */
+    var quizzes: MutableList<SavedQuiz>? = null,
 ) {
     // Committed point lists are immutable; Store.edit detaches them before edits.
-    fun copyForSave(): Lesson = copy(customColors=customColors?.toMutableList(),pdf=pdf?.copyForSave(),pages=pages.map{it.copied(false)}.toMutableList())
-    fun copyDeep(): Lesson = copy(customColors=customColors?.toMutableList(),pdf=pdf?.deepCopy(),pages=pages.map{it.copied()}.toMutableList())
+    fun copyForSave(): Lesson = copy(customColors=customColors?.toMutableList(),quizzes=quizzes?.map{it.copy(questions=it.questions.map{q->q.copy(options=q.options.toList())})}?.toMutableList(),pdf=pdf?.copyForSave(),pages=pages.map{it.copied(false)}.toMutableList())
+    fun copyDeep(): Lesson = copy(customColors=customColors?.toMutableList(),quizzes=quizzes?.map{it.copy(questions=it.questions.map{q->q.copy(options=q.options.toList())})}?.toMutableList(),pdf=pdf?.deepCopy(),pages=pages.map{it.copied()}.toMutableList())
 
     fun validate() {
         require(schema in 2..3) { "Unsupported lesson version" }
@@ -181,6 +183,11 @@ data class Lesson(
         require(pages.size in 1..200 && current in pages.indices)
         require(pages.map{it.id}.distinct().size==pages.size && pages.all{it.id.isNotBlank()})
         customColors = (customColors ?: mutableListOf()).distinct().take(40).toMutableList()
+        quizzes?.let{list->
+            require(list.size<=50)
+            list.forEach{q->require(q.title.length<=200 && q.questions.size in 1..100)
+                q.questions.forEach{x->require(x.q.length<=1000 && x.options.size in 2..4 && x.options.all{it.length<=300} && x.answer in x.options.indices)}}
+        }
         pdf?.validate()
         val canvases=pages.flatMap{it.validationCanvases()}
         require(canvases.sumOf { it.items.size } <= 20000)
@@ -188,8 +195,8 @@ data class Lesson(
         canvases.forEach { page ->
             require(page.panes.size in 1..4)
             require(page.paneCount==null || page.paneCount!! in 1..page.panes.size)
-            require(page.background in listOf("plain","white","dark","dots","grid","ruled","hatch"))
-            require(page.panes.all{it.pattern==null || it.pattern in listOf("plain","white","dark","dots","grid","ruled","hatch")})
+            require(page.background in listOf("plain","white","dark")+PagePatterns.drawn)
+            require(page.panes.all{it.pattern==null || it.pattern in listOf("plain","white","dark")+PagePatterns.drawn})
             require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in PenStyles.keys && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
             require(page.panes.all{it.zoom.isFinite() && it.zoom in .0001f..100000f && it.tx.isFinite() && it.ty.isFinite()})
             require(page.items.all{it.pane in page.panes.indices})
@@ -351,3 +358,6 @@ data class TouchProfile(
             else -> "draw"
         }
 }
+
+data class SavedQuestion(val q:String="",val options:List<String> = emptyList(),val answer:Int=0)
+data class SavedQuiz(val id:String=newId(),val title:String="",val questions:List<SavedQuestion> = emptyList())

@@ -17,7 +17,8 @@ object ClassQuiz {
     private val letters=listOf("A","B","C","D")
     private val tints=listOf(0xff2563eb.toInt(),0xffdc2626.toInt(),0xff16a34a.toInt(),0xfff59e0b.toInt())
 
-    fun show(context:Context,title:String,questions:List<AiTasks.Question>,onClose:()->Unit={}):Dialog{
+    /** [keep] adds "Save to lesson" for a quiz the AI just wrote, so it can be played again next lesson. */
+    fun show(context:Context,title:String,questions:List<AiTasks.Question>,keep:(()->Unit)?=null,onClose:()->Unit={}):Dialog{
         val d=Dialog(context,android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val root=context.column().apply{setBackgroundColor(PAPER);fitsSystemWindows=true;setPadding(context.dp(24),context.dp(16),context.dp(24),context.dp(12))}
         val progress=context.label("",15f,MUTED,true)
@@ -72,6 +73,9 @@ object ClassQuiz {
         root.addView(progress);root.addView(question)
         root.addView(android.widget.ScrollView(context).apply{addView(grid);isFillViewport=true},LinearLayout.LayoutParams(-1,0,1f))
         footer.addView(result,LinearLayout.LayoutParams(0,-2,1f))
+        if(keep!=null){lateinit var saveButton:TextView
+            saveButton=context.button(context.tr("Save to lesson","ذخیره در درس")){keep();saveButton.isEnabled=false;saveButton.text=context.tr("Saved in the lesson","در درس ذخیره شد")}
+            footer.addView(saveButton,LinearLayout.LayoutParams(-2,context.dp(56)).apply{marginEnd=context.dp(10)})}
         footer.addView(close,LinearLayout.LayoutParams(context.dp(150),context.dp(56)).apply{marginEnd=context.dp(10)})
         footer.addView(next,LinearLayout.LayoutParams(context.dp(180),context.dp(56)))
         root.addView(footer)

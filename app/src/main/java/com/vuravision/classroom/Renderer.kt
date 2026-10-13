@@ -20,6 +20,12 @@ fun contentBounds(items: List<Item>): RectF {
     return b
 }
 
+/** Page backgrounds the board draws, and the order they are offered in. */
+object PagePatterns {
+    val drawn=listOf("dots","grid","ruled","hatch","isometric","axes","staff","handwriting")
+    val offered=listOf("plain")+drawn
+}
+
 class Renderer(private val media: Media) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private var pdfBaseId:String?=null
@@ -54,8 +60,10 @@ class Renderer(private val media: Media) {
         val pattern=page.pattern(paneIndex)
         val color=if(pattern=="dark" && fill==Color.WHITE)0xff172a36.toInt()else fill
         c.drawColor(color)
-        if (pattern !in listOf("dots", "grid", "ruled", "hatch")) return
-        p.color = if(android.graphics.Color.luminance(color)<.35)0x55ffffff else 0xffd8dce2.toInt()
+        if (pattern !in PagePatterns.drawn) return
+        val dark=android.graphics.Color.luminance(color)<.35
+        p.color = if(dark)0x55ffffff else 0xffd8dce2.toInt()
+        if(pattern in listOf("staff","handwriting")){fixedLines(c,pattern,area,dark);return}
         p.strokeWidth = 1f
         p.style = Paint.Style.FILL
         val matrix=Matrix();c.getMatrix(matrix);val transform=FloatArray(9);matrix.getValues(transform)
@@ -66,6 +74,21 @@ class Renderer(private val media: Media) {
         val top = floor(area.top / step).toInt()
         val bottom = ceil(area.bottom / step).toInt()
         if ((right - left).toLong() * (bottom - top) > 400000) return
+        if(pattern=="isometric"){
+            // Triangular dot grid for 3D sketches: alternate rows shift by half a step, rows are √3/2 apart.
+            val rowStep=step*.866f;val rowTop=floor(area.top/rowStep).toInt();val rowBottom=ceil(area.bottom/rowStep).toInt()
+            if((right-left).toLong()*(rowBottom-rowTop)>400000)return
+            for(y in rowTop..rowBottom)for(x in left..right)c.drawCircle(x*step+(if(y%2!=0)step/2 else 0f),y*rowStep,1.3f,p)
+            return
+        }
+        if(pattern=="axes"){
+            // Coordinate plane: light grid, every fifth line stronger, and the two axes through the origin.
+            for(y in top..bottom){p.alpha=if(y%5==0)200 else 110;c.drawLine(area.left,y*step,area.right,y*step,p)}
+            for(x in left..right){p.alpha=if(x%5==0)200 else 110;c.drawLine(x*step,area.top,x*step,area.bottom,p)}
+            p.alpha=255;val axis=p.color;p.color=if(dark)0xccffffff.toInt() else 0xff8a8fa3.toInt();p.strokeWidth=2.2f
+            c.drawLine(area.left,0f,area.right,0f,p);c.drawLine(0f,area.top,0f,area.bottom,p)
+            p.strokeWidth=1f;p.color=axis;return
+        }
         if(pattern=="hatch"){
             c.save();c.clipRect(area)
             val diagonals=ceil((area.height()+area.width())/step).toInt()
@@ -79,6 +102,25 @@ class Renderer(private val media: Media) {
         else c.drawLine(area.left, y * step, area.right, y * step, p)
         if (pattern == "grid")
             for (x in left..right) c.drawLine(x * step, area.top, x * step, area.bottom, p)
+    }
+
+    /** Patterns with a fixed size on the page (music staff, handwriting lines): they keep their meaning at any zoom. */
+    private fun fixedLines(c:Canvas,pattern:String,area:RectF,dark:Boolean){
+        val period=if(pattern=="staff")120f else 96f
+        val first=floor(area.top/period).toInt();val last=ceil(area.bottom/period).toInt()
+        if(last-first>2000)return
+        val base=p.color;val strong=if(dark)0x99ffffff.toInt() else 0xffaab0c0.toInt()
+        for(i in first..last){val y=i*period
+            if(pattern=="staff"){p.color=strong;for(l in 0..4)c.drawLine(area.left,y+l*12f,area.right,y+l*12f,p)}
+            else{
+                // Four-line handwriting paper: top line, dashed middle, strong base line, light descender line.
+                p.color=base;c.drawLine(area.left,y,area.right,y,p)
+                p.color=strong;p.pathEffect=DashPathEffect(floatArrayOf(10f,8f),0f);c.drawLine(area.left,y+28f,area.right,y+28f,p);p.pathEffect=null
+                p.strokeWidth=1.8f;c.drawLine(area.left,y+56f,area.right,y+56f,p);p.strokeWidth=1f
+                p.color=base;c.drawLine(area.left,y+76f,area.right,y+76f,p)
+            }
+        }
+        p.color=base
     }
 
     fun draw(c: Canvas, o: Item, sync: Boolean = false) {

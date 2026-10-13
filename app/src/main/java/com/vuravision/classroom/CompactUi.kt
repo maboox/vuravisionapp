@@ -32,7 +32,7 @@ object IconCatalog {
         "pie"->R.drawable.ph_pie;"image"->R.drawable.ph_image;"sticky"->R.drawable.ph_sticky;"mind_map"->R.drawable.ph_mind_map
         "paste"->R.drawable.ph_paste;"crop"->R.drawable.ph_crop;"trophy"->R.drawable.ph_trophy;"stop"->R.drawable.ph_stop
         "swap"->R.drawable.ph_swap;"content"->R.drawable.ph_content;"flask"->R.drawable.ph_flask;"game"->R.drawable.ph_game
-        "spotlight"->R.drawable.ph_spotlight;"table"->R.drawable.ph_table
+        "spotlight"->R.drawable.ph_spotlight;"table"->R.drawable.ph_table;"list_checks"->R.drawable.ph_list_checks
         else->R.drawable.ph_more
     }
     private val FILLED=mapOf("pen" to R.drawable.ph_pen_fill,"highlighter" to R.drawable.ph_highlighter_fill,"eraser" to R.drawable.ph_eraser_fill,
@@ -64,7 +64,7 @@ object IconCatalog {
         "align_start"->"align_left";"align_center"->"align_center";"align_end"->"align_right"
         "pie_settings"->"pie";"image"->"image";"sticky"->"sticky";"mind_map"->"mind_map";"paste"->"paste"
         "crop","pdf_crop"->"crop";"scoreboard"->"trophy";"stop"->"stop";"swap"->"swap";"content"->"content"
-        "spotlight"->"spotlight";"table"->"table";"laser"->"hand_tap";"picker"->"users"
+        "spotlight"->"spotlight";"table"->"table";"laser"->"hand_tap";"picker"->"users";"class_quiz"->"list_checks"
         "ai_explain"->"info";"ai_check"->"eye";"ai_steps"->"table";"ai_quiz"->"game";"ai_mindmap"->"mind_map";"ai_simplify"->"text";"ai_translate"->"globe"
         "ai_cleanup"->"fonts";"ai_setup","ai_service"->"sparkle";"ai_summary"->"file";"ai_image","ai_picture"->"image"
         else->key
