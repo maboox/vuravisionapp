@@ -24,12 +24,14 @@ class UiScenarioTest {
     private val context get()=RuntimeEnvironment.getApplication()
     @get:Rule val name=org.junit.rules.TestName()
     private var watchdog:Thread?=null
-    /** If a scenario hangs, print where the main thread is stuck instead of silently hitting the CI timeout. */
+    @Volatile private var hung:String?=null
+    /** If a scenario hangs, stop it after 2 minutes and fail with where the main thread was stuck. */
+    @Suppress("DEPRECATION")
     @Before fun watch(){
-        val main=Thread.currentThread();val test=name.methodName
-        watchdog=Thread{try{Thread.sleep(120_000);System.err.println("HUNG $test\n"+main.stackTrace.joinToString("\n"){"  at $it"})}catch(_:InterruptedException){}}.apply{isDaemon=true;start()}
+        val main=Thread.currentThread();hung=null
+        watchdog=Thread{try{Thread.sleep(120_000);hung=main.stackTrace.take(40).joinToString("\n"){"  at $it"};main.stop()}catch(_:InterruptedException){}}.apply{isDaemon=true;start()}
     }
-    @After fun unwatch(){watchdog?.interrupt()}
+    @After fun unwatch(){watchdog?.interrupt();hung?.let{throw AssertionError("${name.methodName} hung:\n$it")}}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
     private fun idle(ms:Long=600){Shadows.shadowOf(Looper.getMainLooper()).idleFor(ms,TimeUnit.MILLISECONDS)}
     private fun rect(v:View):Rect{val p=IntArray(2);v.getLocationInWindow(p);return Rect(p[0],p[1],p[0]+v.width,p[1]+v.height)}
