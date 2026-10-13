@@ -5,5 +5,7 @@
     <item name="main_menu_button" type="id" />
     <item name="tool_dock" type="id" />
     <item name="add_panel" type="id" />
+    <item name="page_bar" type="id" />
+    <item name="main_bar" type="id" />
     <string name="main_menu">Main menu</string>
 </resources>

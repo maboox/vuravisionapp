@@ -211,7 +211,7 @@ class MainActivity : Activity() {
         header.addView(icon("menu",s("main_menu")){menu()}.apply{id=R.id.main_menu_button})
         header.addView(icon("files",s("files")){fileMenu()})
         header.addView(icon("share",s("share")){shareOptions()})
-        val headerHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(header)}
+        val headerHost=HorizontalScrollView(this).apply{id=R.id.main_bar;isHorizontalScrollBarEnabled=false;addView(header)}
         floating(headerHost,Gravity.BOTTOM or Gravity.RIGHT)
         (headerHost.layoutParams as FrameLayout.LayoutParams).rightMargin=dp(72)
         // Titles/status remain available in the document menu; canvas chrome uses icons.
@@ -221,9 +221,10 @@ class MainActivity : Activity() {
         pageStrip=row().apply{pad(4)}
         pageStrip.layoutDirection=View.LAYOUT_DIRECTION_LTR
         pageLabel=label("",14f,NAVY,true).apply{gravity=Gravity.CENTER;minWidth=dp(72);layoutDirection=View.LAYOUT_DIRECTION_LTR}
-        val pageHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(pageStrip)}
+        val pageHost=HorizontalScrollView(this).apply{id=R.id.page_bar;isHorizontalScrollBarEnabled=false;addView(pageStrip)}
         floating(pageHost,Gravity.BOTTOM or Gravity.LEFT)
-        selectionBar=row().apply{setPadding(dp(4),dp(4),dp(4),dp(4))}
+        // A column of rows: actions wrap to a second row when the free width (beside the dock) is narrow.
+        selectionBar=column().apply{setPadding(dp(4),dp(4),dp(4),dp(4))}
         selectionHost=HorizontalScrollView(this).apply{id=R.id.selection_toolbar;isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE
             background=rounded(SURFACE,dp(18).toFloat(),OUTLINE);elevation=dp(6).toFloat()}
         canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(72),Gravity.TOP or Gravity.LEFT))
@@ -324,7 +325,8 @@ class MainActivity : Activity() {
         selectionHost.visibility=if(items.isEmpty()||focusMode||board.isTransforming)View.GONE else View.VISIBLE
         val key=items.joinToString{it.id};if(key!=selectionBarKey){selectionBarKey=key;smartBarOpen=false}
         selectionBar.removeAllViews();if(items.isEmpty()||board.isTransforming)return
-        fun action(symbol:String,label:String,title:String=label,active:Boolean=false,run:()->Unit){selectionBar.addView(ActionIcon(this,symbol,title,label,active,run),LinearLayout.LayoutParams(-2,dp(64)))}
+        val actions=mutableListOf<View>()
+        fun action(symbol:String,label:String,title:String=label,active:Boolean=false,run:()->Unit){actions.add(ActionIcon(this,symbol,title,label,active,run))}
         val ink=items.any{it.kind=="ink"};val smart=items.any{ObjectActions.canSmart(it)}
         if(smartBarOpen){
             // "Back" points toward the reading start: right in Persian, left in English.
@@ -337,7 +339,7 @@ class MainActivity : Activity() {
                 action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
             }
             if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
-            positionSelectionBar();return
+            fillSelectionBar(actions);positionSelectionBar();return
         }
         val pdf=items.singleOrNull()?.takeIf{it.kind=="pdf"}
         if(pdf!=null){
@@ -356,25 +358,45 @@ class MainActivity : Activity() {
         }
         action("delete",s("delete")){board.delete()}
         action("more",tr("More","بیشتر"),s("edit")){editSelection()}
-        positionSelectionBar()
+        fillSelectionBar(actions);positionSelectionBar()
+    }
+    /** Free horizontal span for canvas popups: the canvas minus the dock and a 12dp gap. */
+    private fun freeSpan():Pair<Int,Int>{
+        var minLeft=dp(12);var maxRight=canvasHost.width-dp(12)
+        if(::toolDock.isInitialized&&toolDock.visibility==View.VISIBLE&&toolDock.width>0){
+            if(toolDock.left<canvasHost.width/2)minLeft=maxOf(minLeft,toolDock.right+dp(12))else maxRight=minOf(maxRight,toolDock.left-dp(12))
+        }
+        return minLeft to maxRight
+    }
+    /** Greedy rows within the free width, so every action stays visible without scrolling. */
+    private fun fillSelectionBar(actions:List<View>){
+        selectionBar.removeAllViews()
+        val (minLeft,maxRight)=freeSpan()
+        // Before the first layout the width is unknown: keep one row; the next refresh wraps if needed.
+        val limit=if(canvasHost.width==0)Int.MAX_VALUE else (maxRight-minLeft-dp(8)).coerceAtLeast(dp(64))
+        var line=row();var used=0
+        actions.forEach{v->
+            v.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
+            if(used>0&&used+v.measuredWidth>limit){selectionBar.addView(line);line=row();used=0}
+            line.addView(v,LinearLayout.LayoutParams(-2,dp(64)));used+=v.measuredWidth
+        }
+        selectionBar.addView(line)
     }
     /** Above the selection (below it when there is no room), never under the dock or off screen. */
     private fun positionSelectionBar(){
         if(!::selectionHost.isInitialized||selectionHost.visibility!=View.VISIBLE||canvasHost.width<=0)return
         val bounds=board.selectionScreenBounds()?:return
         val a=IntArray(2);val b=IntArray(2);board.getLocationInWindow(a);canvasHost.getLocationInWindow(b);bounds.offset((a[0]-b[0]).toFloat(),(a[1]-b[1]).toFloat())
-        var minLeft=dp(12);var maxRight=canvasHost.width-dp(12)
-        if(::toolDock.isInitialized&&toolDock.visibility==View.VISIBLE&&toolDock.width>0){
-            if(toolDock.left<canvasHost.width/2)minLeft=maxOf(minLeft,toolDock.right+dp(12))else maxRight=minOf(maxRight,toolDock.left-dp(12))
-        }
+        val (minLeft,maxRight)=freeSpan()
         val maxWidth=(maxRight-minLeft).coerceAtLeast(dp(64))
-        selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.makeMeasureSpec(dp(72),View.MeasureSpec.AT_MOST))
+        selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.UNSPECIFIED)
         val barWidth=selectionBar.measuredWidth.coerceIn(dp(64),maxWidth);val barHeight=selectionBar.measuredHeight.coerceAtLeast(dp(72))
         val above=bounds.top-barHeight-dp(28);val y=if(above>=dp(12))above else bounds.bottom+dp(20)
         (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{
             width=barWidth;height=barHeight;gravity=Gravity.TOP or Gravity.LEFT
             leftMargin=(bounds.centerX()-barWidth/2).toInt().coerceIn(minLeft,(maxRight-barWidth).coerceAtLeast(minLeft))
-            topMargin=y.toInt().coerceIn(dp(12),(canvasHost.height-barHeight-dp(84)).coerceAtLeast(dp(12)))
+            val floor=if(::toolDock.isInitialized)toolDock.bottomObstacle() else canvasHost.height-dp(84)
+            topMargin=y.toInt().coerceIn(dp(12),(floor-barHeight-dp(12)).coerceAtLeast(dp(12)))
         };selectionHost.requestLayout()
     }
     private fun splitSettings(){

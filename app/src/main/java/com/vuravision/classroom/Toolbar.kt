@@ -76,16 +76,21 @@ class ToolDock(
         if(columns==1){
             (penButtons+listOf(eraser,select,recentButton,add)).forEach{column.addView(it,wrap())}
             column.addView(divider());column.addView(undo,wrap());column.addView(redo,wrap());column.addView(divider());column.addView(swapButton,wrap())
-        }else buttons().chunked(2).forEach{pair->column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
+        }else{
+            // Pairs that belong together: two pens, highlighter+eraser, select+recent, Add+side switch, then Undo+Redo.
+            val rows=listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(select,recentButton),listOf(add,swapButton),listOf(undo,redo))
+            rows.forEachIndexed{i,pair->if(i==rows.lastIndex)column.addView(divider().apply{(layoutParams as LinearLayout.LayoutParams).width=context.dp(buttonDp*2-16)});column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
+        }
     }
     /** Keep the dock inside the middle of the side, whatever the density or UI size. */
     private fun fit(height:Int){
         if(height<=0)return
         val px=context.dp(100)/100f
         val heightDp=height/px
-        // Centered and capped at 72% of the height: one column on a 720dp (1080p) panel, while both
-        // bottom corners (page bar, assistant) stay free.
-        val available=heightDp*.72f-16
+        // Centered and capped at 72% of the height: one column on a 720dp (1080p) panel. Being centered,
+        // it must also leave the bottom bars' height free at both ends.
+        val reserved=(height-bottomObstacle())/px
+        val available=minOf(heightDp*.72f,heightDp-2*reserved-24)-16
         val single=(available-20)/buttons().size
         val (cols,size)=if(single>=44)1 to single.coerceAtMost(60f) else 2 to (available/((buttons().size+1)/2)).coerceIn(36f,56f)
         // Rebuild after the current layout pass; adding views inside it leaves them unmeasured.
@@ -127,7 +132,11 @@ class ToolDock(
     private fun toggleAdd(){
         if(addPanel!=null){closeAdd();return}
         stripShown=false
-        addPanel=AddPanel(context,host,end,beside(),{closeAdd()}){key->closeAdd();used(key);perform(key)}
+        val gap=context.dp(12);val onRight=isLaidOut&&left+width/2>host.width/2
+        val freeWidth=(if(!isLaidOut)host.width-2*gap else if(onRight)left-2*gap else host.width-right-2*gap).coerceAtLeast(context.dp(200))
+        addPanel=AddPanel(context,host,freeWidth,(bottomObstacle()-2*gap).coerceAtLeast(context.dp(200)),{closeAdd()}){key->closeAdd();used(key);perform(key)}.also{panel->
+            panel.place{w->if(!isLaidOut)gap else if(onRight)(left-gap-w).coerceAtLeast(gap) else (right+gap)}
+        }
         refresh()
     }
     fun closeAdd(){addPanel?.close();addPanel=null;refresh()}
@@ -140,8 +149,8 @@ class ToolDock(
         animate().translationX(0f).alpha(1f).setDuration(260).start()
     }
     // The strip and Add panel are placed from the dock's width; re-place them whenever it changes.
-    /** Distance from the panel edge to just past the dock, for the strip and Add panel. */
-    private fun beside()=context.dp(12)+(if(width>0)width else context.dp(buttonDp*columns+14))+context.dp(12)
+    /** Top of the highest bottom bar (page bar, main bar), or the canvas bottom. */
+    fun bottomObstacle():Int=listOf(R.id.page_bar,R.id.main_bar).mapNotNull{host.findViewById<View>(it)}.filter{it.visibility==View.VISIBLE&&it.height>0}.minOfOrNull{it.top}?:host.height
     private fun place(){
         val side=if(end)Gravity.END else Gravity.START
         (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(12))}
@@ -169,7 +178,7 @@ class ToolDock(
         val button=penButtons[activePreset()]
         if(!button.isLaidOut||host.height==0)return context.dp(120)
         val at=IntArray(2);val origin=IntArray(2);button.getLocationInWindow(at);host.getLocationInWindow(origin)
-        return (at[1]-origin[1]).coerceIn(context.dp(12),(host.height-stripHost.measuredHeight-context.dp(12)).coerceAtLeast(context.dp(12)))
+        return (at[1]-origin[1]).coerceIn(context.dp(12),(bottomObstacle()-stripHost.measuredHeight-context.dp(12)).coerceAtLeast(context.dp(12)))
     }
     /** A touch anywhere outside the dock and its strip closes the strip; the touch still draws. */
     fun touchedAt(rawX:Float,rawY:Float){
@@ -198,8 +207,11 @@ class ToolDock(
     }
 }
 
-/** Everything that is not on the dock, grouped the way a teacher looks for it. */
-class AddPanel(private val context:Context,private val host:FrameLayout,end:Boolean,beside:Int,private val dismiss:()->Unit,private val pick:(String)->Unit) {
+/**
+ * Everything that is not on the dock, grouped the way a teacher looks for it.
+ * Columns follow the free width beside the dock (2-4); height stops above the bottom bars and scrolls.
+ */
+class AddPanel(private val context:Context,private val host:FrameLayout,freeWidth:Int,private val maxHeight:Int,private val dismiss:()->Unit,private val pick:(String)->Unit) {
     companion object {
         val groups=listOf(
             "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
@@ -209,25 +221,28 @@ class AddPanel(private val context:Context,private val host:FrameLayout,end:Bool
         )
     }
     private val scrim=FrameLayout(context).apply{isClickable=true;setOnClickListener{dismiss()}}
-    private val panel=context.column().apply{
-        setPadding(context.dp(14),context.dp(12),context.dp(14),context.dp(14))
-        background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(8).toFloat();isClickable=true
+    private val panel=context.column().apply{setPadding(context.dp(14),context.dp(12),context.dp(14),context.dp(14));isClickable=true}
+    private val scroll=ScrollView(context).apply{
+        addView(panel);isVerticalScrollBarEnabled=true;id=R.id.add_panel
+        background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(8).toFloat()
     }
     init {
+        val columns=((freeWidth-context.dp(28))/context.dp(88)).coerceIn(2,4)
         groups.forEach{(group,keys)->
             panel.addView(context.label(title(group),15f,MUTED,true).apply{setPadding(context.dp(4),context.dp(8),context.dp(4),context.dp(4))})
-            val grid=GridLayout(context).apply{columnCount=4}
+            val grid=GridLayout(context).apply{columnCount=columns}
             keys.forEach{key->grid.addView(tile(key))}
             panel.addView(grid)
         }
-        // The scroll view is the visible panel; its content may be taller and scrolls on short screens.
-        val scroll=ScrollView(context).apply{addView(panel);isVerticalScrollBarEnabled=false;id=R.id.add_panel}
-        scrim.addView(scroll,FrameLayout.LayoutParams(-2,-2,Gravity.CENTER_VERTICAL or(if(end)Gravity.END else Gravity.START)).apply{
-            topMargin=context.dp(12);bottomMargin=context.dp(12)
-            if(end){marginStart=0;marginEnd=beside}else{marginStart=beside;marginEnd=0}
-        })
         host.addView(scrim,FrameLayout.LayoutParams(-1,-1))
-        panel.alpha=0f;panel.translationY=context.dp(12).toFloat();panel.animate().alpha(1f).translationY(0f).setDuration(180).start()
+    }
+    /** Absolute placement next to the dock: [left] gets the measured width and returns the left edge. */
+    fun place(left:(Int)->Int){
+        scroll.measure(View.MeasureSpec.makeMeasureSpec(host.width,View.MeasureSpec.AT_MOST),View.MeasureSpec.UNSPECIFIED)
+        val h=scroll.measuredHeight.coerceAtMost(maxHeight);val w=scroll.measuredWidth
+        val top=((maxHeight-h)/2+context.dp(12)).coerceAtLeast(context.dp(12))
+        scrim.addView(scroll,FrameLayout.LayoutParams(w,h,Gravity.TOP or Gravity.LEFT).apply{leftMargin=left(w);topMargin=top})
+        scroll.alpha=0f;scroll.translationY=context.dp(12).toFloat();scroll.animate().alpha(1f).translationY(0f).setDuration(180).start()
     }
     private fun title(group:String)=when(group){
         "board"->context.tr("On the board","روی تخته");"geometry"->context.tr("Geometry","هندسه")
@@ -241,8 +256,8 @@ class AddPanel(private val context:Context,private val host:FrameLayout,end:Bool
         gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(4),context.dp(4),context.dp(4),context.dp(6))
         val icon=WorkspaceIcon(context,key,label(key)){pick(key)}.apply{sizeDp=56}
         addView(icon,LinearLayout.LayoutParams(-2,-2))
-        addView(context.label(label(key),14f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},LinearLayout.LayoutParams(context.dp(92),-2))
-        layoutParams=GridLayout.LayoutParams().apply{width=context.dp(96)}
+        addView(context.label(label(key),14f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},LinearLayout.LayoutParams(context.dp(84),-2))
+        layoutParams=GridLayout.LayoutParams().apply{width=context.dp(88)}
     }
     fun close(){host.removeView(scrim)}
 }

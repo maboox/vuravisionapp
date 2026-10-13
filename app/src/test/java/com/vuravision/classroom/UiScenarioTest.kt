@@ -56,7 +56,11 @@ class UiScenarioTest {
         if(centers.size==1)assertTrue("$state: icons off center",kotlin.math.abs(centers[0]-dr.centerX())<=2)
         else{assertEquals("$state: unexpected icon columns $centers",2,centers.size);assertTrue("$state: columns not symmetric",kotlin.math.abs(centers[0]+centers[1]-2*dr.centerX())<=3)}
         val others=listOfNotNull(d.inkPopup.takeIf{it.isShown},a.findViewById<View>(R.id.selection_toolbar)?.takeIf{it.isShown},a.findViewById<View>(R.id.add_panel)?.takeIf{it.isShown})
-        others.forEach{o->val r=rect(o);val name=if(o.id!=View.NO_ID)a.resources.getResourceEntryName(o.id)else "popup";assertTrue("$state: $name off screen $r",area.contains(r));assertFalse("$state: overlaps the dock $r / $dr",Rect.intersects(r,dr))}
+        // Bottom bars (pages, main menu) are obstacles too: neither the dock nor any popup may cover them.
+        val bars=listOf(R.id.page_bar,R.id.main_bar).mapNotNull{a.findViewById<View>(it)?.takeIf{v->v.isShown}}.map{rect(it)}
+        bars.forEach{assertFalse("$state: dock overlaps a bottom bar $it / $dr",Rect.intersects(it,dr))}
+        others.forEach{o->val r=rect(o);val name=if(o.id!=View.NO_ID)a.resources.getResourceEntryName(o.id)else "popup";assertTrue("$state: $name off screen $r",area.contains(r));assertFalse("$state: $name overlaps the dock $r / $dr",Rect.intersects(r,dr))
+            bars.forEach{assertFalse("$state: $name overlaps a bottom bar $r / $it",Rect.intersects(r,it))}}
     }
 
     private fun run(language:String,size:String,uiScale:Float=1f){
