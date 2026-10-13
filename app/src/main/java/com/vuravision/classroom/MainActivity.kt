@@ -693,14 +693,20 @@ class MainActivity : Activity() {
     }
     private fun calibrationSettings(){
         val c=column().apply{pad(16)}
-        c.addView(button(tr("Pen tips and palm","سر قلم و کف دست")){calibrateTips()})
-        c.addView(button(s("touch_test")){dialog(s("touch_test"),TouchDiagnostics(this,board.profile).apply{minimumHeight=dp(320)})})
+        c.addView(sectionTitle(tr("Pen and touch","قلم و لمس")))
+        c.addView(row().apply{
+            addView(button(tr("Pen tips and palm","سر قلم و کف دست")){calibrateTips()},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(8)})
+            addView(button(s("touch_test")){dialog(s("touch_test"),TouchDiagnostics(this@MainActivity,board.profile).apply{minimumHeight=dp(320)})},LinearLayout.LayoutParams(0,dp(52),1f))
+        })
+        c.addView(sectionTitle(tr("Size on screen","اندازه روی صفحه")))
         c.addView(infoTitle(tr("Real centimetres","سانتی‌متر واقعی"),tr("Measure the line below with a physical ruler, then enter its length in cm. Calibration belongs to this display. Without calibration, geometry uses board units (u).", "خط زیر را با خطکش واقعی اندازه بگیرید و طولش را به سانتی‌متر وارد کنید. کالیبراسیون مخصوص همین نمایشگر است. بدون آن، واحد هندسی u است.")))
         val line=object:View(this){override fun onDraw(c:Canvas){val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=NAVY;strokeWidth=3f};c.drawLine(dp(16).toFloat(),height/2f,width-dp(16).toFloat(),height/2f,p);listOf(dp(16).toFloat(),width-dp(16).toFloat()).forEach{x->c.drawLine(x,8f,x,height-8f,p)}}};c.addView(line,LinearLayout.LayoutParams(-1,dp(40)))
         val length=field(hintValue=tr("Measured line length (cm)","طول واقعی خط (سانتی‌متر)"));length.inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;c.addView(length)
         val d=dialog(s("calibration"),c)
-        c.addView(button(s("apply"),true){val n=length.text.toString().toFloatOrNull();val px=line.width-dp(32);if(n==null||!n.isFinite()||n<=0||px<=0||px/n !in 5f..1000f){length.error=tr("Enter a valid measured length","طول واقعی معتبر وارد کنید");return@button};prefs.edit().putFloat("pixelsPerCm",px/n).apply();board.sceneChanged();d.dismiss()})
-        c.addView(button(tr("Use board units","استفاده از واحد تخته")){prefs.edit().remove("pixelsPerCm").apply();board.sceneChanged();d.dismiss()})
+c.addView(row().apply{
+            addView(button(tr("Use board units","استفاده از واحد تخته")){prefs.edit().remove("pixelsPerCm").apply();board.sceneChanged();d.dismiss()},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(8)})
+            addView(button(s("apply"),true){val n=length.text.toString().toFloatOrNull();val px=line.width-dp(32);if(n==null||!n.isFinite()||n<=0||px<=0||px/n !in 5f..1000f){length.error=tr("Enter a valid measured length","طول واقعی معتبر وارد کنید");return@button};prefs.edit().putFloat("pixelsPerCm",px/n).apply();board.sceneChanged();d.dismiss()},LinearLayout.LayoutParams(0,dp(52),1f))
+        },LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
     }
     private fun measureShape(o:Item){
         if(Measurements.of(o)!=null)board.showMeasurements(o)
@@ -2477,7 +2483,9 @@ class MainActivity : Activity() {
             }
         }
         faChoice.setOnClickListener{choose(Fonts.persian,true)};enChoice.setOnClickListener{choose(Fonts.english,false)}
-        content.addView(faChoice);content.addView(enChoice);content.addView(preview)
+        content.addView(sectionTitle(tr("Fonts for the board and the app","فونت تخته و برنامه")))
+        content.addView(faChoice,LinearLayout.LayoutParams(-1,dp(52)).apply{bottomMargin=dp(6)});content.addView(enChoice,LinearLayout.LayoutParams(-1,dp(52)))
+        content.addView(sectionTitle(tr("Preview","پیش‌نمایش")));content.addView(preview)
         val existing=CheckBox(this).apply{text=tr("Also apply to editable text on the active page (Undo available)","روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال شود (قابل بازگردانی)")}
         content.addView(existing)
         val dialog=dialog(s("fonts"),ScrollView(this).apply{addView(content)})
