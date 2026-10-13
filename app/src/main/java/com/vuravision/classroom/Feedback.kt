@@ -47,7 +47,7 @@ object Sounds {
             val n=RATE*ms/1000
             for(i in 0 until n){
                 val t=i.toDouble()/RATE;val phase=2*PI*freq*t
-                val raw=if(cue.wave=="square")(if(sin(phase)>=0)1.0 else -1.0)*.35 else sin(phase)
+                val raw=if(cue.wave=="square")(if(sin(phase)>=0)1.0 else -1.0)*.6 else sin(phase)
                 val envelope=minOf(1.0,i/(RATE*.008))*exp(-3.0*i/n)
                 out.add((raw*envelope*.45*Short.MAX_VALUE).toInt().toShort())
             }
@@ -99,5 +99,5 @@ class GameFx {
         pieces.removeAll{it.y>height+40}
     }
     /** True while anything is still moving, so the view keeps drawing frames. */
-    val busy get()=pieces.isNotEmpty()||(0..1).any{now()-flashAt[it]<600||now()-shakeAt[it]<350}
+    val busy get()=pieces.isNotEmpty()||(0..1).any{(flashAt[it]!=0L&&now()-flashAt[it]<600)||(shakeAt[it]!=0L&&now()-shakeAt[it]<350)}
 }

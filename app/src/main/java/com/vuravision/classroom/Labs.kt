@@ -214,7 +214,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
     private var trials = DoubleArray(1000) { Math.random() }
 
     fun resample() {
-        sampleSeed++
+        sampleSeed++;time=0.0
         trials = DoubleArray(1000) { Math.random() }
     }
 
@@ -229,7 +229,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         if (last != 0L && canAnimate()) time += (now - last).coerceAtMost(50) / 1000.0
         last = now
         render(c, width, height)
-        if(canAnimate()&&(key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postDelayed(frame,16)}
+        if(canAnimate()&&((key.removePrefix("native_") in NativeLabs.growing&&time<NativeLabs.GROW_SECONDS+.2)||key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postDelayed(frame,16)}
     }
 
     override fun onAttachedToWindow() {
@@ -293,7 +293,8 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         c.translate((w - 1000 * scale) / 2, (h - 570 * scale) / 2)
         c.scale(scale, scale)
         text(c, context.s(key), 32f, 44f, 24f)
-        if(key in NativeLabs.keys){NativeLabs.draw(c,key,values,time,sampleSeed,context);c.restore();return}
+        // A still preview (gallery card) shows the finished picture; a running lab starts from zero and grows.
+        if(key in NativeLabs.keys){NativeLabs.draw(c,key,values,if(running)time else 1e4,sampleSeed,context);c.restore();return}
         val a = values[0].toDouble()
         val b = values.getOrElse(1) { 0f }.toDouble()
         val d = values.getOrElse(2) { 0f }.toDouble()

@@ -8,6 +8,9 @@ import kotlin.random.Random
 object NativeLabs {
  val ids=listOf("orbit","pendulum","projectile","spring","collision","standing","gas","molecule","states","ph","reaction","atom","solubility","halflife","waves","circle","fractal","golden","quadratic","tangent","fourier","galton","coins","dice","montecarlo","walk","clt","regression","incline","lens","circuit","doppler","buoyancy","heat","periodic","titration","electrolysis","diffusion","flame","equilibrium","primes","pythagoras","polypi","lissajous","series","pascal","monty","birthday","bayes","benford","median","streaks","freefall","interference","pressure","lightclock","bonding","catalyst","osmosis","density","collatz","modcircle","koch","sorting","sampling","ruin","simpson","markov")
  val keys=ids.map{"native_$it"}
+ const val GROW_SECONDS=4.0
+ /** Labs whose random samples accumulate over time (see draw). */
+ val growing=setOf("galton","coins","dice","montecarlo","walk","clt","monty","streaks","sampling")
  private fun ctl(name:String,min:Float,max:Float,v:Float)=LabControl(name,min,max,v)
  fun controls(full:String):List<LabControl> = when(full.removePrefix("native_")) {
   "orbit"->listOf(ctl("Mass / M☉",.2f,3f,1f),ctl("Radius / AU",.3f,3f,1f))
@@ -84,6 +87,8 @@ object NativeLabs {
   fun f(x:Double)="%.3f".format(java.util.Locale.US,x)
   fun note(text:String)=g.caption(text)
   fun graph(y:(Double)->Double)=g.plot(-5.0,5.0,-5.0,5.0,y)
+  // Sampling labs fill in over about four seconds, so the class watches the pattern emerge instead of seeing only the end.
+  val grow=(t/GROW_SECONDS).coerceIn(0.0,1.0)
   when(key){
    "gas","lens","buoyancy"->ExtraLabs.draw(c,key,v,context,t)
    "circuit"->ExtraLabs.draw(c,"ohm",v,context,t)
@@ -113,12 +118,12 @@ object NativeLabs {
    "quadratic"->{graph{a*it*it+b*it+d};val disc=b*b-4*a*d;note(if(abs(a)<.00001)"Linear case: y=${f(b)}x+${f(d)}"else if(disc<0)"Discriminant = ${f(disc)}: no real roots"else"Roots: ${f((-b-sqrt(disc))/(2*a))}, ${f((-b+sqrt(disc))/(2*a))}")}
    "tangent"->{graph{it*it};g.plot(-5.0,5.0,-5.0,5.0,{2*a*it-a*a},ORANGE,false);note("f(x)=x²; f′(${f(a)}) = ${f(2*a)}")}
    "fourier"->{val n=a.roundToInt();graph{x->(0 until n).sumOf{val k=2*it+1;(4/PI)*sin(k*x)/k}};note("Square-wave Fourier approximation · $n odd harmonics")}
-   "galton"->{val rows=a.roundToInt();val counts=DoubleArray(rows+1);repeat(b.toInt()){var k=0;repeat(rows){if(random.nextBoolean())k++};counts[k]++};g.bars(counts.toList());note("Binomial distribution: $rows rows, p=0.5, ${b.toInt()} balls")}
-   "coins"->{var heads=0;val n=b.toInt();g.plot(0.0,n.toDouble(),0.0,1.0,{a},ORANGE);val values=(1..n).map{if(random.nextDouble()<a)heads++;it.toDouble() to heads.toDouble()/it};g.data(values,0.0,n.toDouble(),0.0,1.0);note("Heads / trials = ${f(heads.toDouble()/n)} · expected ${f(a)}")}
-   "dice"->{val count=DoubleArray(11);repeat(a.toInt()){count[random.nextInt(6)+random.nextInt(6)]++};g.bars(count.toList(),(2..12).map{it.toString()});note("Sum of two fair dice · ${a.toInt()} independent throws")}
-   "montecarlo"->{var inside=0;g.block(320.0,100.0,320.0,320.0,0xffeeebff.toInt());repeat(a.toInt()){val x=random.nextDouble();val y=random.nextDouble();val hit=x*x+y*y<=1;if(hit)inside++;g.ball(320+x*320,420-y*320,2.0,if(hit)TEAL else ORANGE)};note("π ≈ 4·inside/N = ${f(4.0*inside/a.toInt())}")}
-   "walk"->{var y=0.0;val n=a.toInt();val pts=(0 until n).map{y+=if(random.nextDouble()<b)1 else -1;it.toDouble() to y};g.data(pts,0.0,n.toDouble(),-n.toDouble(),n.toDouble());note("Biased random walk · P(right)=${f(b)} · final position=${f(y)}")}
-   "clt"->{val n=a.toInt();val bins=DoubleArray(20);repeat(b.toInt()){val mean=(0 until n).sumOf{random.nextDouble()}/n;bins[(mean*20).toInt().coerceIn(0,19)]++};g.bars(bins.toList());note("Means of Uniform(0,1), n=$n; expected SE = ${f(sqrt(1.0/(12*n)))}")}
+   "galton"->{val rows=a.roundToInt();val counts=DoubleArray(rows+1);val shown=(b*grow).toInt();repeat(shown){var k=0;repeat(rows){if(random.nextBoolean())k++};counts[k]++};g.bars(counts.toList());note("Binomial distribution: $rows rows, p=0.5, $shown balls")}
+   "coins"->{var heads=0;val n=max(1,(b*grow).toInt());g.plot(0.0,b.toDouble(),0.0,1.0,{a},ORANGE);val values=(1..n).map{if(random.nextDouble()<a)heads++;it.toDouble() to heads.toDouble()/it};g.data(values,0.0,b.toDouble(),0.0,1.0);note("Heads / trials = ${f(heads.toDouble()/n)} · expected ${f(a)}")}
+   "dice"->{val count=DoubleArray(11);val shown=(a*grow).toInt();repeat(shown){count[random.nextInt(6)+random.nextInt(6)]++};g.bars(count.toList(),(2..12).map{it.toString()});note("Sum of two fair dice · $shown independent throws")}
+   "montecarlo"->{var inside=0;val shown=max(1,(a*grow).toInt());g.block(320.0,100.0,320.0,320.0,0xffeeebff.toInt());repeat(shown){val x=random.nextDouble();val y=random.nextDouble();val hit=x*x+y*y<=1;if(hit)inside++;g.ball(320+x*320,420-y*320,2.0,if(hit)TEAL else ORANGE)};note("π ≈ 4·inside/N = ${f(4.0*inside/shown)} · N = $shown")}
+   "walk"->{var y=0.0;val n=max(1,(a*grow).toInt());val pts=(0 until n).map{y+=if(random.nextDouble()<b)1 else -1;it.toDouble() to y};g.data(pts,0.0,a.toDouble(),-a.toDouble(),a.toDouble());note("Biased random walk · P(right)=${f(b)} · final position=${f(y)}")}
+   "clt"->{val n=a.toInt();val bins=DoubleArray(20);repeat((b*grow).toInt()){val mean=(0 until n).sumOf{random.nextDouble()}/n;bins[(mean*20).toInt().coerceIn(0,19)]++};g.bars(bins.toList());note("Means of Uniform(0,1), n=$n; expected SE = ${f(sqrt(1.0/(12*n)))}")}
    "regression"->{val pts=(0..50).map{val x=it/5.0-5;x to (a*x+(random.nextDouble()-.5)*b)};g.scatter(pts,-5.0,5.0,-18.0,18.0);val fit=LabMath.fit(pts);g.plot(-5.0,5.0,-18.0,18.0,{fit.first*it+fit.second},ORANGE);note("OLS slope=${f(fit.first)}, intercept=${f(fit.second)}")}
    "incline"->{val q=a*PI/180;val acc=max(0.0,9.81*(sin(q)-b*cos(q)));g.line(170.0,130.0,850.0,130+260*sin(q),TEAL,5f);val u=min(1.0,acc*(t%6).pow(2)/60);g.ball(170+680*u,105+260*sin(q)*u,20.0,ORANGE);note("a=max(0,g(sin θ−μ cos θ))=${f(acc)} m/s²; from rest")}
    "doppler"->{val observed=b*343/(343-a);repeat(7){val r=20+(t*60+it*45)%300;g.ring(500-a/4,260.0,r,if(it%2==0)TEAL else MUTED)};g.ball(500.0,260.0,15.0,ORANGE);note("Stationary observer ahead: f′=f c/(c−v)=${f(observed)} Hz; c=343 m/s")}
@@ -141,12 +146,12 @@ object NativeLabs {
    "lissajous"->{g.curve((0..600).map{val q=2*PI*it/600;500+280*sin(a.roundToInt()*q+d*PI/180) to 270-160*sin(b.roundToInt()*q)});note("x=sin(fx·t+φ), y=sin(fy·t)")}
    "series"->{val n=b.roundToInt();g.bars((0 until n).map{a.pow(it)});note("Σ rᵏ, k=0..${n-1}: ${(1-a.pow(n))/(1-a)}; limit=${f(1/(1-a))}")}
    "pascal"->{for(row in 0 until a.toInt()){var value=1L;for(k in 0..row){g.text(value.toString(),500-row*32.0+k*64,100+row*38.0,18f);value=value*(row-k)/(k+1)}};note("Each inner entry is the sum of the two entries above")}
-   "monty"->{var stay=0;repeat(a.toInt()){if(random.nextInt(3)==0)stay++};g.bars(listOf(stay.toDouble(),a.toInt()-stay.toDouble()),listOf("Stay wins","Switch wins"));note("Host knows prize, always opens a goat: P(switch win)=2/3")}
+   "monty"->{var stay=0;val shown=(a*grow).toInt();repeat(shown){if(random.nextInt(3)==0)stay++};g.bars(listOf(stay.toDouble(),shown-stay.toDouble()),listOf("Stay wins","Switch wins"));note("Host knows prize, always opens a goat: P(switch win)=2/3")}
    "birthday"->{val n=a.toInt();val prob=1-(0 until n).fold(1.0){acc,i->acc*(365-i)/365};g.bars(listOf(prob,1-prob),listOf("Shared birthday","All distinct"));note("$n people; P(shared birthday)=${f(prob*100)}%; uniform 365-day model")}
    "bayes"->{val prev=a/100;val se=b/100;val sp=d/100;val ppv=se*prev/(se*prev+(1-sp)*(1-prev));g.bars(listOf(se*prev,(1-sp)*(1-prev)),listOf("True positives","False positives"));note("P(condition | +)=${f(ppv*100)}% · teaching model, not clinical advice")}
    "benford"->{val digit=a.roundToInt().coerceIn(1,9);g.bars((1..9).map{log10(1+1.0/it)},(1..9).map{it.toString()},digit-1);note("Highlighted digit $digit: P(d)=log₁₀(1+1/d)=${f(log10(1+1.0/digit))}")}
    "median"->{val arr=listOf(2.0,3.0,4.0,5.0,a);g.bars(arr);note("Mean=${f(arr.average())}, median=${f(arr.sorted()[2])}; outliers shift the mean")}
-   "streaks"->{var longest=0;var run=0;repeat(a.toInt()){val hit=random.nextDouble()<b;run=if(hit)run+1 else 0;longest=max(longest,run);g.ball(70+(it%40)*22.0,110+(it/40)*40.0,8.0,if(hit)TEAL else ORANGE)};note("Longest heads streak=$longest; streaks occur in independent sequences")}
+   "streaks"->{var longest=0;var run=0;repeat((a*grow).toInt()){val hit=random.nextDouble()<b;run=if(hit)run+1 else 0;longest=max(longest,run);g.ball(70+(it%40)*22.0,110+(it/40)*40.0,8.0,if(hit)TEAL else ORANGE)};note("Longest heads streak=$longest; streaks occur in independent sequences")}
    "freefall"->{val time=t%8;val fallen=if(b<1e-6).5*9.81*time*time else 9.81/b*(time-(1-exp(-b*time))/b);g.line(400.0,100.0,400.0,450.0,MUTED);g.ball(500.0,100+350*min(a,fallen)/a,20.0,ORANGE);note("Linear drag: dv/dt=g−kv/m; distance=${f(min(a,fallen))} m")}
    "pressure"->{val pressure=b*9.81*a/1000;val depth=110+330*a/30
     val blue=(245-(b-500)*.045).roundToInt().coerceIn(170,245)
@@ -176,7 +181,7 @@ object NativeLabs {
    "modcircle"->{val n=b.roundToInt();val m=a.roundToInt();g.ring(500.0,260.0,180.0,MUTED);repeat(n){val q=2*PI*it/n;val r=2*PI*(it*m%n)/n;g.line(500+180*cos(q),260+180*sin(q),500+180*cos(r),260+180*sin(r),TEAL,1f)};note("Connect k → ${m}k mod $n")}
    "koch"->{var pts=listOf(300.0 to 390.0,700.0 to 390.0,500.0 to 44.0,300.0 to 390.0);repeat(a.toInt()){pts=pts.zipWithNext().flatMap{(u,w)->val dx=(w.first-u.first)/3;val dy=(w.second-u.second)/3;listOf(u,(u.first+dx) to (u.second+dy),(u.first+1.5*dx-sqrt(3.0)*dy/2) to (u.second+1.5*dy+sqrt(3.0)*dx/2),(u.first+2*dx) to (u.second+2*dy))}+pts.last()};g.curve(pts);note("Koch curve: segments ×4, each length ÷3 at each iteration")}
    "sorting"->{val n=a.toInt();val arr=MutableList(n){random.nextInt(10,100).toDouble()};var steps=(t*10).toInt().coerceAtMost(n*n);for(i in 0 until n)for(j in 0 until n-1-i)if(steps-->0&&arr[j]>arr[j+1]){val tmp=arr[j];arr[j]=arr[j+1];arr[j+1]=tmp};g.bars(arr);note("Bubble sort: compare adjacent values and swap if out of order")}
-   "sampling"->{val se=sqrt(b*(1-b)/a);val bins=DoubleArray(20);repeat(200){val p=(0 until a.toInt()).count{random.nextDouble()<b}.toDouble()/a.toInt();bins[(p*20).toInt().coerceIn(0,19)]++};g.bars(bins.toList());note("Bernoulli sample proportion SE=√(p(1−p)/n)=${f(se)}")}
+   "sampling"->{val se=sqrt(b*(1-b)/a);val bins=DoubleArray(20);repeat((200*grow).toInt()){val p=(0 until a.toInt()).count{random.nextDouble()<b}.toDouble()/a.toInt();bins[(p*20).toInt().coerceIn(0,19)]++};g.bars(bins.toList());note("Bernoulli sample proportion SE=√(p(1−p)/n)=${f(se)}")}
    "ruin"->{val capital=a.roundToInt();val ratio=(1-b)/b;val win=if(abs(b-.5)<1e-6)capital/20.0 else (1-ratio.pow(capital))/(1-ratio.pow(20));g.bars(listOf(win,1-win),listOf("Reach 20","Ruin at 0"));note("Gambler's ruin: initial=$capital, P(win step)=${f(b)}")}
    "simpson"->{val one=(0..15).map{val x=1+it/5.0;x to (5-.5*x+random.nextDouble()*.4)};val two=(0..15).map{val x=6+it/5.0;x to (12-.5*x+random.nextDouble()*.4)};g.scatter(one,0.0,10.0,0.0,12.0,TEAL);g.scatter(two,0.0,10.0,0.0,12.0,ORANGE);val sets=if(a>.5)listOf(one,two)else listOf(one+two);sets.forEach{val fit=LabMath.fit(it);g.plot(0.0,10.0,0.0,12.0,{x->fit.first*x+fit.second},NAVY,false)};note("Each group slopes down; combined data slopes up due to group differences")}
    "markov"->{val rain=a/(a+b);g.bars(listOf(1-rain,rain),listOf("Sun","Rain"))
