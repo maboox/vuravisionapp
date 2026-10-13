@@ -420,7 +420,8 @@ class MainActivity : Activity() {
             // As wide as both buttons really are: a narrower scrolling box let the second button stick out under the dock.
             actions.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
             val controlWidth=min(actions.measuredWidth,(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
-            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,maxOf(dp(52),actions.measuredHeight)))
+            // Explicit LEFT: with the default START gravity, Persian (RTL) put every panel's buttons at the right edge, ignoring leftMargin.
+            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,maxOf(dp(52),actions.measuredHeight),Gravity.TOP or Gravity.LEFT))
         }
         positionSplitControls()
     }
