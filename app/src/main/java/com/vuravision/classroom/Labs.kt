@@ -174,6 +174,18 @@ object Labs {
             )
             sliders.addView(col, LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,context.dp(3),0,context.dp(3))})
         }
+        // Item 54: drag across the picture itself to change the first setting (sideways) or the second (up/down).
+        if(controls.isNotEmpty()){
+            view.ranges=controls.map{it.min..it.max}
+            view.dragHint=if(controls.size>1)context.tr("Drag on the picture: sideways for ${LabText.t(context,controls[0].label)}, up or down for ${LabText.t(context,controls[1].label)}",
+                "روی تصویر بکشید: افقی برای ${LabText.t(context,controls[0].label)}، عمودی برای ${LabText.t(context,controls[1].label)}")
+                else context.tr("Drag sideways on the picture for ${LabText.t(context,controls[0].label)}","برای ${LabText.t(context,controls[0].label)} روی تصویر افقی بکشید")
+            view.onDrag={i,v->
+                val control=controls[i];val value=if(integral(control))round(v)else v
+                sliderViews[i].progress=((value-control.min)/(control.max-control.min)*1000).toInt()
+                view.time=0.0;view.dragLabel="${LabText.t(context,control.label)} = ${fmt(view.values[i])}"
+            }
+        }
         sliders.addView(context.label(context.s("ex_$key"), 13f, MUTED))
         c.addView(ScrollView(context).apply{addView(sliders);isFillViewport=false},LinearLayout.LayoutParams(-1,context.dp(if(context.resources.configuration.screenWidthDp<620)190 else 235)))
         val r = context.row()
@@ -249,6 +261,43 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
     private var sampleSeed=42
     private var trials = DoubleArray(1000) { Math.random() }
 
+    var ranges:List<ClosedFloatingPointRange<Float>> = emptyList()
+    var onDrag:((Int,Float)->Unit)?=null
+    /** Shown on the picture until the first drag; [dragLabel] shows the setting being changed while dragging. */
+    var dragHint:String?=null
+    var dragLabel:String?=null
+    private var downX=0f;private var downY=0f;private var axis=-1;private var startValue=0f
+    override fun onTouchEvent(e:MotionEvent):Boolean{
+        val drag=onDrag?:return super.onTouchEvent(e)
+        if(ranges.isEmpty())return super.onTouchEvent(e)
+        when(e.actionMasked){
+            MotionEvent.ACTION_DOWN->{downX=e.x;downY=e.y;axis=-1;parent?.requestDisallowInterceptTouchEvent(true)}
+            MotionEvent.ACTION_MOVE->{
+                val dx=e.x-downX;val dy=e.y-downY
+                if(axis<0){
+                    if(hypot(dx,dy)<context.dp(12))return true
+                    axis=if(abs(dx)>=abs(dy)||ranges.size<2)0 else 1;startValue=values[axis];dragHint=null
+                }
+                val r=ranges[axis];val rtl=layoutDirection==View.LAYOUT_DIRECTION_RTL
+                // Same direction as the sliders below: they grow to the left in Persian.
+                val delta=if(axis==0)(if(rtl)-dx else dx)/width.coerceAtLeast(1) else -dy/height.coerceAtLeast(1)
+                drag(axis,(startValue+delta*(r.endInclusive-r.start)).coerceIn(r.start,r.endInclusive));invalidate()
+            }
+            MotionEvent.ACTION_UP,MotionEvent.ACTION_CANCEL->{if(axis<0&&e.actionMasked==MotionEvent.ACTION_UP)performClick();axis=-1;dragLabel=null;invalidate()}
+        }
+        return true
+    }
+    override fun performClick():Boolean{super.performClick();return true}
+    private fun chip(c:Canvas,text:String,top:Boolean){
+        val textPaint=android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply{textSize=context.dp(15).toFloat();color=Color.WHITE;typeface=Typeface.DEFAULT_BOLD}
+        val w=minOf(textPaint.measureText(text),width-context.dp(48).toFloat());val shown=android.text.TextUtils.ellipsize(text,textPaint,w,android.text.TextUtils.TruncateAt.END).toString()
+        val pad=context.dp(12).toFloat();val h=context.dp(36).toFloat()
+        val y=if(top)context.dp(12).toFloat() else height-h-context.dp(12)
+        val r=RectF(width/2f-w/2-pad,y,width/2f+w/2+pad,y+h)
+        p.style=Paint.Style.FILL;p.color=0xcc20194f.toInt();c.drawRoundRect(r,h/2,h/2,p)
+        c.drawText(shown,width/2f-textPaint.measureText(shown)/2,r.centerY()-(textPaint.ascent()+textPaint.descent())/2,textPaint)
+    }
+
     fun resample() {
         sampleSeed++;time=0.0
         trials = DoubleArray(1000) { Math.random() }
@@ -265,6 +314,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         if (last != 0L && canAnimate()) time += (now - last).coerceAtMost(50) / 1000.0 * speed
         last = now
         render(c, width, height)
+        dragLabel?.let{chip(c,it,true)}?:dragHint?.let{chip(c,it,false)}
         if(canAnimate()&&((key.removePrefix("native_") in NativeLabs.growing&&time<NativeLabs.GROW_SECONDS+.2)||key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postDelayed(frame,16)}
     }
 

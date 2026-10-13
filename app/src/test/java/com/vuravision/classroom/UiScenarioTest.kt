@@ -347,6 +347,27 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Dragging across a lab's picture changes its first setting, and the slider below follows. */
+    @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun labPictureDragChangesSetting(){
+        val ctl=open("en");val a=ctl.get()
+        try{
+            settle(a);Labs.open(a,"native_pendulum"){it.recycle()};idle(300)
+            val d=org.robolectric.shadows.ShadowDialog.getLatestDialog();val decor=d.window!!.decorView;val m=a.resources.displayMetrics
+            decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)
+            val lab=views(decor).filterIsInstance<LabView>().single();val slider=views(decor).filterIsInstance<SeekBar>().first()
+            assertNotNull("a hint should explain the drag",lab.dragHint)
+            val before=lab.values[0];val progress=slider.progress
+            fun touch(action:Int,x:Float,y:Float){val e=MotionEvent.obtain(0,0,action,x,y,0);lab.dispatchTouchEvent(e);e.recycle()}
+            val y=lab.height/2f;touch(MotionEvent.ACTION_DOWN,lab.width*.3f,y);touch(MotionEvent.ACTION_MOVE,lab.width*.4f,y);touch(MotionEvent.ACTION_MOVE,lab.width*.5f,y)
+            assertNotNull("the changing value is shown while dragging",lab.dragLabel)
+            touch(MotionEvent.ACTION_UP,lab.width*.5f,y)
+            assertTrue("dragging right should raise the first setting ($before → ${lab.values[0]})",lab.values[0]>before||before>=lab.ranges[0].endInclusive)
+            assertTrue("the slider should follow",slider.progress!=progress||before>=lab.ranges[0].endInclusive)
+            assertNull(lab.dragHint);assertNull(lab.dragLabel)
+            d.dismiss()
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** A Persian lab, mid-growth and finished, plus the galleries at panel width: for reviewing texts and layout by eye. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun persianLabAndGalleries(){
         val ctl=open();val a=ctl.get()
