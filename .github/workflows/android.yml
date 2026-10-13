@@ -80,7 +80,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${APP_VERSION}-build${{ github.run_number }}"
-          gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt \
+          # Robolectric screenshots let reviewers check layouts without a device.
+          (cd app/build/qa && zip -q "$GITHUB_WORKSPACE/artifacts/screenshots.zip" *.png) || true
+          gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt $(ls artifacts/screenshots.zip 2>/dev/null) \
             --repo "${{ github.repository }}" --target "${{ github.sha }}" --prerelease \
             --title "VuraVision ${APP_VERSION} · build ${{ github.run_number }}" \
             --notes "Branch: ${{ github.ref_name }} · Commit: ${{ github.sha }}"
