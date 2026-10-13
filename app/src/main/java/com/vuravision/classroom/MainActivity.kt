@@ -731,7 +731,7 @@ class MainActivity : Activity() {
             addView(button(tr("Fine tip","سر باریک")){broad=false;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
             addView(button(tr("Broad tip","سر پهن")){broad=true;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
         })
-        c.addView(body);refresh();dialog(s("pen"),ScrollView(this).apply{addView(c)})
+        c.addView(body);refresh();toolSheet(s("pen"),ScrollView(this).apply{addView(c)})
     }
 
     private fun layers(){
@@ -820,7 +820,7 @@ class MainActivity : Activity() {
         c.addView(infoTitle(tr("PDF erasing","پاک‌کن PDF"),tr("Original PDF content is covered with white and can be restored with Undo. This is not permanent redaction. With two tips off, broad touch scrolls the PDF.","محتوای اصلی PDF با رنگ سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف محرمانه نیست. با دو سر قلم خاموش، تماس پهن PDF را اسکرول می‌کند.")))
         slider(c,tr("Radius","شعاع"),board.eraserRadius,80){board.eraserRadius=it;prefs.edit().putFloat("eraserRadius",it).apply()}
         c.addView(CheckBox(this).apply{text=tr("Include objects (otherwise ink only)","روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)");isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean("eraseObjects",v).apply()}})
-        val d=dialog(s("erase"),ScrollView(this).apply{addView(c)})
+        val d=toolSheet(s("erase"),ScrollView(this).apply{addView(c)})
         addClearSlider(c){d.dismiss()}
     }
     private fun addText(sticky:Boolean){textEditor(null,sticky)}
@@ -897,6 +897,26 @@ class MainActivity : Activity() {
     }
     private fun dialog(title:String,content:View):AlertDialog =
         navigationBuilder(title).setView(content).create().also{it.show();shown(it)}
+    /**
+     * Settings for the tool just tapped: a sheet beside the dock instead of a centered dialog, with no dimming,
+     * so the board stays visible and the eye stays near the tool. Touching outside closes it.
+     */
+    private fun toolSheet(title:String,content:View):AlertDialog =
+        navigationBuilder(title).setView(content).create().also{d->
+            d.setCanceledOnTouchOutside(true);d.show();shown(d)
+            d.window?.let{w->
+                w.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                val screen=resources.displayMetrics.widthPixels
+                val at=IntArray(2);var onLeft=true;var edge=dp(12)
+                if(::toolDock.isInitialized&&toolDock.isShown&&toolDock.width>0){
+                    toolDock.getLocationOnScreen(at);onLeft=at[0]+toolDock.width/2<screen/2
+                    edge=if(onLeft)at[0]+toolDock.width+dp(12) else screen-at[0]+dp(12)
+                }
+                w.setGravity((if(onLeft)Gravity.LEFT else Gravity.RIGHT) or Gravity.CENTER_VERTICAL)
+                w.attributes=w.attributes.apply{x=edge;y=0}
+                w.setLayout(minOf(dp(440),screen-edge-dp(12)),WindowManager.LayoutParams.WRAP_CONTENT)
+            }
+        }
 
     private fun choices(title:String,keys:List<String>,action:(Int)->Unit) {
         val parent=menuReturn
@@ -918,7 +938,7 @@ class MainActivity : Activity() {
             prefs.edit().putString("selectionMode",mode).apply();whiteboard.selectionMode=mode;board.selectionMode=mode;board.clearSelection()
         }
         c.addView(group)
-        dialog(s("selection_settings"),c)
+        toolSheet(s("selection_settings"),c)
     }
 
     private fun confirm(title: String, action: () -> Unit) {
