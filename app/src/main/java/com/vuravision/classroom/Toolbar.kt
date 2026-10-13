@@ -140,25 +140,35 @@ class ToolDock(
         animate().translationX(0f).alpha(1f).setDuration(260).start()
     }
     // The strip and Add panel are placed from the dock's width; re-place them whenever it changes.
-    override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int){super.onSizeChanged(w,h,oldw,oldh);if(w!=oldw||h!=oldh)post{place()}}
     /** Distance from the panel edge to just past the dock, for the strip and Add panel. */
     private fun beside()=context.dp(12)+(if(width>0)width else context.dp(buttonDp*columns+14))+context.dp(12)
     private fun place(){
         val side=if(end)Gravity.END else Gravity.START
         (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(12))}
         (handle.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or(if(end)Gravity.START else Gravity.END);setMargins(context.dp(3),0,context.dp(3),0)}
-        (stripHost.layoutParams as FrameLayout.LayoutParams).apply{
-            gravity=Gravity.TOP or side;topMargin=stripTop();bottomMargin=0
-            if(end){marginStart=0;marginEnd=beside()}else{marginStart=beside();marginEnd=0}
-        }
+        placeStrip()
         requestLayout();handle.requestLayout();stripHost.requestLayout()
     }
+    /**
+     * Absolute position from where the dock actually is after layout (not from a width computed earlier):
+     * just outside its inner edge, level with the active pen, fully on screen.
+     */
+    private fun placeStrip(){
+        val lp=stripHost.layoutParams as FrameLayout.LayoutParams
+        lp.gravity=Gravity.TOP or Gravity.LEFT;lp.marginStart=0;lp.marginEnd=0;lp.rightMargin=0;lp.bottomMargin=0
+        stripHost.measure(MeasureSpec.makeMeasureSpec(host.width.coerceAtLeast(1),MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(host.height.coerceAtLeast(1),MeasureSpec.AT_MOST))
+        val gap=context.dp(12);val w=stripHost.measuredWidth
+        val onRight=isLaidOut&&left+width/2>host.width/2
+        lp.leftMargin=if(!isLaidOut)gap else if(onRight)(left-gap-w).coerceAtLeast(gap) else (right+gap).coerceAtMost((host.width-w-gap).coerceAtLeast(gap))
+        lp.topMargin=stripTop()
+        stripHost.layoutParams=lp
+    }
+    override fun onLayout(changed:Boolean,l:Int,t:Int,r:Int,b:Int){super.onLayout(changed,l,t,r,b);if(changed)post{placeStrip()}}
     /** Level with the active pen, kept fully on screen. */
     private fun stripTop():Int{
         val button=penButtons[activePreset()]
         if(!button.isLaidOut||host.height==0)return context.dp(120)
         val at=IntArray(2);val origin=IntArray(2);button.getLocationInWindow(at);host.getLocationInWindow(origin)
-        stripHost.measure(MeasureSpec.makeMeasureSpec(host.width,MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(host.height,MeasureSpec.AT_MOST))
         return (at[1]-origin[1]).coerceIn(context.dp(12),(host.height-stripHost.measuredHeight-context.dp(12)).coerceAtLeast(context.dp(12)))
     }
     /** A touch anywhere outside the dock and its strip closes the strip; the touch still draws. */
