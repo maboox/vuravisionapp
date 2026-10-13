@@ -750,7 +750,9 @@ class MainActivity : Activity() {
             "text"->addText(false);"sticky"->addText(true);"mind_map"->mindNode(null)
             "ruler","set_square","protractor","compass"->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")300f else 360f,h=when(key){"compass"->300f;"ruler"->64f;else->180f},geometryVersion=1,geometryAngle=if(key=="compass")-60f else 45f))
             "smart"->smartSettings();"math"->math();"insert"->insert();"image"->pick("image/*",102);"pdf"->choosePdfImport()
-            "timer","stopwatch","dice","scoreboard"->floatingTools.open(key)
+            "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
+            "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
+            "spotlight"->showSpotlight()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2034,6 +2036,11 @@ class MainActivity : Activity() {
         if(board===whiteboard&&page.items.none{it.pane in page.visiblePaneIndices})store.editMetadata{page.visiblePaneIndices.forEach{page.panes[it].background=background}}
         else toast(tr("Applies to new pages; this page already has content","برای صفحه‌های جدید اعمال می‌شود؛ این صفحه محتوا دارد"))
         board.sceneChanged();refreshDock()
+    }
+    private var spotlight:Spotlight?=null
+    private fun showSpotlight(){
+        spotlight?.let{canvasHost.removeView(it)}
+        spotlight=Spotlight(this){spotlight?.let{canvasHost.removeView(it)};spotlight=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
     }
     private var settingsScreen:SettingsScreen?=null
     private fun settings()=settingsAt(prefs.getString("settingsTab",null))

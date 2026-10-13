@@ -31,7 +31,7 @@ class ToolDock(
     companion object {
         val defaults=listOf(PenPreset(false,NAVY,4f),PenPreset(false,0xffdc2626.toInt(),8f),PenPreset(true,0xffffcf40.toInt(),6f))
         /** Tools that can occupy the "recent" slot after being used from the Add panel. */
-        val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill")
+        val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill","laser","spotlight","picker")
         fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f),
             prefs.getString("dockPen${i}Style",d.style)?.takeIf{it in PenStyles.keys}?:d.style,prefs.getInt("dockPen${i}Opacity",d.opacity).coerceIn(10,255),
             prefs.getFloat("dockPen${i}DashLength",d.dashLength).coerceIn(1f,80f),prefs.getFloat("dockPen${i}DashGap",d.dashGap).coerceIn(1f,80f))}
@@ -256,6 +256,8 @@ class ToolDock(
         }
         listOf(eraser to "erase",select to "select").forEach{(button,key)->if(button.active!=(b.tool==key))button.showActive(b.tool==key)}
         if(add.active!=(addPanel!=null))add.showActive(addPanel!=null)
+        // The recent slot shows when its tool is the active one (e.g. the laser pen), like the pens do.
+        if(recentButton.active!=(b.tool==recent()))recentButton.showActive(b.tool==recent())
         (penButtons+listOf(eraser,select,recentButton,add)+pinButtons).forEach{it.isEnabled=editable;it.alpha=if(editable)1f else .35f}
         val inking=b.tool=="pen"||b.tool=="highlight"
         if(!inking)stripShown=false
@@ -275,7 +277,7 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
             "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
             "geometry" to listOf("ruler","set_square","protractor","compass"),
             "smart" to listOf("smart","layers","split","fill","background","touch"),
-            "class" to listOf("timer","stopwatch","dice","scoreboard","periodic","lab","games"),
+            "class" to listOf("laser","spotlight","picker","timer","stopwatch","dice","scoreboard","periodic","lab","games"),
         )
     }
     private val scrim=FrameLayout(context).apply{isClickable=true;setOnClickListener{dismiss()}}

@@ -31,6 +31,27 @@ class ClassroomWidgets(private val context:Context,private val host:FrameLayout)
     if(key=="timer"){val minutes=context.field("5",context.s("minutes")).apply{inputType=android.text.InputType.TYPE_CLASS_NUMBER;setSingleLine(true)};val row=context.row();row.addView(minutes,LinearLayout.LayoutParams(0,-2,1f));row.addView(context.button(context.s("minutes")){val n=minutes.text.toString().toIntOrNull();if(n!=null&&n in 1..240){duration=n*60000L;elapsed=0;running=false;display.setTextColor(NAVY)}else minutes.error="1–240"});body.addView(row)}
    }
    "dice"->{display.text="⚄";btn(context.s("roll")){display.text="${(1..6).random()}"}}
+   // Name picker: names spin past, then one lands; nobody is picked twice until everyone has had a turn (fairness the class can see).
+   "picker"->{
+    val prefs=context.getSharedPreferences("vura",0);val used=mutableSetOf<String>()
+    display.text="?";display.textSize=40f*context.uiScale()
+    val names=context.field(prefs.getString("pickerNames","")?:"",context.s("picker_names")).apply{isSingleLine=false;minLines=3;maxLines=6
+     inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE}
+    btn(context.s("pick")){
+     val list=names.text.toString().lines().map{it.trim()}.filter{it.isNotEmpty()}.distinct()
+     prefs.edit().putString("pickerNames",list.joinToString("\n")).apply()
+     if(list.size<2){names.error=context.s("picker_names");return@btn}
+     var pool=list.filter{it !in used};if(pool.isEmpty()){used.clear();pool=list;Toast.makeText(context,context.s("picker_restart"),Toast.LENGTH_SHORT).show()}
+     val chosen=pool.random();var steps=14;display.setTextColor(NAVY)
+     val spin=object:Runnable{override fun run(){
+      if(steps-->0){display.text=list.random();Sounds.play(context,Sounds.Cue.TICK);handler.postDelayed(this,60L+(14-steps)*14L)}
+      else{display.text=chosen;display.setTextColor(TEAL);used.add(chosen);Sounds.play(context,Sounds.Cue.CORRECT);card.announceForAccessibility(chosen)}
+     }}
+     tasks.add(spin);handler.post(spin)
+    }
+    btn("↺"){used.clear();display.text="?";display.setTextColor(NAVY)}
+    body.addView(names,LinearLayout.LayoutParams(-1,-2).apply{topMargin=context.dp(8)})
+   }
    "scoreboard"->{var a=0;var b=0;display.text="0 : 0";btn("A +"){a++;display.text="$a : $b"};btn("B +"){b++;display.text="$a : $b"};btn("↺"){a=0;b=0;display.text="0 : 0"}}
    "curtain"->{display.text=context.s("curtain");display.setTextColor(Color.WHITE);display.setBackgroundColor(NAVY);display.layoutParams=LinearLayout.LayoutParams(-1,context.dp(220));btn(context.s("reveal")){display.visibility=if(display.visibility==View.VISIBLE)View.GONE else View.VISIBLE}}
   }

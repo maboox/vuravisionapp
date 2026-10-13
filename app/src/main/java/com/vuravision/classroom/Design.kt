@@ -32,6 +32,10 @@ val SUCCESS = 0xff287d58.toInt()
 // Board colors (content, not chrome): the classic green chalkboard and a dark slate board.
 val CHALKBOARD = 0xff20392f.toInt()
 val DARK_BOARD = 0xff172a36.toInt()
+// Laser pen: a saturated rose that stands out on white, green and dark boards alike.
+val LASER_COLOR = 0xffff2d6f.toInt()
+const val LASER_HOLD = 1000L
+const val LASER_GONE = 2000L
 
 fun Context.s(key: String): String {
     val name = if (key == "new") "new_lesson" else key

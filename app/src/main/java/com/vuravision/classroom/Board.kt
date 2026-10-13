@@ -91,6 +91,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var smartMode="text"
     var onSmart:(List<Item>)->Unit={}
     var onObjectActions:()->Unit={}
+    /** Laser strokes that are fading out: drawn on top, never stored. */
+    private val fading=mutableListOf<Pair<Item,Long>>()
+    val laserStrokes get()=fading.size
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
     private var tappedSelected=false
     private val eraseLast=mutableMapOf<Int,PointF>()
@@ -426,6 +429,14 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             val save=if(alpha<1f)c.saveLayerAlpha(null,(alpha*255).toInt())else c.save();renderer.draw(c,o);c.restoreToCount(save)
             c.restore()
         }
+        if(fading.isNotEmpty()){
+            val now=android.os.SystemClock.uptimeMillis()
+            fading.removeAll{(o,at)->(now-at>LASER_GONE).also{gone->if(gone)renderer.forgetInk(o.id)}}
+            // Fully visible for a second, then fades out over the next second.
+            fading.forEach{(o,at)->val a=(1f-(now-at-LASER_HOLD).coerceAtLeast(0)/(LASER_GONE-LASER_HOLD).toFloat()).coerceIn(0f,1f)
+                c.save();transformCanvas(c,o.pane);val layer=c.saveLayerAlpha(null,(a*255).toInt());renderer.draw(c,o);c.restoreToCount(layer);c.restore()}
+            if(fading.isNotEmpty())postInvalidateOnAnimation()
+        }
         c.save();transformCanvas(c)
         p.color = selectionColor
         p.style = Paint.Style.STROKE
@@ -589,6 +600,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                             color = inkColor,
                             width = inkWidth,
                         )
+                } else if (tool == "laser") {
+                    // Laser pen: for pointing while explaining. The line fades by itself and never enters the page or Undo.
+                    live[id]=Item(layerId=store.page.activeLayerId,pane=pointerPanes[id]?:activePane,w=1f,h=1f,color=LASER_COLOR,width=5f,shape="round",points=mutableListOf())
+                    sampleGuidedInk(id,live.getValue(id),Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex)))
                 } else if (tool in listOf("pen", "highlight", "smart")) {
                     if(tool!="smart" || smartMode=="shape")checkpoint()
                     val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
@@ -681,6 +696,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             MotionEvent.ACTION_POINTER_UP -> {
                 cancelHold(id)
                 live.remove(id)?.let { o ->
+                    if(tool=="laser"){fading.add(o to android.os.SystemClock.uptimeMillis());postInvalidateOnAnimation();return@let}
                     var guideLabel:Item?=null
                     if (o.kind == "ink") {
                         val endpoint=Point(at.x,at.y,e.eventTime)

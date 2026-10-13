@@ -269,6 +269,41 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Laser pen: a stroke shows, fades, and never becomes part of the page or its Undo history. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun laserPenLeavesNothingBehind(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);val run=MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}
+            run.invoke(a,"laser");settle(a);assertEquals("laser",a.board.tool)
+            val before=a.store.page.items.size;val undo=a.store.undoCount
+            val r=rect(a.board);val x=r.left+300f;val y=r.top+300f
+            fun touch(action:Int,dx:Float,t:Long){val e=MotionEvent.obtain(0,t,action,x+dx-r.left,y-r.top,0);a.board.onTouchEvent(e);e.recycle()}
+            touch(MotionEvent.ACTION_DOWN,0f,0);touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);touch(MotionEvent.ACTION_UP,200f,48)
+            assertEquals("laser stroke was stored",before,a.store.page.items.size);assertEquals("laser stroke entered Undo",undo,a.store.undoCount)
+            assertEquals(1,a.board.laserStrokes);shot(a,"laser-stroke")
+            idle(2600);a.board.invalidate();settle(a);a.board.draw(Canvas(Bitmap.createBitmap(10,10,Bitmap.Config.ARGB_8888)))
+            assertEquals("laser stroke did not fade",0,a.board.laserStrokes)
+        }finally{ctl.pause().stop().destroy()}
+    }
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun spotlightAndNamePicker(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);val run=MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}
+            run.invoke(a,"spotlight");settle(a)
+            val light=views(a.window.decorView).filterIsInstance<Spotlight>().single();shot(a,"spotlight")
+            views(light).filterIsInstance<WorkspaceIcon>().first{it.key=="close"}.performClick();settle(a)
+            assertTrue("spotlight did not close",views(a.window.decorView).none{it is Spotlight})
+            context.getSharedPreferences("vura",0).edit().putString("pickerNames","Sara\nAli\nNima").commit()
+            run.invoke(a,"picker");settle(a)
+            val pick=views(a.window.decorView).filterIsInstance<Button>().first{it.text.toString()==a.s("pick")}
+            val picked=mutableSetOf<String>()
+            repeat(3){pick.performClick();idle(3000);settle(a)
+                picked.add(views(a.window.decorView).filterIsInstance<TextView>().first{it.text.toString() in setOf("Sara","Ali","Nima")&&it !is EditText}.text.toString())}
+            assertEquals("someone was picked twice before everyone had a turn",setOf("Sara","Ali","Nima"),picked)
+            shot(a,"name-picker")
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+    }
+
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panel1080Persian()=run("fa","panel")
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun panel1080English()=run("en","panel")
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panelLargeUi()=run("fa","panel-large",1.4f)

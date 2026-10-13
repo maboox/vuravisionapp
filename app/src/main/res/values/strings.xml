@@ -299,4 +299,10 @@
     <string name="connect_points">Connect points in order</string>
     <string name="add_child">Add child branch</string>
     <string name="add_sibling">Add sibling branch</string>
+<string name="laser">Laser pen</string>
+<string name="spotlight">Spotlight</string>
+<string name="picker">Name picker</string>
+<string name="pick">Pick</string>
+<string name="picker_names">Names, one per line</string>
+<string name="picker_restart">Everyone has been picked; starting again</string>
 </resources>
