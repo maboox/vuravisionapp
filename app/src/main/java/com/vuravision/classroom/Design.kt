@@ -34,6 +34,8 @@ val CHALKBOARD = 0xff20392f.toInt()
 val DARK_BOARD = 0xff172a36.toInt()
 // Laser pen: a saturated rose that stands out on white, green and dark boards alike.
 val LASER_COLOR = 0xffff2d6f.toInt()
+/** Connector arrows: a bright teal, readable on white, chalk and dark boards alike. */
+val CONNECTOR = 0xff218c91.toInt()
 const val LASER_HOLD = 1000L
 const val LASER_GONE = 2000L
 

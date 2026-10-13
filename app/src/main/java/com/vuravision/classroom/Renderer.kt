@@ -279,6 +279,33 @@ class Renderer(private val media: Media) {
         c.restore()
     }
 
+    /** Connector arrows run edge to edge between the two objects' frames, under the objects, and follow every move. */
+    private fun connectors(c:Canvas,items:List<Item>,region:RectF?){
+        val sources=items.filter{!it.links.isNullOrBlank()};if(sources.isEmpty())return
+        val byId=items.associateBy{it.id}
+        fun edge(r:RectF,tx:Float,ty:Float):PointF{
+            val dx=tx-r.centerX();val dy=ty-r.centerY()
+            if(dx==0f&&dy==0f)return PointF(r.centerX(),r.centerY())
+            val t=minOf(if(dx!=0f)(r.width()/2+8f)/kotlin.math.abs(dx)else Float.MAX_VALUE,if(dy!=0f)(r.height()/2+8f)/kotlin.math.abs(dy)else Float.MAX_VALUE)
+            return PointF(r.centerX()+dx*t,r.centerY()+dy*t)
+        }
+        sources.forEach{from->from.linkIds().forEach{id->
+            val to=byId[id]?:return@forEach
+            if(to.pane!=from.pane)return@forEach
+            val a=itemBounds(from);val b=itemBounds(to)
+            if(RectF.intersects(a,b))return@forEach
+            val start=edge(a,b.centerX(),b.centerY());val end=edge(b,a.centerX(),a.centerY())
+            if(region!=null&&!RectF.intersects(RectF(minOf(start.x,end.x),minOf(start.y,end.y),maxOf(start.x,end.x),maxOf(start.y,end.y)).apply{inset(-20f,-20f)},region))return@forEach
+            p.reset();p.isAntiAlias=true;p.color=CONNECTOR;p.strokeWidth=3f;p.style=Paint.Style.STROKE;p.strokeCap=Paint.Cap.ROUND
+            c.drawLine(start.x,start.y,end.x,end.y,p)
+            val angle=kotlin.math.atan2(end.y-start.y,end.x-start.x);val head=16f;val spread=.45f
+            val path=android.graphics.Path().apply{moveTo(end.x,end.y)
+                lineTo(end.x-head*kotlin.math.cos(angle-spread),end.y-head*kotlin.math.sin(angle-spread))
+                lineTo(end.x-head*kotlin.math.cos(angle+spread),end.y-head*kotlin.math.sin(angle+spread));close()}
+            p.style=Paint.Style.FILL;c.drawPath(path,p)
+        }}
+    }
+
     fun scene(c:Canvas,page:Page,sync:Boolean=false,region:RectF?=null,pane:Int?=null,exclude:Set<String> = emptySet()) {
         val visibleLayers=page.layers.filter { it.visible && it.opacity>0f }
         // Draw all branches first: a parent may occur before its child in item order.
@@ -301,6 +328,7 @@ class Renderer(private val media: Media) {
                 c.drawLine(x,y,xx,yy,p)
             }
         }
+        connectors(c,visibleLayers.flatMap{grouped[it.id].orEmpty()},region)
         visibleLayers.forEach { layer ->
             val save=if(layer.opacity<1f)c.saveLayerAlpha(null,(layer.opacity*255).toInt())else c.save()
             grouped[layer.id].orEmpty().forEach { o ->

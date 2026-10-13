@@ -402,6 +402,15 @@ class MainActivity : Activity() {
         items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)action("measure",s("measure")){measureShape(o)}}
         if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
+        if(items.size==2){
+            // Two objects selected: connect them with an arrow from the first chosen to the second, or remove the link.
+            val (a,b)=board.selected.mapNotNull{id->items.firstOrNull{it.id==id}}.takeIf{it.size==2}?.let{it[0] to it[1]}?:(items[0] to items[1])
+            val linked=b.id in a.linkIds()||a.id in b.linkIds()
+            if(linked)action("disconnect",tr("Unlink","قطع اتصال"),tr("Remove the arrow between them","حذف فلش میان این دو")){store.editMetadata{
+                a.links=a.linkIds().filter{it!=b.id}.joinToString(" ").ifEmpty{null};b.links=b.linkIds().filter{it!=a.id}.joinToString(" ").ifEmpty{null}};board.sceneChanged();refreshSelectionBar()}
+            else action("connect",tr("Connect","وصل کن"),tr("Draw an arrow from the first to the second; it follows them when moved","فلشی از اولی به دومی؛ با جابه‌جایی همراهشان می‌آید")){store.editMetadata{
+                a.links=(a.linkIds()+b.id).joinToString(" ")};board.sceneChanged();refreshSelectionBar()}
+        }
         action("duplicate",s("duplicate")){
             val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
             store.editMetadata{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()

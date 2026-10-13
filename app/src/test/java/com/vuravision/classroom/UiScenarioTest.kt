@@ -311,6 +311,33 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
 
+    /** Two objects, Connect: an arrow edge to edge that follows a move, survives saving and duplicating, and Unlink removes it. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun connectorFollowsObjects(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a)
+            val first=Item(kind="sticky",text="علت",x=200f,y=200f,w=200f,h=120f);val second=Item(kind="shape",shape="rectangle",x=600f,y=220f,w=200f,h=100f,width=4f)
+            a.store.editMetadata{a.store.page.items.addAll(listOf(first,second))}
+            a.board.tool="select";a.board.selected.clear();a.board.selected.add(first.id);a.board.selected.add(second.id);a.board.onSelection();settle(a)
+            fun tap(symbol:String){views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().first{it.symbol==symbol}.performClick();settle(a)}
+            tap("connect")
+            assertEquals("the arrow runs from the first chosen to the second",second.id,a.store.page.items.first{it.id==first.id}.links)
+            fun pixel(x:Float,y:Float):Int{val b=Bitmap.createBitmap(1000,500,Bitmap.Config.ARGB_8888);try{Canvas(b).apply{drawColor(Color.WHITE);a.board.renderer.scene(this,a.store.page)};return b.getPixel(x.toInt(),y.toInt())}finally{b.recycle()}}
+            pixel(500f,265f).let{assertTrue("arrow not drawn between the two: ${Integer.toHexString(it)}",Color.red(it)<150&&Color.green(it)>100)}
+            shot(a,"connector")
+            a.store.editMetadata{a.store.page.items.first{it.id==second.id}.y=420f}
+            assertEquals("the arrow follows a move",Color.WHITE,pixel(500f,265f))
+            val loaded=com.google.gson.Gson().fromJson(com.google.gson.Gson().toJson(a.store.lesson),Lesson::class.java);loaded.validate()
+            assertEquals(second.id,loaded.pages[0].items.first{it.id==first.id}.links)
+            val copies=duplicateItems(a.store.page.items.filter{it.id==first.id||it.id==second.id})
+            assertEquals("a copied pair keeps its own arrow",copies[1].id,copies[0].links)
+            assertNull("an arrow to an object left behind is not copied",duplicateItems(listOf(a.store.page.items.first{it.id==first.id})).single().links)
+            a.board.selected.clear();a.board.selected.add(first.id);a.board.selected.add(second.id);a.board.onSelection();settle(a)
+            tap("disconnect");assertNull(a.store.page.items.first{it.id==first.id}.links)
+            a.store.undo();assertEquals("Undo brings the arrow back",second.id,a.store.page.items.first{it.id==first.id}.links)
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** A Persian lab, mid-growth and finished, plus the galleries at panel width: for reviewing texts and layout by eye. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun persianLabAndGalleries(){
         val ctl=open();val a=ctl.get()

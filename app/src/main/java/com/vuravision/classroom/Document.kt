@@ -8,7 +8,7 @@ fun newId(): String = UUID.randomUUID().toString()
 /** Keep connections within a copied tree; detach references outside the selection. */
 fun duplicateItems(items: List<Item>): List<Item> {
     val ids=items.associate{it.id to newId()}
-    return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty()}}
+    return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty();links=linkIds().mapNotNull{l->ids[l]}.joinToString(" ").ifEmpty{null}}}
 }
 
 data class FillRun(val y:Float=0f,val x:Float=0f,val end:Float=0f,val height:Float=1f)
@@ -62,8 +62,11 @@ data class Item(
     var connectPlotPoints: Boolean = false,
     var plotIntersections: List<PlotPoint>? = emptyList(),
     var fillRuns: List<FillRun>? = emptyList(),
+    /** Ids of objects this one points to with a connector arrow, separated by spaces; arrows follow both ends. */
+    var links: String? = null,
 
 ) {
+    fun linkIds()=links.orEmpty().split(' ').filter{it.isNotBlank()}
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() }, plotPoints = plotPoints?.map { it.copy() })
 
     fun local(px: Float, py: Float): Pair<Float, Float> {
@@ -228,6 +231,7 @@ data class Lesson(
                 require(o.fillAlpha in 0..255 && o.geometryAngle.isFinite() && o.geometrySweep.isFinite() && o.geometryVersion in 0..1 && o.selectedElement in 0..118)
                 require((o.plotPoints.orEmpty()+o.plotIntersections.orEmpty()).size <= 1000 && (o.plotPoints.orEmpty()+o.plotIntersections.orEmpty()).all{it.x.isFinite() && it.y.isFinite() && abs(it.x)<=100000 && abs(it.y)<=100000})
                 require(o.textAlign in listOf("start","center","end"))
+                require(o.links.orEmpty().length<=4000)
                 points += o.points.size+o.fillRuns.orEmpty().size
                 require(points <= 1000000)
                 require(o.points.all { it.x.isFinite() && it.y.isFinite() })
