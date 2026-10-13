@@ -347,6 +347,28 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a)
+            val strokes=(0 until 3).map{i->Item(kind="ink",x=200f+i*260f,y=200f,w=200f,h=150f,inkW=200f,inkH=150f,width=6f,points=(0..40).map{k->Point(k*5f,75f+60f*kotlin.math.sin(k/4.0+i).toFloat())}.toMutableList())}
+            val note=Item(kind="sticky",text="جمع‌بندی",x=400f,y=420f,w=220f,h=120f)
+            a.store.editMetadata{a.store.page.items.addAll(strokes+note)}
+            val before=com.google.gson.Gson().toJson(a.store.page)
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"replay");settle(a)
+            val replay=views(a.window.decorView).filterIsInstance<Replay>().single()
+            replay.seek(1500.0);shot(a,"replay-middle")
+            replay.seek(Double.MAX_VALUE);shot(a,"replay-end")
+            assertFalse("replay should stop at the end",replay.playing)
+            val bar=views(replay).filterIsInstance<WorkspaceIcon>().first{it.key=="close"}
+            assertTrue("controls at the bottom",rect(bar).top>rect(replay).centerY())
+            bar.performClick();settle(a)
+            assertTrue(views(a.window.decorView).none{it is Replay})
+            assertEquals("replay must not change the page",before,com.google.gson.Gson().toJson(a.store.page))
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Dragging across a lab's picture changes its first setting, and the slider below follows. */
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun labPictureDragChangesSetting(){
         val ctl=open("en");val a=ctl.get()

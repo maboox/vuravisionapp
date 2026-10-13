@@ -302,6 +302,7 @@
 <string name="laser">Laser pen</string>
 <string name="spotlight">Spotlight</string>
 <string name="class_quiz">Class quiz</string>
+<string name="replay">Replay the page</string>
 <string name="picker">Name picker</string>
 <string name="pick">Pick</string>
 <string name="picker_names">Names, one per line</string>

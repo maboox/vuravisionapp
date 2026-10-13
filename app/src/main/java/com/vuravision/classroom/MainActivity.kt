@@ -786,7 +786,7 @@ class MainActivity : Activity() {
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2372,6 +2372,13 @@ class MainActivity : Activity() {
         }
     }
     private var spotlight:Spotlight?=null
+    private var replay:Replay?=null
+    /** Recap: the page redrawn stroke by stroke, over the board; the page itself is untouched. */
+    private fun showReplay(){
+        if(store.page.visibleItems().none{it.pane==board.activePane}){toast(tr("This page is empty","این صفحه خالی است"));return}
+        replay?.let{canvasHost.removeView(it)}
+        replay=Replay(this,store.page,board.activePane,board.renderer){replay?.let{canvasHost.removeView(it)};replay=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
+    }
     private fun showSpotlight(){
         spotlight?.let{canvasHost.removeView(it)}
         spotlight=Spotlight(this){spotlight?.let{canvasHost.removeView(it)};spotlight=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
