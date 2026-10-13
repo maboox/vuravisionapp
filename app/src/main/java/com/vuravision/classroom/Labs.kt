@@ -141,7 +141,7 @@ object Labs {
         val sliderViews=mutableListOf<SeekBar>()
         controls.forEachIndexed { i, control ->
             val col = context.column()
-            val label = context.label("${control.label} = ${fmt(control.value)}", 13f)
+            val label = context.label("${LabText.t(context,control.label)} = ${fmt(control.value)}", 13f)
             col.addView(label)
             col.addView(
                 SeekBar(context).apply {
@@ -155,7 +155,7 @@ object Labs {
                                 var v = control.min + (control.max - control.min) * p / 1000
                                 if (control.label in listOf("n", "N")) v = round(v)
                                 view.values[i] = v
-                                label.text = "${control.label} = ${fmt(v)}"
+                                label.text = "${LabText.t(context,control.label)} = ${fmt(v)}"
                                 if(u)view.time=0.0
                                 view.invalidate()
                             }

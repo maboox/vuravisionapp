@@ -83,9 +83,9 @@ object NativeLabs {
  }
  fun draw(c:Canvas,full:String,v:FloatArray,t:Double,seed:Int,context:Context){
   val key=full.removePrefix("native_");val a=v[0].toDouble();val b=v.getOrElse(1){1f}.toDouble();val d=v.getOrElse(2){0f}.toDouble()
-  val g=LabGraphics(c);val random=Random(seed)
+  val g=LabGraphics(c){LabText.t(context,it)};val random=Random(seed)
   fun f(x:Double)="%.3f".format(java.util.Locale.US,x)
-  fun note(text:String)=g.caption(text)
+  fun note(text:String)=g.caption(LabText.t(context,text))
   fun graph(y:(Double)->Double)=g.plot(-5.0,5.0,-5.0,5.0,y)
   // Sampling labs fill in over about four seconds, so the class watches the pattern emerge instead of seeing only the end.
   val grow=(t/GROW_SECONDS).coerceIn(0.0,1.0)
@@ -197,7 +197,7 @@ object NativeLabs {
 object LabMath {
  fun fit(pts:List<Pair<Double,Double>>):Pair<Double,Double>{val x=pts.map{it.first}.average();val y=pts.map{it.second}.average();val den=pts.sumOf{(it.first-x).pow(2)};val slope=if(den<1e-12)0.0 else pts.sumOf{(it.first-x)*(it.second-y)}/den;return slope to y-slope*x}
 }
-class LabGraphics(private val c:Canvas){
+class LabGraphics(private val c:Canvas,private val words:(String)->String={it}){
  private val p=Paint(Paint.ANTI_ALIAS_FLAG)
  fun text(s:String,x:Double,y:Double,size:Float=22f,color:Int=NAVY){p.color=color;p.style=Paint.Style.FILL;p.textSize=size;c.drawText(s,x.toFloat(),y.toFloat(),p)}
  fun caption(value:String){
@@ -227,7 +227,7 @@ class LabGraphics(private val c:Canvas){
   values.forEachIndexed{i,v->
    val height=maxHeight*abs(v)/high
    block(100+i*w,if(v>=0)baseline-height else baseline,w*.75,height,if(i==selected)0xffd97800.toInt()else if(i%2==0)TEAL else ORANGE)
-   if(values.size<=12)text(labels.getOrElse(i){(i+1).toString()},100+i*w,470.0,16f)
+   if(values.size<=12)text(words(labels.getOrElse(i){(i+1).toString()}),100+i*w,470.0,16f)
   }
   if(negatives)line(80.0,baseline,920.0,baseline,MUTED,1f)
  }
