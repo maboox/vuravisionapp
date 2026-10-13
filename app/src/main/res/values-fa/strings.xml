@@ -305,4 +305,7 @@
 <string name="pick">انتخاب کن</string>
 <string name="picker_names">نام‌ها، هر کدام در یک خط</string>
 <string name="picker_restart">همه انتخاب شده‌اند؛ از نو</string>
+<string name="ai_quiz">آزمونک هوشمند</string>
+<string name="ai_mindmap">نقشهٔ ذهنی هوشمند</string>
+<string name="ai_summary">خلاصهٔ درس</string>
 </resources>

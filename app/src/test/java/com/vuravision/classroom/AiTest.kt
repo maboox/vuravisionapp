@@ -1,0 +1,122 @@
+package com.vuravision.classroom
+
+import android.graphics.*
+import android.os.Looper
+import android.view.*
+import android.widget.*
+import org.json.JSONObject
+import org.junit.*
+import org.junit.Assert.*
+import org.junit.runner.RunWith
+import org.robolectric.*
+import org.robolectric.annotation.*
+import org.robolectric.shadows.ShadowDialog
+import java.io.File
+import java.util.concurrent.TimeUnit
+
+/** The AI layer against a fake service: request formats, caching, limits, parsing, and every board action end to end. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk=[28])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class AiTest {
+    private val context get()=RuntimeEnvironment.getApplication()
+    private val sent=mutableListOf<Pair<String,String>>()
+    private var reply:(String,String)->String={_,_->"{}"}
+    @Before fun fake(){
+        context.getSharedPreferences("vura",0).edit().clear().commit();SmartAi.clearCache();sent.clear()
+        SmartAi.testKey={"test-key"};SmartAi.testTransport=AiTransport{url,_,body->sent.add(url to body);reply(url,body)}
+    }
+    @After fun real(){SmartAi.testKey=null;SmartAi.testTransport=null;SmartAi.clearCache()}
+    private fun openAi(text:String)=JSONObject().put("choices",org.json.JSONArray().put(JSONObject().put("message",JSONObject().put("content",text)))).toString()
+    private fun gemini(text:String)=JSONObject().put("candidates",org.json.JSONArray().put(JSONObject().put("content",JSONObject().put("parts",org.json.JSONArray().put(JSONObject().put("text",text)))))).toString()
+    private fun idle()=org.robolectric.Shadows.shadowOf(Looper.getMainLooper()).idleFor(200,TimeUnit.MILLISECONDS)
+
+    @Test fun geminiAndOpenAiRequestsAndReplies(){
+        context.getSharedPreferences("vura",0).edit().putString("aiProvider","gemini").commit()
+        reply={_,_->gemini("Hello")}
+        val bitmap=Bitmap.createBitmap(20,20,Bitmap.Config.ARGB_8888)
+        assertEquals("Hello",SmartAi(context,{""}).ask("sys","prompt",bitmap))
+        assertTrue(sent.last().first.contains("generativelanguage.googleapis.com")&&sent.last().first.endsWith(":generateContent"))
+        assertTrue("image missing",sent.last().second.contains("inline_data"))
+        context.getSharedPreferences("vura",0).edit().putString("aiProvider","avalai").commit()
+        reply={_,_->openAi("```json\n{\"text\":\"ok\"}\n```")}
+        assertEquals("ok",SmartAi(context,{""}).askJson("sys","p2",bitmap).getString("text"))
+        assertTrue(sent.last().first.endsWith("/chat/completions")&&sent.last().second.contains("image_url"))
+        bitmap.recycle()
+    }
+    @Test fun cachesAndCapsRequests(){
+        context.getSharedPreferences("vura",0).edit().putString("aiProvider","openai").putInt("aiDailyLimit",10).commit()
+        reply={_,_->openAi("same")}
+        val ai=SmartAi(context,{""})
+        ai.ask("s","p");ai.ask("s","p");assertEquals("cached answers must not be requested again",1,sent.size)
+        repeat(9){ai.ask("s","p$it")}
+        try{ai.ask("s","over");fail("daily limit not enforced")}catch(e:AiException){assertEquals("limit",e.reason)}
+    }
+    @Test fun noKeyIsReportedNotSent(){
+        SmartAi.testKey={""}
+        try{SmartAi(context,{""}).ask("s","p");fail()}catch(e:AiException){assertEquals("no_key",e.reason)}
+        assertTrue(sent.isEmpty())
+    }
+    @Test fun parsersAcceptRealWorldReplies(){
+        val check=AiTasks.parseCheck(JSONObject("""{"correct":false,"summary":"2+2 is 4","mistakes":[{"box":[10,20,40,60],"note":"should be 4"},{"box":[0.5]}]}"""))
+        assertEquals(1,check.mistakes.size);assertEquals(.1f,check.mistakes[0].first.left,.001f);assertEquals(.6f,check.mistakes[0].first.bottom,.001f)
+        val quiz=AiTasks.parseQuiz(JSONObject("""{"questions":[{"q":"2+2?","options":["3","4","5","6"],"answer":1},{"q":"bad","options":["a","a"],"answer":0},{"q":"x","options":["a","b"],"answer":7}]}"""))
+        assertEquals(1,quiz.size);assertEquals(1,quiz[0].answer)
+        val map=AiTasks.parseMindMap(JSONObject("""{"title":"Water","children":[{"title":"Cycle","children":[{"title":"Rain"},{"title":"Snow","children":[{"title":"too deep"}]}]},{"title":"Uses"}]}"""))
+        assertEquals(2,map.children.size);assertTrue(map.children[0].children[1].children.isEmpty())
+        assertEquals(2,AiTasks.parseSteps(JSONObject("""{"steps":["a","",  "b"],"answer":"c"}""")).steps.size)
+        assertEquals("{\"a\":1}",SmartAi.jsonOf("Sure! ```json\n{\"a\":1}\n``` hope it helps"))
+    }
+
+    private fun shot(a:MainActivity,name:String){
+        val m=a.resources.displayMetrics;val decor=a.window.decorView
+        decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)
+        val b=Bitmap.createBitmap(m.widthPixels,m.heightPixels,Bitmap.Config.ARGB_8888)
+        try{decor.draw(Canvas(b));File("build/qa/ai-$name.png").apply{parentFile!!.mkdirs()}.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}
+    }
+    private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
+    private fun waitFor(condition:()->Boolean){repeat(50){if(condition())return;Thread.sleep(20);idle()};assertTrue("timed out",condition())}
+
+    /** Every AI action from the selection bar, with a fake service answering in Persian. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun boardActionsEndToEnd(){
+        context.getSharedPreferences("vura",0).edit().putString("language","fa").putString("aiProvider","openai").commit()
+        reply={_,body->when{
+            body.contains("mistakes")->openAi("""{"correct":false,"summary":"یک اشتباه در جمع","mistakes":[{"box":[0.5,0.2,0.9,0.8],"note":"۷ + ۵ = ۱۲"}]}""")
+            body.contains("\\\"steps\\\"")->openAi("""{"steps":["دو طرف را منهای ۳ کنید","تقسیم بر ۲"],"answer":"x = 4"}""")
+            body.contains("questions")->openAi("""{"questions":[{"q":"۲ + ۲ چند است؟","options":["۳","۴","۵","۶"],"answer":1},{"q":"پایتخت ایران؟","options":["تهران","شیراز","تبریز","مشهد"],"answer":0}]}""")
+            body.contains("mind map")->openAi("""{"title":"آب","children":[{"title":"چرخه","children":[{"title":"باران"},{"title":"تبخیر"}]},{"title":"کاربرد","children":[{"title":"کشاورزی"}]}]}""")
+            else->openAi("این یک معادلهٔ درجهٔ اول است؛ x را تنها کنید.")
+        }}
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        try{
+            val ink=Item(kind="ink",x=300f,y=200f,w=300f,h=120f,inkW=300f,inkH=120f,width=4f,points=mutableListOf(Point(0f,60f),Point(100f,0f),Point(200f,120f),Point(300f,60f)))
+            a.store.editMetadata{a.store.page.items.add(ink)}
+            fun select(){a.board.tool="select";a.board.selected.clear();a.board.selected.add(ink.id);a.board.onSelection();idle()}
+            fun tap(symbol:String){views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().first{it.symbol==symbol}.performClick();idle()}
+            select();tap("smart");shot(a,"smart-bar")
+            assertTrue("AI actions should lead when configured",views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().any{it.symbol=="ai_explain"})
+            val count=a.store.page.items.size
+            tap("ai_explain");waitFor{a.store.page.items.size==count+1}
+            assertTrue(a.store.page.items.last().text.contains("معادله"));shot(a,"explain")
+            select();tap("smart");tap("ai_check");waitFor{a.store.page.items.any{it.shape=="ellipse"}}
+            val circle=a.store.page.items.first{it.shape=="ellipse"};assertTrue("mistake circle should sit on the work",circle.x>=ink.x+100f&&circle.x<ink.x+ink.w)
+            shot(a,"check")
+            select();tap("smart");tap("ai_steps");waitFor{views(a.window.decorView).any{it is StepReveal}}
+            val before=a.store.page.items.size
+            views(a.window.decorView).filterIsInstance<StepReveal>().single().let{bar->views(bar).filterIsInstance<Button>().first{it.text.toString()==a.tr("Next step","گام بعد")}.performClick()}
+            assertEquals(before+1,a.store.page.items.size);shot(a,"steps")
+            select();tap("smart");tap("ai_mindmap");waitFor{a.store.page.items.count{it.shape=="mindnode"}==6}
+            shot(a,"mindmap")
+            select();tap("smart");tap("ai_quiz");waitFor{ShadowDialog.getLatestDialog()?.isShowing==true}
+            val quiz=ShadowDialog.getLatestDialog()
+            val m=a.resources.displayMetrics;val decor=quiz.window!!.decorView
+            decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)
+            views(decor).first{it.contentDescription?.toString()?.startsWith("B")==true}.performClick()
+            val b=Bitmap.createBitmap(m.widthPixels,m.heightPixels,Bitmap.Config.ARGB_8888);decor.draw(Canvas(b))
+            File("build/qa/ai-quiz.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)};b.recycle()
+            assertTrue(views(decor).filterIsInstance<TextView>().any{it.text.toString()==a.tr("Correct!","درست است!")})
+            quiz.dismiss()
+            assertTrue("only the selection should be sent, never the whole board",sent.all{it.second.length<2_000_000})
+        }finally{ctl.pause().stop().destroy()}
+    }
+}

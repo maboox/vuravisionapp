@@ -276,7 +276,7 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
         val groups=listOf(
             "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
             "geometry" to listOf("ruler","set_square","protractor","compass"),
-            "smart" to listOf("smart","layers","split","fill","background","touch"),
+            "smart" to listOf("smart","ai_quiz","ai_mindmap","ai_summary","layers","split","fill","background","touch"),
             "class" to listOf("laser","spotlight","picker","timer","stopwatch","dice","scoreboard","periodic","lab","games"),
         )
     }

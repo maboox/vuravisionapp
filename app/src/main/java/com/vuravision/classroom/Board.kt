@@ -23,6 +23,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val state=store.page.panes[n]
         return RectF(r.left+density*(state.tx+bounds.left*state.zoom),r.top+density*(state.ty+bounds.top*state.zoom),r.left+density*(state.tx+bounds.right*state.zoom),r.top+density*(state.ty+bounds.bottom*state.zoom))
     }
+    /** The given items alone on white, at most [maxSide] px: the picture sent to the AI. Returns it with its board bounds. */
+    fun snapshotItems(items:List<Item>,maxSide:Int=1024):Pair<Bitmap,RectF>{
+        val b=RectF(contentBounds(items));b.inset(-16f,-16f)
+        val scale=(maxSide/maxOf(b.width(),b.height(),1f)).coerceAtMost(3f)
+        val bmp=Bitmap.createBitmap(maxOf(1,(b.width()*scale).toInt()),maxOf(1,(b.height()*scale).toInt()),Bitmap.Config.ARGB_8888)
+        val c=Canvas(bmp);c.drawColor(Color.WHITE);c.scale(scale,scale);c.translate(-b.left,-b.top)
+        items.forEach{renderer.draw(c,it,sync=true)}
+        return bmp to b
+    }
     fun selectionScreenBounds():RectF?=chosen().takeIf{it.isNotEmpty()}?.let{screenRect(contentBounds(it))}
     fun viewportWorld():RoomRect {val r=paneRect(activePane);val a=world(r.left,r.top);val b=world(r.right,r.bottom);return RoomRect(a.x,a.y,b.x,b.y)}
     fun roomPreviews():List<Item> =(live.values.toList()+listOfNotNull(geometry.preview())+store.page.items.filter{it.id in transforming}).take(8).map {v->

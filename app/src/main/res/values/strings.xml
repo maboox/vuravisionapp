@@ -305,4 +305,7 @@
 <string name="pick">Pick</string>
 <string name="picker_names">Names, one per line</string>
 <string name="picker_restart">Everyone has been picked; starting again</string>
+<string name="ai_quiz">AI quiz</string>
+<string name="ai_mindmap">AI mind map</string>
+<string name="ai_summary">Lesson summary</string>
 </resources>

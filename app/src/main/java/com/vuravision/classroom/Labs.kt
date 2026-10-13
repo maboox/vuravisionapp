@@ -26,6 +26,11 @@ object Physics {
 data class LabControl(val label: String, val min: Float, val max: Float, val value: Float)
 
 object Labs {
+    /**
+     * Set by the board when an AI service is configured: (lab name, what it models, current settings, picture, answer).
+     * The answer callback gets null on failure (the host has already told the teacher why).
+     */
+    var assistant:((String,String,String,Bitmap,(String?)->Unit)->Unit)?=null
     val keys =
         NativeLabs.keys + listOf("energy", "triangle_area", "statistics", "dilution", "trig", "periodic_table")
 
@@ -187,6 +192,21 @@ object Labs {
             view.speed=next.first;speed.text=context.tr("Speed ","سرعت ")+next.second
         }
         r.addView(speed)
+        // "What are we seeing?": the AI describes the current state and asks the class a prediction question.
+        assistant?.let{ask->
+            lateinit var explain:android.widget.Button
+            val answer=context.label("",17f,NAVY).apply{visibility=View.GONE;background=rounded(0xfffff6c7.toInt(),context.dp(14).toFloat());setPadding(context.dp(14),context.dp(10),context.dp(14),context.dp(10))}
+            sliders.addView(answer,0)
+            explain=context.button(context.tr("Explain (AI)","توضیح هوشمند"),true){
+                explain.isEnabled=false;explain.text=context.tr("Thinking…","در حال فکر…")
+                val values=controls.indices.joinToString(", "){i->"${controls[i].label} = ${fmt(view.values[i])}"}
+                ask(context.s(key),context.s("ex_$key"),values,view.snapshot()){text->
+                    explain.isEnabled=true;explain.text=context.tr("Explain (AI)","توضیح هوشمند")
+                    if(text!=null){answer.text=text;answer.visibility=View.VISIBLE}
+                }
+            }
+            r.addView(explain)
+        }
         r.addView(
             context.button(context.s("reset")) {
                 view.time=0.0

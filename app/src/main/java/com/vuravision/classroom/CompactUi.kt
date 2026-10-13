@@ -65,6 +65,8 @@ object IconCatalog {
         "pie_settings"->"pie";"image"->"image";"sticky"->"sticky";"mind_map"->"mind_map";"paste"->"paste"
         "crop","pdf_crop"->"crop";"scoreboard"->"trophy";"stop"->"stop";"swap"->"swap";"content"->"content"
         "spotlight"->"spotlight";"table"->"table";"laser"->"hand_tap";"picker"->"users"
+        "ai_explain"->"info";"ai_check"->"eye";"ai_steps"->"table";"ai_quiz"->"game";"ai_mindmap"->"mind_map";"ai_simplify"->"text";"ai_translate"->"globe"
+        "ai_cleanup"->"fonts";"ai_setup","ai_service"->"sparkle";"ai_summary"->"file"
         else->key
     }
     fun drawable(c:Context,key:String):Drawable?=ContextCompat.getDrawable(c,resource(key))?.mutate()?.apply{setTint(NAVY)}

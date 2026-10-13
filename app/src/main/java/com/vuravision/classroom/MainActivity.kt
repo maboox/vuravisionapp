@@ -165,6 +165,7 @@ class MainActivity : Activity() {
             refreshTitle()
         }
         setupRooms()
+        installLabAssistant()
     }
 
     private fun setupRooms(){
@@ -339,16 +340,34 @@ class MainActivity : Activity() {
         fun back()=action(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"next" else "menu_back",tr("Back","بازگشت")){open("main")}
         val ink=items.any{it.kind=="ink"};val smart=items.any{ObjectActions.canSmart(it)}
         when(selectionBarMode){
+            "busy"->{
+                // An AI request is running: say what, and let the teacher cancel; the board itself stays usable.
+                actions.add(label(aiBusyLabel,16f,NAVY,true).apply{gravity=Gravity.CENTER_VERTICAL;setPadding(dp(16),0,dp(12),0);layoutParams=LinearLayout.LayoutParams(-2,dp(64))})
+                action("close",tr("Cancel","لغو")){cancelAi()}
+                fillSelectionBar(actions);positionSelectionBar();return
+            }
             "smart"->{
                 back()
-                if(smart){
-                    action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
-                    action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
-                    action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
-                    action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
-                    action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
+                // AI first when a service is set up: it understands any handwriting, drawing or language.
+                if(smartAi.configured()){
+                    action("ai_explain",tr("Explain","توضیح")){aiExplain("explain")}
+                    action("ai_check",tr("Check","غلط‌یابی")){aiCheck()}
+                    action("ai_steps",tr("Steps","گام‌به‌گام")){aiSteps()}
+                    action("ai_quiz",tr("Quiz","آزمونک")){aiQuiz()}
+                    action("ai_mindmap",tr("Mind map","نقشهٔ ذهنی")){aiMindMap()}
+                    action("more",tr("More","بیشتر")){open("smart_more")}
+                }else{
+                    offlineSmart(smart,ink){symbol,text,title,run->action(symbol,text,title){run()}}
+                    action("ai_setup",tr("Set up AI","راه‌اندازی هوش")){aiSettings()}
                 }
-                if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
+                fillSelectionBar(actions);positionSelectionBar();return
+            }
+            "smart_more"->{
+                action(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"next" else "menu_back",tr("Back","بازگشت")){open("smart")}
+                action("ai_simplify",tr("Simpler","ساده‌تر")){aiExplain("simplify")}
+                action("ai_translate",tr("Translate","ترجمه")){aiExplain("translate")}
+                if(ink)action("ai_cleanup",tr("Clean up","تمیز کن"),tr("Handwriting to typed text (AI)","دست‌خط به متن تایپی (هوش)")){aiCleanup()}
+                offlineSmart(smart,ink){symbol,text,title,run->action(symbol,text,title){run()}}
                 fillSelectionBar(actions);positionSelectionBar();return
             }
             "color"->{
@@ -753,6 +772,7 @@ class MainActivity : Activity() {
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
+            "ai_quiz"->aiQuiz();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2037,6 +2057,209 @@ class MainActivity : Activity() {
         else toast(tr("Applies to new pages; this page already has content","برای صفحه‌های جدید اعمال می‌شود؛ این صفحه محتوا دارد"))
         board.sceneChanged();refreshDock()
     }
+    // ---- Board AI (phase 6) ----
+    private val smartAi by lazy{SmartAi(this,{p->voiceKeys.forProvider(p).read()})}
+    private val aiWorker=Executors.newSingleThreadExecutor()
+    private var aiTicket=0
+    private var aiBusyLabel=""
+    /**
+     * Runs one AI request off the main thread. The selection bar shows what is happening with Cancel, the board stays
+     * usable, and any failure becomes one sentence saying what to do (never a dialog full of errors).
+     */
+    private fun <T> runAi(label:String,work:(SmartAi)->T,done:(T)->Unit){
+        if(!smartAi.configured()){toast(AiMessages.text(this,"no_key"));aiSettings();return}
+        val ticket=++aiTicket;aiBusyLabel=label;selectionBarMode="busy";refreshSelectionBar()
+        if(board.chosen().isEmpty())toast(label)
+        aiWorker.execute{
+            val result=runCatching{work(smartAi)}
+            handler.post{
+                if(destroyed||ticket!=aiTicket)return@post
+                if(selectionBarMode=="busy")selectionBarMode="main"
+                result.onSuccess{done(it)}.onFailure{e->toast(AiMessages.text(this,(e as? AiException)?.reason?:"service"))}
+                refreshSelectionBar()
+            }
+        }
+    }
+    /** The offline smart tools (no internet, no key): recognition, solving, plotting, units, search, shapes. */
+    private fun offlineSmart(smart:Boolean,ink:Boolean,action:(String,String,String,()->Unit)->Unit){
+        if(smart){
+            action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
+            action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
+            action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
+            action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
+            action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
+        }
+        if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
+    }
+    private fun providerName(p:String)=mapOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI")[p]?:p
+    /**
+     * The AI service for board actions: which service, which model, the key (shared with the smart assistant, entered once),
+     * the students' level the answers are written for, and a daily cap. "Test" sends one tiny request.
+     */
+    private fun aiSettings(){
+        val c=column().apply{pad(16)};var s=AiSettings.load(this)
+        val model=field(s.model).apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
+        val keyState=label("",13f,MUTED)
+        val key=field("",tr("API key","کلید API")).apply{setSingleLine(true);inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;textDirection=View.TEXT_DIRECTION_LTR}
+        val presets=FlowRow(this,dp(6))
+        fun refresh(){
+            model.setText(AiSettings.load(this).let{if(it.provider==s.provider)it.model else AiSettings.defaults.getValue(s.provider)})
+            keyState.text=if(voiceKeys.forProvider(s.provider).hasKey())tr("A key is saved for this service (also used by the smart assistant). Leave empty to keep it.","برای این سرویس کلید ذخیره شده است (دستیار هوشمند هم از آن استفاده می‌کند). برای حفظ آن خالی بگذارید.")
+                else tr("No key yet for this service.","هنوز کلیدی برای این سرویس نیست.")
+            presets.removeAllViews()
+            val ids=when(s.provider){"gemini"->listOf("gemini-2.5-flash","gemini-2.5-pro");"openai"->listOf("gpt-4o-mini","gpt-4.1-mini","gpt-4o");"openrouter"->listOf("google/gemini-2.5-flash","openai/gpt-4o-mini");else->listOf("gpt-4o-mini","gemini-2.5-flash","gpt-4.1-mini")}
+            ids.forEach{id->presets.addView(button(id){model.setText(id)},ViewGroup.LayoutParams(-2,dp(40)))}
+        }
+        c.addView(sectionTitle(tr("Service","سرویس")))
+        c.addView(segmented(listOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI"),s.provider){s=s.copy(provider=it);refresh()})
+        c.addView(label(tr("AvalAI's address is the one set in the smart assistant page.","آدرس AvalAI همان است که در صفحهٔ دستیار هوشمند تنظیم شده."),12f,MUTED))
+        c.addView(sectionTitle(tr("Model","مدل")));c.addView(model);c.addView(presets)
+        c.addView(sectionTitle(tr("Key","کلید")));c.addView(keyState);c.addView(key)
+        c.addView(sectionTitle(tr("Write answers for","پاسخ‌ها برای")))
+        c.addView(segmented(listOf("primary" to tr("Primary","دبستان"),"middle" to tr("Grades 7–9","متوسطهٔ اول"),"high" to tr("Grades 10–12","متوسطهٔ دوم")),s.grade){s=s.copy(grade=it)})
+        c.addView(sectionTitle(tr("Requests per day on this panel","سقف درخواست روزانهٔ این پنل")))
+        c.addView(segmented(listOf("50" to "50","150" to "150","500" to "500"),s.dailyLimit.toString()){s=s.copy(dailyLimit=it.toInt())})
+        c.addView(label(tr("Only what you select is sent, as one picture. Nothing is sent until you tap an AI action.","فقط چیزی که انتخاب می‌کنید، به‌صورت یک تصویر، فرستاده می‌شود؛ تا یکی از کارهای هوشمند را نزنید چیزی ارسال نمی‌شود."),12f,MUTED).apply{setPadding(dp(4),dp(10),dp(4),dp(4))})
+        refresh()
+        fun store():Boolean{
+            val id=model.text.toString().trim().removePrefix("models/")
+            if(!VoiceSettings.validCompatModel(id)){model.error=s("voice_model_error");return false}
+            val pasted=key.text.toString()
+            if(pasted.isNotBlank()){val v=VoiceApiKey.normalize(pasted);if(!VoiceApiKey.isAcceptable(v)){key.error=s("voice_key_invalid");return false}
+                try{voiceKeys.forProvider(s.provider).save(pasted)}catch(_:Exception){key.error=s("voice_key_invalid");return false}}
+            s=s.copy(model=id);s.save(this);SmartAi.clearCache();key.setText("");refresh();return true
+        }
+        val d=dialog(tr("AI service","سرویس هوش"),ScrollView(this).apply{addView(c)})
+        c.addView(row().apply{
+            addView(button(s("apply"),true){if(store()){toast(s("saved"));d.dismiss();refreshSelectionBar()}},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(6)})
+            addView(button(tr("Test","آزمایش")){if(store())runAi(tr("Testing…","در حال آزمایش…"),{ai->ai.ask("Reply with the single word OK.","Are you there?")}){r->toast(tr("Connected: ","وصل شد: ")+r.take(40))}},LinearLayout.LayoutParams(0,dp(52),1f))
+        },LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
+    }
+    /** Lets labs ask the AI about the running simulation, when a service is configured. */
+    private fun installLabAssistant(){
+        Labs.assistant={name,description,values,picture,answer->
+            if(!smartAi.configured()){picture.recycle();toast(AiMessages.text(this,"no_key"));answer(null)}
+            else aiWorker.execute{
+                val result=runCatching{try{smartAi.ask(aiSystem(),AiTasks.lab(name,description,values),picture)}finally{picture.recycle()}}
+                handler.post{if(destroyed)return@post
+                    result.onSuccess{answer(it)}.onFailure{e->toast(AiMessages.text(this,(e as? AiException)?.reason?:"service"));answer(null)}}
+            }
+        }
+    }
+    private fun cancelAi(){aiTicket++;selectionBarMode="main";refreshSelectionBar()}
+    private fun aiSystem()=AiTasks.system(this,smartAi.settings.grade)
+    /** Sends only the selection, as one picture; the bitmap is released as soon as the request is built. */
+    private fun <T> aiOnSelection(label:String,ask:(SmartAi,android.graphics.Bitmap)->T,done:(T,RectF)->Unit){
+        val items=board.chosen();if(items.isEmpty())return
+        val (bitmap,bounds)=board.snapshotItems(items)
+        runAi(label,{ai->try{ask(ai,bitmap)}finally{bitmap.recycle()}}){done(it,bounds)}
+    }
+    private fun aiNote(bounds:RectF,text:String,color:Int=0xfffff6c7.toInt()):Item{
+        val note=Item(kind="sticky",text=text,width=22f,w=380f,h=160f,x=bounds.right+32f,y=bounds.top,noteColor=color,layerId=store.page.activeLayerId,pane=board.activePane)
+        Fonts.stamp(note,true);TextLayout.fit(note);return note
+    }
+    private fun addAndSelect(items:List<Item>){
+        if(items.isEmpty())return
+        store.editMetadata{store.page.items.addAll(items)}
+        board.selected.clear();board.selected.add(items.first().id);board.tool="select";board.sceneChanged();refreshDock()
+    }
+    private fun aiExplain(kind:String){
+        val prompt=when(kind){"simplify"->AiTasks.simplify();"translate"->AiTasks.translate(this);else->AiTasks.explain()}
+        val label=when(kind){"simplify"->tr("Simplifying…","در حال ساده‌سازی…");"translate"->tr("Translating…","در حال ترجمه…");else->tr("Explaining…","در حال توضیح…")}
+        aiOnSelection(label,{ai,b->ai.ask(aiSystem(),prompt,b)}){text,bounds->addAndSelect(listOf(aiNote(bounds,text)))}
+    }
+    /** Mistakes are circled in red on the work itself, each with a short fix beside it; one Undo removes them all. */
+    private fun aiCheck(){
+        aiOnSelection(tr("Checking…","در حال بررسی…"),{ai,b->AiTasks.parseCheck(ai.askJson(aiSystem(),AiTasks.check(),b))}){check,bounds->
+            val red=0xffdc2626.toInt();val added=mutableListOf<Item>()
+            check.mistakes.forEach{(r,note)->
+                val x=bounds.left+r.left*bounds.width()-10f;val y=bounds.top+r.top*bounds.height()-10f
+                val w=r.width()*bounds.width()+20f;val h=r.height()*bounds.height()+20f
+                added.add(Item(kind="shape",shape="ellipse",x=x,y=y,w=w,h=h,color=red,width=4f,layerId=store.page.activeLayerId,pane=board.activePane))
+                if(note.isNotBlank())added.add(Item(kind="text",text=note,color=red,width=20f,x=x+w+12f,y=y,w=320f,h=60f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)})
+            }
+            if(check.mistakes.isEmpty())added.add(aiNote(bounds,(if(check.correct)"✓ " else "")+check.summary.ifBlank{tr("No mistakes found","اشتباهی پیدا نشد")},0xffdcfce7.toInt()))
+            else Sounds.play(this,Sounds.Cue.TICK)
+            addAndSelect(added);if(check.summary.isNotBlank())toast(check.summary)
+        }
+    }
+    /** Steps appear on the board one at a time, under the work, when the teacher taps Next. */
+    private fun aiSteps(){
+        aiOnSelection(tr("Solving…","در حال حل…"),{ai,b->AiTasks.parseSteps(ai.askJson(aiSystem(),AiTasks.steps(),b))}){steps,bounds->
+            stepReveal?.let{canvasHost.removeView(it)}
+            var y=bounds.bottom+24f;val page=store.page
+            val lines=steps.steps.mapIndexed{i,t->"${i+1}. $t"}+listOfNotNull(steps.answer.takeIf{it.isNotBlank()}?.let{"= $it"})
+            stepReveal=StepReveal(this,lines,{i->
+                // Only onto the page the steps belong to; switching pages pauses the reveal.
+                if(store.page===page){
+                val item=Item(kind="text",text=lines[i],color=if(i==lines.lastIndex&&steps.answer.isNotBlank())TEAL else NAVY,width=26f,x=bounds.left,y=y,w=maxOf(bounds.width(),420f),h=60f,
+                    layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
+                y+=item.h+10f;store.editMetadata{store.page.items.add(item)};board.sceneChanged()
+                }
+            }){stepReveal?.let{canvasHost.removeView(it)};stepReveal=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{bottomMargin=dp(96)})}
+        }
+    }
+    private var stepReveal:StepReveal?=null
+    /** Handwriting (Persian included) becomes typed text in place, through the AI's vision; the ink goes, Undo brings it back. */
+    private fun aiCleanup(){
+        val ink=board.chosen().filter{it.kind=="ink"&&!it.locked&&store.page.editable(it)};if(ink.isEmpty())return
+        val (bitmap,bounds)=board.snapshotItems(ink)
+        runAi(tr("Reading the handwriting…","در حال خواندن دست‌خط…"),{ai->try{ai.askJson(aiSystem(),AiTasks.transcribe(),bitmap).optString("text").trim()}finally{bitmap.recycle()}}){text->
+            if(text.isBlank()){toast(AiMessages.text(this,"format"));return@runAi}
+            val item=Item(kind="text",text=text,color=ink.first().color,width=(bounds.height()/maxOf(1,text.lines().size)*.55f).coerceIn(18f,64f),x=bounds.left,y=bounds.top,w=maxOf(bounds.width(),200f),h=bounds.height(),
+                layerId=ink.first().layerId,pane=ink.first().pane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
+            store.editMetadata{store.page.items.removeAll(ink.toSet());store.page.items.add(item)}
+            board.selected.clear();board.selected.add(item.id);board.sceneChanged();refreshDock()
+        }
+    }
+    /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */
+    private fun aiQuiz(){
+        if(board.chosen().isNotEmpty())aiOnSelection(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai,b->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quiz(5),b))}){q,_->ClassQuiz.show(this,tr("Quiz","آزمونک"),q)}
+        else input(tr("Quiz topic","موضوع آزمونک"),""){topic->require(topic.isNotBlank())
+            runAi(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quizFromTopic(topic,5)))}){q->ClassQuiz.show(this,topic,q)}}
+    }
+    /** A mind map of real mind-map nodes (editable, movable), beside the selection or in the middle of the board. */
+    private fun aiMindMap(){
+        fun build(root:AiTasks.Node,at:PointF){
+            val layer=store.page.activeLayerId;val pane=board.activePane;val items=mutableListOf<Item>()
+            fun node(title:String,x:Float,y:Float,parent:String,color:Int)=Item(kind="sticky",shape="mindnode",text=title,width=22f,w=200f,h=90f,x=x,y=y,noteColor=color,parentNode=parent,layerId=layer,pane=pane).also{Fonts.stamp(it,true)}
+            val leaves=root.children.sumOf{maxOf(1,it.children.size)}
+            var y=at.y-leaves*55f
+            val top=node(root.title,at.x,at.y-45f,"",0xffe2f2f0.toInt());items.add(top)
+            root.children.forEach{branch->
+                val span=maxOf(1,branch.children.size)*110f
+                val b=node(branch.title,at.x+300f,y+span/2-45f,top.id,0xffeceaf7.toInt());items.add(b)
+                branch.children.forEachIndexed{i,leaf->items.add(node(leaf.title,at.x+600f,y+i*110f,b.id,0xfffff6e0.toInt()))}
+                y+=span
+            }
+            addAndSelect(items)
+        }
+        if(board.chosen().isNotEmpty())aiOnSelection(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai,b->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMap(),b))}){root,bounds->build(root,PointF(bounds.right+60f,bounds.centerY()))}
+        else input(tr("Mind map topic","موضوع نقشهٔ ذهنی"),""){topic->require(topic.isNotBlank())
+            runAi(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMapFromTopic(topic)))}){root->val c=board.center();build(root,PointF(c.x-400f,c.y))}}
+    }
+    /** End of lesson: the pages go to the AI as one contact sheet; the summary becomes a new last page. */
+    private fun aiSummary(){
+        val pages=projectStore.lesson.pages.filter{it.items.isNotEmpty()}.takeLast(6)
+        if(pages.isEmpty()){toast(tr("The lesson has no content yet","درس هنوز محتوایی ندارد"));return}
+        val sheet=android.graphics.Bitmap.createBitmap(960,810,android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas=Canvas(sheet);canvas.drawColor(Color.WHITE)
+        pages.forEachIndexed{i,page->canvas.save();canvas.translate((i%2)*480f,(i/2)*270f);canvas.clipRect(0f,0f,476f,266f);board.renderer.page(canvas,page,476,266,true);canvas.restore()}
+        runAi(tr("Summarizing the lesson…","در حال خلاصه‌کردن درس…"),{ai->try{AiTasks.parseSummary(ai.askJson(aiSystem(),AiTasks.summary(),sheet))}finally{sheet.recycle()}}){summary->
+            if(projectStore.lesson.pages.size>=200)return@runAi
+            activateBoard(whiteboard)
+            val page=newBoardPage(projectStore.page);val layer=page.activeLayerId
+            fun text(t:String,size:Float,y:Float,color:Int=NAVY)=Item(kind="text",text=t,width=size,x=120f,y=y,w=1200f,h=size*2,color=color,layerId=layer).also{Fonts.stamp(it,true);TextLayout.fit(it)}
+            val title=text(summary.title.ifBlank{tr("Lesson summary","خلاصهٔ درس")},48f,80f)
+            val points=text(summary.points.joinToString("\n"){"• $it"},28f,title.y+title.h+30f)
+            val items=mutableListOf(title,points)
+            if(summary.homework.isNotBlank())items.add(text(tr("Practice: ","تمرین: ")+summary.homework,26f,points.y+points.h+30f,TEAL))
+            page.items.addAll(items)
+            projectStore.editMetadata{projectStore.lesson.pages.add(page);projectStore.lesson.current=projectStore.lesson.pages.lastIndex}
+            whiteboard.clearSelection();whiteboard.reset();refreshPages()
+            toast(tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"))
+        }
+    }
     private var spotlight:Spotlight?=null
     private fun showSpotlight(){
         spotlight?.let{canvasHost.removeView(it)}
@@ -2080,6 +2303,7 @@ class MainActivity : Activity() {
                 page(s("history_settings"),{tr("${HistorySettings.load(this)} steps","${HistorySettings.load(this)} مرحله")}){historySettings()},
             )),
             SettingsCategory("smart",tr("Smart","هوشمند"),"sparkle",listOf(
+                page(tr("AI service","سرویس هوش"),{if(smartAi.configured())smartAi.settings.let{"${providerName(it.provider)} · ${it.model} · "+tr("${smartAi.usedToday()} of ${it.dailyLimit} today","${smartAi.usedToday()} از ${it.dailyLimit} امروز")}else tr("Not set up","راه‌اندازی نشده")}){aiSettings()},
                 page(s("voice_assistant"),{if(VoiceSettings.enabled(this))tr("On","روشن")+" · "+(providers[VoiceSettings.load(this).provider]?:VoiceSettings.load(this).provider)else tr("Off","خاموش")}){voiceSettings()},
                 page(s("models"),{tr("Handwriting recognition","تشخیص دست‌خط")}){models()},
                 page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
@@ -2459,6 +2683,7 @@ class MainActivity : Activity() {
         googleSearch?.close();googleSearch=null
         stopVoice()
         voiceWorker.shutdown()
+        aiWorker.shutdownNow();if(Labs.assistant!=null)Labs.assistant=null
         artPlayer?.stop()
         floatingTools.closeAll()
         handler.removeCallbacksAndMessages(null)
