@@ -750,10 +750,12 @@ c.addView(row().apply{
     }
     private fun pieSettings(){
         val c=column().apply{pad(16)}
-        c.addView(Switch(this).apply{text=tr("Enable five-finger pie menu","فعال‌سازی منوی پنج‌انگشتی");isChecked=prefs.getBoolean("pieEnabled",false);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v}})
-        c.addView(infoTitle(tr("Gesture","ژست"),tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")))
+        c.addView(switchRow(tr("Enable five-finger pie menu","فعال‌سازی منوی پنج‌انگشتی"),prefs.getBoolean("pieEnabled",false),
+            tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")){v->
+            prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v})
+        c.addView(sectionTitle(tr("Shortcuts","میان‌برها")))
         val slots=column();c.addView(slots)
-        fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())"+"else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,-2,1f));slots.addView(r)}}
+        fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())tr("Empty","خالی")else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginStart=dp(8)});slots.addView(r,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})}}
         refreshPieSettings=::refresh;refresh()
         dialog(s("pie_settings"),ScrollView(this).apply{addView(c)}).setOnDismissListener{refreshPieSettings=null}
     }
