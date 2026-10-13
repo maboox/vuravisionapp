@@ -25,6 +25,7 @@ class Gallery(private val context:Context,title:String,intro:String,back:(()->Un
     val search:EditText=EditText(context).apply{
         hint=context.tr("Search","جستجو");contentDescription=hint;isSingleLine=true;textSize=16f*context.uiScale();setTextColor(NAVY);setHintTextColor(MUTED)
         background=rounded(SURFACE,context.dp(14).toFloat(),OUTLINE);setPadding(context.dp(16),0,context.dp(16),0);Fonts.bind(this,false)
+        gravity=android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.START;textDirection=View.TEXT_DIRECTION_LOCALE
     }
     /** 1 column on a phone, up to 4 on a wide panel; cards stay at least ~300dp wide. */
     val columns=context.resources.configuration.screenWidthDp.let{w->when{w<620->1;w<1000->2;w<1400->3;else->4}}
@@ -41,6 +42,9 @@ class Gallery(private val context:Context,title:String,intro:String,back:(()->Un
         root.addView(ScrollView(context).apply{addView(grid);isFillViewport=true},LinearLayout.LayoutParams(-1,0,1f))
         root.addView(context.row().apply{gravity=android.view.Gravity.END;setPadding(0,context.dp(6),0,context.dp(10))
             addView(context.button(context.s("close")){dialog.dismiss()},LinearLayout.LayoutParams(context.dp(160),context.dp(52)))})
+        // The search field must not take focus on open: that would pop up the keyboard over the catalog on every visit.
+        root.isFocusableInTouchMode=true;root.requestFocus()
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         dialog.setContentView(root)
     }
     /** A row of choices; the current one is filled. Rebuild it after a pick with the new current value. */

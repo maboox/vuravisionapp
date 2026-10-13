@@ -28,7 +28,9 @@ object LabText {
         "k forward" to "k رفت","k reverse" to "k برگشت","Added water (mL)" to "آب افزوده (mL)",
         // Bar labels
         "Stay wins" to "برد با ماندن","Switch wins" to "برد با تعویض","Shared birthday" to "تولد مشترک","All distinct" to "همه متفاوت",
-        "Reach 20" to "رسیدن به ۲۰","Ruin at 0" to "ورشکستگی در ۰",
+        "Reach 20" to "رسیدن به ۲۰","Ruin at 0" to "ورشکستگی در ۰","True positives" to "مثبت واقعی","False positives" to "مثبت کاذب",
+        "A fraction" to "سهم A","B fraction" to "سهم B","Dissolved g" to "حل‌شده (g)","Undissolved g" to "ته‌نشین (g)","HCl mmol" to "HCl (mmol)","NaOH mmol" to "NaOH (mmol)",
+        "Left °C" to "چپ (°C)","Right °C" to "راست (°C)","Reactant" to "واکنش‌دهنده","Product" to "فراورده","Sun" to "آفتاب","Rain" to "باران","P(condition | +)" to "P(بیمار | مثبت)",
         // Captions: whole sentences first, then phrases, then single words
         "Host knows prize, always opens a goat" to "مجری جای جایزه را می‌داند و همیشه درِ بز را باز می‌کند",
         "Prime numbers have exactly two positive divisors" to "اعداد اول دقیقاً دو مقسوم‌علیه مثبت دارند",
