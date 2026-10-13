@@ -719,18 +719,22 @@ class MainActivity : Activity() {
         fun refresh(){
             body.removeAllViews();palette(body,penColor()){color->val pane=panel();if(pane!=null)store.editMetadata{pane.color=color}else if(broad)board.profile.thickColor=color else board.penColor=color;savePens();preview.invalidate()}
             slider(body,tr("Thickness","ضخامت"),penWidth(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.penWidth=value}else if(broad)board.profile.thickWidth=value else board.penWidth=value;savePens();preview.invalidate()}
-            val styles=row();body.addView(scrollRow(styles))
-            PenStyles.selectable.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){val pane=panel();if(pane!=null)store.editMetadata{pane.penStyle=key}else if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()})}
+            // Every line style visible at once (wraps instead of scrolling); the current one is filled.
+            val styles=FlowRow(this,dp(6));body.addView(styles,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
+            PenStyles.selectable.forEach{key->styles.addView(button(PenStyles.name(this,key),tipStyle()==key){val pane=panel();if(pane!=null)store.editMetadata{pane.penStyle=key}else if(broad)board.profile.thickStyle=key else board.penStyle=key;savePens();refresh();preview.invalidate()},ViewGroup.LayoutParams(-2,dp(44)))}
             slider(body,tr("Opacity","کدری"),board.penOpacity/255f*100,100){board.penOpacity=(it/100*255).toInt();savePens();preview.invalidate()}
             if(tipStyle()=="dashed"){
                 slider(body,tr("Dash length","طول خط‌چین"),dashLength(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.dashLength=value}else board.dashLength=value;savePens();preview.invalidate()}
                 slider(body,tr("Dash gap","فاصلهٔ خط‌چین"),dashGap(),80){value->val pane=panel();if(pane!=null)store.editMetadata{pane.dashGap=value}else board.dashGap=value;savePens();preview.invalidate()}
             }
         }
-        if(!board.touchMode && panel()==null)c.addView(row().apply{
-            addView(button(tr("Fine tip","سر باریک")){broad=false;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
-            addView(button(tr("Broad tip","سر پهن")){broad=true;refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(48),1f))
-        })
+        // Fine/broad tip is a two-way switch, so the active side must show (both looked the same before).
+        val tips=row()
+        fun tipsRefresh(){tips.removeAllViews()
+            tips.addView(button(tr("Fine tip","سر باریک"),!broad){broad=false;tipsRefresh();refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(44),1f).apply{marginEnd=dp(6)})
+            tips.addView(button(tr("Broad tip","سر پهن"),broad){broad=true;tipsRefresh();refresh();preview.invalidate()},LinearLayout.LayoutParams(0,dp(44),1f))
+        }
+        if(!board.touchMode && panel()==null){tipsRefresh();c.addView(tips,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(10)})}
         c.addView(body);refresh();toolSheet(s("pen"),ScrollView(this).apply{addView(c)})
     }
 
