@@ -422,8 +422,10 @@ class MainActivity : Activity() {
             val actions=row().apply{pad(2)};surface(actions)
             actions.addView(icon("pen",tr("Panel ${i+1}: pen","بخش ${i+1}: قلم")){paneBar(i,true)})
             actions.addView(icon("background",tr("Panel ${i+1}: background","بخش ${i+1}: پس‌زمینه")){paneBar(i,false)})
-            val controlWidth=min(dp(100),(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
-            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,dp(52)).apply{
+            // As wide as both buttons really are: a narrower scrolling box let the second button stick out under the dock.
+            actions.measure(View.MeasureSpec.UNSPECIFIED,View.MeasureSpec.UNSPECIFIED)
+            val controlWidth=min(actions.measuredWidth,(canvasHost.width/columns-dp(12)).coerceAtLeast(dp(40)))
+            overlay.addView(scrollRow(actions),FrameLayout.LayoutParams(controlWidth,maxOf(dp(52),actions.measuredHeight)).apply{
                 val (freeLeft,freeRight)=freeSpan()
                 leftMargin=((i+1)*canvasHost.width/columns-controlWidth-dp(6)).coerceAtMost(freeRight-controlWidth).coerceAtLeast(maxOf(freeLeft,i*canvasHost.width/columns))
                 topMargin=(canvasHost.height-dp(if(canvasHost.width<dp(800))216 else 144)).coerceAtLeast(dp(12))

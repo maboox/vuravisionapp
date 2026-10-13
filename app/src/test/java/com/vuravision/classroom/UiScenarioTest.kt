@@ -167,7 +167,7 @@ class UiScenarioTest {
                 val r=rect(bar);val paneLeft=area.left+i*area.width()/3;val paneRight=area.left+(i+1)*area.width()/3
                 assertTrue("panel ${i+1} bar leaves its panel $r",r.left>=paneLeft&&r.right<=paneRight&&area.contains(r))
                 assertFalse("panel ${i+1} bar under the dock",Rect.intersects(r,rect(dock(a))))
-                views(a.window.decorView).filterIsInstance<WorkspaceIcon>().filter{it.contentDescription.toString().startsWith(a.tr("Panel","بخش"))}.forEach{assertFalse("panel button under the dock",Rect.intersects(rect(it),rect(dock(a))))}
+                views(a.window.decorView).filterIsInstance<WorkspaceIcon>().filter{it.contentDescription.toString().startsWith(a.tr("Panel","بخش"))}.forEach{assertFalse("panel button under the dock ${rect(it)} dock ${rect(dock(a))}",Rect.intersects(rect(it),rect(dock(a))))}
                 if(pen)assertEquals("panel ${i+1}: ink options",9,views(bar).count{it.contentDescription==a.tr("Ink color","رنگ قلم")||it.contentDescription==a.tr("Ink width","ضخامت قلم")})
                 shot(a,"split-panel-${i+1}-${if(pen)"pen" else "background"}")
                 val tap=MotionEvent.obtain(0,0,MotionEvent.ACTION_DOWN,area.left+5f,area.top+5f,0);a.dispatchTouchEvent(tap);tap.recycle();settle(a)
