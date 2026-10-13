@@ -216,7 +216,7 @@ class MainActivity : Activity() {
         (headerHost.layoutParams as FrameLayout.LayoutParams).rightMargin=dp(72)
         // Titles/status remain available in the document menu; canvas chrome uses icons.
         titleView=label("");status=label("");pageLabel=label("")
-        toolDock=ToolDock(this,canvasHost,prefs,{board},{dockAction(it)},{key->when(key){"pen"->penSettings();"erase"->eraserSettings();"select"->selectionSettings()}}){savePens();refreshDock()}
+        toolDock=ToolDock(this,canvasHost,prefs,{board},{dockAction(it)},{key->when(key){"pen"->penSettings();"erase"->eraserSettings();"select"->selectionSettings();else->{}}}){savePens();refreshDock()}
         chrome.add(toolDock)
         pageStrip=row().apply{pad(4)}
         pageStrip.layoutDirection=View.LAYOUT_DIRECTION_LTR
