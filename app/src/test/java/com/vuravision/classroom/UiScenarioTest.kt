@@ -118,6 +118,15 @@ class UiScenarioTest {
             shot(a,"$tag-3c-pinned");checkChrome(a,"$tag pinned")
             views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first{it.key=="ruler"}.performLongClick();settle(a)
             assertFalse("$tag: ruler not unpinned",views(dock(a)).filterIsInstance<WorkspaceIcon>().any{it.key=="ruler"})
+            // A math teacher sees math tools first; nothing else disappears.
+            views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
+            context.getSharedPreferences("vura",0).edit().putString("subject","math").commit()
+            views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
+            val tiles=views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>()
+            assertEquals("$tag: subject tools should lead","graph",tiles.first().key)
+            assertTrue("$tag: other tools must stay",tiles.any{it.key=="periodic"})
+            shot(a,"$tag-3d-subject-math")
+            context.getSharedPreferences("vura",0).edit().remove("subject").commit()
             views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
 
             // Selection bar, its smart mode, and a selection right next to the dock.

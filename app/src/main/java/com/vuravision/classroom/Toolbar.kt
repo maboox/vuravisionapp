@@ -315,7 +315,8 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
     private fun show(query:String){
         body.removeAllViews()
         if(query.isEmpty()){
-            groups.forEach{(group,keys)->
+            val subject=Subjects.current(context)
+            (listOfNotNull(Subjects.tools(subject).takeIf{it.isNotEmpty()}?.let{"subject" to it})+groups).forEach{(group,keys)->
                 body.addView(context.label(title(group),15f,MUTED,true).apply{setPadding(context.dp(4),context.dp(8),context.dp(4),context.dp(4))})
                 val grid=GridLayout(context).apply{columnCount=columns}
                 keys.forEach{key->grid.addView(tile(key))}
@@ -339,7 +340,8 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
     }
     private fun title(group:String)=when(group){
         "board"->context.tr("On the board","روی تخته");"geometry"->context.tr("Geometry","هندسه")
-        "smart"->context.tr("Smart and page","هوشمند و صفحه");else->context.tr("Class","کلاس")
+        "smart"->context.tr("Smart and page","هوشمند و صفحه");"subject"->context.tr("For ","برای ")+Subjects.name(context,Subjects.current(context))
+        else->context.tr("Class","کلاس")
     }
     private fun label(key:String)=when(key){
         "split"->context.tr("Split board","تقسیم تخته");"layers"->context.tr("Layers","لایه‌ها");"touch"->context.tr("Touch mode","حالت لمس")

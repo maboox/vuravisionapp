@@ -2377,8 +2377,8 @@ class MainActivity : Activity() {
         spotlight=Spotlight(this){spotlight?.let{canvasHost.removeView(it)};spotlight=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
     }
     /** Every page background, named for teachers: also staff paper for music, four-line paper for first writing, axes for graphs. */
-    private fun patternChoices()=listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"),
-        "isometric" to tr("Isometric","ایزومتریک"),"axes" to tr("Axes","محور مختصات"),"staff" to tr("Music staff","حامل موسیقی"),"handwriting" to tr("Handwriting","خط‌نویسی"))
+    private fun patternChoices()=Subjects.patternsFirst(Subjects.current(this),listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"),
+        "isometric" to tr("Isometric","ایزومتریک"),"axes" to tr("Axes","محور مختصات"),"staff" to tr("Music staff","حامل موسیقی"),"handwriting" to tr("Handwriting","خط‌نویسی")))
     private var settingsScreen:SettingsScreen?=null
     private fun settings()=settingsAt(prefs.getString("settingsTab",null))
     /**
@@ -2423,6 +2423,7 @@ class MainActivity : Activity() {
                 page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
             )),
             SettingsCategory("class",tr("Class","کلاس"),"users",listOf(
+                SettingRow.Choice(tr("I teach","درس من"),Subjects.keys.map{it to Subjects.name(this,it)},{Subjects.current(this)}){v->prefs.edit().putString("subject",v).apply()},
                 SettingRow.Toggle(tr("Game sounds","صدای بازی‌ها"),tr("Short sounds for right answers and winners","صدای کوتاه برای پاسخ درست و برنده"),{Sounds.enabled(this)}){prefs.edit().putBoolean("gameSounds",it).apply()},
                 page(s("device_profile"),{DeviceProfiles.load(this).name}){roomUi?.profile(menuReturn)},
                 page(s("shared_room"),{tr("Share this board with devices on the same network","اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
