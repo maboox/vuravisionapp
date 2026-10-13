@@ -94,6 +94,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     /** Laser strokes that are fading out: drawn on top, never stored. */
     private val fading=mutableListOf<Pair<Item,Long>>()
     val laserStrokes get()=fading.size
+    val laserPoints get()=fading.sumOf{it.first.points.size}
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
     private var tappedSelected=false
     private val eraseLast=mutableMapOf<Int,PointF>()

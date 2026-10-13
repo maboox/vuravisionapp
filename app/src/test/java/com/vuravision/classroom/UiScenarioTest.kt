@@ -227,6 +227,7 @@ class UiScenarioTest {
         val b=Bitmap.createBitmap(decor.measuredWidth.coerceAtLeast(1),decor.measuredHeight.coerceAtLeast(1),Bitmap.Config.ARGB_8888)
         try{Canvas(b).apply{drawColor(Color.DKGRAY);decor.draw(this)};val f=File("build/qa/scenario-$name.png");f.parentFile!!.mkdirs();f.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}
     }
+    private fun diag(line:String){val f=File("build/qa/diagnostics.txt");f.parentFile!!.mkdirs();f.appendText(line+"\n")}
     private fun settingsScreen(a:MainActivity)=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen
     /** Device report: Settings → Smart assistant did nothing. Now every settings page must open, and Settings stays underneath. */
     private fun settingsScenario(tag:String,language:String){
@@ -281,6 +282,9 @@ class UiScenarioTest {
             touch(MotionEvent.ACTION_DOWN,0f,0);touch(MotionEvent.ACTION_MOVE,80f,16);touch(MotionEvent.ACTION_MOVE,160f,32);touch(MotionEvent.ACTION_UP,200f,48)
             assertEquals("laser stroke was stored",before,a.store.page.items.size);assertEquals("laser stroke entered Undo",undo,a.store.undoCount)
             assertEquals(1,a.board.laserStrokes);a.board.invalidate();shot(a,"laser-stroke")
+            val bmp=Bitmap.createBitmap(a.board.width,a.board.height,Bitmap.Config.ARGB_8888);a.board.draw(Canvas(bmp))
+            var lit=0;for(px in 0 until bmp.width step 2)for(py in 0 until bmp.height step 2){val c=bmp.getPixel(px,py);if(Color.red(c)>200&&Color.green(c)<120)lit++}
+            bmp.recycle();diag("laser: points=${a.board.laserPoints} litPixels=$lit board=${a.board.width}x${a.board.height}")
             idle(2600);a.board.invalidate();settle(a);a.board.draw(Canvas(Bitmap.createBitmap(10,10,Bitmap.Config.ARGB_8888)))
             assertEquals("laser stroke did not fade",0,a.board.laserStrokes)
         }finally{ctl.pause().stop().destroy()}
@@ -313,7 +317,9 @@ class UiScenarioTest {
                 Labs.open(a,key){it.recycle()};idle(1500)
                 val d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"lab-${key.removePrefix("native_")}-fa");d.dismiss()
             }
-            Labs.show(a,{it.recycle()},{},null);var d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"labs-gallery-fa");d.dismiss()
+            Labs.show(a,{it.recycle()},{},null);var d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"labs-gallery-fa")
+            views(d.window!!.decorView).filterIsInstance<EditText>().forEach{diag("gallery search: hint='${it.hint}' hintColor=${Integer.toHexString(it.currentHintTextColor)} focused=${it.isFocused} size=${it.width}x${it.height} text='${it.text}' gravity=${it.gravity} visible=${it.isShown}")}
+            d.dismiss()
             Games.show(a);d=org.robolectric.shadows.ShadowDialog.getLatestDialog();shotWindow(d,"games-gallery-fa");d.dismiss()
         }finally{ctl.pause().stop().destroy()}
     }
