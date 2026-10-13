@@ -81,7 +81,7 @@ jobs:
         run: |
           TAG="v${APP_VERSION}-build${{ github.run_number }}"
           # Robolectric screenshots let reviewers check layouts without a device.
-          (cd app/build/qa && zip -q "$GITHUB_WORKSPACE/artifacts/screenshots.zip" *.png) || true
+          (cd app/build/qa && zip -q "$GITHUB_WORKSPACE/artifacts/screenshots.zip" *.png $(ls *.txt 2>/dev/null)) || true
           gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt $(ls artifacts/screenshots.zip 2>/dev/null) \
             --repo "${{ github.repository }}" --target "${{ github.sha }}" --prerelease \
             --title "VuraVision ${APP_VERSION} · build ${{ github.run_number }}" \
