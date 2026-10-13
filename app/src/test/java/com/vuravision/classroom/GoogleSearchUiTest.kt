@@ -45,6 +45,7 @@ class GoogleSearchUiTest {
             val item=Item(kind="text",text="آب چیست؟")
             a.store.editMetadata{a.store.page.items.clear();a.store.page.items.add(item)}
             a.board.selected.add(item.id);a.board.onSelection()
+            views(a.window.decorView).filterIsInstance<ActionIcon>().first{it.symbol=="smart"}.performClick()
             views(a.window.decorView).filterIsInstance<ActionIcon>().first{it.symbol=="search"}.performClick()
             val intent=Shadows.shadowOf(a).nextStartedActivity
             assertNotNull(intent);assertEquals(item.text,intent.data!!.getQueryParameter("q"))
@@ -92,6 +93,7 @@ class GoogleSearchUiTest {
             val a=controller.get();val item=Item(kind="text",text="why is the sky blue?")
             a.store.editMetadata{a.store.page.items.clear();a.store.page.items.add(item)}
             a.board.selected.add(item.id);a.board.onSelection()
+            views(a.window.decorView).filterIsInstance<ActionIcon>().first{it.symbol=="smart"}.performClick()
             val search=views(a.window.decorView).filterIsInstance<ActionIcon>().first{it.symbol=="search"}
             search.performClick()
             val dialog=ShadowDialog.getLatestDialog()

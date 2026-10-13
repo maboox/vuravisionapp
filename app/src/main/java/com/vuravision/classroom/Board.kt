@@ -37,6 +37,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var pdfPalmErase=false
     var onActivate:()->Unit={}
     private var transforming:Set<String> = emptySet()
+    val isTransforming get()=transforming.isNotEmpty()
     fun copyToolsFrom(b:Board){
         tool=b.tool;shape=b.shape;touchMode=b.touchMode;selectionMode=b.selectionMode;profile=b.profile.copy()
         penColor=b.penColor;highlightColor=b.highlightColor;penWidth=b.penWidth;highlightWidth=b.highlightWidth
@@ -730,7 +731,8 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
                     }
                 }
                 if (e.actionMasked == MotionEvent.ACTION_UP) {
-                    if(transforming.isNotEmpty()){transforming=emptySet();backingDirty=true}
+                    // The object bar hides during a drag; tell the host once it ends so it reappears at the new place.
+                    if(transforming.isNotEmpty()){transforming=emptySet();backingDirty=true;post{onSelection()}}
                     if(changed || mode=="navigate") { isCommitting=true;try{if(!changed || !store.discardUnchangedCheckpoint())store.changed()}finally{isCommitting=false} }
                     changed = false
                     mode = ""

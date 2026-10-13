@@ -31,7 +31,8 @@ class ToolDock(
         val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill")
         fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f))}
     }
-    private val column=context.column().apply{setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6))}
+    // Centered children: icons and dividers share one vertical axis whatever the button size.
+    private val column=context.column().apply{gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6))}
     private val penButtons=defaults.indices.map{i->icon(if(defaults[i].highlight)"highlight" else "pen",penTitle(i)){pen(i)}}
     private val eraser=icon("erase",context.s("erase")){tool("erase")}
     private val select=icon("select",context.s("select")){tool("select")}
@@ -40,8 +41,8 @@ class ToolDock(
     private val undo=icon("undo",context.s("undo")){board().undo()}
     private val redo=icon("redo",context.s("redo")){board().redo()}
     private val swapButton=icon("swap",context.tr("Move toolbar to the other side","انتقال نوار به سمت دیگر")){swap()}
-    private val strip=InkStrip(context,board,showTools=false){savePreset();changed();refresh()}
-    private val stripHost=FrameLayout(context).apply{addView(strip,FrameLayout.LayoutParams(-2,-2));background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(8),context.dp(4),context.dp(8),context.dp(4));visibility=View.GONE}
+    private val strip=InkStrip(context,board,showTools=false,grid=true,more={stripShown=false;refresh();toolSettings("pen")}){savePreset();changed();refresh()}
+    private val stripHost=FrameLayout(context).apply{addView(strip,FrameLayout.LayoutParams(-2,-2));background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(10),context.dp(10),context.dp(10),context.dp(10));visibility=View.GONE;isClickable=true}
     private val handle=View(context).apply{
         background=rounded(OUTLINE_STRONG,context.dp(6).toFloat());contentDescription=context.tr("Bring the toolbar to this side","آوردن نوار ابزار به این سمت")
         isClickable=true;setOnClickListener{swap()}
@@ -52,6 +53,8 @@ class ToolDock(
     private var stripShown=false
     var end=prefs.getBoolean("dockEnd",false)
         private set
+    /** The color/width popover, exposed for layout checks. */
+    val inkPopup:View get()=stripHost
     init {
         background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat()
         id=R.id.tool_dock
@@ -88,7 +91,8 @@ class ToolDock(
         post{if(cols!=columns || size.toInt()!=buttonDp){columns=cols;buttonDp=size.toInt();arrange()};place()}
     }
     private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=52}
-    private fun divider()=View(context).apply{setBackgroundColor(OUTLINE);layoutParams=LinearLayout.LayoutParams(context.dp(buttonDp),context.dp(1)).apply{setMargins(context.dp(8),context.dp(4),context.dp(8),context.dp(4))}}
+    // Dividers are as wide as the icon area (button minus its rounded padding), centered under the buttons.
+    private fun divider()=View(context).apply{setBackgroundColor(OUTLINE);layoutParams=LinearLayout.LayoutParams(context.dp(buttonDp-16),context.dp(1)).apply{gravity=Gravity.CENTER_HORIZONTAL;topMargin=context.dp(6);bottomMargin=context.dp(6)}}
     private fun penTitle(i:Int)=if(defaults[i].highlight)context.tr("Highlighter","هایلایتر")else context.tr("Pen ${i+1}","قلم ${i+1}")
     private fun activePreset()=prefs.getInt("dockPen",0).coerceIn(0,defaults.lastIndex)
     private fun recent()=prefs.getString("dockRecent","shape")?.takeIf{it in recentable}?:"shape"
@@ -141,11 +145,24 @@ class ToolDock(
         (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(12))}
         (handle.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or(if(end)Gravity.START else Gravity.END);setMargins(context.dp(3),0,context.dp(3),0)}
         (stripHost.layoutParams as FrameLayout.LayoutParams).apply{
-            // Level with the pen buttons at the top of the dock.
-            gravity=Gravity.TOP or side;topMargin=if(top>0)top else context.dp(120);bottomMargin=0
+            gravity=Gravity.TOP or side;topMargin=stripTop();bottomMargin=0
             if(end){marginStart=0;marginEnd=beside()}else{marginStart=beside();marginEnd=0}
         }
         requestLayout();handle.requestLayout();stripHost.requestLayout()
+    }
+    /** Level with the active pen, kept fully on screen. */
+    private fun stripTop():Int{
+        val button=penButtons[activePreset()]
+        if(!button.isLaidOut||host.height==0)return context.dp(120)
+        val at=IntArray(2);val origin=IntArray(2);button.getLocationInWindow(at);host.getLocationInWindow(origin)
+        stripHost.measure(MeasureSpec.makeMeasureSpec(host.width,MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(host.height,MeasureSpec.AT_MOST))
+        return (at[1]-origin[1]).coerceIn(context.dp(12),(host.height-stripHost.measuredHeight-context.dp(12)).coerceAtLeast(context.dp(12)))
+    }
+    /** A touch anywhere outside the dock and its strip closes the strip; the touch still draws. */
+    fun touchedAt(rawX:Float,rawY:Float){
+        if(!stripShown)return
+        fun inside(v:View):Boolean{if(v.visibility!=View.VISIBLE)return false;val p=IntArray(2);v.getLocationOnScreen(p);return rawX>=p[0]&&rawX<p[0]+v.width&&rawY>=p[1]&&rawY<p[1]+v.height}
+        if(!inside(this)&&!inside(stripHost)){stripShown=false;refresh()}
     }
     /** Hide or show with the rest of the canvas chrome (focus mode). */
     fun setChromeVisible(visible:Boolean){

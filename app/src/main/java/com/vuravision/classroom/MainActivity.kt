@@ -223,10 +223,10 @@ class MainActivity : Activity() {
         pageLabel=label("",14f,NAVY,true).apply{gravity=Gravity.CENTER;minWidth=dp(72);layoutDirection=View.LAYOUT_DIRECTION_LTR}
         val pageHost=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(pageStrip)}
         floating(pageHost,Gravity.BOTTOM or Gravity.LEFT)
-        selectionBar=row().apply{pad(4)}
-        surface(selectionBar)
-        selectionHost=HorizontalScrollView(this).apply{id=R.id.selection_toolbar;isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE}
-        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(56),Gravity.TOP or Gravity.LEFT))
+        selectionBar=row().apply{setPadding(dp(4),dp(4),dp(4),dp(4))}
+        selectionHost=HorizontalScrollView(this).apply{id=R.id.selection_toolbar;isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE
+            background=rounded(SURFACE,dp(18).toFloat(),OUTLINE);elevation=dp(6).toFloat()}
+        canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(72),Gravity.TOP or Gravity.LEFT))
         val focus=icon("fullscreen",tr("Hide / show toolbars","پنهان / نمایان کردن ابزارها")){
             focusMode=!focusMode
             window.decorView.systemUiVisibility=if(focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
@@ -311,51 +311,69 @@ class MainActivity : Activity() {
         }
         refreshDock()
     }
+    private var smartBarOpen=false
+    private var selectionBarKey=""
+    /**
+     * Bar above the selection: at most six labeled actions, chosen by what is selected.
+     * "Smart" swaps the bar to recognition/solve actions in place, so nothing opens elsewhere on the board.
+     * Hidden while the selection is being dragged; shown again at the new position on release.
+     */
     private fun refreshSelectionBar(){
         if(!::selectionBar.isInitialized)return
-        val items=board.chosen();selectionHost.visibility=if(items.isEmpty()||focusMode)View.GONE else View.VISIBLE
-        selectionBar.removeAllViews();if(items.isEmpty())return
-        fun icon(key:String,title:String=s(key),action:()->Unit){selectionBar.addView(ActionIcon(this,key,title,action),LinearLayout.LayoutParams(dp(48),dp(48)))}
+        val items=board.chosen()
+        selectionHost.visibility=if(items.isEmpty()||focusMode||board.isTransforming)View.GONE else View.VISIBLE
+        val key=items.joinToString{it.id};if(key!=selectionBarKey){selectionBarKey=key;smartBarOpen=false}
+        selectionBar.removeAllViews();if(items.isEmpty()||board.isTransforming)return
+        fun action(symbol:String,label:String,title:String=label,active:Boolean=false,run:()->Unit){selectionBar.addView(ActionIcon(this,symbol,title,label,active,run),LinearLayout.LayoutParams(-2,dp(64)))}
+        val ink=items.any{it.kind=="ink"};val smart=items.any{ObjectActions.canSmart(it)}
+        if(smartBarOpen){
+            // "Back" points toward the reading start: right in Persian, left in English.
+            action(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"next" else "menu_back",tr("Back","بازگشت")){smartBarOpen=false;refreshSelectionBar()}
+            if(smart){
+                action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
+                action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
+                action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
+                action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
+                action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
+            }
+            if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
+            positionSelectionBar();return
+        }
         val pdf=items.singleOrNull()?.takeIf{it.kind=="pdf"}
         if(pdf!=null){
-            icon("previous"){if(pdf.pdfPage>0)board.edit{it.pdfPage--}}
-            selectionBar.addView(button("${pdf.pdfPage+1} / ${pdf.pageCount}"){input(s("page_picker"),"${pdf.pdfPage+1}"){v->val n=v.toInt();require(n in 1..pdf.pageCount);board.edit{it.pdfPage=n-1}}})
-            icon("next"){if(pdf.pdfPage<pdf.pageCount-1)board.edit{it.pdfPage++}}
+            action("previous",tr("Previous","قبلی")){if(pdf.pdfPage>0)board.edit{it.pdfPage--}}
+            action("page_picker","${pdf.pdfPage+1} / ${pdf.pageCount}",s("page_picker")){input(s("page_picker"),"${pdf.pdfPage+1}"){v->val n=v.toInt();require(n in 1..pdf.pageCount);board.edit{it.pdfPage=n-1}}}
+            action("next",tr("Next","بعدی")){if(pdf.pdfPage<pdf.pageCount-1)board.edit{it.pdfPage++}}
         }
-        if(items.any{ObjectActions.canSmart(it)}){
-            icon("text",tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
-            icon("formula",tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
-            selectionBar.addView(this.icon("convert",tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())})
-            icon("graph",tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
-            icon("search",tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
-        }
-        if(items.singleOrNull()?.shape=="mindnode"){
-            val node=items.single()
-            icon("text",tr("Add text","افزودن متن")){textEditor(node)}
-        }
-        if(items.any{it.kind=="ink"})icon("shape",tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
-        items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)selectionBar.addView(this.icon("measure",s("measure")){measureShape(o)})}
-        if(items.any{ObjectActions.canColor(it)})icon("color"){colors()}
-        if(items.singleOrNull()?.kind in listOf("image","pdf"))icon("crop"){crop(items.single())}
-        icon("duplicate"){
+        if(smart||ink)action("smart",tr("Smart","هوشمند"),active=false){smartBarOpen=true;refreshSelectionBar()}
+        items.singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->action("text",tr("Add text","افزودن متن")){textEditor(node)}}
+        items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)action("measure",s("measure")){measureShape(o)}}
+        if(items.any{ObjectActions.canColor(it)})action("color",s("color")){colors()}
+        if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
+        action("duplicate",s("duplicate")){
             val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
             store.editMetadata{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
         }
-        icon("delete"){board.delete()}
-        icon("more",s("edit")){editSelection()}
+        action("delete",s("delete")){board.delete()}
+        action("more",tr("More","بیشتر"),s("edit")){editSelection()}
         positionSelectionBar()
     }
+    /** Above the selection (below it when there is no room), never under the dock or off screen. */
     private fun positionSelectionBar(){
         if(!::selectionHost.isInitialized||selectionHost.visibility!=View.VISIBLE||canvasHost.width<=0)return
         val bounds=board.selectionScreenBounds()?:return
         val a=IntArray(2);val b=IntArray(2);board.getLocationInWindow(a);canvasHost.getLocationInWindow(b);bounds.offset((a[0]-b[0]).toFloat(),(a[1]-b[1]).toFloat())
-        val maxWidth=(canvasHost.width-dp(96)).coerceAtLeast(dp(48))
-        selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.makeMeasureSpec(dp(56),View.MeasureSpec.EXACTLY))
-        val barWidth=selectionBar.measuredWidth.coerceIn(dp(48),maxWidth);val barHeight=dp(56)
-        val above=bounds.top-barHeight-dp(36);val y=if(above>=dp(12))above else bounds.bottom+dp(16)
+        var minLeft=dp(12);var maxRight=canvasHost.width-dp(12)
+        if(::toolDock.isInitialized&&toolDock.visibility==View.VISIBLE&&toolDock.width>0){
+            if(toolDock.left<canvasHost.width/2)minLeft=maxOf(minLeft,toolDock.right+dp(12))else maxRight=minOf(maxRight,toolDock.left-dp(12))
+        }
+        val maxWidth=(maxRight-minLeft).coerceAtLeast(dp(64))
+        selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.makeMeasureSpec(dp(72),View.MeasureSpec.AT_MOST))
+        val barWidth=selectionBar.measuredWidth.coerceIn(dp(64),maxWidth);val barHeight=selectionBar.measuredHeight.coerceAtLeast(dp(72))
+        val above=bounds.top-barHeight-dp(28);val y=if(above>=dp(12))above else bounds.bottom+dp(20)
         (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{
             width=barWidth;height=barHeight;gravity=Gravity.TOP or Gravity.LEFT
-            leftMargin=(bounds.centerX()-barWidth/2).toInt().coerceIn(dp(78),(canvasHost.width-barWidth-dp(12)).coerceAtLeast(dp(78)))
+            leftMargin=(bounds.centerX()-barWidth/2).toInt().coerceIn(minLeft,(maxRight-barWidth).coerceAtLeast(minLeft))
             topMargin=y.toInt().coerceIn(dp(12),(canvasHost.height-barHeight-dp(84)).coerceAtLeast(dp(12)))
         };selectionHost.requestLayout()
     }
@@ -2153,6 +2171,7 @@ class MainActivity : Activity() {
 
     override fun dispatchTouchEvent(event:MotionEvent):Boolean {
         lastUserTouch=SystemClock.uptimeMillis()
+        if(event.actionMasked==MotionEvent.ACTION_DOWN && ::toolDock.isInitialized)toolDock.touchedAt(event.rawX,event.rawY)
         return super.dispatchTouchEvent(event)
     }
 
