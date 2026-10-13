@@ -8,7 +8,7 @@ The complete Apache 2.0 text and NanoHTTPD license are in `docs/licenses`. Build
 
 [ML Kit terms and privacy](https://developers.google.com/ml-kit/terms)
 
-The packaged lab.html and arcade.html are adapted from the two HTML reference documents supplied by the user for this project. Their authorship and distribution rights remain with their respective rights holders; no blanket open-source license is asserted for those documents. Changes include local packaging, branding, navigation, accessibility and selected runtime/scientific fixes. Bundled Latin ML Kit OCR has Google SDK/model terms, not an open-source model license.
+The native labs and games were derived from two HTML reference documents supplied by the user for this project; the HTML files themselves are no longer packaged. Bundled Latin ML Kit OCR has Google SDK/model terms, not an open-source model license.
 
 Application icons are generated from Phosphor Icons 2.1.1 (Bold and Fill weights) by `scripts/generate-icons.py`, under the MIT license (`docs/licenses/Phosphor-MIT.txt`). The protractor glyph (`vura_protractor`) is a project-specific addition in the same style.
 
