@@ -109,15 +109,21 @@ class ToolDock(
         fun wrap()=LinearLayout.LayoutParams(-2,-2)
         if(presentation){
             if(columns==1){(penButtons+eraser).forEach{column.addView(it,wrap())};column.addView(divider());column.addView(undo,wrap())}
-            else listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(undo)).forEach{pair->column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
+            else listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(undo)).forEach{pair->column.addView(pairRow(pair),wrap())}
         }else if(columns==1){
             (penButtons+listOf(eraser,select,recentButton)+pinButtons+add).forEach{column.addView(it,wrap())}
             column.addView(divider());column.addView(undo,wrap());column.addView(redo,wrap());column.addView(divider());column.addView(swapButton,wrap())
         }else{
             // Pairs that belong together: two pens, highlighter+eraser, select+recent, Add+side switch, then Undo+Redo.
-            val rows=listOfNotNull(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(select,recentButton),pinButtons.takeIf{it.isNotEmpty()},listOf(add,swapButton),listOf(undo,redo))
-            rows.forEachIndexed{i,pair->if(i==rows.lastIndex)column.addView(divider().apply{(layoutParams as LinearLayout.LayoutParams).width=context.dp(buttonDp*2-16)});column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
+            // Pins, Add and the side switch fill pairs in order, so an odd count never leaves a button in the middle.
+            val rows=listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(select,recentButton))+(pinButtons+listOf(add,swapButton)).chunked(2)+listOf(listOf(undo,redo))
+            rows.forEachIndexed{i,pair->if(i==rows.lastIndex)column.addView(divider().apply{(layoutParams as LinearLayout.LayoutParams).width=context.dp(buttonDp*2-16)});column.addView(pairRow(pair),wrap())}
         }
+    }
+    /** Two buttons side by side; a lone button keeps the start column (an empty cell holds the other), never the middle. */
+    private fun pairRow(pair:List<View>)=context.row().apply{
+        pair.forEach{addView(it,LinearLayout.LayoutParams(-2,-2))}
+        if(pair.size==1)addView(View(context),LinearLayout.LayoutParams(context.dp(buttonDp),context.dp(buttonDp)))
     }
     /** Keep the dock inside the middle of the side, whatever the density or UI size. */
     private fun fit(height:Int){
