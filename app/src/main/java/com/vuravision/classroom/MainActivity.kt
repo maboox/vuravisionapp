@@ -457,8 +457,12 @@ class MainActivity : Activity() {
     }
     private fun splitSettings(){
         if(board!==whiteboard){pdfMenu();return}
-        navigationBuilder(tr("Split board","تقسیم تخته"))
-            .setSingleChoiceItems(arrayOf(tr("One canvas","یک بخش"),tr("Two panels","دو بخش"),tr("Three panels","سه بخش"),tr("Four panels","چهار بخش")),store.page.visiblePaneCount-1){d,index->board.split(index+1);d.dismiss();refreshSplitControls()}.show().also{shown(it)}
+        // Beside the dock like other tool sheets; four side-by-side choices instead of a radio list in the middle of the board.
+        val c=column().apply{pad(16)}
+        lateinit var d:AlertDialog
+        c.addView(segmented(listOf("1" to "1","2" to "2","3" to "3","4" to "4"),store.page.visiblePaneCount.toString()){n->board.split(n.toInt());refreshSplitControls();d.dismiss()})
+        c.addView(label(tr("Each panel has its own pen, background and Undo","هر بخش قلم، پس‌زمینه و بازگردانی خودش را دارد"),13f,MUTED))
+        d=toolSheet(tr("Split board","تقسیم تخته"),c)
     }
     private fun refreshSplitControls(){
         closePaneBar()
@@ -604,7 +608,7 @@ class MainActivity : Activity() {
             if(page.pattern(paneIndex)=="dark")pane.pattern="plain"
             pane.background=color
         }}
-        dialog(tr("Background · page ${store.lesson.current+1}","پس‌زمینه · صفحهٔ ${store.lesson.current+1}"),ScrollView(this).apply{addView(c)})
+        toolSheet(tr("Background · page ${store.lesson.current+1}","پس‌زمینه · صفحهٔ ${store.lesson.current+1}"),ScrollView(this).apply{addView(c)})
     }
     private fun slider(c:LinearLayout,name:String,value:Float,maxValue:Int=40,undoable:Boolean=false,changed:(Float)->Unit){
         val title=label("$name · ${value.toInt()}",15f,NAVY,true);title.setPadding(dp(4),dp(18),dp(4),dp(8));c.addView(title)
@@ -630,7 +634,7 @@ class MainActivity : Activity() {
         palette(c,board.fillColor?:board.penColor){board.fillColor=it;board.tool="fill";board.clearSelection();refreshDock()}
         slider(c,tr("Fill opacity","کدری رنگ داخل"),board.fillAlpha/255f*100,100){board.fillAlpha=(it/100*255).toInt()}
         c.addView(button(tr("No fill","بدون رنگ داخل")){board.fillColor=null;board.tool="fill";board.clearSelection();refreshDock()})
-        val d=dialog(s("fill"),c)
+        val d=toolSheet(s("fill"),c)
         c.addView(button(tr("Use bucket","استفاده از سطل رنگ"),true){board.tool="fill";board.clearSelection();refreshDock();d.dismiss()})
     }
     private fun newBoardPage(previous:Page?):Page {
@@ -732,7 +736,7 @@ class MainActivity : Activity() {
             "undo"->board.undo();"redo"->board.redo();"clear_page"->clearPageNow()
             "pen","erase","select","pan"->{board.tool=key;board.clearSelection();refreshDock()}
             "shape"->shapes();"fill"->fillSettings()
-            "color"->{val c=column().apply{pad(12)};val d=dialog(s("color"),c);val pane=store.page.panes[board.activePane];palette(c,if(store.page.visiblePaneCount>1)pane.color else board.inkColor){color->if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=color}else board.inkColor=color;savePens();d.dismiss()}}
+            "color"->{val c=column().apply{pad(12)};val d=toolSheet(s("color"),c);val pane=store.page.panes[board.activePane];palette(c,if(store.page.visiblePaneCount>1)pane.color else board.inkColor){color->if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=color}else board.inkColor=color;savePens();d.dismiss()}}
             "thicker","thinner"->{val delta=if(key=="thicker")2 else -2;if(store.page.visiblePaneCount>1){val pane=store.page.panes[board.activePane];store.editMetadata{pane.penWidth=(pane.penWidth+delta).coerceIn(1f,80f)}}else board.inkWidth=(board.inkWidth+delta).coerceIn(1f,80f);savePens()}
             "new_page"->addPage();"new_layer"->{if(store.page.layers.size<100)store.editMetadata{val layer=Layer(name=tr("Layer ","لایهٔ ")+(store.page.layers.size+1));store.page.layers.add(layer);store.page.activeLayerId=layer.id}}
             "layers"->layers();"pages"->pages();"background"->backgroundSettings();"fit"->board.fit()
@@ -940,7 +944,7 @@ class MainActivity : Activity() {
     }
 
     private fun shapes() {
-        val c=column().apply{pad(12)};val d=dialog(s("shape"),ScrollView(this).apply{addView(c)})
+        val c=column().apply{pad(12)};val d=toolSheet(s("shape"),ScrollView(this).apply{addView(c)})
         c.addView(button(tr("Automatic shape recognition","تشخیص خودکار شکل")){board.tool="smart";board.smartMode="shape";board.clearSelection();refreshDock();d.dismiss()})
         Shapes.keys.chunked(4).forEach{chunk->val r=row();chunk.forEach{key->
             val cell=column().apply{gravity=Gravity.CENTER;pad(5);background=rounded(PAPER,dp(10).toFloat())}
@@ -1261,32 +1265,6 @@ class MainActivity : Activity() {
             else{applyColor(color);refreshSelectionBar()}
         }
         dialog(tr("Color","رنگ"),ScrollView(this).apply{addView(c)})
-    }
-
-    private fun width() {
-        val c = column().apply { pad(20) }
-        val read = label("${board.inkWidth.toInt()}")
-        val seek =
-            SeekBar(this).apply {
-                max = 19
-                progress = board.inkWidth.toInt() - 1
-                setOnSeekBarChangeListener(
-                    object : SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(s: SeekBar?, p: Int, u: Boolean) {
-                            board.inkWidth = p + 1f
-                            read.text = "${p+1}"
-                        }
-
-                        override fun onStartTrackingTouch(s: SeekBar?) {}
-
-                        override fun onStopTrackingTouch(s: SeekBar?) {}
-                    }
-                )
-            }
-        c.addView(read)
-        c.addView(seek)
-        c.addView(button(s("apply")) { board.edit { it.width = board.inkWidth } })
-        dialog(s("width"), c)
     }
 
     private fun insert() {
@@ -1929,7 +1907,7 @@ class MainActivity : Activity() {
         val keys=listOf("auto","offline","en-US","fa")
         val source=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,listOf(tr("Auto · English / Persian","خودکار · انگلیسی / فارسی"),tr("Offline Latin","لاتین آفلاین"),tr("English handwriting","دست‌خط انگلیسی"),tr("Persian handwriting","دست‌خط فارسی")));setSelection(keys.indexOf(smartSource).coerceAtLeast(0))};c.addView(source)
         val review=Switch(this).apply{text=tr("Review before applying","بررسی نتیجه قبل از اعمال");isChecked=prefs.getBoolean("smartReview",false)};c.addView(review)
-        val d=dialog(s("smart"),c)
+        val d=toolSheet(s("smart"),c)
         d.setOnDismissListener{smartSource=keys[source.selectedItemPosition];prefs.edit().putString("smartSource",smartSource).putBoolean("smartReview",review.isChecked).apply()}
         c.addView(button(s("models")){d.dismiss();models()})
         c.addView(infoTitle(tr("Information","اطلاعات"),tr("Auto uses installed handwriting models and falls back to bundled Latin OCR. Install Persian and English models below when needed.","حالت خودکار از مدل‌های دست‌نویس نصب‌شده استفاده می‌کند و در غیر این صورت سراغ تشخیص لاتین همراه برنامه می‌رود. مدل‌های فارسی و انگلیسی را در صورت نیاز نصب کنید.")))
@@ -2299,17 +2277,6 @@ class MainActivity : Activity() {
         dialog("Maboox",c)
     }
 
-    private fun classroomTools() {
-        val keys=listOf("timer","stopwatch","dice","scoreboard")+GeometryTools.keys+listOf("mind_map","coordinates","periodic","fill")
-        choices(s("tools"),keys){i->val key=keys[i];when{
-            key=="mind_map"->mindNode(null)
-            key=="coordinates"->board.insert(Item(kind="graph",text="",w=560f,h=400f))
-            key=="periodic"->PeriodicTable.show(this){board.insert(it)}
-            key=="fill"->fillSettings()
-            key in GeometryTools.keys->board.insert(Item(kind="shape",shape=key,w=if(key=="compass")300f else 360f,h=when(key){"ruler"->64f;"set_square","protractor"->180f;else->300f},color=board.penColor,geometryVersion=1,geometryAngle=if(key=="compass")-60f else 45f))
-            else->floatingTools.open(key)
-        }}
-    }
     private fun mindNode(parent:Item?,sibling:Boolean=false){
         if(parent!=null&&(parent.locked||!store.page.editable(parent)))return
         if(parent==null && !store.page.canDraw()){toast(tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"));return}

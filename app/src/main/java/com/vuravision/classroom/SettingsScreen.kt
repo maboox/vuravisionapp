@@ -15,7 +15,7 @@ import android.widget.ScrollView
 /** One entry on the settings screen. */
 sealed class SettingRow(val title:String) {
     /** Opens a page of its own (fonts, calibration, ...); [value] shows the current state under the title. */
-    class Page(title:String,val value:()->String="",val open:()->Unit):SettingRow(title)
+    class Page(title:String,val value:()->String={""},val open:()->Unit):SettingRow(title)
     /** Applies at once, no page in between. */
     class Toggle(title:String,val detail:String?=null,val get:()->Boolean,val set:(Boolean)->Unit):SettingRow(title)
     /** A few exclusive options shown side by side. */
