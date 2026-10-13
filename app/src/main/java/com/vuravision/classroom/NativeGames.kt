@@ -108,7 +108,12 @@ class ArcadeView(context:Context,val key:String):View(context){
  fun stop(){active=false;contacts.clear();previous.clear();pressed.fill(0)}
  fun restart(){scores.fill(0);round=0;startRound(true)}
  fun startRound(force:Boolean=false){if(active&&!force)return;if(scores.any{it>=5})scores.fill(0);round++;game=ArcadeRound(key).apply{prepare()};progress.fill(0);choices.fill(-1);used.forEach{it.clear()};opened.forEach{it.clear()};flipAt.fill(0);measure.fill(Double.NaN);pressed.fill(0);cells.fill(-1);turn=0;message="";ended=false;active=true;start=clock.now();last=start;readyDelay=random.nextLong(1700,4300);ballX=.5;ballY=.5;ballVX=if(random.nextBoolean()).3 else -.3;ballVY=.2;paddles.fill(.5);invalidate()}
- private fun finish(winner:Int){if(!active)return;active=false;ended=true;resultWinner=winner;if(winner>=0)scores[winner]++;message=resultMessage(winner);invalidate()}
+ private val fx=GameFx()
+ /** Every round ends here, so feedback lives here too: a sound, a green flash for the winner, confetti for the match. */
+ private fun finish(winner:Int){if(!active)return;active=false;ended=true;resultWinner=winner;if(winner>=0)scores[winner]++;message=resultMessage(winner)
+  val match=winner>=0&&scores[winner]>=5
+  fx.round(winner,panels(),match);Sounds.play(context,if(match)Sounds.Cue.WIN else if(winner<0)Sounds.Cue.TICK else Sounds.Cue.CORRECT)
+  invalidate()}
  private fun bothMeasured(){if(measure.all{it.isFinite()})finish(if(abs(measure[0]-measure[1])<.001)-1 else if(measure[0]<measure[1])0 else 1)}
  private fun panels():List<RectF> = if(face || width<height)listOf(RectF(8f,70f,width-8f,height/2f),RectF(8f,height/2f+8,width-8f,height-8f))else listOf(RectF(8f,70f,width/2f-4,height-8f),RectF(width/2f+4,70f,width-8f,height-8f))
  private fun local(x:Float,y:Float,player:Int):PointF{
@@ -142,13 +147,15 @@ class ArcadeView(context:Context,val key:String):View(context){
   }
   last=now
   text(c,"${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round",width/2f,42f,28f)
-  if(key in setOf("ttt","c4")){drawBoard(c);return}
-  if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);if(active&&!clock.paused&&isShown)postInvalidateOnAnimation();return}
-  panels().forEachIndexed{player,r->c.save();c.clipRect(r);rect(c,r,if(player==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());
+  if(key in setOf("ttt","c4")){drawBoard(c);fx.confetti(c,height);if(fx.busy&&isAttachedToWindow)postInvalidateOnAnimation();return}
+  if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);fx.confetti(c,height);if((active&&!clock.paused||fx.busy)&&isShown)postInvalidateOnAnimation();return}
+  panels().forEachIndexed{player,r->c.save();c.clipRect(r);c.translate(fx.shake(player),0f);rect(c,r,if(player==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());
    val scale=min(r.width()/500f,r.height()/600f).coerceAtLeast(.001f)
    c.translate(r.left+(r.width()-500f*scale)/2,r.top+(r.height()-600f*scale)/2)
    if(face&&player==0){c.translate(500f*scale,600f*scale);c.rotate(180f)}
-   c.scale(scale,scale);drawPanel(c,player,now,elapsed);c.restore()}
+   c.scale(scale,scale);drawPanel(c,player,now,elapsed);c.restore();fx.flash(c,player,r)}
+  fx.confetti(c,height)
+  if(fx.busy&&isAttachedToWindow&&isShown)postInvalidateOnAnimation()
   val animating=key in timed || (key in memory&&elapsed<2.5) || key in setOf("reaction","draw","potato","timing","balloon") || (key=="pairs"&&opened.any{it.size==2})
   if(active&&!clock.paused&&isAttachedToWindow&&isShown&&animating)postInvalidateOnAnimation()
  }

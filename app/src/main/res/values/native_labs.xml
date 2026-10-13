@@ -44,7 +44,7 @@
 <string name="native_galton">Galton board</string>
 <string name="ex_native_galton">Adding many small random events always gives the normal (bell) curve, whatever each event looks like. That is why heights and measurement errors are bell-shaped.</string>
 <string name="native_coins">Law of large numbers</string>
-<string name="ex_native_coins">After a few tosses the share of heads may be 80% or 20%; with more tosses it settles near 50%. Casinos and insurers rely on exactly this law!</string>
+<string name="ex_native_coins" formatted="false">After a few tosses the share of heads may be 80% or 20%; with more tosses it settles near 50%. Casinos and insurers rely on exactly this law!</string>
 <string name="native_dice">Sum of two dice</string>
 <string name="ex_native_dice">A sum of 7 has six combinations (1+6, 2+5, …) but a sum of 2 only one (1+1), so the distribution is a triangle. Counting cases is the basis of probability, and the secret of backgammon!</string>
 <string name="native_montecarlo">Estimating π</string>
@@ -94,11 +94,11 @@
 <string name="native_monty">Monty Hall</string>
 <string name="ex_native_monty">Your first pick is right only ⅓ of the time, so ⅔ of the time the prize is elsewhere. When the host opens an empty door, that ⅔ moves to the remaining door. Switch and double your chances!</string>
 <string name="native_birthday">Birthday paradox</string>
-<string name="ex_native_birthday">In a group of 23 people, the chance that two share a birthday is over 50%! The number of pairs grows fast: 23 people make 253 pairs. Our intuition is weak against combinatorial growth.</string>
+<string name="ex_native_birthday" formatted="false">In a group of 23 people, the chance that two share a birthday is over 50%! The number of pairs grows fast: 23 people make 253 pairs. Our intuition is weak against combinatorial growth.</string>
 <string name="native_bayes">Medical test and Bayes</string>
 <string name="ex_native_bayes">When a disease is rare, most positive results are false positives! Bayes: P(sick | positive) = TP / (TP + FP). Each dot is one person in 1,000; compare the dark red dots with the orange ones.</string>
 <string name="native_benford">Benford\'s law</string>
-<string name="ex_native_benford">In much real data (city populations, bills, river lengths) the first digit is d with probability log₁₀(1 + 1/d): about 30% start with 1! Auditors catch fraud this way, because made-up numbers don\'t follow it. Uniform random data doesn\'t either. Try it!</string>
+<string name="ex_native_benford" formatted="false">In much real data (city populations, bills, river lengths) the first digit is d with probability log₁₀(1 + 1/d): about 30% start with 1! Auditors catch fraud this way, because made-up numbers don\'t follow it. Uniform random data doesn\'t either. Try it!</string>
 <string name="native_median">Mean or median?</string>
 <string name="ex_native_median">One billionaire walking into a café sends the mean income sky-high, but the median barely moves. That is why income and house prices are reported as medians. Drag the points and see the difference!</string>
 <string name="native_streaks">Lucky streaks</string>

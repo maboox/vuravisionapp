@@ -2078,6 +2078,7 @@ class MainActivity : Activity() {
                 page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
             )),
             SettingsCategory("class",tr("Class","کلاس"),"users",listOf(
+                SettingRow.Toggle(tr("Game sounds","صدای بازی‌ها"),tr("Short sounds for right answers and winners","صدای کوتاه برای پاسخ درست و برنده"),{Sounds.enabled(this)}){prefs.edit().putBoolean("gameSounds",it).apply()},
                 page(s("device_profile"),{DeviceProfiles.load(this).name}){roomUi?.profile(menuReturn)},
                 page(s("shared_room"),{tr("Share this board with devices on the same network","اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
             )),
