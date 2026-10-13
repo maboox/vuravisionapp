@@ -95,7 +95,7 @@ class VoiceUiTest {
             views(decor).filterIsInstance<WorkspaceIcon>().forEach{control->
                 val rect=Rect();if(control.getGlobalVisibleRect(rect))assertFalse("Assistant overlaps a drawing control",Rect.intersects(voiceRect,rect))
             }
-            val focus=views(decor).first{it.contentDescription?.toString()?.let{description->description.contains("Hide / show toolbars") || description.contains("پنهان / نمایان کردن ابزارها")}==true}
+            val focus=views(decor).first{it.contentDescription?.toString()?.let{description->description.contains("Presentation mode") || description.contains("حالت ارائه")}==true}
             focus.performClick();assertTrue(voice.isShown)
             voice.performClick();val dialog=ShadowDialog.getLatestDialog()
             capture(dialog.window!!.decorView,"voice-connection-$language",1000,900)

@@ -37,7 +37,7 @@ class StudioUiTest {
     @Test fun settingsExposePieAndCalibrationWithSelectionInItsTool(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{assertFalse(a.getSharedPreferences("vura",0).getBoolean("pieEnabled",false));assertFalse(VoiceSettings.enabled(a))
-            call(a,"settings");val d=ShadowDialog.getLatestDialog();val keys=views(d.window!!.decorView).filterIsInstance<ListView>().single().adapter.let{(0 until it.count).map{n->it.getItem(n)}}
+            call(a,"settings");val screen=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen;val d=screen.dialog;val keys=screen.titles()
             assertTrue(keys.contains(a.s("calibration")));assertTrue(keys.contains(a.s("pie_settings")));assertFalse(keys.contains(a.s("selection_settings")))
             assertFalse(keys.contains(a.s("help")));assertTrue(keys.contains(a.s("voice_assistant")));d.dismiss()
             call(a,"eraserSettings");val e=ShadowDialog.getLatestDialog();assertFalse(views(e.window!!.decorView).filterIsInstance<Button>().any{it.text.toString().contains("Calibrate")});e.dismiss()

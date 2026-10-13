@@ -69,6 +69,14 @@ class UiScenarioTest {
         // Bottom bars (pages, main menu) are obstacles too: neither the dock nor any popup may cover them.
         val bars=listOf(R.id.page_bar,R.id.main_bar).mapNotNull{a.findViewById<View>(it)?.takeIf{v->v.isShown}}.map{rect(it)}
         bars.forEach{assertFalse("$state: dock overlaps a bottom bar $it / $dr",Rect.intersects(it,dr))}
+        // The selection bar never covers the rotation handle (28dp above the selection) or the resize handle (bottom corner).
+        a.findViewById<View>(R.id.selection_toolbar)?.takeIf{it.isShown}?.let{bar->a.board.selectionScreenBounds()?.let{b->
+            val p=IntArray(2);a.board.getLocationInWindow(p);val d=a.resources.displayMetrics.density
+            val rotate=Rect((p[0]+b.centerX()-23*d).toInt(),(p[1]+b.top-51*d).toInt(),(p[0]+b.centerX()+23*d).toInt(),(p[1]+b.top-5*d).toInt())
+            val resize=Rect((p[0]+b.right-23*d).toInt(),(p[1]+b.bottom-23*d).toInt(),(p[0]+b.right+23*d).toInt(),(p[1]+b.bottom+23*d).toInt())
+            assertFalse("$state: selection bar ${rect(bar)} covers the rotation handle $rotate",Rect.intersects(rect(bar),rotate))
+            assertFalse("$state: selection bar ${rect(bar)} covers the resize handle $resize",Rect.intersects(rect(bar),resize))
+        }}
         others.forEach{o->val r=rect(o);val name=if(o.id!=View.NO_ID)a.resources.getResourceEntryName(o.id)else "popup";assertTrue("$state: $name off screen $r",area.contains(r));assertFalse("$state: $name overlaps the dock $r / $dr",Rect.intersects(r,dr))
             bars.forEach{assertFalse("$state: $name overlaps a bottom bar $r / $it",Rect.intersects(r,it))}}
     }
@@ -97,6 +105,19 @@ class UiScenarioTest {
             // Add panel.
             views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
             assertNotNull("$tag: add panel",a.findViewById<View>(R.id.add_panel));shot(a,"$tag-3-add-panel");checkChrome(a,"$tag add panel")
+            // Search finds a tool by part of its name, in this language.
+            val search=views(a.findViewById(R.id.add_panel)).filterIsInstance<EditText>().single()
+            search.setText(a.s("protractor").take(4));settle(a)
+            assertTrue("$tag: search did not find the protractor",views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().any{it.key=="protractor"})
+            shot(a,"$tag-3b-search");checkChrome(a,"$tag search")
+            search.setText("zzzz");settle(a);assertTrue("$tag: no 'nothing found'",views(a.findViewById(R.id.add_panel)).filterIsInstance<TextView>().any{it.text==a.tr("Nothing found","چیزی پیدا نشد")})
+            search.setText("");settle(a)
+            // Long press pins a tool to the dock; again unpins it.
+            views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first{it.key=="ruler"}.performLongClick();settle(a)
+            assertTrue("$tag: ruler not pinned",views(dock(a)).filterIsInstance<WorkspaceIcon>().any{it.key=="ruler"})
+            shot(a,"$tag-3c-pinned");checkChrome(a,"$tag pinned")
+            views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first{it.key=="ruler"}.performLongClick();settle(a)
+            assertFalse("$tag: ruler not unpinned",views(dock(a)).filterIsInstance<WorkspaceIcon>().any{it.key=="ruler"})
             views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
 
             // Selection bar, its smart mode, and a selection right next to the dock.
@@ -106,6 +127,20 @@ class UiScenarioTest {
             shot(a,"$tag-4-selection");checkChrome(a,"$tag selection")
             views(bar).filterIsInstance<ActionIcon>().first{it.symbol=="smart"}.performClick();settle(a)
             shot(a,"$tag-5-smart");checkChrome(a,"$tag smart")
+            // Color opens inside the bar (like Smart), not as a window; a tap recolors at once.
+            views(bar).filterIsInstance<ActionIcon>().first{it.contentDescription==a.tr("Back","بازگشت")}.performClick();settle(a)
+            views(bar).filterIsInstance<ActionIcon>().first{it.symbol=="color"}.performClick();settle(a)
+            assertNull("$tag: color opened a window",org.robolectric.shadows.ShadowDialog.getLatestDialog()?.takeIf{it.isShowing})
+            val swatches=views(bar).filterIsInstance<InkStrip.Swatch>().filter{it.color!=null}
+            assertTrue("$tag: color choices in the bar",swatches.size>=6)
+            swatches.first{it.color==InkStrip.colors[1]}.performClick();settle(a)
+            assertEquals("$tag: color not applied",InkStrip.colors[1],ink.color)
+            shot(a,"$tag-5b-color");checkChrome(a,"$tag color")
+            views(bar).filterIsInstance<ActionIcon>().first{it.contentDescription==a.tr("Back","بازگشت")}.performClick();settle(a)
+            views(bar).filterIsInstance<ActionIcon>().first{it.symbol=="more"}.performClick();settle(a)
+            assertNull("$tag: more opened a window",org.robolectric.shadows.ShadowDialog.getLatestDialog()?.takeIf{it.isShowing})
+            shot(a,"$tag-5c-more");checkChrome(a,"$tag more")
+            views(bar).filterIsInstance<ActionIcon>().first{it.contentDescription==a.tr("Back","بازگشت")}.performClick();settle(a)
             val dr=rect(dock(a));val board=rect(a.board);val at=a.board.world((dr.centerX()-board.left).toFloat(),(dr.centerY()-board.top).toFloat())
             a.store.editMetadata{ink.x=at.x-ink.w/2;ink.y=at.y-ink.h/2};a.board.onSelection();settle(a)
             shot(a,"$tag-6-selection-near-dock");checkChrome(a,"$tag selection near dock")
@@ -147,9 +182,17 @@ class UiScenarioTest {
         val ctl=open();val a=ctl.get()
         try{
             settle(a);val pens=views(dock(a)).filterIsInstance<WorkspaceIcon>().filter{it.key=="pen"}
-            pens[0].performClick();settle(a);a.board.penStyle="dashed";a.board.onSelection();settle(a)
-            pens[1].performClick();settle(a);assertEquals("second pen took the first pen's style","round",a.board.penStyle)
-            pens[0].performClick();settle(a);assertEquals("first pen lost its style","dashed",a.board.penStyle)
+            // Changed in pen settings, then the next pen tapped directly (no outside tap, no dock refresh in between).
+            pens[0].performClick();settle(a);a.board.penStyle="dashed";a.board.penOpacity=120;a.board.dashGap=20f
+            pens[1].performClick();settle(a)
+            assertEquals("second pen took the first pen's style","round",a.board.penStyle)
+            assertEquals("second pen took the first pen's opacity",255,a.board.penOpacity)
+            a.board.penOpacity=200;call(a,"savePens")
+            pens[0].performClick();settle(a)
+            assertEquals("first pen lost its style","dashed",a.board.penStyle)
+            assertEquals("first pen lost its opacity",120,a.board.penOpacity)
+            assertEquals("first pen lost its dash gap",20f,a.board.dashGap,.01f)
+            pens[1].performClick();settle(a);assertEquals("second pen lost its opacity",200,a.board.penOpacity)
         }finally{ctl.pause().stop().destroy()}
     }
 
@@ -175,6 +218,40 @@ class UiScenarioTest {
             }
         }finally{ctl.pause().stop().destroy()}
     }
+
+    /** Draws a dialog's window at the size it asked for, into build/qa (dialogs are not part of the activity's shot). */
+    private fun shotWindow(d:android.app.Dialog,name:String){
+        val m=context.resources.displayMetrics;val attrs=d.window!!.attributes;val decor=d.window!!.decorView
+        val w=if(attrs.width>0)attrs.width else m.widthPixels;val h=if(attrs.height>0)attrs.height else m.heightPixels
+        decor.measure(View.MeasureSpec.makeMeasureSpec(w,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(h,View.MeasureSpec.AT_MOST));decor.layout(0,0,decor.measuredWidth,decor.measuredHeight)
+        val b=Bitmap.createBitmap(decor.measuredWidth.coerceAtLeast(1),decor.measuredHeight.coerceAtLeast(1),Bitmap.Config.ARGB_8888)
+        try{Canvas(b).apply{drawColor(Color.DKGRAY);decor.draw(this)};val f=File("build/qa/scenario-$name.png");f.parentFile!!.mkdirs();f.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}
+    }
+    private fun settingsScreen(a:MainActivity)=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen
+    /** Device report: Settings → Smart assistant did nothing. Now every settings page must open, and Settings stays underneath. */
+    private fun settingsScenario(tag:String,language:String){
+        val ctl=open(language);val a=ctl.get()
+        try{
+            settle(a);call(a,"settings");idle()
+            val screen=settingsScreen(a);val m=context.resources.displayMetrics
+            val attrs=screen.dialog.window!!.attributes
+            assertTrue("$tag: settings wider than the screen",attrs.width in 1..m.widthPixels);assertTrue("$tag: settings taller than the screen",attrs.height in 1..m.heightPixels)
+            screen.categoryKeys().forEach{key->screen.showCategory(key);shotWindow(screen.dialog,"settings-$tag-$language-$key")}
+            for(title in screen.pages()){
+                if(title==a.s("cache"))continue
+                val before=org.robolectric.shadows.ShadowDialog.getLatestDialog()
+                screen.open(title);idle()
+                val d=org.robolectric.shadows.ShadowDialog.getLatestDialog()
+                assertTrue("$tag: '$title' opened nothing",d!==before&&d!==screen.dialog&&d.isShowing)
+                d.dismiss();idle()
+                assertTrue("$tag: settings closed after '$title'",screen.dialog.isShowing)
+            }
+            screen.dialog.dismiss()
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+    }
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun settingsPanelPersian()=settingsScenario("panel","fa")
+    @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun settingsPanelEnglish()=settingsScenario("panel","en")
+    @Test @Config(qualifiers="fa-w411dp-h891dp-port-xhdpi") fun settingsPhonePersian()=settingsScenario("phone","fa")
 
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun panel1080Persian()=run("fa","panel")
     @Test @Config(qualifiers="en-w1280dp-h720dp-land-hdpi") fun panel1080English()=run("en","panel")

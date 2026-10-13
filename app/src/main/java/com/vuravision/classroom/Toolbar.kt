@@ -8,8 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 
-/** One saved pen: ink or highlighter with its own color, width and line style (round, dashed, ...). */
-data class PenPreset(val highlight:Boolean,val color:Int,val width:Float,val style:String="round")
+/**
+ * One saved pen: ink or highlighter with its own color and width; ink pens also keep their own line style,
+ * opacity and dash pattern, so changing one pen never changes another.
+ */
+data class PenPreset(val highlight:Boolean,val color:Int,val width:Float,val style:String="round",val opacity:Int=255,val dashLength:Float=12f,val dashGap:Float=8f)
 
 /**
  * Side dock for large panels: three pen presets, eraser, select, the most recent inserted tool,
@@ -30,7 +33,8 @@ class ToolDock(
         /** Tools that can occupy the "recent" slot after being used from the Add panel. */
         val recentable=setOf("shape","text","sticky","mind_map","graph","coordinates","ruler","set_square","protractor","compass","timer","stopwatch","dice","scoreboard","periodic","image","pdf","smart","fill")
         fun presets(prefs:SharedPreferences)=defaults.mapIndexed{i,d->PenPreset(d.highlight,prefs.getInt("dockPen${i}Color",d.color),prefs.getFloat("dockPen${i}Width",d.width).coerceIn(.5f,80f),
-            prefs.getString("dockPen${i}Style",d.style)?.takeIf{it in PenStyles.keys}?:d.style)}
+            prefs.getString("dockPen${i}Style",d.style)?.takeIf{it in PenStyles.keys}?:d.style,prefs.getInt("dockPen${i}Opacity",d.opacity).coerceIn(10,255),
+            prefs.getFloat("dockPen${i}DashLength",d.dashLength).coerceIn(1f,80f),prefs.getFloat("dockPen${i}DashGap",d.dashGap).coerceIn(1f,80f))}
     }
     // Centered children: icons and dividers share one vertical axis whatever the button size.
     private val column=context.column().apply{gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6))}
@@ -42,17 +46,39 @@ class ToolDock(
     private val undo=icon("undo",context.s("undo")){board().undo()}
     private val redo=icon("redo",context.s("redo")){board().redo()}
     private val swapButton=icon("swap",context.tr("Move toolbar to the other side","انتقال نوار به سمت دیگر")){swap()}
-    private val strip=InkStrip(context,board,showTools=false,grid=true,more={stripShown=false;refresh();toolSettings("pen")}){savePreset();changed();refresh()}
+    private val strip=InkStrip(context,board,showTools=false,grid=true,more={stripShown=false;refresh();toolSettings("pen")}){saveActive();changed();refresh()}
     private val stripHost=FrameLayout(context).apply{addView(strip,FrameLayout.LayoutParams(-2,-2));background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(6).toFloat();setPadding(context.dp(10),context.dp(10),context.dp(10),context.dp(10));visibility=View.GONE;isClickable=true}
     private val handle=View(context).apply{
         background=rounded(OUTLINE_STRONG,context.dp(6).toFloat());contentDescription=context.tr("Bring the toolbar to this side","آوردن نوار ابزار به این سمت")
         isClickable=true;setOnClickListener{swap()}
     }
     private var addPanel:AddPanel?=null
+    /** Up to two tools the teacher pinned from the Add panel (long press), e.g. ruler for maths, text for literature. */
+    private var pinButtons=pins().map{key->icon(key,context.s(key)){perform(key)}}
+    private fun pins()=prefs.getString("dockPins","")!!.split(',').filter{it.isNotBlank()}.take(2)
+    /** Long press in the Add panel: pin, or unpin if already pinned. Returns true when the tool is now pinned. */
+    fun togglePin(key:String):Boolean{
+        val now=pins().toMutableList();val pinned=key !in now
+        if(pinned){now.add(key);while(now.size>2)now.removeAt(0)}else now.remove(key)
+        prefs.edit().putString("dockPins",now.joinToString(",")).apply()
+        pinButtons=now.map{k->icon(k,context.s(k)){perform(k)}};columns=0;arrange();fit(host.height);refresh();place()
+        // The dock may have grown (or gone to two columns): reopen the Add panel beside its new edge.
+        if(addPanel!=null)post{post{if(addPanel!=null){closeAdd();toggleAdd()}}}
+        return pinned
+    }
     private var columns=1
     private var buttonDp=52
     private var stripShown=false
     var end=prefs.getBoolean("dockEnd",false)
+        private set
+    /**
+     * Vertical place on the side: "middle" (default), "top" or "bottom". On an 86" panel the middle puts the pens
+     * around 1.7 m; "bottom" brings them within reach of children and shorter teachers, "top" suits a raised panel.
+     */
+    var position=prefs.getString("dockPosition","middle")?.takeIf{it in listOf("top","middle","bottom")}?:"middle"
+        set(value){if(value==field||value !in listOf("top","middle","bottom"))return;field=value;prefs.edit().putString("dockPosition",value).apply();columns=0;fit(host.height);place()}
+    /** Presentation: only the three pens, eraser and Undo stay, so the class sees the board and the teacher can still write. */
+    var presentation=false
         private set
     /** The color/width popover, exposed for layout checks. */
     val inkPopup:View get()=stripHost
@@ -68,19 +94,28 @@ class ToolDock(
         host.addOnLayoutChangeListener{_,_,t,_,b,_,_,_,_->fit(b-t)}
         place();refresh()
     }
-    private fun buttons()=penButtons+listOf(eraser,select,recentButton,add,undo,redo,swapButton)
+    private fun buttons()=if(presentation)penButtons+listOf(eraser,undo) else penButtons+listOf(eraser,select,recentButton)+pinButtons+listOf(add,undo,redo,swapButton)
+    fun setPresentation(on:Boolean){
+        if(on==presentation)return
+        presentation=on;closeAdd();stripShown=false;columns=0
+        handle.visibility=if(on)View.GONE else View.VISIBLE
+        arrange();fit(host.height);refresh();place()
+    }
     /** One column on tall panels; two columns when one would exceed the space beside the canvas. */
     private fun arrange(){
         column.removeAllViews()
         buttons().forEach{(it.parent as? ViewGroup)?.removeView(it);it.sizeDp=buttonDp}
         // Buttons keep their own square size; LinearLayout's default would stretch them across the panel.
         fun wrap()=LinearLayout.LayoutParams(-2,-2)
-        if(columns==1){
-            (penButtons+listOf(eraser,select,recentButton,add)).forEach{column.addView(it,wrap())}
+        if(presentation){
+            if(columns==1){(penButtons+eraser).forEach{column.addView(it,wrap())};column.addView(divider());column.addView(undo,wrap())}
+            else listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(undo)).forEach{pair->column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
+        }else if(columns==1){
+            (penButtons+listOf(eraser,select,recentButton)+pinButtons+add).forEach{column.addView(it,wrap())}
             column.addView(divider());column.addView(undo,wrap());column.addView(redo,wrap());column.addView(divider());column.addView(swapButton,wrap())
         }else{
             // Pairs that belong together: two pens, highlighter+eraser, select+recent, Add+side switch, then Undo+Redo.
-            val rows=listOf(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(select,recentButton),listOf(add,swapButton),listOf(undo,redo))
+            val rows=listOfNotNull(listOf(penButtons[0],penButtons[1]),listOf(penButtons[2],eraser),listOf(select,recentButton),pinButtons.takeIf{it.isNotEmpty()},listOf(add,swapButton),listOf(undo,redo))
             rows.forEachIndexed{i,pair->if(i==rows.lastIndex)column.addView(divider().apply{(layoutParams as LinearLayout.LayoutParams).width=context.dp(buttonDp*2-16)});column.addView(context.row().apply{pair.forEach{addView(it,wrap())}},wrap())}
         }
     }
@@ -92,13 +127,16 @@ class ToolDock(
         // Centered and capped at 72% of the height: one column on a 720dp (1080p) panel. Being centered,
         // it must also leave the bottom bars' height free at both ends.
         val reserved=(height-bottomObstacle())/px
-        val available=minOf(heightDp*.72f,heightDp-2*reserved-24)-16
+        // At the top or bottom it only has to stay above the bottom bars, not clear of them at both ends.
+        val available=minOf(heightDp*.72f,heightDp-(if(position=="middle")2 else 1)*reserved-24)-16
         // Overheads: 12dp padding plus 13dp per divider (two in one column, one in two columns).
         val single=(available-38)/buttons().size
         val (cols,size)=if(single>=44)1 to single.coerceAtMost(60f) else 2 to ((available-25)/((buttons().size+1)/2)).coerceIn(36f,56f)
         // Rebuild after the current layout pass; adding views inside it leaves them unmeasured.
         // Only a real change rebuilds (posting unconditionally would loop: place() requests another layout).
         if(cols!=columns || size.toInt()!=buttonDp)post{if(cols!=columns || size.toInt()!=buttonDp){columns=cols;buttonDp=size.toInt();arrange();place()}}
+        // At the bottom the dock sits on the bottom bars, which can move after a layout; follow them (only on change).
+        else if((layoutParams as? FrameLayout.LayoutParams)?.bottomMargin!=bottomMargin())post{place()}
     }
     private fun icon(key:String,title:String,action:()->Unit)=WorkspaceIcon(context,key,title,false,action).apply{sizeDp=52}
     // Dividers are as wide as the icon area (button minus its rounded padding), centered under the buttons.
@@ -111,9 +149,11 @@ class ToolDock(
         val b=board();val preset=presets(prefs)[i]
         val already=activePreset()==i && b.tool==(if(preset.highlight)"highlight" else "pen")
         if(already){stripShown=!stripShown;refresh();post{place()};return}
+        // Keep what was just changed on the pen being left (settings may still be open when the next pen is tapped).
+        saveActive()
         prefs.edit().putInt("dockPen",i).apply()
         b.tool=if(preset.highlight)"highlight" else "pen";b.clearSelection()
-        if(b.store.page.visiblePaneCount==1){if(preset.highlight){b.highlightColor=preset.color;b.highlightWidth=preset.width}else{b.penColor=preset.color;b.penWidth=preset.width;b.penStyle=preset.style}}
+        if(b.store.page.visiblePaneCount==1){if(preset.highlight){b.highlightColor=preset.color;b.highlightWidth=preset.width}else{b.penColor=preset.color;b.penWidth=preset.width;b.penStyle=preset.style;b.penOpacity=preset.opacity;b.dashLength=preset.dashLength;b.dashGap=preset.dashGap}}
         stripShown=true;changed();refresh();post{place()}
     }
     private fun tool(key:String){
@@ -128,11 +168,12 @@ class ToolDock(
         prefs.edit().putString("dockRecent",key).apply()
         recentButton=icon(key,context.s(key)){useRecent()};arrange();refresh()
     }
-    private fun savePreset(){
+    /** Stores the board's current ink into the active preset; called on every pen change, not only when the dock refreshes. */
+    fun saveActive(){
         val b=board();val i=activePreset();if(b.store.page.visiblePaneCount>1)return
-        val highlight=b.tool=="highlight";if(highlight!=defaults[i].highlight)return
+        val highlight=b.tool=="highlight";if(b.tool!="pen"&&!highlight || highlight!=defaults[i].highlight)return
         val edit=prefs.edit().putInt("dockPen${i}Color",if(highlight)b.highlightColor else b.penColor).putFloat("dockPen${i}Width",if(highlight)b.highlightWidth else b.penWidth)
-        if(!highlight)edit.putString("dockPen${i}Style",b.penStyle)
+        if(!highlight)edit.putString("dockPen${i}Style",b.penStyle).putInt("dockPen${i}Opacity",b.penOpacity).putFloat("dockPen${i}DashLength",b.dashLength).putFloat("dockPen${i}DashGap",b.dashGap)
         edit.apply()
     }
     private fun toggleAdd(){
@@ -140,7 +181,7 @@ class ToolDock(
         stripShown=false
         val gap=context.dp(12);val onRight=isLaidOut&&left+width/2>host.width/2
         val freeWidth=(if(!isLaidOut)host.width-2*gap else if(onRight)left-2*gap else host.width-right-2*gap).coerceAtLeast(context.dp(200))
-        addPanel=AddPanel(context,host,freeWidth,(bottomObstacle()-2*gap).coerceAtLeast(context.dp(200)),{closeAdd()}){key->closeAdd();used(key);perform(key)}.also{panel->
+        addPanel=AddPanel(context,host,freeWidth,(bottomObstacle()-2*gap).coerceAtLeast(context.dp(200)),{closeAdd()},{key->togglePin(key)}){key->closeAdd();used(key);perform(key)}.also{panel->
             panel.place{w->if(!isLaidOut)gap else if(onRight)(left-gap-w).coerceAtLeast(gap) else (right+gap)}
         }
         refresh()
@@ -155,11 +196,13 @@ class ToolDock(
         animate().translationX(0f).alpha(1f).setDuration(260).start()
     }
     // The strip and Add panel are placed from the dock's width; re-place them whenever it changes.
+    private fun bottomMargin()=if(position=="bottom"&&host.height>0)(host.height-bottomObstacle()+context.dp(12)).coerceAtLeast(context.dp(12)) else context.dp(12)
     /** Top of the highest bottom bar (page bar, main bar), or the canvas bottom. */
     fun bottomObstacle():Int=listOf(R.id.page_bar,R.id.main_bar).mapNotNull{host.findViewById<View>(it)}.filter{it.visibility==View.VISIBLE&&it.height>0}.minOfOrNull{it.top}?:host.height
     private fun place(){
         val side=if(end)Gravity.END else Gravity.START
-        (layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or side;setMargins(context.dp(12),context.dp(12),context.dp(12),context.dp(12))}
+        val vertical=when(position){"top"->Gravity.TOP;"bottom"->Gravity.BOTTOM;else->Gravity.CENTER_VERTICAL}
+        (layoutParams as FrameLayout.LayoutParams).apply{gravity=vertical or side;setMargins(context.dp(12),context.dp(12),context.dp(12),bottomMargin())}
         (handle.layoutParams as FrameLayout.LayoutParams).apply{gravity=Gravity.CENTER_VERTICAL or(if(end)Gravity.START else Gravity.END);setMargins(context.dp(3),0,context.dp(3),0)}
         placeStrip()
         requestLayout();handle.requestLayout();stripHost.requestLayout()
@@ -199,7 +242,7 @@ class ToolDock(
     }
     fun refresh(){
         // Changes made in full pen settings (style, color, width) belong to the active preset only.
-        if(board().tool==(if(defaults[activePreset()].highlight)"highlight" else "pen"))savePreset()
+        saveActive()
         val b=board();val editable=b.sessionCanEdit;val presets=presets(prefs);val active=activePreset()
         penButtons.forEachIndexed{i,button->
             val on=i==active && b.tool==(if(presets[i].highlight)"highlight" else "pen")
@@ -207,7 +250,7 @@ class ToolDock(
         }
         listOf(eraser to "erase",select to "select").forEach{(button,key)->if(button.active!=(b.tool==key))button.showActive(b.tool==key)}
         if(add.active!=(addPanel!=null))add.showActive(addPanel!=null)
-        (penButtons+listOf(eraser,select,recentButton,add)).forEach{it.isEnabled=editable;it.alpha=if(editable)1f else .35f}
+        (penButtons+listOf(eraser,select,recentButton,add)+pinButtons).forEach{it.isEnabled=editable;it.alpha=if(editable)1f else .35f}
         val inking=b.tool=="pen"||b.tool=="highlight"
         if(!inking)stripShown=false
         stripHost.visibility=if(stripShown && visibility==View.VISIBLE)View.VISIBLE else View.GONE
@@ -219,7 +262,8 @@ class ToolDock(
  * Everything that is not on the dock, grouped the way a teacher looks for it.
  * Columns follow the free width beside the dock (2-4); height stops above the bottom bars and scrolls.
  */
-class AddPanel(private val context:Context,private val host:FrameLayout,freeWidth:Int,private val maxHeight:Int,private val dismiss:()->Unit,private val pick:(String)->Unit) {
+class AddPanel(private val context:Context,private val host:FrameLayout,freeWidth:Int,private val maxHeight:Int,private val dismiss:()->Unit,
+               private val pin:(String)->Boolean={false},private val pick:(String)->Unit) {
     companion object {
         val groups=listOf(
             "board" to listOf("shape","text","sticky","mind_map","image","pdf","graph","coordinates"),
@@ -234,15 +278,48 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
         addView(panel);isVerticalScrollBarEnabled=true;id=R.id.add_panel
         background=rounded(SURFACE,context.dp(20).toFloat(),OUTLINE);elevation=context.dp(8).toFloat()
     }
+    private val columns=((freeWidth-context.dp(28))/context.dp(88)).coerceIn(2,4)
+    private val body=context.column()
+    /**
+     * Search (item 47): "where is the protractor?" is asked here, in the catalog, so the field sits on top of it.
+     * It finds every command the app has (not only these tiles), by its name in either language or its key.
+     */
+    private val search=EditText(context).apply{
+        hint=context.tr("Search tools: protractor, timer, layers…","جستجوی ابزار: نقاله، تایمر، لایه‌ها…");contentDescription=context.tr("Search tools","جستجوی ابزار")
+        isSingleLine=true;textSize=15f*context.uiScale();setTextColor(NAVY);setHintTextColor(MUTED);Fonts.bind(this,false)
+        background=rounded(SURFACE_VARIANT,context.dp(14).toFloat());setPadding(context.dp(14),0,context.dp(14),0)
+        imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+        addTextChangedListener(object:android.text.TextWatcher{
+            override fun beforeTextChanged(s:CharSequence?,a:Int,b:Int,c:Int){};override fun onTextChanged(s:CharSequence?,a:Int,b:Int,c:Int){}
+            override fun afterTextChanged(s:android.text.Editable?){show(s?.toString().orEmpty().trim())}
+        })
+    }
     init {
-        val columns=((freeWidth-context.dp(28))/context.dp(88)).coerceIn(2,4)
-        groups.forEach{(group,keys)->
-            panel.addView(context.label(title(group),15f,MUTED,true).apply{setPadding(context.dp(4),context.dp(8),context.dp(4),context.dp(4))})
-            val grid=GridLayout(context).apply{columnCount=columns}
-            keys.forEach{key->grid.addView(tile(key))}
-            panel.addView(grid)
-        }
+        panel.addView(search,LinearLayout.LayoutParams(-1,context.dp(44)).apply{bottomMargin=context.dp(4)})
+        panel.addView(body)
+        show("")
+        panel.addView(context.label(context.tr("Long-press a tool to pin it to the toolbar","برای سنجاق کردن ابزار به نوار، آن را نگه دارید"),12f,MUTED).apply{gravity=Gravity.CENTER;setPadding(context.dp(4),context.dp(10),context.dp(4),0)})
         host.addView(scrim,FrameLayout.LayoutParams(-1,-1))
+    }
+    /** Every searchable command: the tiles here first, then the rest of the app's commands. */
+    private fun searchable()=(groups.flatMap{it.second}+ShortcutCatalog.keys).distinct().filter{it !in listOf("insert","pen","erase","select","undo","redo")}
+    fun matches(query:String)=searchable().filter{key->listOf(label(key),key.replace('_',' ')).any{it.contains(query,ignoreCase=true)}}
+    private fun show(query:String){
+        body.removeAllViews()
+        if(query.isEmpty()){
+            groups.forEach{(group,keys)->
+                body.addView(context.label(title(group),15f,MUTED,true).apply{setPadding(context.dp(4),context.dp(8),context.dp(4),context.dp(4))})
+                val grid=GridLayout(context).apply{columnCount=columns}
+                keys.forEach{key->grid.addView(tile(key))}
+                body.addView(grid)
+            }
+            return
+        }
+        val found=matches(query)
+        if(found.isEmpty()){body.addView(context.label(context.tr("Nothing found","چیزی پیدا نشد"),14f,MUTED).apply{setPadding(context.dp(4),context.dp(16),context.dp(4),context.dp(16))});return}
+        val grid=GridLayout(context).apply{columnCount=columns}
+        found.forEach{key->grid.addView(tile(key))}
+        body.addView(grid)
     }
     /** Absolute placement next to the dock: [left] gets the measured width and returns the left edge. */
     fun place(left:(Int)->Int){
@@ -262,7 +339,8 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
     }
     private fun tile(key:String)=context.column().apply{
         gravity=Gravity.CENTER_HORIZONTAL;setPadding(context.dp(4),context.dp(4),context.dp(4),context.dp(6))
-        val icon=WorkspaceIcon(context,key,label(key)){pick(key)}.apply{sizeDp=56}
+        val icon=WorkspaceIcon(context,key,label(key)){pick(key)}.apply{sizeDp=56
+            setOnLongClickListener{val now=pin(key);Toast.makeText(context,if(now)context.tr("Pinned to the toolbar","به نوار ابزار سنجاق شد")else context.tr("Unpinned","از نوار برداشته شد"),Toast.LENGTH_SHORT).show();true}}
         addView(icon,LinearLayout.LayoutParams(-2,-2))
         // Two lines, shrinking to 10sp for a single long word (e.g. "Background") instead of clipping it.
         addView(context.label(label(key),13f,NAVY).apply{gravity=Gravity.CENTER;maxLines=2;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO

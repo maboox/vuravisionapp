@@ -111,18 +111,15 @@ class Studio114Test {
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{
             call(a,"menu");choose(ShadowDialog.getLatestDialog() as AlertDialog,a.s("settings"))
-            var d=ShadowDialog.getLatestDialog() as AlertDialog
-            assertTrue((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("pie_settings")})
-            assertFalse((0 until d.listView.adapter.count).any{d.listView.adapter.getItem(it)==a.s("selection_settings")})
-            choose(d,a.s("fonts"));d=ShadowDialog.getLatestDialog() as AlertDialog
+            val screen=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen
+            assertTrue(a.s("pie_settings") in screen.titles());assertFalse(a.s("selection_settings") in screen.titles())
+            screen.open(a.s("fonts"));var d=ShadowDialog.getLatestDialog() as AlertDialog
             val back=requireNotNull(d.findViewById<View>(R.id.menu_back_button));assertEquals(a.s("menu_back"),back.contentDescription.toString());back.performClick()
             // AlertDialog delivers button callbacks through the main message queue.
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             assertFalse("Back must close the font settings dialog",d.isShowing)
-            val settings=ShadowDialog.getLatestDialog() as AlertDialog
-            assertNotSame("Back must reopen the parent menu",d,settings)
-            assertTrue("The parent settings menu must be visible",settings.isShowing)
-            choose(settings,a.s("pie_settings"))
+            assertTrue("Settings must still be there underneath",screen.dialog.isShowing)
+            screen.open(a.s("pie_settings"))
             d=ShadowDialog.getLatestDialog() as AlertDialog;assertTrue(views(d.window!!.decorView).filterIsInstance<Switch>().any{!it.text.toString().contains("experimental")})
             d.dismiss()
         }finally{ctl.pause().stop().destroy()}
@@ -130,11 +127,13 @@ class Studio114Test {
     @Test fun imageSelectionHasCropAndDuplicateWithoutColorOrClipboardActions(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{
-            a.board.insert(Item(kind="image",asset="sample.png"));call(a,"editSelection")
-            val d=ShadowDialog.getLatestDialog() as AlertDialog;val labels=(0 until d.listView.adapter.count).map{d.listView.adapter.getItem(it)}
-            assertTrue(a.s("crop") in labels);assertTrue(a.s("duplicate") in labels)
-            assertFalse(a.s("copy") in labels);assertFalse(a.s("paste") in labels);assertFalse(a.s("color") in labels)
-            assertFalse("copy" in ShortcutCatalog.keys);assertFalse("paste" in ShortcutCatalog.keys);d.dismiss()
+            a.board.insert(Item(kind="image",asset="sample.png"))
+            fun labels()=views(a.window.decorView).filterIsInstance<ActionIcon>().map{it.contentDescription.toString()}
+            // Main selection bar plus its "More" content (shown in the bar, not in a separate window).
+            val main=labels();call(a,"editSelection");val all=main+labels()
+            assertTrue(a.s("crop") in main);assertTrue(a.s("duplicate") in main)
+            assertFalse(a.s("copy") in all);assertFalse(a.s("paste") in all);assertFalse(a.s("color") in all)
+            assertFalse("copy" in ShortcutCatalog.keys);assertFalse("paste" in ShortcutCatalog.keys)
         }finally{ctl.pause().stop().destroy()}
     }
     @Test

@@ -55,19 +55,23 @@ class InkStrip(context:Context,private val board:()->Board,showTools:Boolean=tru
         val sizes=if(b.tool=="highlight")highlightWidths else penWidths
         widths.forEachIndexed{i,w->w.chosen=kotlin.math.abs(sizes[i]-b.inkWidth)<.01f;w.ink=b.inkColor;w.invalidate()}
     }
-    private class Swatch(context:Context,val color:Int?,val size:Int?,action:()->Unit):View(context){
+    /** One color or width option; also used in the selection bar's color mode. */
+    class Swatch(context:Context,val color:Int?,val size:Int?,action:()->Unit):View(context){
         var chosen=false
         var ink=Color.BLACK
         private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
         init{isClickable=true;isFocusable=true;contentDescription=if(color!=null)context.tr("Ink color","رنگ قلم")else context.tr("Ink width","ضخامت قلم");setOnClickListener{action()}}
+        override fun onMeasure(w:Int,h:Int)=setMeasuredDimension(resolveSize(context.dp(44),w),resolveSize(context.dp(48),h))
         override fun onDraw(c:Canvas){
             val cx=width/2f;val cy=height/2f
             // The chosen option gets a navy ring: visible on every swatch color, including dark ink.
             if(chosen){paint.style=Paint.Style.STROKE;paint.strokeWidth=context.dp(2).toFloat();paint.color=NAVY;c.drawCircle(cx,cy,context.dp(19).toFloat(),paint)}
             paint.style=Paint.Style.FILL
-            if(color!=null){paint.color=color;c.drawCircle(cx,cy,context.dp(14).toFloat(),paint)}
+            if(color!=null){paint.color=color;c.drawCircle(cx,cy,context.dp(14).toFloat(),paint)
+                // White and pale colors get a thin outline, or they vanish on the white bar.
+                if(Color.luminance(color)>.8f){paint.style=Paint.Style.STROKE;paint.strokeWidth=context.dp(1).toFloat();paint.color=OUTLINE_STRONG;c.drawCircle(cx,cy,context.dp(14).toFloat(),paint)}}
             // Widths are previewed as dots of increasing size in the current ink color.
-            else{paint.color=ink;c.drawCircle(cx,cy,context.dp(3+4*(size?:0)).toFloat(),paint)}
+            else{paint.color=if(Color.luminance(ink)>.8f)NAVY else ink;c.drawCircle(cx,cy,context.dp(3+4*(size?:0)).toFloat(),paint)}
         }
     }
 }

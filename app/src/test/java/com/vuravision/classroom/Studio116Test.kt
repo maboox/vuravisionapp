@@ -89,16 +89,16 @@ class Studio116Test {
     @Test fun graphAndFixedStyleGuidesHaveNoColorOrSmartActions(){withActivity{a->
         for(o in listOf(Item(kind="graph"),Item(kind="shape",shape="ruler"),Item(kind="shape",shape="set_square"))){a.board.insert(o)
             assertFalse(views(a.window.decorView).filterIsInstance<ActionIcon>().any{it.symbol=="color"});call(a,"editSelection")
-            val list=(ShadowDialog.getLatestDialog() as AlertDialog).listView;val keys=(0 until list.adapter.count).map{list.adapter.getItem(it)}
+            // "More" opens in the selection bar itself, not in a separate list window.
+            val keys=views(a.window.decorView).filterIsInstance<ActionIcon>().map{it.contentDescription.toString()}
             assertFalse(keys.contains(a.s("color")));if(o.shape=="ruler"){assertTrue(keys.contains(a.s("draw_parallel")));assertFalse(keys.contains(a.s("draw_with_tool")));assertTrue(keys.contains(a.s("rotate")))}
-            ShadowDialog.getLatestDialog().dismiss()
         }
     }}
     @Test fun mindMapHasOnlyNamedBranchActionsAndNoSmartConversions(){withActivity{a->
         a.board.insert(Item(kind="sticky",shape="mindnode"));val icons=views(a.window.decorView).filterIsInstance<ActionIcon>()
         assertFalse(icons.any{it.symbol in listOf("formula","graph","convert","search","insert")});assertTrue(icons.any{it.symbol=="text"})
-        call(a,"editSelection");val list=(ShadowDialog.getLatestDialog() as AlertDialog).listView;val keys=(0 until list.adapter.count).map{list.adapter.getItem(it)}
-        assertTrue(keys.contains(a.s("add_child")));assertTrue(keys.contains(a.s("add_sibling")));assertFalse(keys.contains(a.s("smart")));ShadowDialog.getLatestDialog().dismiss()
+        call(a,"editSelection");val keys=views(a.window.decorView).filterIsInstance<ActionIcon>().map{it.contentDescription.toString()}
+        assertTrue(keys.contains(a.s("add_child")));assertTrue(keys.contains(a.s("add_sibling")));assertFalse(keys.contains(a.s("smart")))
     }}
     @Test fun connectedPointSegmentsFindTheirCrossingWithoutExtraVertices(){
         val vertices=listOf(PlotPoint(-2.0,-2.0),PlotPoint(2.0,2.0),PlotPoint(-2.0,2.0),PlotPoint(2.0,-2.0))

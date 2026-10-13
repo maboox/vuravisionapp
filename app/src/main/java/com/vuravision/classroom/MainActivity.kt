@@ -228,11 +228,14 @@ class MainActivity : Activity() {
         selectionHost=HorizontalScrollView(this).apply{id=R.id.selection_toolbar;isHorizontalScrollBarEnabled=false;addView(selectionBar);visibility=View.GONE
             background=rounded(SURFACE,dp(18).toFloat(),OUTLINE);elevation=dp(6).toFloat()}
         canvasHost.addView(selectionHost,FrameLayout.LayoutParams(-2,dp(72),Gravity.TOP or Gravity.LEFT))
-        val focus=icon("fullscreen",tr("Hide / show toolbars","پنهان / نمایان کردن ابزارها")){
-            focusMode=!focusMode
+        // Presentation mode: everything but a small pen bar (3 pens, eraser, Undo) fades away. Before, this hid every tool,
+        // so writing one word meant leaving the mode and entering it again.
+        lateinit var focus:WorkspaceIcon
+        focus=icon("fullscreen",tr("Presentation mode","حالت ارائه")){
+            focusMode=!focusMode;focus.showActive(focusMode)
             window.decorView.systemUiVisibility=if(focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
-            chrome.forEach{it.visibility=if(focusMode)View.GONE else View.VISIBLE}
-            toolDock.setChromeVisible(!focusMode)
+            chrome.forEach{if(it!==toolDock)it.visibility=if(focusMode)View.GONE else View.VISIBLE}
+            toolDock.setPresentation(focusMode)
             if(focusMode){closeSidePanel();selectionHost.visibility=View.GONE}else refreshSelectionBar()
             refreshSplitControls()
         }
@@ -314,34 +317,55 @@ class MainActivity : Activity() {
         }
         refreshDock()
     }
-    private var smartBarOpen=false
+    /** What the selection bar shows: its main actions, or one of them opened in place ("smart", "color", "more"). */
+    private var selectionBarMode="main"
     private var selectionBarKey=""
     /**
      * Bar above the selection: at most six labeled actions, chosen by what is selected.
-     * "Smart" swaps the bar to recognition/solve actions in place, so nothing opens elsewhere on the board.
+     * Smart, Color and More swap the bar's content in place (with Back) instead of opening a window elsewhere:
+     * the eye and hand stay on the object, and the board is not covered.
      * Hidden while the selection is being dragged; shown again at the new position on release.
      */
     private fun refreshSelectionBar(){
         if(!::selectionBar.isInitialized)return
         val items=board.chosen()
         selectionHost.visibility=if(items.isEmpty()||focusMode||board.isTransforming)View.GONE else View.VISIBLE
-        val key=items.joinToString{it.id};if(key!=selectionBarKey){selectionBarKey=key;smartBarOpen=false}
+        val key=items.joinToString{it.id};if(key!=selectionBarKey){selectionBarKey=key;selectionBarMode="main"}
         selectionBar.removeAllViews();if(items.isEmpty()||board.isTransforming)return
         val actions=mutableListOf<View>()
         fun action(symbol:String,label:String,title:String=label,active:Boolean=false,run:()->Unit){actions.add(ActionIcon(this,symbol,title,label,active,run))}
+        fun open(mode:String){selectionBarMode=mode;refreshSelectionBar()}
+        // "Back" points toward the reading start: right in Persian, left in English.
+        fun back()=action(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"next" else "menu_back",tr("Back","بازگشت")){open("main")}
         val ink=items.any{it.kind=="ink"};val smart=items.any{ObjectActions.canSmart(it)}
-        if(smartBarOpen){
-            // "Back" points toward the reading start: right in Persian, left in English.
-            action(if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"next" else "menu_back",tr("Back","بازگشت")){smartBarOpen=false;refreshSelectionBar()}
-            if(smart){
-                action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
-                action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
-                action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
-                action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
-                action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
+        when(selectionBarMode){
+            "smart"->{
+                back()
+                if(smart){
+                    action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
+                    action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
+                    action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
+                    action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
+                    action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
+                }
+                if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
+                fillSelectionBar(actions);positionSelectionBar();return
             }
-            if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
-            fillSelectionBar(actions);positionSelectionBar();return
+            "color"->{
+                back();colorActions(items,actions)
+                fillSelectionBar(actions);positionSelectionBar();return
+            }
+            "more"->{
+                back();moreActions(items){symbol,label,run->action(symbol,label){run()}}
+                fillSelectionBar(actions);positionSelectionBar();return
+            }
+            "text_size"->{
+                // Sizes readable from the back of a classroom, plus an exact value when needed.
+                back();val current=items.singleOrNull()?.width?.toInt()
+                listOf(20,28,40,56,72).forEach{n->action("text","$n",tr("Text size $n","اندازهٔ متن $n"),active=current==n){board.edit{it.width=n.toFloat();TextLayout.fit(it)};refreshSelectionBar()}}
+                action("more",tr("Exact","دقیق"),s("text_size")){input(s("text_size"),(current?:28).toString()){v->val n=v.toFloat();require(n in 8f..120f);board.edit{it.width=n;TextLayout.fit(it)};refreshSelectionBar()}}
+                fillSelectionBar(actions);positionSelectionBar();return
+            }
         }
         val pdf=items.singleOrNull()?.takeIf{it.kind=="pdf"}
         if(pdf!=null){
@@ -349,18 +373,45 @@ class MainActivity : Activity() {
             action("page_picker","${pdf.pdfPage+1} / ${pdf.pageCount}",s("page_picker")){input(s("page_picker"),"${pdf.pdfPage+1}"){v->val n=v.toInt();require(n in 1..pdf.pageCount);board.edit{it.pdfPage=n-1}}}
             action("next",tr("Next","بعدی")){if(pdf.pdfPage<pdf.pageCount-1)board.edit{it.pdfPage++}}
         }
-        if(smart||ink)action("smart",tr("Smart","هوشمند"),active=false){smartBarOpen=true;refreshSelectionBar()}
+        if(smart||ink)action("smart",tr("Smart","هوشمند")){open("smart")}
         items.singleOrNull()?.takeIf{it.shape=="mindnode"}?.let{node->action("text",tr("Add text","افزودن متن")){textEditor(node)}}
         items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)action("measure",s("measure")){measureShape(o)}}
-        if(items.any{ObjectActions.canColor(it)})action("color",s("color")){colors()}
+        if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
         action("duplicate",s("duplicate")){
             val copies=duplicateItems(MindMap.group(store.page,board.chosen())).onEach{it.x+=24;it.y+=24;it.locked=false}
             store.editMetadata{store.page.items.addAll(copies)};board.selected.clear();board.selected.addAll(copies.map{it.id});refreshDock()
         }
         action("delete",s("delete")){board.delete()}
-        action("more",tr("More","بیشتر"),s("edit")){editSelection()}
+        action("more",tr("More","بیشتر"),s("edit")){open("more")}
         fillSelectionBar(actions);positionSelectionBar()
+    }
+    /**
+     * Color in the bar itself: the same six ink colors as the pen strip plus white, and for strokes three widths.
+     * Sticky notes get paper colors instead (dark ink on a dark note would be unreadable). "Custom" opens the full palette.
+     */
+    private fun colorActions(items:List<Item>,actions:MutableList<View>){
+        val targets=items.filter{ObjectActions.canColor(it)}
+        val notes=targets.isNotEmpty()&&targets.all{it.kind=="sticky"}
+        val current=targets.firstOrNull()?.let{if(it.kind=="sticky")it.noteColor else it.color}
+        val colors=if(notes)listOf(0xfffff59d.toInt(),0xfff8bbd0.toInt(),0xffbbdefb.toInt(),0xffc8e6c9.toInt(),0xffffe0b2.toInt(),0xffe1bee7.toInt(),Color.WHITE)
+            else InkStrip.colors+Color.WHITE
+        colors.forEach{color->actions.add(InkStrip.Swatch(this,color,null){applyColor(color);refreshSelectionBar()}.apply{
+            chosen=color==current;contentDescription=tr("Color","رنگ");layoutParams=LinearLayout.LayoutParams(dp(48),dp(64))})}
+        if(!notes&&targets.any{it.kind=="ink"||it.kind=="shape"}){
+            val width=targets.first().width
+            InkStrip.penWidths.forEachIndexed{i,w->actions.add(InkStrip.Swatch(this,null,i){board.edit{o->if(o.kind=="ink"||o.kind=="shape")o.width=w};refreshSelectionBar()}.apply{
+                chosen=kotlin.math.abs(width-w)<.01f;ink=current?:NAVY;contentDescription=tr("Thickness","ضخامت")})}
+        }
+        actions.add(ActionIcon(this,"palette",tr("Custom color","رنگ دلخواه"),tr("Custom","دلخواه")){colors()})
+    }
+    private fun applyColor(color:Int)=board.edit{item->
+        if(!ObjectActions.canColor(item))return@edit
+        if(item.kind=="sticky"){
+            item.noteColor=color
+            if(Color.luminance(color)<.25 && Color.luminance(item.color)<.35)item.color=Color.WHITE
+            else if(Color.luminance(color)>.65 && Color.luminance(item.color)>.65)item.color=NAVY
+        }else item.color=color
     }
     /** Free horizontal span for canvas popups: the canvas minus the dock and a 12dp gap. */
     private fun freeSpan():Pair<Int,Int>{
@@ -393,7 +444,10 @@ class MainActivity : Activity() {
         val maxWidth=(maxRight-minLeft).coerceAtLeast(dp(64))
         selectionBar.measure(View.MeasureSpec.makeMeasureSpec(maxWidth,View.MeasureSpec.AT_MOST),View.MeasureSpec.UNSPECIFIED)
         val barWidth=selectionBar.measuredWidth.coerceIn(dp(64),maxWidth);val barHeight=selectionBar.measuredHeight.coerceAtLeast(dp(72))
-        val above=bounds.top-barHeight-dp(28);val y=if(above>=dp(12))above else bounds.bottom+dp(20)
+        // Clear of the selection handles, which the board draws in physical dp (not scaled by UI size):
+        // rotation handle 28dp above the top edge with a 23dp touch radius, resize handle 23dp around the bottom corner.
+        val d=resources.displayMetrics.density
+        val above=bounds.top-barHeight-(28+23+8)*d;val y=if(above>=dp(12))above else bounds.bottom+(23+8)*d
         (selectionHost.layoutParams as FrameLayout.LayoutParams).apply{
             width=barWidth;height=barHeight;gravity=Gravity.TOP or Gravity.LEFT
             leftMargin=(bounds.centerX()-barWidth/2).toInt().coerceIn(minLeft,(maxRight-barWidth).coerceAtLeast(minLeft))
@@ -505,7 +559,9 @@ class MainActivity : Activity() {
         activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,newBoardPage(projectStore.page));projectStore.lesson.current++}
         whiteboard.clearSelection();whiteboard.reset()
     }
-    private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).putInt("penOpacity",board.penOpacity).apply()}
+    private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).putInt("penOpacity",board.penOpacity).apply()
+        // Every pen change also belongs to the active dock preset at once, and its dot shows the new color.
+        if(::toolDock.isInitialized)toolDock.refresh()}
     private val backgroundSwatches get()=listOf(Color.WHITE,Color.BLACK,0xff172a36.toInt(),PAPER,0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt())
     private fun palette(c:LinearLayout,initial:Int,background:Boolean=false,changed:(Int)->Unit){
         val holder=column();c.addView(holder);var current=initial
@@ -693,7 +749,7 @@ class MainActivity : Activity() {
             "recent"->withPdfExit{recent()}
             "export_pdf","export_png","export_jpg"->exportChoice(key.substringAfter('_'))
             "rename"->rename();"lab"->openExplorer(true);"games"->openExplorer(false);"share"->shareOptions();"help"->quickGuide()
-            "google_search_settings"->GoogleSearchSettingsUi(this).show(menuReturn.also{menuReturn=null});"fonts"->fontSettings();"models"->models();"input_controls"->inputSettings();"page_background"->defaultBackgroundSettings();"calibration"->calibrationSettings()
+            "google_search_settings"->GoogleSearchSettingsUi(this).show(menuReturn.also{menuReturn=null});"fonts"->fontSettings();"models"->models();"input_controls"->settingsAt("input");"page_background"->defaultBackgroundSettings();"calibration"->calibrationSettings()
             "settings"->settings()
             "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
             "ui_size"->choices(s("ui_size"),listOf("small","medium","large")){i->persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
@@ -714,6 +770,13 @@ class MainActivity : Activity() {
     }
 
     private fun penSettings(){
+        // The highlighter has its own color and width; "More settings" from its strip must edit it, not the pen.
+        if(board.tool=="highlight"&&store.page.visiblePaneCount==1){
+            val c=column().apply{pad(16)}
+            palette(c,board.highlightColor){board.highlightColor=it;savePens()}
+            slider(c,tr("Thickness","ضخامت"),board.highlightWidth,80){board.highlightWidth=it;savePens()}
+            toolSheet(tr("Highlighter","هایلایتر"),ScrollView(this).apply{addView(c)});return
+        }
         val c=column().apply{pad(16)};val body=column();var broad=false
         fun panel()=store.page.panes.getOrNull(board.activePane)?.takeIf{store.page.visiblePaneCount>1}
         fun penColor()=panel()?.color?:if(broad)board.profile.thickColor else board.penColor
@@ -728,7 +791,6 @@ class MainActivity : Activity() {
             PenStyles.apply(paint,o)
             val path=Path();path.moveTo(20f,height*.7f);path.cubicTo(this.width*.3f,0f,this.width*.55f,height.toFloat(),this.width-20f,height*.3f);canvas.drawPath(path,paint)
         }}.apply{background=rounded(PAPER,dp(10).toFloat())}
-        c.addView(infoTitle(tr("Pen","قلم"),tr("Styles use fixed width and do not need pressure sensing. Set each tip independently.","حالت‌ها با عرض ثابت کار می‌کنند و به فشار قلم وابسته نیستند. هر سر قلم را جدا تنظیم کنید.")))
         c.addView(preview,LinearLayout.LayoutParams(-1,dp(44)))
         fun refresh(){
             body.removeAllViews();palette(body,penColor()){color->val pane=panel();if(pane!=null)store.editMetadata{pane.color=color}else if(broad)board.profile.thickColor=color else board.penColor=color;savePens();preview.invalidate()}
@@ -818,26 +880,32 @@ class MainActivity : Activity() {
         val d=dialog(tr("Dual-tip calibration","کالیبراسیون دو سر قلم"),ScrollView(this).apply{addView(c)})
         c.addView(button(s("apply"),true){val a=thin.text.toString().toFloatOrNull();val b=palm.text.toString().toFloatOrNull();if(a==null||b==null||!a.isFinite()||!b.isFinite()||a<=0||b<=a){thin.error=tr("Use 0 < fine < palm","باید ۰ < سر باریک < کف دست باشد");return@button};board.profile.calibrated=true;board.profile.thin=a;board.profile.palm=b;board.profile.palmErase=palmErase.isChecked;prefs.edit().putBoolean("calibrated",true).putFloat("thin",a).putFloat("palm",b).putBoolean("palmErase",palmErase.isChecked).apply();savePens();d.dismiss()})
     }
-    private fun palmControls(c:LinearLayout){
-        c.addView(infoTitle(tr("Palm erasing","پاک‌کردن با کف دست"),tr("Requires contact-size reporting. Calibrate the threshold in Settings → Calibration. The selected eraser mode and size apply to the palm.","نیازمند گزارش اندازهٔ تماس است. آستانه را از تنظیمات ← کالیبراسیون تنظیم کنید. حالت و اندازهٔ پاک‌کن برای کف دست هم اعمال می‌شوند.")))
-        c.addView(Switch(this).apply{
-            text=tr("Use palm as a temporary eraser","کف دست، پاک‌کن موقت باشد")
-            isChecked=board.profile.palmErase
-            setOnCheckedChangeListener{_,enabled->
-                board.profile.palmErase=enabled
-                prefs.edit().putBoolean("palmErase",enabled).apply()
-            }
-        })
-
-    }
+    /**
+     * Eraser sheet, most used first: what it erases, how big, then what else it may touch.
+     * PDF options appear only while a PDF is open (they mean nothing otherwise). Clearing the page stays last and
+     * needs a slide, because it is the one destructive action here.
+     */
     private fun eraserSettings(){
-        val c=column().apply{pad(20)};palmControls(c);c.addView(infoTitle(tr("Eraser modes","حالت‌های پاک‌کن"),tr("Stroke/object: remove an entire touched item. Area: remove only the region under the eraser, including text, shapes, images and PDFs. Undo restores it.","خط/شیء: تمام مورد لمس‌شده پاک می‌شود. ناحیه‌ای: فقط مسیر پاک‌کن روی خط، متن، شکل، تصویر یا PDF پاک می‌شود. با Undo قابل برگشت است.")))
-        val modes=RadioGroup(this);listOf("stroke" to tr("Whole stroke / object","کل خط / شیء"),"area" to tr("Area eraser","پاک‌کن ناحیه‌ای")).forEach{(key,title)->modes.addView(RadioButton(this).apply{text=title;isChecked=board.eraserMode==key;setOnClickListener{board.eraserMode=key;prefs.edit().putString("eraserMode",key).apply()}})};c.addView(modes)
-        c.addView(CheckBox(this).apply{text=tr("On PDF: also cover original content","روی PDF: محتوای اصلی هم پوشانده شود");isChecked=board.erasePdfContent;setOnCheckedChangeListener{_,v->board.erasePdfContent=v;prefs.edit().putBoolean("erasePdfContent",v).apply()}})
-        c.addView(CheckBox(this).apply{text=tr("Allow palm erasing inside PDF","پاک‌کردن با کف دست در بخش PDF");isChecked=board.pdfPalmErase;setOnCheckedChangeListener{_,v->board.pdfPalmErase=v;prefs.edit().putBoolean("pdfPalmErase",v).apply()}})
-        c.addView(infoTitle(tr("PDF erasing","پاک‌کن PDF"),tr("Original PDF content is covered with white and can be restored with Undo. This is not permanent redaction. With two tips off, broad touch scrolls the PDF.","محتوای اصلی PDF با رنگ سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف محرمانه نیست. با دو سر قلم خاموش، تماس پهن PDF را اسکرول می‌کند.")))
-        slider(c,tr("Radius","شعاع"),board.eraserRadius,80){board.eraserRadius=it;prefs.edit().putFloat("eraserRadius",it).apply()}
-        c.addView(CheckBox(this).apply{text=tr("Include objects (otherwise ink only)","روی اشیاء هم اعمال شود (وگرنه فقط دست‌نویس)");isChecked=board.eraseObjects;setOnCheckedChangeListener{_,v->board.eraseObjects=v;prefs.edit().putBoolean("eraseObjects",v).apply()}})
+        val c=column().apply{pad(16)}
+        c.addView(sectionTitle(tr("Erases","پاک می‌کند")))
+        c.addView(segmented(listOf("stroke" to tr("Whole stroke","کل خط"),"area" to tr("Only where touched","فقط محل لمس")),board.eraserMode){
+            board.eraserMode=it;prefs.edit().putString("eraserMode",it).apply()})
+        c.addView(sectionTitle(tr("Size","اندازه")))
+        val sizes=listOf(10f to tr("Small","کوچک"),18f to tr("Medium","متوسط"),36f to tr("Large","بزرگ"))
+        c.addView(segmented(sizes.map{(r,t)->r.toInt().toString() to t},sizes.firstOrNull{kotlin.math.abs(it.first-board.eraserRadius)<.5f}?.first?.toInt()?.toString()){
+            board.eraserRadius=it.toFloat();prefs.edit().putFloat("eraserRadius",board.eraserRadius).apply()})
+        c.addView(sectionTitle(tr("Also","همچنین")))
+        c.addView(switchRow(tr("Erase objects too","اشیاء را هم پاک کند"),board.eraseObjects,tr("Text, shapes and images, not only handwriting","متن، شکل و تصویر؛ نه فقط دست‌نوشته")){
+            board.eraseObjects=it;prefs.edit().putBoolean("eraseObjects",it).apply()})
+        c.addView(switchRow(tr("Use palm as a temporary eraser","کف دست، پاک‌کن موقت باشد"),board.profile.palmErase,tr("Needs a panel that reports touch size","پنل باید اندازهٔ تماس را گزارش کند")){
+            board.profile.palmErase=it;prefs.edit().putBoolean("palmErase",it).apply()})
+        if(projectStore.lesson.pdf!=null){
+            c.addView(sectionTitle("PDF"))
+            c.addView(switchRow(tr("Also cover the PDF's own content","محتوای خود PDF را هم بپوشاند"),board.erasePdfContent,tr("Covered with white; Undo restores it. Not a secure deletion.","با سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف امن نیست.")){
+                board.erasePdfContent=it;prefs.edit().putBoolean("erasePdfContent",it).apply()})
+            c.addView(switchRow(tr("Palm erasing inside the PDF","پاک‌کردن با کف دست داخل PDF"),board.pdfPalmErase){
+                board.pdfPalmErase=it;prefs.edit().putBoolean("pdfPalmErase",it).apply()})
+        }
         val d=toolSheet(s("erase"),ScrollView(this).apply{addView(c)})
         addClearSlider(c){d.dismiss()}
     }
@@ -924,6 +992,9 @@ class MainActivity : Activity() {
             d.setCanceledOnTouchOutside(true);d.show();shown(d)
             d.window?.let{w->
                 w.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                // A touch outside closes the sheet AND reaches the board or dock: tapping another pen switches at once
+                // instead of the first tap being swallowed just to close the sheet.
+                w.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH)
                 val screen=resources.displayMetrics.widthPixels
                 val at=IntArray(2);var onLeft=true;var edge=dp(12)
                 if(::toolDock.isInitialized&&toolDock.isShown&&toolDock.width>0){
@@ -945,17 +1016,14 @@ class MainActivity : Activity() {
         }.show().also{shown(it)}
     }
 
+    /** Only one real choice, so the sheet is one segmented row with a line saying what each does. */
     private fun selectionSettings(){
         val c=column().apply{pad(16)}
-        c.addView(infoTitle(s("selection_settings"),tr("Tap the active selection icon to open these settings. Free selection follows your drawn loop; box selection shows only a dashed rectangle.","با زدن دوبارهٔ آیکون انتخاب، این تنظیمات باز می‌شود. انتخاب آزاد مسیر شما را دنبال می‌کند؛ انتخاب کادری فقط مستطیل خط‌چین نشان می‌دهد.")))
-        val modes=listOf("free","box");val group=RadioGroup(this)
-        modes.forEach{mode->group.addView(RadioButton(this).apply{
-            id=View.generateViewId();tag=mode;text=s(if(mode=="free")"selection_free"else"selection_box");textSize=16f*uiScale();minHeight=dp(52);isChecked=board.selectionMode==mode
-        })}
-        group.setOnCheckedChangeListener{g,id->val mode=g.findViewById<RadioButton>(id)?.tag as? String?:return@setOnCheckedChangeListener
-            prefs.edit().putString("selectionMode",mode).apply();whiteboard.selectionMode=mode;board.selectionMode=mode;board.clearSelection()
-        }
-        c.addView(group)
+        val hint=label("",13f,MUTED)
+        fun explain(mode:String){hint.text=if(mode=="free")tr("Draw a loop around what you want","دور چیزی که می‌خواهید خط بکشید")else tr("Drag a rectangle over what you want","روی چیزی که می‌خواهید مستطیل بکشید")}
+        c.addView(segmented(listOf("free" to s("selection_free"),"box" to s("selection_box")),board.selectionMode){mode->
+            prefs.edit().putString("selectionMode",mode).apply();whiteboard.selectionMode=mode;board.selectionMode=mode;board.clearSelection();explain(mode)})
+        explain(board.selectionMode);c.addView(hint)
         toolSheet(s("selection_settings"),c)
     }
 
@@ -1190,14 +1258,7 @@ class MainActivity : Activity() {
         val c=column().apply{pad(16)}
         palette(c,initial){color->
             if(chosen.isEmpty()){board.inkColor=color;savePens()}
-            else board.edit{item->
-                if(!ObjectActions.canColor(item))return@edit
-                if(item.kind=="sticky"){
-                    item.noteColor=color
-                    if(Color.luminance(color)<.25 && Color.luminance(item.color)<.35)item.color=Color.WHITE
-                    else if(Color.luminance(color)>.65 && Color.luminance(item.color)>.65)item.color=NAVY
-                }else item.color=color
-            }
+            else{applyColor(color);refreshSelectionBar()}
         }
         dialog(tr("Color","رنگ"),ScrollView(this).apply{addView(c)})
     }
@@ -1248,9 +1309,13 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Tapping a selected object, or "More": the remaining actions open inside the selection bar. */
     private fun editSelection() {
-        val items = board.chosen()
-        if (items.isEmpty()) return
+        if(board.chosen().isEmpty())return
+        selectionBarMode="more";refreshSelectionBar()
+    }
+    /** Every action that applies to [items], by key; the bar shows the common ones and "More" the rest. */
+    private fun selectionKeys(items:List<Item>):List<String> {
         val one = items.singleOrNull()
         val keys = mutableListOf("delete", "duplicate", "lock", "front", "back")
         if(items.any{ObjectActions.canColor(it)})keys.add("color")
@@ -1269,74 +1334,92 @@ class MainActivity : Activity() {
         if(one?.shape in listOf("ruler","set_square"))keys.addAll(listOf("draw_parallel","draw_perpendicular"))
         if (one?.kind == "pdf") keys.addAll(listOf("previous", "next", "page_picker"))
         if (one?.kind in listOf("image", "pdf")) keys.add("crop")
-        choices(s("edit"), keys) { i ->
-            when (keys[i]) {
-                "measure" -> one?.let{measureShape(it)}
-                "fill" -> fillSettings()
-                "periodic" -> one?.let{PeriodicTable.show(this){board.insert(it)}}
-                "coordinates" -> one?.let{coordinateSettings(it)}
-                "smart" -> smartSettings()
-                "add_child" -> mindNode(one)
-                "add_sibling" -> mindNode(one,true)
-                "rotate" -> one?.let{o->input(s("rotate"),DisplayNumbers.one(o.rotation.toDouble())){value->val angle=value.toFloat();require(angle.isFinite());board.edit{it.rotation=angle%360}}}
-                "guide_slope" -> one?.let{o->input(s("guide_slope"),DisplayNumbers.one(kotlin.math.atan2(o.h,o.w)*180/kotlin.math.PI)){value->val angle=value.toFloat();require(angle.isFinite()&&angle in 10f..80f);board.edit{GeometryTools.setSlope(it,angle)}}}
-                "draw_parallel","draw_perpendicular" -> one?.let{insertConstruction(it,keys[i]=="draw_perpendicular")}
-                "draw_with_tool" -> one?.let{insertConstruction(it)}
-                "delete" -> board.delete()
-                "duplicate" -> {
-                    store.editMetadata {
-                        duplicateItems(MindMap.group(store.page,items))
-                            .onEach {
-                                it.apply {
-                                    x += 24
-                                    y += 24
-                                    locked = false
-                                }
+        return keys
+    }
+    /** Keys already on the main selection bar, so "More" does not repeat them. */
+    private fun mainBarKeys(items:List<Item>):Set<String> {
+        val one=items.singleOrNull()
+        return buildSet{
+            if(items.any{it.kind=="ink"}||items.any{ObjectActions.canSmart(it)})add("smart")
+            if(one?.shape=="mindnode")add("text")
+            if(one!=null&&Measurements.of(one)!=null)add("measure")
+            if(items.any{ObjectActions.canColor(it)})add("color")
+            if(one?.kind in listOf("image","pdf"))add("crop")
+            if(one?.kind=="pdf")addAll(listOf("previous","next","page_picker"))
+            add("duplicate");add("delete")
+        }
+    }
+    private fun moreActions(items:List<Item>,action:(String,String,()->Unit)->Unit){
+        val shown=mainBarKeys(items)
+        selectionKeys(items).filter{it !in shown}.forEach{key->
+            val label=if(key=="lock"&&items.all{it.locked})tr("Unlock","باز کردن قفل")else s(key)
+            action(if(key=="lock"&&items.all{it.locked})"unlock" else key,label){runSelectionKey(key,board.chosen());refreshSelectionBar()}
+        }
+    }
+    private fun runSelectionKey(key:String,items:List<Item>) {
+        if(items.isEmpty())return
+        val one = items.singleOrNull()
+        when (key) {
+            "measure" -> one?.let{measureShape(it)}
+            "fill" -> fillSettings()
+            "periodic" -> one?.let{PeriodicTable.show(this){board.insert(it)}}
+            "coordinates" -> one?.let{coordinateSettings(it)}
+            "smart" -> smartSettings()
+            "add_child" -> mindNode(one)
+            "add_sibling" -> mindNode(one,true)
+            "rotate" -> one?.let{o->input(s("rotate"),DisplayNumbers.one(o.rotation.toDouble())){value->val angle=value.toFloat();require(angle.isFinite());board.edit{it.rotation=angle%360}}}
+            "guide_slope" -> one?.let{o->input(s("guide_slope"),DisplayNumbers.one(kotlin.math.atan2(o.h,o.w)*180/kotlin.math.PI)){value->val angle=value.toFloat();require(angle.isFinite()&&angle in 10f..80f);board.edit{GeometryTools.setSlope(it,angle)}}}
+            "draw_parallel","draw_perpendicular" -> one?.let{insertConstruction(it,key=="draw_perpendicular")}
+            "draw_with_tool" -> one?.let{insertConstruction(it)}
+            "delete" -> board.delete()
+            "duplicate" -> {
+                store.editMetadata {
+                    duplicateItems(MindMap.group(store.page,items))
+                        .onEach {
+                            it.apply {
+                                x += 24
+                                y += 24
+                                locked = false
                             }
-                            .forEach { store.page.items.add(it) }
-                    }
+                        }
+                        .forEach { store.page.items.add(it) }
                 }
-                "lock" -> {
-                    store.editMetadata { items.forEach { it.locked = !it.locked } }
-                }
-                "front" -> {
-                    store.editMetadata {
-                        store.page.items.removeAll(items.toSet())
-                        store.page.items.addAll(items)
-                    }
-                }
-                "back" -> {
-                    store.editMetadata {
-                        store.page.items.removeAll(items.toSet())
-                        store.page.items.addAll(0, items)
-                    }
-                }
-                "color" -> colors()
-                "restore_erased" -> board.edit{it.cuts=emptyList()}
-                "text" -> if(one!!.kind=="graph")graph(existing=one)else textEditor(one)
-                "text_size" ->
-                    input(s("text_size"), one!!.width.toInt().toString()) { v ->
-                        val n = v.toFloat()
-                        require(n in 8f..120f)
-                        board.edit { it.width = n;TextLayout.fit(it) }
-                    }
-                "domain" ->
-                    input(s("domain"), one!!.domain.toString()) { v ->
-                        val n = v.toFloat()
-                        require(n in .1f..1000f)
-                        board.edit { it.domain = n }
-                    }
-                "previous" -> board.edit { it.pdfPage = (it.pdfPage - 1).coerceAtLeast(0) }
-                "next" ->
-                    board.edit { it.pdfPage = (it.pdfPage + 1).coerceAtMost(it.pageCount - 1) }
-                "page_picker" ->
-                    input(s("page_picker"), "${one!!.pdfPage+1}") { v ->
-                        val page = v.toInt()
-                        require(page in 1..one.pageCount)
-                        board.edit { it.pdfPage = page - 1 }
-                    }
-                "crop" -> crop(one!!)
             }
+            "lock" -> {
+                store.editMetadata { items.forEach { it.locked = !it.locked } }
+            }
+            "front" -> {
+                store.editMetadata {
+                    store.page.items.removeAll(items.toSet())
+                    store.page.items.addAll(items)
+                }
+            }
+            "back" -> {
+                store.editMetadata {
+                    store.page.items.removeAll(items.toSet())
+                    store.page.items.addAll(0, items)
+                }
+            }
+            "color" -> colors()
+            "restore_erased" -> board.edit{it.cuts=emptyList()}
+            "text" -> if(one!!.kind=="graph")graph(existing=one)else textEditor(one)
+            "text_size" -> selectionBarMode="text_size"
+            "domain" ->
+                input(s("domain"), one!!.domain.toString()) { v ->
+                    val n = v.toFloat()
+                    require(n in .1f..1000f)
+                    board.edit { it.domain = n }
+                }
+            "previous" -> board.edit { it.pdfPage = (it.pdfPage - 1).coerceAtLeast(0) }
+            "next" ->
+                board.edit { it.pdfPage = (it.pdfPage + 1).coerceAtMost(it.pageCount - 1) }
+            "page_picker" ->
+                input(s("page_picker"), "${one!!.pdfPage+1}") { v ->
+                    val page = v.toInt()
+                    require(page in 1..one.pageCount)
+                    board.edit { it.pdfPage = page - 1 }
+                }
+            "crop" -> crop(one!!)
         }
     }
 
@@ -1749,9 +1832,11 @@ class MainActivity : Activity() {
     private fun shareOptions(){
         val choices=arrayOf(tr("Send PDF via another app / cloud","فرستادن PDF با برنامهٔ دیگر / فضای ابری"),
             tr("QR for a public HTTPS link","QR برای لینک عمومی HTTPS"),
-            tr("QR on the same local network","QR روی شبکهٔ محلی"))
+            tr("QR on the same local network","QR روی شبکهٔ محلی"),
+            // Where a teacher looks for "share with the class"; it was only in the hidden Engineering menu.
+            tr("Live class on this network (experimental)","کلاس زنده روی همین شبکه (آزمایشی)"))
         MaterialAlertDialogBuilder(this).setTitle(s("share"))
-            .setItems(choices){_,index->when(index){0->sharePdf();1->publicQr();else->share()}}
+            .setItems(choices){_,index->when(index){0->sharePdf();1->publicQr();2->share();else->sharedRoom()}}
             .setNegativeButton(s("cancel"),null).show()
     }
     private fun sharePdf(){
@@ -1948,43 +2033,57 @@ class MainActivity : Activity() {
         dialog(s("models"),ScrollView(this).apply{addView(c)})
     }
 
-    private fun inputSettings(){
-        val c=column().apply{pad(16)}
-        c.addView(Switch(this).apply{text=tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)");isChecked=board.touchMode;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();refreshDock()}}})
-        c.addView(Switch(this).apply{text=s("multi_touch_short");isChecked=board.profile.multiTouch;setOnCheckedChangeListener{_,v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}}})
-        c.addView(infoTitle(tr("History gesture","ژست تاریخچه"),tr("Double tap with two nearby fingers for Undo. Hold the second tap and slide left/right to browse Undo and Redo; release to keep that point.","دو بار با دو انگشت نزدیک به هم ضربه بزنید. ضربهٔ دوم را نگه دارید و به چپ یا راست بکشید تا Undo و Redo را مرور کنید؛ با برداشتن دست، همان مرحله حفظ می‌شود.")))
-        c.addView(Switch(this).apply{text=tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی");isChecked=prefs.getBoolean("twoFingerUndo",true);setOnCheckedChangeListener{_,v->prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()}})
-        dialog(s("input_controls"),c)
-    }
 
-    private fun settings() {
-        val keys=mutableListOf("device_profile","language","fonts","google_search_settings","ui_size","models","input_controls","pie_settings","page_background","calibration","cache","about")
-        // Always listed: turning the assistant on, choosing the service and changing its key all live here.
-        keys.add(2,"voice_assistant")
-        // Engineering is intentionally only reachable through the hidden About logo gesture.
-        choices(s("settings"),keys){index->
-            if(rooms?.active==true&&keys[index] in listOf("language","ui_size")){toast(s("room_leave_first"));return@choices}
-            when(keys[index]){
-            "device_profile"->roomUi?.profile(menuReturn.also{menuReturn=null})
-            "language"->choices(s("language"),listOf("english","persian")){i->persist();prefs.edit().putString("language",if(i==0)"en"else"fa").apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
-            "fonts"->fontSettings()
-            "voice_assistant"->voiceSettings()
-            "google_search_settings"->GoogleSearchSettingsUi(this).show(menuReturn.also{menuReturn=null})
-            "ui_size"->navigationBuilder(tr("Interface size","اندازهٔ رابط کاربری"))
-                .setSingleChoiceItems(arrayOf(tr("Small","کوچک"),tr("Medium","متوسط"),tr("Large","بزرگ")),
-                    listOf(.8f,1f,1.4f).indexOf(prefs.getFloat("uiScale",1f)).coerceAtLeast(0)){d,i->
-                    persist();prefs.edit().putFloat("uiScale",listOf(.8f,1f,1.4f)[i]).apply();d.dismiss();worker.execute{handler.post{if(!destroyed)recreate()}}
-                }.show().also{shown(it)}
-            "models"->models()
-            "input_controls"->inputSettings()
-            "selection_settings"->selectionSettings()
-            "pie_settings"->pieSettings()
-            "page_background"->defaultBackgroundSettings()
-            "calibration"->calibrationSettings()
-            "cache"->{media.clear();board.sceneChanged();toast(s("done"))}
-            "about"->about()
-            "engineering"->engineering()
-        }}
+    private var settingsScreen:SettingsScreen?=null
+    private fun settings()=settingsAt(prefs.getString("settingsTab",null))
+    /**
+     * One settings screen with categories (item 44). On/off and few-option settings apply in place;
+     * only settings that need room open a page, which returns here with its back arrow.
+     */
+    private fun settingsAt(tab:String?){
+        menuReturn=null
+        fun page(title:String,value:()->String={""},open:()->Unit)=SettingRow.Page(title,value){menuReturn={};try{open()}finally{menuReturn=null}}
+        fun roomSafe(action:()->Unit){if(rooms?.active==true)toast(s("room_leave_first"))else action()}
+        fun restart(edit:SharedPreferences.Editor.()->Unit){persist();prefs.edit().apply(edit).apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
+        val providers=mapOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI")
+        val categories=listOf(
+            SettingsCategory("general",tr("General","عمومی"),"settings",listOf(
+                SettingRow.Choice(s("language"),listOf("en" to "English","fa" to "فارسی"),{prefs.getString("language","en")?:"en"}){v->roomSafe{restart{putString("language",v)}}},
+                SettingRow.Choice(s("ui_size"),listOf("0.8" to tr("Small","کوچک"),"1.0" to tr("Medium","متوسط"),"1.4" to tr("Large","بزرگ")),
+                    {prefs.getFloat("uiScale",1f).let{if(it<.9f)"0.8" else if(it>1.2f)"1.4" else "1.0"}}){v->roomSafe{restart{putFloat("uiScale",v.toFloat())}}},
+                SettingRow.Choice(tr("Toolbar height on the side","ارتفاع نوار ابزار کنار صفحه"),listOf("top" to tr("Higher","بالاتر"),"middle" to tr("Middle","وسط"),"bottom" to tr("Lower","پایین‌تر")),
+                    {toolDock.position}){toolDock.position=it},
+                page(s("fonts"),{Fonts.persian.first{it.id==Fonts.persianId}.let{tr(it.en,it.fa)}+" · "+Fonts.english.first{it.id==Fonts.englishId}.let{tr(it.en,it.fa)}}){fontSettings()},
+            )),
+            SettingsCategory("input",tr("Pen and touch","قلم و لمس"),"pen",listOf(
+                SettingRow.Toggle(tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)"),null,{board.touchMode}){v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();refreshDock()}},
+                SettingRow.Toggle(s("multi_touch_short"),null,{board.profile.multiTouch}){v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}},
+                SettingRow.Toggle(tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی"),tr("Hold the second tap and slide to browse history","ضربهٔ دوم را نگه دارید و بکشید تا تاریخچه را مرور کنید"),{prefs.getBoolean("twoFingerUndo",true)}){v->
+                    prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()},
+                SettingRow.Toggle(tr("Five-finger pie menu","منوی دایره‌ای پنج‌انگشتی"),tr("Double tap with five fingers to open your shortcuts","با پنج انگشت دو بار ضربه بزنید تا میان‌برهایتان باز شود"),{prefs.getBoolean("pieEnabled",false)}){v->
+                    prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v},
+                page(s("pie_settings")){pieSettings()},
+                page(s("calibration"),{tr("Pen tips, palm and real centimetres","سر قلم، کف دست و سانتی‌متر واقعی")}){calibrationSettings()},
+            )),
+            SettingsCategory("board",tr("Board","تخته"),"background",listOf(
+                page(s("page_background"),{tr("For new pages","برای صفحه‌های جدید")}){defaultBackgroundSettings()},
+                page(s("history_settings"),{tr("${HistorySettings.load(this)} steps","${HistorySettings.load(this)} مرحله")}){historySettings()},
+            )),
+            SettingsCategory("smart",tr("Smart","هوشمند"),"sparkle",listOf(
+                page(s("voice_assistant"),{if(VoiceSettings.enabled(this))tr("On","روشن")+" · "+(providers[VoiceSettings.load(this).provider]?:VoiceSettings.load(this).provider)else tr("Off","خاموش")}){voiceSettings()},
+                page(s("models"),{tr("Handwriting recognition","تشخیص دست‌خط")}){models()},
+                page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
+            )),
+            SettingsCategory("class",tr("Class","کلاس"),"users",listOf(
+                page(s("device_profile"),{DeviceProfiles.load(this).name}){roomUi?.profile(menuReturn)},
+                page(s("shared_room"),{tr("Experimental · share this board with devices on the same network","آزمایشی · اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
+            )),
+            SettingsCategory("about",tr("About","درباره"),"info",listOf(
+                page(s("cache"),{tr("Frees memory used by images and PDF pages","حافظهٔ تصاویر و صفحه‌های PDF را آزاد می‌کند")}){media.clear();board.sceneChanged();toast(s("done"))},
+                page(s("about"),{"VuraVision ${BuildConfig.VERSION_NAME}"}){about()},
+            )),
+        )
+        settingsScreen=SettingsScreen(this,categories){prefs.edit().putString("settingsTab",it).apply()}.also{it.show(tab)}
     }
 
     private fun about(){
@@ -2287,8 +2386,8 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Opens even while the assistant is off: this page is where it is turned on (it used to silently do nothing). */
     private fun voiceSettings(){
-        if(!VoiceSettings.enabled(this))return
         VoiceSettingsUi(this,menuReturn.also{menuReturn=null}).connection(voiceKeys,voiceWorker){stopVoice()}
     }
     private fun toggleVoice(){

@@ -32,8 +32,11 @@ class Version14Test {
             val icons=views(a.window.decorView).filterIsInstance<WorkspaceIcon>()
             assertTrue(icons.any{it.contentDescription==a.s("share")})
             assertTrue(icons.all{!it.contentDescription.isNullOrBlank()})
-            val focus=icons.single{it.contentDescription.toString().contains("Hide / show")}
+            val focus=icons.single{it.contentDescription.toString().contains("Presentation mode")}
             focus.performClick();assertFalse(a.findViewById<View>(R.id.main_menu_button).isShown)
+            // Presentation keeps a small pen bar: pens, eraser and Undo, nothing else.
+            val kept=views(a.findViewById(R.id.tool_dock)).filterIsInstance<WorkspaceIcon>().filter{it.isShown}.map{it.key}
+            assertEquals(listOf("pen","pen","highlight","erase","undo"),kept)
             assertTrue(focus.isShown);focus.performClick();assertTrue(a.findViewById<View>(R.id.main_menu_button).isShown)
         }finally{c.pause().stop().destroy()}
     }
