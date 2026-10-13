@@ -208,6 +208,8 @@ class RouterVoiceAssistant(
             ui{
                 try{audio.start(::input,{ui{stop("voice_audio_error")}})}catch(_:Exception){stop("voice_audio_error");return@ui}
                 ready=true;connected()
+                // No greeting: listen as soon as the service is validated.
+                turns.reset();accepting=true;state("voice_listening")
             }
         }
     }

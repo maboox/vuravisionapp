@@ -80,13 +80,13 @@ class VoiceAssistantTest {
     @Test(expected=IllegalArgumentException::class) fun unsupportedAudioRateIsRejected(){
         VoiceProtocol.parse("""{"serverContent":{"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=16000","data":"AQI="}}]}}}""")
     }
-    @Test fun connectionWaitsForSetupGreetsOnceAndStopsAllMedia(){
+    @Test fun connectionWaitsForSetupNeverGreetsAndStopsAllMedia(){
         val audio=Audio();val wire=Wire();var ended:String?="not-ended"
         val session=VoiceAssistant(VoiceSettings(),"fake-key","guide",audio,{}, {ended=it},{wire})
         session.start();assertFalse(session.ready);assertFalse(session.sendImage(byteArrayOf(1,2)))
         wire.events.opened();idle();assertEquals(1,wire.sent.size);assertTrue(JSONObject(wire.sent[0]).has("setup"));assertEquals(0,audio.starts)
         wire.events.message("""{"setupComplete":{}}""");idle()
-        assertEquals(1,audio.starts);assertEquals(1,wire.sent.count{JSONObject(it).has("clientContent")})
+        assertEquals(1,audio.starts);assertEquals(0,wire.sent.count{JSONObject(it).has("clientContent")})
         audio.input!!(byteArrayOf(0,1),2);assertTrue(JSONObject(wire.sent.last()).getJSONObject("realtimeInput").has("audio"))
         assertTrue(session.sendImage(byteArrayOf(4,5)))
         wire.events.message("""{"serverContent":{"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=24000","data":"AQI="}}]}}}""");idle();assertEquals(1,audio.played.size)

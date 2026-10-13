@@ -151,11 +151,11 @@ class VoiceProvidersTest {
             assertFalse(played)
         }
     }
-    @Test fun routerRejectsUncertainGuessGreetsOnceAndStopsEveryResource(){
+    @Test fun routerListensWithoutGreetingRejectsUncertainGuessAndStopsEveryResource(){
         val audio=Audio();val service=Service();val worker=Worker();var end:String?="not ended"
         val session=RouterVoiceAssistant(VoiceSettings(provider="openrouter"),"guide",audio,service,{}, {end=it},worker=worker)
         session.start();assertFalse(session.ready);worker.run();idle();worker.run();idle()
-        assertTrue(session.ready);assertEquals(1,service.spoken.size)
+        assertTrue(session.ready);assertEquals(0,service.spoken.size)
         Shadows.shadowOf(Looper.getMainLooper()).idleFor(1,TimeUnit.SECONDS)
         session.sendImage(byteArrayOf(3,4))
         repeat(10){audio.input!!(frame(1600),1280)};repeat(18){audio.input!!(frame(0),1280)}
