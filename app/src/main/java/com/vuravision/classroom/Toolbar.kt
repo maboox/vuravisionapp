@@ -154,8 +154,8 @@ class ToolDock(
      * just outside its inner edge, level with the active pen, fully on screen.
      */
     private fun placeStrip(){
-        val lp=stripHost.layoutParams as FrameLayout.LayoutParams
-        lp.gravity=Gravity.TOP or Gravity.LEFT;lp.marginStart=0;lp.marginEnd=0;lp.rightMargin=0;lp.bottomMargin=0
+        // Fresh params: a start/end margin left on the old ones would override leftMargin in LTR layouts.
+        val lp=FrameLayout.LayoutParams(-2,-2,Gravity.TOP or Gravity.LEFT)
         stripHost.measure(MeasureSpec.makeMeasureSpec(host.width.coerceAtLeast(1),MeasureSpec.AT_MOST),MeasureSpec.makeMeasureSpec(host.height.coerceAtLeast(1),MeasureSpec.AT_MOST))
         val gap=context.dp(12);val w=stripHost.measuredWidth
         val onRight=isLaidOut&&left+width/2>host.width/2
