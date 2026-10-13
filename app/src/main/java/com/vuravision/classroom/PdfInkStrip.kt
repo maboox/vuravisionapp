@@ -28,18 +28,18 @@ class PdfInkStrip(context:Context,private val board:()->Board,private val change
     fun refresh(){
         val b=board()
         tools.forEach{it.alpha=if(it.symbol==b.tool)1f else .55f}
-        swatches.forEach{it.selected=it.color==b.inkColor;it.ink=b.inkColor;it.invalidate()}
+        swatches.forEach{it.chosen=it.color==b.inkColor;it.ink=b.inkColor;it.invalidate()}
         val sizes=if(b.tool=="highlight")highlightWidths else penWidths
-        widths.forEachIndexed{i,w->w.selected=kotlin.math.abs(sizes[i]-b.inkWidth)<.01f;w.ink=b.inkColor;w.invalidate()}
+        widths.forEachIndexed{i,w->w.chosen=kotlin.math.abs(sizes[i]-b.inkWidth)<.01f;w.ink=b.inkColor;w.invalidate()}
     }
     private class Swatch(context:Context,val color:Int?,val size:Int?,action:()->Unit):View(context){
-        var selected=false
+        var chosen=false
         var ink=Color.BLACK
         private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
         init{isClickable=true;isFocusable=true;contentDescription=if(color!=null)context.tr("Ink color","رنگ قلم")else context.tr("Ink width","ضخامت قلم");setOnClickListener{action()}}
         override fun onDraw(c:Canvas){
             val cx=width/2f;val cy=height/2f
-            if(selected){paint.style=Paint.Style.STROKE;paint.strokeWidth=context.dp(2).toFloat();paint.color=NAVY;c.drawCircle(cx,cy,context.dp(17).toFloat(),paint)}
+            if(chosen){paint.style=Paint.Style.STROKE;paint.strokeWidth=context.dp(2).toFloat();paint.color=NAVY;c.drawCircle(cx,cy,context.dp(17).toFloat(),paint)}
             paint.style=Paint.Style.FILL
             if(color!=null){paint.color=color;c.drawCircle(cx,cy,context.dp(13).toFloat(),paint)}
             else{paint.color=ink;c.drawCircle(cx,cy,context.dp(3+4*(size?:0)).toFloat(),paint)}
