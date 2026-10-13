@@ -45,7 +45,7 @@ class UiScenarioTest {
     private fun checkChrome(a:MainActivity,state:String){
         val d=dock(a);val area=canvas(a);val dr=rect(d)
         assertTrue("$state: dock off screen $dr in $area",area.contains(dr))
-        assertTrue("$state: dock taller than 70% of the canvas",dr.height()<=area.height()*.7f)
+        assertTrue("$state: dock taller than 75% of the canvas",dr.height()<=area.height()*.75f)
         val icons=views(d).filterIsInstance<WorkspaceIcon>()
         assertTrue("$state: dock has buttons",icons.size>=10)
         icons.forEach{assertTrue("$state: dock button ${it.key} is not square (${it.width}x${it.height})",kotlin.math.abs(it.width-it.height)<=1)}
