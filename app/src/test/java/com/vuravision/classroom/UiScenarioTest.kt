@@ -900,6 +900,20 @@ class UiScenarioTest {
             settle(a)
             assertTrue(views(a.window.decorView).none { it is Replay })
             assertEquals("replay must not change the page", before, com.google.gson.Gson().toJson(a.store.page))
+            // "Start here" marks the page; the next replay shows only what came after it, and can switch back.
+            a.callHidden("runShortcut", "replay")
+            settle(a)
+            views(a.window.decorView).filterIsInstance<Button>().first { it.text.toString() == a.tr("Start here", "شروع از اینجا") }.performClick()
+            settle(a)
+            a.store.editMetadata { a.store.page.items.add(Item(kind = "sticky", text = "بعدی", x = 700f, y = 420f, w = 220f, h = 120f)) }
+            a.callHidden("runShortcut", "replay")
+            settle(a)
+            val since = views(a.window.decorView).filterIsInstance<Replay>().single()
+            assertTrue("replay should start at the mark", since.sinceMark)
+            since.seek(200.0)
+            shot(a, "replay-since-mark")
+            views(since).filterIsInstance<WorkspaceIcon>().first { it.key == "close" }.performClick()
+            settle(a)
         } finally {
             ctl.pause().stop().destroy()
         }

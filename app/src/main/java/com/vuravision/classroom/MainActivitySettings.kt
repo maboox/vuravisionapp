@@ -49,6 +49,7 @@ import com.vuravision.classroom.ui.scrollRow
 import com.vuravision.classroom.ui.sectionTitle
 import com.vuravision.classroom.ui.switchRow
 import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.ui.uiScale
 import com.vuravision.classroom.voice.VoiceSettings
 import java.util.Locale
 import kotlin.math.*
@@ -423,10 +424,6 @@ internal fun MainActivity.holdSettings(): View {
     toggle("Snap the pen to the ruler and compass", "قلم به خط‌کش و پرگار بچسبد", board.guideSnapEnabled) { v ->
         board.guideSnapEnabled = v
         prefs.edit().putBoolean("guideSnap", v).apply()
-    }
-    toggle("Ignore the palm instead of erasing with it", "کف دست نادیده گرفته شود (به‌جای پاک‌کردن)", !board.profile.palmErase) { v ->
-        board.profile.palmErase = !v
-        prefs.edit().putBoolean("palmErase", !v).apply()
     }
     return c
 }

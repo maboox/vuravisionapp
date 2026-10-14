@@ -193,18 +193,38 @@ object QuizBuilder {
                 addView(c.button(c.s("cancel")) { d.dismiss() }, LinearLayout.LayoutParams(c.dp(140), c.dp(56)).apply { marginEnd = c.dp(8) })
                 addView(
                     c.button(c.tr("Save", "ذخیره"), true) {
+                        all.forEach { card -> (listOf(card.question) + card.options).forEach { it.error = null } }
+                        // Says exactly which question and which field is wrong, and marks that field: a general
+                        // "fill everything" message left teachers with every field filled and no idea what was missing.
+                        fun problem(card: Card, field: EditText, en: String, fa: String): Nothing? {
+                            val n = all.indexOf(card) + 1
+                            error.text = c.tr("Question $n: $en", "سؤال $n: $fa")
+                            field.error = c.tr(en, fa)
+                            field.requestFocus()
+                            return null
+                        }
+                        var failed = false
                         val questions = all.mapNotNull { card ->
+                            if (failed)return@mapNotNull null
                             val options = card.options.map { it.text.toString().trim() }
                             val text = card.question.text.toString().trim()
                             if (text.isEmpty() && options.all { it.isEmpty() })return@mapNotNull null
                             val kept = options.withIndex().filter { it.value.isNotEmpty() }
                             val answer = kept.indexOfFirst { it.index == card.answer }
-                            if (text.isEmpty() || kept.size < 2 || answer < 0 || kept.map { it.value }.distinct().size != kept.size) {
-                                error.text = c.tr("Each question needs text, two different answers and a filled correct answer.", "هر سؤال باید متن، دو پاسخ متفاوت و پاسخ درستِ پرشده داشته باشد.")
-                                return@button
+                            val letter = "ABCD"[card.answer]
+                            val repeated = kept.firstOrNull { k -> kept.any { it.index < k.index && it.value == k.value } }
+                            when {
+                                text.isEmpty() -> problem(card, card.question, "write the question.", "متن سؤال را بنویسید.")
+                                kept.size < 2 -> problem(card, card.options.first { it.text.isNullOrBlank() }, "write at least two answers.", "دست‌کم دو پاسخ بنویسید.")
+                                answer < 0 -> problem(card, card.options[card.answer], "the correct answer ($letter) is empty; fill it or pick another letter.", "پاسخ درست ($letter) خالی است؛ آن را پر کنید یا حرف دیگری را انتخاب کنید.")
+                                repeated != null -> problem(card, card.options[repeated.index], "two answers are the same.", "دو پاسخ یکسان‌اند.")
+                                else -> SavedQuestion(text.take(1000), kept.map { it.value.take(300) }, answer)
+                            } ?: run {
+                                failed = true
+                                null
                             }
-                            SavedQuestion(text.take(1000), kept.map { it.value.take(300) }, answer)
                         }
+                        if (failed)return@button
                         if (questions.isEmpty()) {
                             error.text = c.tr("Write at least one question.", "دست‌کم یک سؤال بنویسید.")
                             return@button

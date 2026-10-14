@@ -233,7 +233,6 @@ class MainActivity : Activity() {
         board.eraserRadius = prefs.getFloat("eraserRadius", 18f)
         board.eraseObjects = prefs.getBoolean("eraseObjects", true)
         board.erasePdfContent = prefs.getBoolean("erasePdfContent", false)
-        board.pdfPalmErase = prefs.getBoolean("pdfPalmErase", false)
         board.penColor = prefs.getInt("penColor", INK_NAVY)
         board.highlightColor = prefs.getInt("highlightColor", 0xffffcf40.toInt())
         board.penWidth = prefs.getFloat("penWidth", 4f)
@@ -2006,7 +2005,7 @@ class MainActivity : Activity() {
             }
         )
         c.addView(
-            switchRow(tr("Use palm as a temporary eraser", "کف دست، پاک‌کن موقت باشد"), board.profile.palmErase, tr("Needs a panel that reports touch size", "پنل باید اندازهٔ تماس را گزارش کند")) {
+            switchRow(tr("Use palm as a temporary eraser", "کف دست، پاک‌کن موقت باشد"), board.profile.palmErase, tr("On the board and in PDFs. Needs a panel that reports touch size", "روی تخته و داخل PDF. پنل باید اندازهٔ تماس را گزارش کند")) {
                 board.profile.palmErase = it
                 prefs.edit().putBoolean("palmErase", it).apply()
             }
@@ -2017,12 +2016,6 @@ class MainActivity : Activity() {
                 switchRow(tr("Also cover the PDF's own content", "محتوای خود PDF را هم بپوشاند"), board.erasePdfContent, tr("Covered with white; Undo restores it. Not a secure deletion.", "با سفید پوشانده می‌شود و با بازگردانی برمی‌گردد؛ حذف امن نیست.")) {
                     board.erasePdfContent = it
                     prefs.edit().putBoolean("erasePdfContent", it).apply()
-                }
-            )
-            c.addView(
-                switchRow(tr("Palm erasing inside the PDF", "پاک‌کردن با کف دست داخل PDF"), board.pdfPalmErase) {
-                    board.pdfPalmErase = it
-                    prefs.edit().putBoolean("pdfPalmErase", it).apply()
                 }
             )
         }
@@ -3301,6 +3294,9 @@ class MainActivity : Activity() {
     }
     internal var spotlight: Spotlight? = null
     internal var replay: Replay? = null
+
+    /** Replay start marks per page: the ids on the page when the teacher pressed "Start here" (this session only). */
+    internal val replayMarks = mutableMapOf<String, Set<String>>()
     internal var settingsScreen: SettingsScreen? = null
     private fun insertConstruction(guide: Item, perpendicular: Boolean = false) {
         if (guide.locked || !store.page.editable(guide) || !store.page.canDraw() || !board.canEditItem(guide))return

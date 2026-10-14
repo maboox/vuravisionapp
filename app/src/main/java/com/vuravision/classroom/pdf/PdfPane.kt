@@ -423,5 +423,9 @@ class PdfPane(
     }
 }
 object PdfTouch {
-    fun scrolls(profile: TouchProfile, tool: Int, major: Float): Boolean = tool != MotionEvent.TOOL_TYPE_STYLUS && tool != MotionEvent.TOOL_TYPE_ERASER && major > profile.thin
+    /** Broad contact scrolls the PDF, except a palm when palm erasing is on: that goes to the sheet and erases, as on the board. */
+    fun scrolls(profile: TouchProfile, tool: Int, major: Float): Boolean {
+        if (tool == MotionEvent.TOOL_TYPE_STYLUS || tool == MotionEvent.TOOL_TYPE_ERASER || major <= profile.thin)return false
+        return !(profile.palmErase && profile.classify(tool, major) == "palm")
+    }
 }

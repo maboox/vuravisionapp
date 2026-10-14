@@ -114,6 +114,11 @@ class PdfProjectPersistenceTest {
         assertFalse(PdfTouch.scrolls(profile, MotionEvent.TOOL_TYPE_FINGER, 0f))
         assertFalse(PdfTouch.scrolls(profile, MotionEvent.TOOL_TYPE_STYLUS, 12f))
         assertFalse(PdfTouch.scrolls(profile, MotionEvent.TOOL_TYPE_ERASER, 12f))
+        // With palm erasing on, a palm goes to the sheet and erases instead of scrolling; a finger still scrolls.
+        val palm = TouchProfile(calibrated = true, thin = 5f, palm = 50f, palmErase = true)
+        assertFalse(PdfTouch.scrolls(palm, MotionEvent.TOOL_TYPE_FINGER, 60f))
+        assertTrue(PdfTouch.scrolls(palm, MotionEvent.TOOL_TYPE_FINGER, 12f))
+        assertEquals("erase", palm.action(MotionEvent.TOOL_TYPE_FINGER, 60f))
     }
 
     @Test fun distantBackgroundHasBoundedScreenDensity() {

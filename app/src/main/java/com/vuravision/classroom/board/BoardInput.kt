@@ -142,12 +142,8 @@ internal fun Board.handleTouch(e: MotionEvent): Boolean {
                 return true
             }
             if (e.actionMasked == MotionEvent.ACTION_DOWN) requestUnbufferedDispatch(e)
-            val behavior =
-                if (pdfBaseId != null && profile.classify(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex)) == "palm") {
-                    if (pdfPalmErase)"erase" else "reject"
-                } else {
-                    profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
-                }
+            // One palm setting for the board and PDF sheets (a separate, default-off PDF switch made palm erasing look broken there).
+            val behavior = profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
             actions[id] = behavior
             if (behavior == "reject") return true
 
@@ -172,8 +168,7 @@ internal fun Board.handleTouch(e: MotionEvent): Boolean {
             }
             if (effectiveTool == "erase" || behavior == "erase") {
                 checkpoint()
-                erase(at, eraseLast[id] ?: at, pointerPanes[id] ?: activePane)
-                eraseLast[id] = at
+                if (erase(at, eraseLast[id] ?: at, pointerPanes[id] ?: activePane))eraseLast[id] = at
             } else if (effectiveTool == "select" && id == primary) {
                 actions[id] = "select"
                 val chosen = chosen()
@@ -295,8 +290,7 @@ internal fun Board.handleTouch(e: MotionEvent): Boolean {
                 if (pid in broadPointers && mode == "navigate")continue
                 if (tool == "erase" || actions[pid] == "erase") {
                     checkpoint()
-                    erase(point, eraseLast[pid] ?: point, pointerPanes[pid] ?: activePane)
-                    eraseLast[pid] = point
+                    if (erase(point, eraseLast[pid] ?: point, pointerPanes[pid] ?: activePane))eraseLast[pid] = point
                 } else if (actions[pid] == "select" && pid == primary) {
                     if (mode == "box") {
                         if (selectionMode == "free")lasso.add(point)
@@ -512,8 +506,12 @@ internal fun Board.transform(point: PointF) {
                 o.x = b.left + (base.x - b.left) * factor
                 o.y = b.top + (base.y - b.top) * factor
                 if (original.size == 1 && base.kind == "shape" && base.shape == "ruler") {
-                    o.w = (base.w + point.x - anchor.x).coerceIn(40f, 100000f)
-                    o.h = (base.h * o.w / base.w).coerceIn(.01f, 100000f)
+                    // A ruler only gets longer or shorter, along its own edge; its width and markings stay the same size.
+                    val angle = Math.toRadians(base.rotation.toDouble())
+                    o.x = base.x
+                    o.y = base.y
+                    o.w = (base.w + ((point.x - anchor.x) * cos(angle) + (point.y - anchor.y) * sin(angle)).toFloat()).coerceIn(40f, 100000f)
+                    o.h = base.h
                 } else if (original.size == 1 && base.kind == "shape" && !Shapes.uniform(base.shape) && base.shape !in GeometryTools.keys) {
                     o.w = (base.w + point.x - anchor.x).coerceIn(4f, 100000f)
                     o.h = (base.h + point.y - anchor.y).coerceIn(4f, 100000f)
@@ -541,15 +539,21 @@ internal fun Board.transform(point: PointF) {
     }
 }
 
-internal fun Board.erase(q: PointF, from: PointF = q, index: Int = activePane) {
+/**
+ * Returns false when the step was too short to record; the caller then keeps its last point, so the next sweep covers it.
+ * Covering PDF content was slow: every move event added a cut and redrew the whole sheet. Now short steps merge into one
+ * cut and only the swept area is redrawn.
+ */
+internal fun Board.erase(q: PointF, from: PointF = q, index: Int = activePane): Boolean {
     if (erasePdfContent && pdfBaseId != null) {
+        val r = eraserRadius / store.page.panes[index].zoom
+        if (from !== q && hypot(q.x - from.x, q.y - from.y) < r * .4f)return false
         store.page.items.firstOrNull { it.id == pdfBaseId }?.let { o ->
             val was = o.locked
             o.locked = false
-            Erasing.cut(o, from, q, eraserRadius / store.page.panes[index].zoom)
+            Erasing.cut(o, from, q, r)
             o.locked = was
         }
-        backingDirty = true
     }
     if (store.page.visiblePaneCount > 1)backingDirty = true
     val radius = eraserRadius / store.page.panes[index].zoom
@@ -579,6 +583,7 @@ internal fun Board.erase(q: PointF, from: PointF = q, index: Int = activePane) {
         }
     }
     selected.retainAll(store.page.items.map { it.id }.toSet())
+    return true
 }
 
 internal fun Board.navigate(e: MotionEvent) {

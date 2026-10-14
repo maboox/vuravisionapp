@@ -64,7 +64,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
             renderer.retainPdfBase(value)
         }
     var erasePdfContent = false
-    var pdfPalmErase = false
     var onActivate: () -> Unit = {}
     internal var transforming: Set<String> = emptySet()
     val isTransforming get() = transforming.isNotEmpty()
@@ -75,7 +74,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         state.copyFrom(b.state)
         profile = b.profile.copy()
         erasePdfContent = b.erasePdfContent
-        pdfPalmErase = b.pdfPalmErase
         keepToolAfterInsert = b.keepToolAfterInsert
         gestures.undoEnabled = b.gestures.undoEnabled
         gestures.pieEnabled = b.gestures.pieEnabled

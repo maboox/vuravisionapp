@@ -111,7 +111,7 @@ internal fun MainActivity.pdfMenu() {
         tr("Save annotations to the original PDF", "ذخیرهٔ یادداشت‌ها روی همان PDF"), tr("Save as a new PDF", "ذخیره به‌صورت PDF جدید"),
         tr("Keep annotations in the project only", "یادداشت‌ها فقط در پروژه بمانند"), tr("Hand / writing mode", "حالت دست / نوشتن"),
         tr("Swap PDF and board sides", "تعویض سمت PDF و تخته"), tr("PDF fullscreen / split", "PDF تمام‌صفحه / کنار تخته"),
-        tr("Fit PDF to width", "نمایش PDF متناسب با عرض"), tr("Copy page or region to board", "کپی صفحه یا بخشی از آن به تخته"),
+        tr("Copy page or region to board", "کپی صفحه یا بخشی از آن به تخته"),
         tr("Export board pages as PDF", "خروجی PDF از صفحات تخته"), tr("Close PDF workspace", "بستن بخش PDF")
     )
     choices(state.title + if (state.unsaved)" •"else "", entries) { i ->
@@ -136,10 +136,9 @@ internal fun MainActivity.pdfMenu() {
                 refreshPdfPresentation()
                 projectChanged()
             }
-            6 -> pdfPane?.fitWidth()
-            7 -> copyPdfPage()
-            8 -> choices(s("export_pdf"), listOf("current_page", "all_pages")) { n -> export("pdf", n == 1) { createDocument(it, "application/pdf") } }
-            9 -> withPdfExit {
+            6 -> copyPdfPage()
+            7 -> choices(s("export_pdf"), listOf("current_page", "all_pages")) { n -> export("pdf", n == 1) { createDocument(it, "application/pdf") } }
+            8 -> withPdfExit {
                 activateBoard(whiteboard)
                 projectStore.editMetadata { projectStore.lesson.pdf = null }
             }

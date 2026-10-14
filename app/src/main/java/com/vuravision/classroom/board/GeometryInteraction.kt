@@ -183,7 +183,7 @@ class GeometryInteraction(private val board: Board) {
                     o.h = when (o.shape) {
                         "protractor" -> o.w / 2
                         "set_square" -> o.w * ratio
-                        "ruler" -> o.w * (base!!.h / base!!.w)
+                        "ruler" -> base!!.h
                         else -> o.h
                     }
                 }
