@@ -402,6 +402,7 @@ class MainActivity : Activity() {
         items.singleOrNull()?.let{o->if(Measurements.of(o)!=null)action("measure",s("measure")){measureShape(o)}}
         if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
+        items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("table",tr("Edit cells","ویرایش خانه‌ها")){editTable(t)}}
         if(items.size==2){
             // Two objects selected: connect them with an arrow from the first chosen to the second, or remove the link.
             val (a,b)=board.selected.mapNotNull{id->items.firstOrNull{it.id==id}}.takeIf{it.size==2}?.let{it[0] to it[1]}?:(items[0] to items[1])
@@ -793,7 +794,7 @@ c.addView(row().apply{
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2385,6 +2386,18 @@ c.addView(row().apply{
             com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
                 .setAction(tr("Share PDF with the class","PDF برای کلاس")){share()}.show()
         }
+    }
+    /** A 3 × 3 table in the middle of the view, selected, with its cells open for typing at once. */
+    private fun insertTable(){
+        val c=board.center();val t=Tables.create(3,3,c.x-300f,c.y-108f,store.page.activeLayerId,board.activePane).apply{flipX=resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL}
+        store.editMetadata{store.page.items.add(t)}
+        board.selected.clear();board.selected.add(t.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
+        editTable(t)
+    }
+    /** Cell size stays the same when rows or columns change, so the table grows instead of squeezing. */
+    private fun editTable(t:Item)=Tables.editor(this,t){rows->
+        val before=Tables.cells(t);val cw=t.w/before.first().size;val rh=t.h/before.size
+        store.page.items.firstOrNull{it.id==t.id&&!it.locked}?.let{o->store.editMetadata{o.text=Tables.encode(rows);o.w=cw*rows.first().size;o.h=rh*rows.size};board.sceneChanged()};refreshSelectionBar()
     }
     private var spotlight:Spotlight?=null
     private var replay:Replay?=null

@@ -347,6 +347,32 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Table: inserted from the Add panel, typed in a grid, a column added; cells survive saving and draw right to left in Persian. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun tableInsertEditAndSave(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a)
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"table");settle(a)
+            val t=a.store.page.items.single{it.shape=="table"};assertTrue("a Persian table runs right to left",t.flipX)
+            val editor=org.robolectric.shadows.ShadowDialog.getLatestDialog();val decor=editor.window!!.decorView;val m=a.resources.displayMetrics
+            fun layout(){decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)}
+            layout();var fields=views(decor).filterIsInstance<EditText>();assertEquals(9,fields.size)
+            fields[0].setText("عنصر");fields[1].setText("نماد");fields[3].setText("اکسیژن");fields[4].setText("O")
+            views(decor).filterIsInstance<Button>().first{it.text.toString()==a.tr("+ Column","+ ستون")}.performClick();layout()
+            fields=views(decor).filterIsInstance<EditText>();assertEquals("the typed cells stay after adding a column","اکسیژن",fields[4].text.toString());assertEquals(12,fields.size)
+            fields[2].setText("عدد اتمی");fields[6].setText("8")
+            shotWindow(editor,"table-editor")
+            views(decor).filterIsInstance<Button>().first{it.text.toString()==a.tr("Save","ذخیره")}.performClick();settle(a)
+            val saved=a.store.page.items.single{it.shape=="table"}
+            assertEquals(listOf("عنصر","نماد","عدد اتمی","اکسیژن","O","8"),Tables.cells(saved).take(2).flatten().filter{it.isNotEmpty()})
+            assertEquals("the table grows by a column instead of squeezing",800f,saved.w,0.1f)
+            val loaded=com.google.gson.Gson().fromJson(com.google.gson.Gson().toJson(a.store.lesson),Lesson::class.java);loaded.validate()
+            assertEquals(saved.text,loaded.pages[a.store.lesson.current].items.single{it.shape=="table"}.text)
+            shot(a,"table")
+            a.store.undo();assertEquals("one Undo restores the cells",3,Tables.cells(a.store.page.items.single{it.shape=="table"}).first().size)
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()
