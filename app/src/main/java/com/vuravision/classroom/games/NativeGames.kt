@@ -351,7 +351,8 @@ class ArcadeView(context: Context, val key: String) : View(context) {
     private val sequenceKeys = setOf("numrace", "sort", "pin", "simon", "pattern", "emojiseq", "gridlight")
     private val wholePanelKeys = setOf("reaction", "draw", "potato", "timing", "tap", "tug", "swipe", "hold", "balloon")
     init {
-        setBackgroundColor(Color.WHITE)
+        // Its own arena background, so the score bar sits on the same deep blue as the screen around it.
+        background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(NativeGames.ARENA_TOP, NativeGames.ARENA_BOTTOM))
         isFocusable = true
         contentDescription = context.s("arc_$key")
     }

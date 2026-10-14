@@ -2273,12 +2273,13 @@ class MainActivity : Activity() {
                     LinearLayout.LayoutParams(dp(44), dp(36))
                 )
                 cell.addView(
-                    label(s(key), 10f, if (on) NAVY else MUTED).apply {
+                    label(s(key), 11f, if (on) NAVY else MUTED).apply {
                         gravity = Gravity.CENTER
-                        maxLines = 1
-                        ellipsize = android.text.TextUtils.TruncateAt.END
+                        maxLines = 2
+                        // Long names ("Parallelogram", "مکعب مستطیل") shrink to fit instead of being cut off.
+                        setAutoSizeTextTypeUniformWithConfiguration(8, 11, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
                     },
-                    LinearLayout.LayoutParams(dp(58), -2)
+                    LinearLayout.LayoutParams(dp(76), dp(30))
                 )
                 cell.setOnClickListener {
                     board.shape = key
