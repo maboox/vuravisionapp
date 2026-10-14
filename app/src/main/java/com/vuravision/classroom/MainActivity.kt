@@ -2198,46 +2198,88 @@ class MainActivity : Activity() {
         )
     }
 
+    /**
+     * The shape menu: small drawn icons in three groups (flat, solids, lines) instead of big boxed tiles, the current
+     * shape marked, and "draw freely" (automatic recognition) as one chip on top.
+     */
     internal fun shapes() {
         val c = column().apply { pad(12) }
         val d = toolSheet(s("shape"), ScrollView(this).apply { addView(c) })
+        val auto = board.tool == "smart" && board.smartMode == "shape"
         c.addView(
-            button(tr("Automatic shape recognition", "تشخیص خودکار شکل")) {
-                board.tool = "smart"
-                board.smartMode = "shape"
-                board.clearSelection()
-                refreshDock()
-                d.dismiss()
-            }
+            row().apply {
+                gravity = Gravity.CENTER_VERTICAL
+                background = rounded(if (auto) PRIMARY_CONTAINER else SURFACE_VARIANT, dp(18).toFloat())
+                setPadding(dp(14), dp(8), dp(14), dp(8))
+                isClickable = true
+                contentDescription = tr("Automatic shape recognition", "تشخیص خودکار شکل")
+                addView(WorkspaceIcon(this@MainActivity, "smart", contentDescription.toString()) {}.apply { isClickable = false }, LinearLayout.LayoutParams(dp(36), dp(36)))
+                addView(
+                    column().apply {
+                        addView(label(tr("Draw freely", "آزاد بکشید"), 15f, NAVY, true))
+                        addView(label(tr("Your drawing becomes the nearest shape", "شکل شما به نزدیک‌ترین شکل تبدیل می‌شود"), 12f, MUTED))
+                    },
+                    LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(10) }
+                )
+                setOnClickListener {
+                    board.tool = "smart"
+                    board.smartMode = "shape"
+                    board.clearSelection()
+                    refreshDock()
+                    d.dismiss()
+                }
+            },
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) }
         )
-        Shapes.keys.chunked(4).forEach { chunk ->
-            val r = row()
-            chunk.forEach { key ->
+        val current = if (board.tool == "shape") board.shape else null
+        listOf(
+            tr("Flat shapes", "شکل‌های دوبعدی") to Shapes.flat,
+            tr("Solids", "احجام (سه‌بعدی)") to Shapes.solids,
+            tr("Lines and axes", "خط و محور") to Shapes.lines
+        ).forEach { (title, keys) ->
+            c.addView(sectionTitle(title))
+            val grid = GridLayout(this).apply { columnCount = 6 }
+            keys.forEach { key ->
+                val on = key == current
                 val cell = column().apply {
-                    gravity = Gravity.CENTER
-                    pad(5)
-                    background = rounded(PAPER, dp(10).toFloat())
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    setPadding(dp(2), dp(6), dp(2), dp(4))
+                    background = if (on) rounded(PRIMARY_CONTAINER, dp(12).toFloat()) else null
+                    isClickable = true
+                    isFocusable = true
+                    contentDescription = s(key)
+                    tooltipText = s(key)
                 }
                 cell.addView(
                     object : View(this) {
                         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                            color = TEAL
+                            color = if (on) TEAL else NAVY
                             style = Paint.Style.STROKE
                             strokeWidth = dp(2).toFloat()
+                            strokeJoin = Paint.Join.ROUND
+                            strokeCap = Paint.Cap.ROUND
                         }
                         override fun onDraw(canvas: Canvas) {
-                            val ratio = if (key in listOf("rectangle", "rounded_rectangle", "ellipse", "trapezoid", "parallelogram", "line", "arrow", "double_arrow", "speech"))1.8f else 1f
-                            val previewWidth = minOf((width - dp(24)).toFloat(), (height - dp(16)) * ratio).coerceAtLeast(1f)
-                            val previewHeight = previewWidth / ratio
+                            val wide = key in listOf("rectangle", "rounded_rectangle", "ellipse", "semicircle", "trapezoid", "parallelogram", "line", "arrow", "double_arrow", "speech", "cuboid")
+                            val ratio = if (wide) 1.5f else 1f
+                            val pw = minOf(width - dp(8).toFloat(), (height - dp(4)) * ratio).coerceAtLeast(1f)
+                            val ph = pw / ratio
                             canvas.save()
-                            canvas.translate((width - previewWidth) / 2f, (height - previewHeight) / 2f)
-                            Shapes.draw(canvas, key, previewWidth, previewHeight, paint)
+                            canvas.translate((width - pw) / 2f, (height - ph) / 2f)
+                            Shapes.draw(canvas, key, pw, ph, paint)
                             canvas.restore()
                         }
                     },
-                    LinearLayout.LayoutParams(-1, dp(56))
+                    LinearLayout.LayoutParams(dp(44), dp(36))
                 )
-                cell.addView(label(s(key), 11f).apply { gravity = Gravity.CENTER })
+                cell.addView(
+                    label(s(key), 10f, if (on) NAVY else MUTED).apply {
+                        gravity = Gravity.CENTER
+                        maxLines = 1
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                    },
+                    LinearLayout.LayoutParams(dp(58), -2)
+                )
                 cell.setOnClickListener {
                     board.shape = key
                     board.tool = "shape"
@@ -2245,9 +2287,9 @@ class MainActivity : Activity() {
                     refreshDock()
                     d.dismiss()
                 }
-                r.addView(cell, LinearLayout.LayoutParams(0, dp(96), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) })
+                grid.addView(cell, GridLayout.LayoutParams().apply { setMargins(dp(1), dp(1), dp(1), dp(1)) })
             }
-            c.addView(r)
+            c.addView(grid)
         }
     }
 

@@ -215,6 +215,13 @@
 <string name="speech">Speech bubble</string>
 <string name="cylinder">Cylinder</string>
 <string name="cube">Cube</string>
+<string name="semicircle">Semicircle</string>
+<string name="kite">Kite</string>
+<string name="sphere">Sphere</string>
+<string name="hemisphere">Hemisphere</string>
+<string name="cuboid">Cuboid</string>
+<string name="pyramid">Pyramid</string>
+<string name="prism">Prism</string>
 <string name="cone">Cone</string>
 <string name="axes">Coordinate axes</string>
 <string name="minimize">Minimize / expand</string>

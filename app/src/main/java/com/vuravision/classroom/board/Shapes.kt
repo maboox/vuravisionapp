@@ -2,9 +2,13 @@ package com.vuravision.classroom.board
 import android.graphics.*
 import kotlin.math.*
 object Shapes {
-    val keys = listOf("rectangle", "square", "rounded_rectangle", "circle", "ellipse", "triangle", "right_triangle", "diamond", "pentagon", "hexagon", "octagon", "star", "heart", "trapezoid", "parallelogram", "line", "arrow", "double_arrow", "cross", "speech", "cylinder", "cube", "cone", "axes")
+    /** Shown in three groups in the shape menu: flat shapes, solids (3D) and lines. */
+    val flat = listOf("rectangle", "square", "rounded_rectangle", "circle", "ellipse", "semicircle", "triangle", "right_triangle", "diamond", "kite", "trapezoid", "parallelogram", "pentagon", "hexagon", "octagon", "star", "heart", "cross", "speech")
+    val solids = listOf("cube", "cuboid", "cylinder", "cone", "sphere", "hemisphere", "pyramid", "prism")
+    val lines = listOf("line", "arrow", "double_arrow", "axes")
+    val keys = flat + solids + lines
     fun capDepth(w: Float, h: Float) = min(w * .28f, h * .8f)
-    fun uniform(key: String) = key in listOf("circle", "square", "pentagon", "hexagon", "octagon", "star", "cube", "axes")
+    fun uniform(key: String) = key in listOf("circle", "square", "pentagon", "hexagon", "octagon", "star", "cube", "sphere", "axes")
     fun draw(c: Canvas, key: String, w: Float, h: Float, p: Paint) {
         fun polygon(vararg pts: Float) {
             val path = Path()
@@ -77,6 +81,42 @@ object Shapes {
                 polygon(0f, .25f, .25f, 0f, 1f, 0f, .75f, .25f)
                 line(1f, 0f, 1f, .75f)
                 line(1f, .75f, .75f, 1f)
+            }
+            "semicircle" -> {
+                val path = Path()
+                path.moveTo(0f, h)
+                path.arcTo(0f, 0f, w, 2 * h, 180f, 180f, false)
+                path.close()
+                c.drawPath(path, p)
+            }
+            "kite" -> polygon(.5f, 0f, 1f, .35f, .5f, 1f, 0f, .35f)
+            "sphere" -> {
+                c.drawOval(0f, 0f, w, h, p)
+                c.drawArc(0f, h * .38f, w, h * .62f, 0f, 180f, false, p)
+            }
+            "hemisphere" -> {
+                val depth = capDepth(w, h)
+                c.drawArc(0f, 0f, w, 2 * (h - depth / 2), 180f, 180f, false, p)
+                c.drawOval(0f, h - depth, w, h, p)
+            }
+            "cuboid" -> {
+                polygon(0f, .3f, .7f, .3f, .7f, 1f, 0f, 1f)
+                polygon(0f, .3f, .3f, 0f, 1f, 0f, .7f, .3f)
+                line(1f, 0f, 1f, .7f)
+                line(1f, .7f, .7f, 1f)
+            }
+            "pyramid" -> {
+                line(0f, .8f, .65f, 1f)
+                line(.65f, 1f, 1f, .75f)
+                line(.5f, 0f, 0f, .8f)
+                line(.5f, 0f, .65f, 1f)
+                line(.5f, 0f, 1f, .75f)
+            }
+            "prism" -> {
+                polygon(0f, 1f, .65f, 1f, .325f, .35f)
+                line(.65f, 1f, 1f, .65f)
+                line(.325f, .35f, .675f, 0f)
+                line(1f, .65f, .675f, 0f)
             }
             "axes" -> {
                 line(0f, .5f, 1f, .5f)

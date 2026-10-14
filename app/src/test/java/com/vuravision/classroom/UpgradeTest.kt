@@ -174,7 +174,7 @@ class UpgradeTest {
             val r = Renderer(media)
             val b = Bitmap.createBitmap(1200, 700, Bitmap.Config.ARGB_8888)
             Shapes.keys.forEach { r.draw(Canvas(b), Item(kind = "shape", shape = it)) }
-            assertEquals(24, Shapes.keys.size)
+            assertEquals(31, Shapes.keys.size)
             assertEquals(74, Labs.keys.size)
             Labs.keys.forEach { key ->
                 val controls = Labs.controls(key)
@@ -238,7 +238,7 @@ class UpgradeTest {
         views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first { it.contentDescription == a.s("insert") }.performClick()
         views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first { it.contentDescription == a.s("shape") }.performClick()
         val gallery = org.robolectric.shadows.ShadowDialog.getLatestDialog()
-        assertEquals(24, views(gallery.window!!.decorView).filterIsInstance<TextView>().count { label -> Shapes.keys.any { label.text.toString() == a.s(it) } })
+        assertEquals(Shapes.keys.size, views(gallery.window!!.decorView).filterIsInstance<TextView>().count { label -> Shapes.keys.any { label.text.toString() == a.s(it) } })
         capture(gallery.window!!.decorView, "shape-gallery")
         gallery.dismiss()
         ctl.pause().stop().destroy()

@@ -5,7 +5,7 @@ import kotlin.math.*
 
 /** Object-local closed boundaries. Never flood the screen or page background. */
 object ShapeFill {
-    val closedShapes = Shapes.keys.toSet() - setOf("line", "arrow", "double_arrow", "axes", "cube", "cone", "cylinder")
+    val closedShapes = Shapes.flat.toSet()
     private data class Cached(val points: List<Point>, val cuts: List<EraseCut>, val kind: String, val shape: String, val w: Float, val h: Float, val inkW: Float, val inkH: Float, val runs: List<FillRun>?, val path: Path)
     private val paths = object : android.util.LruCache<String, Cached>(16 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Cached) = 1000 + value.points.size * 16 + value.runs.orEmpty().size * 32
@@ -64,6 +64,12 @@ object ShapeFill {
             "triangle" -> polygon(.5f, 0f, 1f, 1f, 0f, 1f)
             "right_triangle" -> polygon(0f, 0f, 1f, 1f, 0f, 1f)
             "diamond" -> polygon(.5f, 0f, 1f, .5f, .5f, 1f, 0f, .5f)
+            "kite" -> polygon(.5f, 0f, 1f, .35f, .5f, 1f, 0f, .35f)
+            "semicircle" -> {
+                p.moveTo(0f, h)
+                p.arcTo(0f, 0f, w, 2 * h, 180f, 180f, false)
+                p.close()
+            }
             "pentagon" -> regular(5)
             "hexagon" -> regular(6)
             "octagon" -> regular(8)

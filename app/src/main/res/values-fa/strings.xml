@@ -215,6 +215,13 @@
 <string name="speech">حباب گفت‌وگو</string>
 <string name="cylinder">استوانه</string>
 <string name="cube">مکعب</string>
+<string name="semicircle">نیم‌دایره</string>
+<string name="kite">کایت</string>
+<string name="sphere">کره</string>
+<string name="hemisphere">نیم‌کره</string>
+<string name="cuboid">مکعب مستطیل</string>
+<string name="pyramid">هرم</string>
+<string name="prism">منشور</string>
 <string name="cone">مخروط</string>
 <string name="axes">محور مختصات</string>
 <string name="minimize">جمع کردن / باز کردن</string>
