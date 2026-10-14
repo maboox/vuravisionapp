@@ -35,12 +35,12 @@ class Replay(context:Context,source:Page,pane:Int,private val renderer:Renderer,
     private var last=0L
     private val bounds=contentBounds(order).apply{inset(-40f,-40f)}
     private val track=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=0x3320194f}
-    private val fill=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=TEAL}
+    private val fill=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=INK_TEAL}
     private lateinit var playButton:android.widget.Button
     private lateinit var speedButton:android.widget.Button
     init{
-        setWillNotDraw(false);isClickable=true;contentDescription=context.tr("Replay","بازپخش");setBackgroundColor(PAPER)
-        val bar=context.row().apply{background=rounded(SURFACE,context.dp(24).toFloat(),OUTLINE);setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6));elevation=context.dp(6).toFloat();gravity=Gravity.CENTER_VERTICAL}
+        setWillNotDraw(false);isClickable=true;contentDescription=context.tr("Replay","بازپخش");setBackgroundColor(INK_PAPER)
+        val bar=context.row().apply{background=rounded(INK_SURFACE,context.dp(24).toFloat(),INK_OUTLINE);setPadding(context.dp(6),context.dp(6),context.dp(6),context.dp(6));elevation=context.dp(6).toFloat();gravity=Gravity.CENTER_VERTICAL}
         playButton=context.button(context.s("pause"),true){toggle()}
         speedButton=context.button("1×"){speed=when(speed){1.0->2.0;2.0->4.0;else->1.0};speedButton.text="${speed.toInt()}×"}.apply{contentDescription=context.tr("Speed","سرعت")}
         bar.addView(playButton,LinearLayout.LayoutParams(context.dp(120),context.dp(52)))

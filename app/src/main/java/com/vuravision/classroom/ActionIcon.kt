@@ -13,8 +13,8 @@ import android.view.View
  * icon alone is ambiguous for actions like convert, solve or arrange.
  */
 class ActionIcon(context:Context,val symbol:String,title:String,private val label:String?=null,active:Boolean=false,action:()->Unit):View(context){
-    private val icon=IconCatalog.drawable(context,symbol)?.apply{if(active)setTint(Color.WHITE)}
-    private val text=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=if(active)Color.WHITE else NAVY;textSize=context.dp(13).toFloat();textAlign=Paint.Align.CENTER;typeface=Fonts.face(Fonts.persianId)}
+    private val icon=IconCatalog.drawable(context,symbol)?.apply{if(active)setTint(ON_NAVY)}
+    private val text=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=if(active)ON_NAVY else NAVY;textSize=context.dp(13).toFloat();textAlign=Paint.Align.CENTER;typeface=Fonts.face(Fonts.persianId)}
     init{
         contentDescription=title;tooltipText=title;isFocusable=true;isClickable=true;setOnClickListener{action()}
         background=RippleDrawable(ColorStateList.valueOf(0x2220194f),rounded(if(active)NAVY else Color.TRANSPARENT,context.dp(12).toFloat()),rounded(Color.WHITE,context.dp(12).toFloat()))

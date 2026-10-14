@@ -53,7 +53,7 @@ class ClassroomWidgets(private val context:Context,private val host:FrameLayout)
     body.addView(names,LinearLayout.LayoutParams(-1,-2).apply{topMargin=context.dp(8)})
    }
    "scoreboard"->{var a=0;var b=0;display.text="0 : 0";btn("A +"){a++;display.text="$a : $b"};btn("B +"){b++;display.text="$a : $b"};btn("↺"){a=0;b=0;display.text="0 : 0"}}
-   "curtain"->{display.text=context.s("curtain");display.setTextColor(Color.WHITE);display.setBackgroundColor(NAVY);display.layoutParams=LinearLayout.LayoutParams(-1,context.dp(220));btn(context.s("reveal")){display.visibility=if(display.visibility==View.VISIBLE)View.GONE else View.VISIBLE}}
+   "curtain"->{display.text=context.s("curtain");display.setTextColor(ON_NAVY);display.setBackgroundColor(NAVY);display.layoutParams=LinearLayout.LayoutParams(-1,context.dp(220));btn(context.s("reveal")){display.visibility=if(display.visibility==View.VISIBLE)View.GONE else View.VISIBLE}}
   }
   val width=minOf(context.dp(if(key=="curtain")480 else 340),(host.width-context.dp(16)).coerceAtLeast(context.dp(240)))
   host.addView(card,FrameLayout.LayoutParams(width,-2,Gravity.TOP or Gravity.LEFT).apply{leftMargin=context.dp(16);topMargin=context.dp(16+widgets.size*24)});widgets[key]=card

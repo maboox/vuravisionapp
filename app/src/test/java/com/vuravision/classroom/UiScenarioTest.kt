@@ -373,6 +373,22 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Dark interface: the chrome turns dark, the board page stays white, and text on the page keeps its dark ink. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun darkInterfaceKeepsTheBoardLight(){
+        context.getSharedPreferences("vura",0).edit().clear().putString("language","fa").putString("uiTheme","dark").commit()
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        try{
+            settle(a);assertTrue(UiTheme.dark)
+            assertTrue("dock should be dark",Color.luminance(SURFACE)<.2f)
+            assertEquals("new pages stay white",Color.WHITE,a.store.page.panes.first().background.let{if(it==-1)Color.WHITE else it})
+            assertEquals("the default pen still writes dark ink",INK_NAVY,a.board.penColor)
+            shot(a,"dark-board");checkChrome(a,"dark")
+            views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a);shot(a,"dark-add-panel")
+            views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="insert"}.performClick();settle(a)
+            call(a,"settings");settle(a);shot(a,"dark-settings")
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit();UiTheme.load(context)}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()

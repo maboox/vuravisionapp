@@ -45,5 +45,46 @@
         <item name="cornerSize">24dp</item>
     </style>
 
+
+    <!-- Dark interface (item 24). Only the chrome: board pages keep their own style. -->
+    <style name="AppThemeDark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#FFE4E0FF</item>
+        <item name="colorOnPrimary">#FF17142E</item>
+        <item name="colorPrimaryContainer">#FF302C52</item>
+        <item name="colorOnPrimaryContainer">#FFE4E0FF</item>
+        <item name="colorSecondary">#FF5CC8C2</item>
+        <item name="colorOnSecondary">#FF0B1F1E</item>
+        <item name="colorSecondaryContainer">#FF17423F</item>
+        <item name="colorOnSecondaryContainer">#FFCDEEEB</item>
+        <item name="android:colorBackground">#FF121120</item>
+        <item name="colorSurface">#FF1E1C30</item>
+        <item name="colorSurfaceContainerHigh">#FF1E1C30</item>
+        <item name="colorSurfaceVariant">#FF28263D</item>
+        <item name="colorOnSurface">#FFE4E0FF</item>
+        <item name="colorOnSurfaceVariant">#FFACA7CF</item>
+        <item name="colorOutline">#FF57537A</item>
+        <item name="colorError">#FFFF8A80</item>
+        <item name="colorOnError">#FF3B0A07</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#FF1E1C30</item>
+        <item name="android:navigationBarColor">#FF1E1C30</item>
+        <item name="android:windowBackground">#FF121120</item>
+        <item name="materialAlertDialogTheme">@style/VuraAlertDialogDark</item>
+        <item name="alertDialogTheme">@style/VuraAlertDialogDark</item>
+    </style>
+
+    <style name="VuraAlertDialogDark" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorPrimary">#FFE4E0FF</item>
+        <item name="colorSecondary">#FF5CC8C2</item>
+        <item name="colorSurface">#FF1E1C30</item>
+        <item name="colorSurfaceContainerHigh">#FF1E1C30</item>
+        <item name="colorOnSurface">#FFE4E0FF</item>
+        <item name="shapeAppearanceMediumComponent">@style/VuraShape.Dialog</item>
+    </style>
+
     <style name="AppTheme" parent="AppThemeBase" />
 </resources>

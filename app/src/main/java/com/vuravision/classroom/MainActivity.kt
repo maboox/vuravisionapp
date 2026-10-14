@@ -87,7 +87,7 @@ class MainActivity : Activity() {
     }
 
     override fun onCreate(state: Bundle?) {
-        Motion.load(this)
+        Motion.load(this);UiTheme.load(this);setTheme(UiTheme.style())
         super.onCreate(state)
         Fonts.initialize(this)
         pendingExport = prefs.getString("pendingExport", null)?.let { name ->
@@ -113,7 +113,7 @@ class MainActivity : Activity() {
         board.eraseObjects=prefs.getBoolean("eraseObjects",true)
         board.erasePdfContent=prefs.getBoolean("erasePdfContent",false)
         board.pdfPalmErase=prefs.getBoolean("pdfPalmErase",false)
-        board.penColor=prefs.getInt("penColor",NAVY)
+        board.penColor=prefs.getInt("penColor",INK_NAVY)
         board.highlightColor=prefs.getInt("highlightColor",0xffffcf40.toInt())
         board.penWidth=prefs.getFloat("penWidth",4f)
         board.highlightWidth=prefs.getFloat("highlightWidth",6f)
@@ -448,7 +448,7 @@ class MainActivity : Activity() {
         if(item.kind=="sticky"){
             item.noteColor=color
             if(Color.luminance(color)<.25 && Color.luminance(item.color)<.35)item.color=Color.WHITE
-            else if(Color.luminance(color)>.65 && Color.luminance(item.color)>.65)item.color=NAVY
+            else if(Color.luminance(color)>.65 && Color.luminance(item.color)>.65)item.color=INK_NAVY
         }else item.color=color
     }
     /** Free horizontal span for canvas popups: the canvas minus the dock and a 12dp gap. */
@@ -549,7 +549,7 @@ class MainActivity : Activity() {
         board.applySharedPane(index)
         val bar=column().apply{setPadding(dp(10),dp(8),dp(10),dp(10));background=rounded(SURFACE,dp(18).toFloat(),OUTLINE);elevation=dp(8).toFloat();isClickable=true}
         bar.addView(label(if(pen)tr("Panel ${index+1} · pen","بخش ${index+1} · قلم")else tr("Panel ${index+1} · background","بخش ${index+1} · پس‌زمینه"),14f,MUTED,true).apply{gravity=Gravity.CENTER})
-        fun chip(title:String,active:Boolean,run:()->Unit)=label(title,14f,if(active)Color.WHITE else NAVY,true).apply{
+        fun chip(title:String,active:Boolean,run:()->Unit)=label(title,14f,if(active)ON_NAVY else NAVY,true).apply{
             gravity=Gravity.CENTER;setPadding(dp(12),0,dp(12),0);minHeight=dp(40);isClickable=true
             background=rounded(if(active)NAVY else SURFACE_VARIANT,dp(20).toFloat());setOnClickListener{run()}
         }
@@ -612,7 +612,7 @@ class MainActivity : Activity() {
         val holder=column();c.addView(holder);var current=initial
         fun refresh(){
             holder.removeAllViews()
-            val base=if(background)backgroundSwatches else listOf(NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),ORANGE,0xffffcf40.toInt(),TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
+            val base=if(background)backgroundSwatches else listOf(INK_NAVY,Color.BLACK,Color.WHITE,0xffe45756.toInt(),INK_ORANGE,0xffffcf40.toInt(),INK_TEAL,0xff268bd2.toInt(),0xff865ac7.toInt(),0xffec76ab.toInt())
             holder.addView(colorPalette(current,base+projectStore.lesson.customColors.orEmpty()+current,{
                 ColorPickerDialog.show(this,current){color->
                     current=color
@@ -2370,17 +2370,17 @@ c.addView(row().apply{
             if(projectStore.lesson.pages.size>=200)return@runAi
             activateBoard(whiteboard)
             val page=newBoardPage(projectStore.page);val layer=page.activeLayerId
-            fun text(t:String,size:Float,y:Float,color:Int=NAVY)=Item(kind="text",text=t,width=size,x=120f,y=y,w=1200f,h=size*2,color=color,layerId=layer).also{Fonts.stamp(it,true);TextLayout.fit(it)}
+            fun text(t:String,size:Float,y:Float,color:Int=INK_NAVY)=Item(kind="text",text=t,width=size,x=120f,y=y,w=1200f,h=size*2,color=color,layerId=layer).also{Fonts.stamp(it,true);TextLayout.fit(it)}
             val title=text(summary.title.ifBlank{tr("Lesson summary","خلاصهٔ درس")},48f,80f)
             val points=text(summary.points.joinToString("\n"){"• $it"},28f,title.y+title.h+30f)
             val items=mutableListOf(title,points)
-            if(summary.homework.isNotBlank())items.add(text(tr("Practice: ","تمرین: ")+summary.homework,26f,points.y+points.h+30f,TEAL))
+            if(summary.homework.isNotBlank())items.add(text(tr("Practice: ","تمرین: ")+summary.homework,26f,points.y+points.h+30f,INK_TEAL))
             // A QR of the summary text: students scan it with the phone camera and keep it, no network or app needed.
             val qrText=(listOf(title.text)+summary.points.map{"• $it"}+listOfNotNull(summary.homework.takeIf{it.isNotBlank()}?.let{tr("Practice: ","تمرین: ")+it})).joinToString("\n").take(1100)
             val qrName=try{media.save(Sharing.qr(qrText))}catch(_:Exception){null}
             if(qrName!=null){
                 items.add(Item(kind="image",asset=qrName,x=1360f,y=80f,w=260f,h=260f,layerId=layer))
-                items.add(text(tr("Scan to keep the summary","برای داشتن خلاصه اسکن کنید"),18f,350f,MUTED).also{it.x=1340f;it.w=300f;TextLayout.fit(it)})
+                items.add(text(tr("Scan to keep the summary","برای داشتن خلاصه اسکن کنید"),18f,350f,INK_MUTED).also{it.x=1340f;it.w=300f;TextLayout.fit(it)})
             }
             page.items.addAll(items)
             projectStore.editMetadata{projectStore.lesson.pages.add(page);projectStore.lesson.current=projectStore.lesson.pages.lastIndex}
@@ -2455,6 +2455,7 @@ c.addView(row().apply{
                 // Item 29: the panel's size, not "small/large": bigger panels are read from farther away, so controls grow with them.
                 SettingRow.Choice(tr("Panel size","اندازهٔ نمایشگر"),panelSizes.map{it.first to it.second},
                     {prefs.getFloat("uiScale",1f).let{v->panelSizes.minByOrNull{kotlin.math.abs(it.third-v)}!!.first}}){v->roomSafe{restart{putFloat("uiScale",panelSizes.first{it.first==v}.third)}}},
+                SettingRow.Choice(tr("Interface","ظاهر برنامه"),listOf("light" to tr("Light","روشن"),"dark" to tr("Dark","تیره")),{if(UiTheme.dark)"dark" else "light"}){v->roomSafe{restart{putString("uiTheme",v)}}},
                 SettingRow.Toggle(tr("Reduce motion","کاهش حرکت"),tr("No sliding panels, shaking or confetti","بدون لغزش پنل‌ها، لرزش و کاغذ رنگی"),{prefs.getBoolean("reduceMotion",false)}){v->prefs.edit().putBoolean("reduceMotion",v).apply();Motion.load(this)},
                 SettingRow.Choice(tr("Toolbar height on the side","ارتفاع نوار ابزار کنار صفحه"),listOf("top" to tr("Higher","بالاتر"),"middle" to tr("Middle","وسط"),"bottom" to tr("Lower","پایین‌تر")),
                     {toolDock.position}){toolDock.position=it},

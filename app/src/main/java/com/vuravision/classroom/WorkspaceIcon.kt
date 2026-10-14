@@ -37,7 +37,7 @@ open class WorkspaceIcon(context:Context,val key:String,title:String,active:Bool
     fun showActive(value:Boolean){
         active=value
         setImageResource(IconCatalog.resource(key,value))
-        imageTintList=ColorStateList.valueOf(if(value)Color.WHITE else NAVY)
+        imageTintList=ColorStateList.valueOf(if(value)ON_NAVY else NAVY)
         background=RippleDrawable(ColorStateList.valueOf(0x2220194f),rounded(if(value)NAVY else SURFACE,context.dp(12).toFloat()),null)
         isSelected=value
     }
@@ -51,7 +51,7 @@ open class WorkspaceIcon(context:Context,val key:String,title:String,active:Bool
             c.drawRoundRect(stroke/2,stroke/2,width-stroke/2,height-stroke/2,context.dp(12).toFloat(),context.dp(12).toFloat(),ring)
         }
         val r=context.dp(4).toFloat();val cx=width/2f;val cy=height-context.dp(7).toFloat()
-        dotPaint.color=if(active)Color.WHITE else SURFACE;c.drawCircle(cx,cy,r+context.dp(2),dotPaint)
+        dotPaint.color=if(active)ON_NAVY else SURFACE;c.drawCircle(cx,cy,r+context.dp(2),dotPaint)
         dotPaint.color=color;c.drawCircle(cx,cy,r,dotPaint)
     }
 }

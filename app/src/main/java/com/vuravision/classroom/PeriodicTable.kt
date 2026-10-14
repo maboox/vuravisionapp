@@ -37,14 +37,14 @@ object PeriodicTable {
         val p=Paint(Paint.ANTI_ALIAS_FLAG);val cw=o.w/18;val ch=o.h/11
         p.color=Color.WHITE;canvas.drawRoundRect(0f,0f,o.w,o.h,12f,12f,p)
         elements(c).forEach{e->val x=e.col*cw;val y=(e.row+1)*ch
-            p.style=Paint.Style.FILL;p.color=colors[e.value("GroupBlock")]?:PAPER
+            p.style=Paint.Style.FILL;p.color=colors[e.value("GroupBlock")]?:INK_PAPER
             canvas.drawRoundRect(x+1,y+1,x+cw-1,y+ch-1,3f,3f,p)
-            if(e.number==o.selectedElement){p.style=Paint.Style.STROKE;p.color=TEAL;p.strokeWidth=2f;canvas.drawRoundRect(x+1,y+1,x+cw-1,y+ch-1,3f,3f,p)}
-            p.style=Paint.Style.FILL;p.color=NAVY;p.textSize=cw*.18f;canvas.drawText(e.number.toString(),x+cw*.08f,y+ch*.22f,p)
+            if(e.number==o.selectedElement){p.style=Paint.Style.STROKE;p.color=INK_TEAL;p.strokeWidth=2f;canvas.drawRoundRect(x+1,y+1,x+cw-1,y+ch-1,3f,3f,p)}
+            p.style=Paint.Style.FILL;p.color=INK_NAVY;p.textSize=cw*.18f;canvas.drawText(e.number.toString(),x+cw*.08f,y+ch*.22f,p)
             p.textSize=cw*.36f;p.typeface=Typeface.DEFAULT_BOLD;canvas.drawText(e.symbol,x+(cw-p.measureText(e.symbol))/2,y+ch*.65f,p)
             p.typeface=Typeface.DEFAULT;p.textSize=cw*.16f;canvas.drawText(e.value("AtomicMass"),x+cw*.08f,y+ch*.9f,p)
         }
-        p.textSize=ch*.26f;p.color=MUTED
+        p.textSize=ch*.26f;p.color=INK_MUTED
         for(g in 1..18)canvas.drawText(g.toString(),(g-.6f)*cw,ch*.75f,p)
         canvas.drawText("57–71",2*cw,6.6f*ch,p);canvas.drawText("89–103",2*cw,7.6f*ch,p)
     }
@@ -52,10 +52,10 @@ object PeriodicTable {
     fun drawCard(canvas:Canvas,o:Item,c:Context){
         val e=elements(c).firstOrNull{it.number==o.selectedElement}?:return
         val side=cardHeader(o)-24;val x=(o.w-side)/2;val y=12f
-        val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=colors[e.value("GroupBlock")]?:PAPER}
+        val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=colors[e.value("GroupBlock")]?:INK_PAPER}
         canvas.drawRoundRect(x,y,x+side,y+side,10f,10f,p)
-        p.style=Paint.Style.STROKE;p.color=TEAL;p.strokeWidth=1.5f;canvas.drawRoundRect(x,y,x+side,y+side,10f,10f,p)
-        p.style=Paint.Style.FILL;p.color=NAVY;p.typeface=Fonts.face(Fonts.en(o));p.textSize=side*.15f
+        p.style=Paint.Style.STROKE;p.color=INK_TEAL;p.strokeWidth=1.5f;canvas.drawRoundRect(x,y,x+side,y+side,10f,10f,p)
+        p.style=Paint.Style.FILL;p.color=INK_NAVY;p.typeface=Fonts.face(Fonts.en(o));p.textSize=side*.15f
         canvas.drawText(e.number.toString(),x+side*.1f,y+side*.22f,p)
         p.typeface=Fonts.face(Fonts.en(o),true);p.textSize=side*.42f;p.textAlign=Paint.Align.CENTER
         canvas.drawText(e.symbol,x+side/2,y+side*.66f,p)
@@ -83,7 +83,7 @@ object PeriodicTable {
         val body=c.column().apply{pad(16)};body.addView(c.label(details(c,e),16f).apply{setTextIsSelectable(true)})
         val compare=Spinner(c);compare.adapter=OptionAdapter(c,elements(c).map{"${it.symbol} · ${c.tr(it.name,it.fa)}"});compare.setSelection((e.number%118));body.addView(compare)
         body.addView(c.button(c.tr("Compare","مقایسه")){val other=elements(c)[compare.selectedItemPosition];val r=c.row();listOf(e,other).forEach{r.addView(c.label(details(c,it),14f),LinearLayout.LayoutParams(0,-2,1f))};MaterialAlertDialogBuilder(c).setTitle(c.tr("Element comparison","مقایسهٔ عناصر")).setView(ScrollView(c).apply{addView(r)}).setPositiveButton(c.s("close"),null).show().also{Fonts.onShown(it)}})
-        body.addView(c.button(c.tr("Add element card to board","افزودن کارت عنصر به تخته")){insert(Item(kind="sticky",shape="element_card",selectedElement=e.number,text=details(c,e),width=15f,w=300f,h=380f,noteColor=colors[e.value("GroupBlock")]?:PAPER));close()})
+        body.addView(c.button(c.tr("Add element card to board","افزودن کارت عنصر به تخته")){insert(Item(kind="sticky",shape="element_card",selectedElement=e.number,text=details(c,e),width=15f,w=300f,h=380f,noteColor=colors[e.value("GroupBlock")]?:INK_PAPER));close()})
         MaterialAlertDialogBuilder(c).setTitle("${e.symbol} · ${c.tr(e.name,e.fa)}").setView(ScrollView(c).apply{addView(body)}).setNegativeButton(c.s("close"),null).show().also{close=it::dismiss;Fonts.onShown(it)}
     }
     fun show(c:Context,insert:(Item)->Unit)=show(c,insert,null)

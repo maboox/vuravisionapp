@@ -21,7 +21,7 @@ object UserGuide {
         val topics=topics(context)
         var fa=context.resources.configuration.locales[0].language=="fa"
         var index=0;var taps=0
-        val dialog=Dialog(context,R.style.AppTheme)
+        val dialog=Dialog(context,UiTheme.style())
         val root=context.column().apply{pad(12);setBackgroundColor(PAPER)}
         val header=context.row();root.addView(header)
         if(back!=null)header.addView(WorkspaceIcon(context,"menu_back",context.s("menu_back")){dialog.dismiss();back()}.apply{id=R.id.menu_back_button;scaleX=if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)-1f else 1f})
@@ -183,9 +183,9 @@ class GuideFigure(context:Context,private val media:Media,private val topic:Stri
                 for(i in 0..3){canvas.save();canvas.translate(45f+i*205f,25f);canvas.clipRect(0f,0f,195f,370f);renderer.background(canvas,Page(background=if(i==0)"grid"else"dots"),RectF(0f,0f,195f,370f),backgrounds[i]);canvas.restore();badge(i+1,75f+i*205f,55f)}
             }
             "geometry"->{
-                renderer.draw(canvas,Item(kind="shape",shape="ruler",x=85f,y=180f,w=390f,h=70f,color=NAVY))
+                renderer.draw(canvas,Item(kind="shape",shape="ruler",x=85f,y=180f,w=390f,h=70f,color=INK_NAVY))
                 line(listOf(85f to 171f,475f to 171f),ORANGE,4f)
-                renderer.draw(canvas,Item(kind="shape",shape="compass",x=610f,y=90f,w=135f,h=160f,color=TEAL))
+                renderer.draw(canvas,Item(kind="shape",shape="compass",x=610f,y=90f,w=135f,h=160f,color=INK_TEAL))
                 shape("circle",537f,145f,200f,200f,TEAL,2f)
                 text("Start near the edge","از نزدیک لبه آغاز کنید",85f,336f)
             }

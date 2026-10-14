@@ -66,7 +66,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     val measurements=MeasurementOverlay(this)
     fun showMeasurements(o:Item){measurements.show(o)}
     var onEducationalTap:(Item,PointF)->Unit={_,_->}
-    var fillColor:Int?=TEAL
+    var fillColor:Int?=INK_TEAL
     var fillAlpha=255
     var tool = "pen"
     var selectionMode="free"
@@ -108,7 +108,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
     private var tappedSelected=false
     private val eraseLast=mutableMapOf<Int,PointF>()
-    var penColor=NAVY
+    var penColor=INK_NAVY
     var highlightColor=0xffffcf40.toInt()
     var penWidth=4f
     var highlightWidth=6f

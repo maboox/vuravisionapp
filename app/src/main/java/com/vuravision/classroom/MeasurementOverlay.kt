@@ -16,7 +16,7 @@ class MeasurementOverlay(private val board:Board){
         paint.textSize=size;paint.typeface=Fonts.face(Fonts.englishId);paint.textAlign=Paint.Align.CENTER
         val pad=5/zoom;val w=paint.measureText(text)/2+pad
         paint.color=0xf4ffffff.toInt();paint.style=Paint.Style.FILL;c.drawRoundRect(x-w,y-size,x+w,y+pad,4/zoom,4/zoom,paint)
-        paint.color=TEAL;c.drawText(text,x,y,paint)
+        paint.color=INK_TEAL;c.drawText(text,x,y,paint)
     }
     fun draw(c:Canvas,zoom:Float){
         val o=board.store.page.items.firstOrNull{it.id==itemId&&it.pane==board.activePane}?:return

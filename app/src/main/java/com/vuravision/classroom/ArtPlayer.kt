@@ -48,7 +48,7 @@ class ArtPlayer(private val context:Context,private val board:Board,
     private val progress=ProgressBar(context,null,android.R.attr.progressBarStyleHorizontal)
     private val state=context.label("",14f)
     private var pauseButton:Button?=null
-    private val controls=Dialog(context,R.style.AppTheme)
+    private val controls=Dialog(context,UiTheme.style())
     private val tick=object:Runnable {
         override fun run() {
             if(stopped||paused)return

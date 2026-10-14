@@ -16,7 +16,7 @@ object GuideLabels {
         }
         return text
     }
-    fun text(value:String,x:Float,y:Float,zoom:Float,owner:Item,offset:Float=28f):Item = Item(kind="text",text=value,width=(15f/zoom).coerceIn(.1f,200f),color=TEAL,layerId=owner.layerId,pane=owner.pane).also{
+    fun text(value:String,x:Float,y:Float,zoom:Float,owner:Item,offset:Float=28f):Item = Item(kind="text",text=value,width=(15f/zoom).coerceIn(.1f,200f),color=INK_TEAL,layerId=owner.layerId,pane=owner.pane).also{
         TextLayout.fit(it);it.x=x-it.w/2;it.y=y-offset/zoom-8-TextLayout.layout(it).getLineBaseline(0)
     }
     fun construction(board:Board,guide:Item,result:Item):Item {

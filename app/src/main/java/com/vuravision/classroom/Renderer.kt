@@ -226,7 +226,7 @@ class Renderer(private val media: Media) {
         p.color = 0xff879aa6.toInt()
         c.drawLine(o.w / 2, 0f, o.w / 2, o.h, p)
         c.drawLine(0f, o.h / 2, o.w, o.h / 2, p)
-        p.textSize=12f;p.style=Paint.Style.FILL;p.color=NAVY
+        p.textSize=12f;p.style=Paint.Style.FILL;p.color=INK_NAVY
         for(i in -10..10){
             if(i==0)continue
             val x=o.w/2+i*step*sx;val y=o.h/2-i*step*sy;val label=MathTools.format((i*step).toDouble())
@@ -269,13 +269,13 @@ class Renderer(private val media: Media) {
         }
         if(o.connectPlotPoints && o.plotPoints.orEmpty().size>1){
             val path=Path();o.plotPoints.orEmpty().forEachIndexed{i,v->val x=o.w/2+(v.x*sx).toFloat();val y=o.h/2-(v.y*sy).toFloat();if(i==0)path.moveTo(x,y)else path.lineTo(x,y)}
-            p.color=TEAL;p.style=Paint.Style.STROKE;p.strokeWidth=2.5f;c.drawPath(path,p)
+            p.color=INK_TEAL;p.style=Paint.Style.STROKE;p.strokeWidth=2.5f;c.drawPath(path,p)
         }
         o.plotIntersections.orEmpty().forEach{v->val x=o.w/2+(v.x*sx).toFloat();val y=o.h/2-(v.y*sy).toFloat()
-            if(x in 0f..o.w&&y in 0f..o.h){p.color=ORANGE;p.style=Paint.Style.STROKE;p.strokeWidth=2f;c.drawCircle(x,y,6f,p);c.drawLine(x-4,y-4,x+4,y+4,p);c.drawLine(x-4,y+4,x+4,y-4,p);p.style=Paint.Style.FILL;p.textSize=12f;c.drawText("(${DisplayNumbers.one(v.x)}, ${DisplayNumbers.one(v.y)})",x+8,y-8,p)}
+            if(x in 0f..o.w&&y in 0f..o.h){p.color=INK_ORANGE;p.style=Paint.Style.STROKE;p.strokeWidth=2f;c.drawCircle(x,y,6f,p);c.drawLine(x-4,y-4,x+4,y+4,p);c.drawLine(x-4,y+4,x+4,y-4,p);p.style=Paint.Style.FILL;p.textSize=12f;c.drawText("(${DisplayNumbers.one(v.x)}, ${DisplayNumbers.one(v.y)})",x+8,y-8,p)}
         }
         o.plotPoints.orEmpty().forEach{point->val x=o.w/2+point.x*sx;val y=o.h/2-point.y*sy
-            if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${DisplayNumbers.one(point.x)}, ${DisplayNumbers.one(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
+            if(x>=0&&x<=o.w&&y>=0&&y<=o.h){p.color=INK_TEAL;p.style=Paint.Style.FILL;c.drawCircle(x.toFloat(),y.toFloat(),4f,p);p.textSize=12f;c.drawText("(${DisplayNumbers.one(point.x)}, ${DisplayNumbers.one(point.y)})",x.toFloat()+6,y.toFloat()-6,p)}
         }
         c.restore()
     }
@@ -325,7 +325,7 @@ class Renderer(private val media: Media) {
                     val bounds=RectF(minOf(x,xx),minOf(y,yy),maxOf(x,xx),maxOf(y,yy)).apply{inset(-3f,-3f)}
                     if(!RectF.intersects(bounds,region))return@forEach
                 }
-                p.reset();p.isAntiAlias=true;p.color=TEAL;p.alpha=(opacity*255).toInt();p.strokeWidth=2f;p.style=Paint.Style.STROKE
+                p.reset();p.isAntiAlias=true;p.color=INK_TEAL;p.alpha=(opacity*255).toInt();p.strokeWidth=2f;p.style=Paint.Style.STROKE
                 c.drawLine(x,y,xx,yy,p)
             }
         }

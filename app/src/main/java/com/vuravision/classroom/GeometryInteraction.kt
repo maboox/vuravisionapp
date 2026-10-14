@@ -101,6 +101,6 @@ class GeometryInteraction(private val board:Board){
             board.measurements.label(canvas,text,at.first,at.second-30/zoom,zoom)
         }
         val p=handlePaint
-        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")ORANGE else TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";"slope"->"∠";"turn","angle"->"✎";else->"↻"},g.first,g.second+5/zoom,p)}}
+        board.chosen().singleOrNull()?.takeIf{it.shape in GeometryTools.keys}?.let{o->handles(o).forEach{(name,point)->val g=o.global(point.first,point.second);p.color=if(name=="turn"||name=="angle")INK_ORANGE else INK_TEAL;p.style=Paint.Style.FILL;canvas.drawCircle(g.first,g.second,11/zoom,p);p.color=Color.WHITE;p.textSize=14/zoom;p.textAlign=Paint.Align.CENTER;canvas.drawText(when(name){"center"->"+";"radius","size"->"↔";"slope"->"∠";"turn","angle"->"✎";else->"↻"},g.first,g.second+5/zoom,p)}}
     }
 }

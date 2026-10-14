@@ -63,14 +63,14 @@ object GeometryTools {
    "set_square"->{val path=Path();path.moveTo(0f,0f);path.lineTo(w,h);path.lineTo(0f,h);path.close();c.drawPath(path,p)}
    "protractor"->c.drawArc(0f,0f,w,h*2,180f,180f,true,p)
    "compass"->{val cx=w/2;val cy=if(o.geometryVersion==1)h/2 else 0f;val r=radius(o);val a=o.geometryAngle*PI/180
-    p.color=TEAL;p.strokeWidth=4f;p.style=Paint.Style.STROKE
+    p.color=INK_TEAL;p.strokeWidth=4f;p.style=Paint.Style.STROKE
     p.pathEffect=DashPathEffect(floatArrayOf(5f,7f),0f);p.strokeWidth=1.2f;c.drawCircle(cx,cy,r,p);p.pathEffect=null
     p.strokeWidth=4f;c.drawLine(cx,cy,cx+r*cos(a).toFloat(),cy+r*sin(a).toFloat(),p)
     p.style=Paint.Style.FILL;c.drawCircle(cx,cy,6f,p);p.textSize=numberSize(o);c.drawText("r = ${DisplayNumbers.one((r/unit).toDouble())} $unitName",cx+8,cy-12,p)
     c.drawText("${DisplayNumbers.one(o.geometrySweep.toDouble())}°",cx+8,cy+numberSize(o)*1.4f,p)
    }
   }
-  p.color=TEAL;p.strokeWidth=1.5f;p.style=Paint.Style.STROKE
+  p.color=INK_TEAL;p.strokeWidth=1.5f;p.style=Paint.Style.STROKE
   if(o.shape=="ruler"){
    c.drawRoundRect(0f,0f,w,h,6f,6f,p)
    // Fonts follow guide size; label density also adapts to display scale.
@@ -93,7 +93,7 @@ object GeometryTools {
   if(o.shape=="protractor"){
    c.drawArc(0f,0f,w,h*2,180f,180f,false,p);c.drawLine(0f,h,w,h,p);p.textSize=numberSize(o)
    val angle=o.geometryAngle.coerceIn(0f,180f)*PI/180
-   p.color=ORANGE;p.strokeWidth=2f;c.drawLine(w/2,h,w/2+w/2*cos(angle).toFloat(),h-h*sin(angle).toFloat(),p);p.color=TEAL;p.textSize=numberSize(o);p.style=Paint.Style.FILL;c.drawText("${DisplayNumbers.one(o.geometryAngle.toDouble())}°",w/2+8,h-16,p);p.style=Paint.Style.STROKE
+   p.color=INK_ORANGE;p.strokeWidth=2f;c.drawLine(w/2,h,w/2+w/2*cos(angle).toFloat(),h-h*sin(angle).toFloat(),p);p.color=INK_TEAL;p.textSize=numberSize(o);p.style=Paint.Style.FILL;c.drawText("${DisplayNumbers.one(o.geometryAngle.toDouble())}°",w/2+8,h-16,p);p.style=Paint.Style.STROKE
    for(deg in 0..180 step 20){val a=deg*PI/180;val x=w/2+w/2*cos(a).toFloat();val y=h-h*sin(a).toFloat();val xx=w/2+(w/2-w*.035f)*cos(a).toFloat();val yy=h-(h-h*.07f)*sin(a).toFloat();c.drawLine(x,y,xx,yy,p);p.style=Paint.Style.FILL;c.drawText("$deg",w/2+(w/2-w*.10f)*cos(a).toFloat()-p.measureText("$deg")/2,h-(h-h*.20f)*sin(a).toFloat(),p);p.style=Paint.Style.STROKE}
   }
  }

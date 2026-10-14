@@ -64,8 +64,8 @@ object Tables {
             }
         }
         build()
-        val root=c.column().apply{setBackgroundColor(PAPER);fitsSystemWindows=true;setPadding(c.dp(20),c.dp(12),c.dp(20),c.dp(10))}
-        root.addView(c.label(c.tr("Table","جدول"),24f,NAVY,true))
+        val root=c.column().apply{setBackgroundColor(INK_PAPER);fitsSystemWindows=true;setPadding(c.dp(20),c.dp(12),c.dp(20),c.dp(10))}
+        root.addView(c.label(c.tr("Table","جدول"),24f,INK_NAVY,true))
         root.addView(c.row().apply{
             fun act(label:String,run:()->Unit)=addView(c.button(label){collect();run();build()},LinearLayout.LayoutParams(-2,c.dp(52)).apply{marginEnd=c.dp(8)})
             act(c.tr("+ Row","+ ردیف")){if(rows.size<MAX)rows.add(MutableList(rows.first().size){""})}
