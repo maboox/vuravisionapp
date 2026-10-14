@@ -43,7 +43,8 @@ data class RoomDelta(val revision:Long,val patches:List<RoomPatch> = emptyList()
 data class RoomFrame(val protocol:Int=1,val room:String="",val revision:Long=0,val lesson:Lesson?=null,val members:List<RoomMember> = emptyList(),val serverTime:Long=0,
     val presence:List<RoomPresence> = emptyList(),val locks:Map<String,String> = emptyMap(),val authors:Map<String,String> = emptyMap(),val role:String=RoomRoles.VIEW,
     val approved:Boolean=false,val receipts:List<RoomReceipt> = emptyList(),val undo:Int=0,val redo:Int=0,val tools:RoomTools=RoomTools(),val deltas:List<RoomDelta> = emptyList())
-data class RoomJoin(val profile:DeviceProfile,val protocol:Int=1)
+/** [key]: the guest's public key for the encrypted session (empty from versions before encryption, which are refused). */
+data class RoomJoin(val profile:DeviceProfile,val protocol:Int=1,val key:String="")
 data class RoomWelcome(val peer:String,val credential:String,val frame:RoomFrame)
 data class RoomListing(val protocol:Int=1,val name:String="",val host:DeviceProfile?=null)
 

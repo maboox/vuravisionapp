@@ -79,10 +79,12 @@ class RoomUi(private val activity:Activity,private val rooms:RoomController):Aut
     fun details(back:(()->Unit)?=null){
         if(!rooms.active){home(back);return};val body=c.column().apply{pad(16)};val status=c.label("",15f);body.addView(status);val members=c.column();body.addView(members);var signature=""
         val dialog=show(c.s("shared_room"),body,back)
-        fun refresh(){if(!dialog.isShowing)return;val frame=rooms.frame;status.text=frame.room+" · "+c.s(roleKey(frame.role))+"\n"+when{rooms.message.isNotEmpty()->c.s(rooms.message);!rooms.connected->c.s("room_reconnecting");!frame.approved->c.s("room_waiting");else->c.s("room_connected")}
+        fun refresh(){if(!dialog.isShowing)return;val frame=rooms.frame;status.text=frame.room+" · "+c.s(roleKey(frame.role))+"\n"+when{rooms.message.isNotEmpty()->c.s(rooms.message);!rooms.connected->c.s("room_reconnecting");!frame.approved->c.s("room_waiting")+(rooms.code?.let{"\n"+c.tr("Code $it — the host sees the same code before approving you","کد $it — میزبان پیش از پذیرش شما همین کد را می‌بیند")}?:"");else->c.s("room_connected")}
             val next=frame.members.joinToString{"${it.profile.id}:${it.profile.hashCode()}:${it.role}:${it.approved}:${it.online}"};if(next==signature)return;signature=next;members.removeAllViews()
             frame.members.forEach{member->val row=c.row().apply{pad(4)};row.addView(avatar(member.profile),LinearLayout.LayoutParams(c.dp(48),c.dp(48)))
-                row.addView(c.label(member.profile.name+"\n"+c.s(if(!member.approved)"room_waiting"else roleKey(member.role))+" · "+c.s(if(member.online)"room_online"else"room_offline"),14f),LinearLayout.LayoutParams(0,-2,1f))
+                // Before approving, the teacher checks this code against the guest's screen (it proves nobody sits in between).
+                val code=if(!member.approved)rooms.memberCode(member.profile.id)?.let{"\n"+c.tr("Code $it: approve only if the device shows the same","کد $it: فقط اگر دستگاه همین کد را نشان می‌دهد بپذیرید")}.orEmpty() else ""
+                row.addView(c.label(member.profile.name+"\n"+c.s(if(!member.approved)"room_waiting"else roleKey(member.role))+" · "+c.s(if(member.online)"room_online"else"room_offline")+code,14f),LinearLayout.LayoutParams(0,-2,1f))
                 if(rooms.hosting&&member.profile.id!=rooms.peer){row.addView(WorkspaceIcon(c,"settings",c.s("room_access")){access(member)});row.addView(WorkspaceIcon(c,"close",c.s("room_remove")){rooms.remove(member.profile.id)})};members.addView(row)}
         }
         refreshDetails=::refresh;dialog.setOnDismissListener{dialogs.remove(dialog);refreshDetails=null};refresh()

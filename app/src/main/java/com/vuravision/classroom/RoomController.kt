@@ -10,7 +10,7 @@ import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private data class RoomRecovery(val address:String,val peer:String,val credential:String,val operations:List<RoomOperation>)
+private data class RoomRecovery(val address:String,val peer:String,val credential:String,val operations:List<RoomOperation>,val key:String="")
 
 /** A single IO queue orders transport; document/UI changes always return to the main thread. */
 class RoomController(private val context:Context,private val store:Store,private val board:Board,private val media:Media,
@@ -64,6 +64,10 @@ class RoomController(private val context:Context,private val store:Store,private
         if(active){point=board.world(event.x,event.y);touching=event.actionMasked !in listOf(MotionEvent.ACTION_UP,MotionEvent.ACTION_CANCEL);refreshPresence()
             if(!board.hasActiveInteraction)deferred?.let{deferred=null;applyDocument(it)}}}}
     private fun resetSession(){lastTools=null;lastPage="";sentProfile=null;uploaded.clear();historyTarget=null;acknowledgedUndo=0;needsDocument=false;ended=false;message="";messageUntil=0;touching=false;deferred=null;joinedDocument=hosting}
+    /** The encrypted session's key (guests only) and the 4-digit code shown to compare with the host's screen. */
+    private var sessionKey:ByteArray?=null
+    val code get()=sessionKey?.let{RoomCrypto.code(it)}
+    fun memberCode(id:String)=server?.code(id)
     fun setHistoryLimit(value:Int){server?.engine?.setHistoryLimit(value)}
     fun host(name:String){
         check(!active&&!connecting&&!board.hasActiveInteraction);require(name.isNotBlank()&&name.length<=60)
@@ -73,16 +77,16 @@ class RoomController(private val context:Context,private val store:Store,private
     }
     fun join(value:RoomAddress,result:(String?)->Unit){
         if(active||connecting){result("room_leave_first");return};connecting=true;val expected=++generation;changed()
-        io.execute{try{val welcome=gson.fromJson(RoomHttp(value).json("/join",RoomJoin(DeviceProfiles.load(context))),RoomWelcome::class.java)
+        io.execute{try{val (welcome,key)=RoomHttp(value).join(DeviceProfiles.load(context))
             check(welcome.frame.protocol==1);require(welcome.peer.matches(Regex("[a-zA-Z0-9-]{1,80}"))&&welcome.credential.matches(Regex("[a-f0-9]{48}")))
-            main.post{if(generation==expected&&!closed){address=value;peer=welcome.peer;credential=welcome.credential;http=RoomHttp(value,peer,credential);hosting=false;active=true;connecting=false;connected=true;frame=welcome.frame
+            main.post{if(generation==expected&&!closed){address=value;peer=welcome.peer;credential=welcome.credential;sessionKey=key;http=RoomHttp(value,peer,credential,key);hosting=false;active=true;connecting=false;connected=true;frame=welcome.frame
                 canonical=null;revision=-1;baseline=store.lesson.copy(pdf=null).copyForSave();resetSession();attach();persistRecovery();refreshPresence();schedule(0,expected);changed();result(null)}}
         }catch(e:Exception){main.post{if(generation==expected&&!closed){connecting=false;changed();result(e.message?:"connection_error")}}}}
     }
     fun resume(result:(String?)->Unit){
         if(active||connecting){result("room_leave_first");return}
         try{require(recovery.length()<=64L*1024*1024);val saved=gson.fromJson(recovery.readText(),RoomRecovery::class.java);require(saved.operations.size<=128)
-            val target=RoomAddress.parse(saved.address);http=RoomHttp(target,saved.peer,saved.credential);address=target;peer=saved.peer;credential=saved.credential
+            val target=RoomAddress.parse(saved.address);val key=RoomCrypto.unhex(saved.key);sessionKey=key;http=RoomHttp(target,saved.peer,saved.credential,key);address=target;peer=saved.peer;credential=saved.credential
             synchronized(pending){pending.clear();saved.operations.forEach{pending[it.id]=it}};hosting=false;active=true;connected=false;frame=RoomFrame();canonical=null;revision=-1;baseline=store.lesson.copy(pdf=null).copyForSave();generation++;resetSession();attach();refreshPresence();schedule(0,generation);changed();result(null)
         }catch(_:Exception){result("room_resume_failed")}
     }
@@ -196,7 +200,7 @@ class RoomController(private val context:Context,private val store:Store,private
         receive(incoming?:engine.frame(peer,-1),engine.snapshot())
     }
     fun endHostAndFlush(){if(active&&hosting&&!ended){pauseDrawing();flushHostDocument();ended=true;server?.end()}}
-    private fun recoveryValue():RoomRecovery?=if(active&&!hosting)address?.let{RoomRecovery(it.url,peer,credential,synchronized(pending){pending.values.toList()})}else null
+    private fun recoveryValue():RoomRecovery?=if(active&&!hosting)address?.let{RoomRecovery(it.url,peer,credential,synchronized(pending){pending.values.toList()},sessionKey?.let{k->RoomCrypto.hex(k)}.orEmpty())}else null
     private fun writeRecovery(value:RoomRecovery?,expected:Int){if(value==null)return;val temp=File(recovery.path+".part");try{val bytes=gson.toJson(value);synchronized(recovery){if(generation!=expected||closed)return;temp.writeText(bytes);check(temp.renameTo(recovery))}}finally{temp.delete()}}
     private fun persistRecovery(){
         if(!active||hosting||closed||!recoveryScheduled.compareAndSet(false,true))return
