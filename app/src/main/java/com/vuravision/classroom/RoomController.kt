@@ -123,6 +123,18 @@ class RoomController(private val context:Context,private val store:Store,private
         if(store.page.layers.any{it.id==t.activeLayer})store.page.activeLayerId=t.activeLayer
         if(board.activePane!=t.activePane)board.applySharedPane(t.activePane);lastTools=t;board.sceneChanged();board.onViewportChanged()
     }
+    /** One persistent socket while it works; any failure falls back to sealed HTTP and the socket is opened again later. */
+    private var socket:RoomSocket?=null
+    private var socketRetry=0L
+    private fun guestPoll(http:RoomHttp,request:RoomPoll):String{
+        val k=sessionKey;val a=address
+        if(k!=null&&a!=null&&socket==null&&System.currentTimeMillis()>=socketRetry){socket=RoomSocket(a,peer,credential,k);socketRetry=System.currentTimeMillis()+5000}
+        socket?.let{s->
+            if(s.open)try{return s.poll(request)}catch(_:Exception){s.close();socket=null}
+            else if(!s.usable){s.close();socket=null}
+        }
+        return http.json("/poll",request)
+    }
     private fun schedule(delay:Long,expected:Int){if(!closed&&active&&generation==expected)io.schedule({poll(expected)},delay,TimeUnit.MILLISECONDS)}
     private fun poll(expected:Int){
         if(closed||!active||generation!=expected)return
@@ -135,7 +147,7 @@ class RoomController(private val context:Context,private val store:Store,private
                 if(permission.approved&&permission.role!=RoomRoles.VIEW)throw e
             }
             val request=RoomPoll(if(canonical==null)-1 else revision,ops,presence,currentProfile.takeUnless{it==sentProfile})
-            val incoming=if(hosting)server!!.engine.poll(peer,request)else gson.fromJson(transport!!.json("/poll",request),RoomFrame::class.java)
+            val incoming=if(hosting)server!!.engine.poll(peer,request)else gson.fromJson(guestPoll(transport!!,request),RoomFrame::class.java)
             check(incoming.protocol==1);if(generation!=expected||!active)return;sentProfile=currentProfile
             val altered=incoming.lesson!=null||incoming.deltas.isNotEmpty();if(altered)needsDocument=true
             incoming.lesson?.let{it.validate();canonical=it.copyDeep()}
@@ -210,13 +222,13 @@ class RoomController(private val context:Context,private val store:Store,private
     }
     fun leave(){
         if(!active){connecting=false;generation++;changed();return}
-        val oldHttp=http;endHostAndFlush();active=false;hosting=false;connected=false;connecting=false;generation++;discovery.close();server=null;http=null;touching=false
+        val oldHttp=http;socket?.close();socket=null;endHostAndFlush();active=false;hosting=false;connected=false;connecting=false;generation++;discovery.close();server=null;http=null;touching=false
         synchronized(pending){pending.clear()};synchronized(recovery){recovery.delete()};detach();store.replace(store.lesson);baseline=store.lesson.copy(pdf=null).copyForSave();changed()
         if(oldHttp!=null)io.execute{runCatching{oldHttp.json("/leave",mapOf("ok" to true))}}
     }
     private fun detach(){board.abortPendingGesture();board.roomOverlay=null;board.canEditItem={true};board.sessionCanEdit=true;board.selectionColor=0xffe46d38.toInt();board.clearSelection();board.sceneChanged()
         store.sessionUndo=null;store.sessionRedo=null;store.sessionHistory=null;store.sessionSeek=null;store.editAllowed={true}}
     override fun close(){
-        if(closed)return;runCatching{recoveryValue()?.let{writeRecovery(it,generation)}};generation++;active=false;closed=true;server?.end();discovery.close();main.removeCallbacksAndMessages(null);io.shutdownNow();detach()
+        if(closed)return;runCatching{recoveryValue()?.let{writeRecovery(it,generation)}};generation++;active=false;closed=true;socket?.close();socket=null;server?.end();discovery.close();main.removeCallbacksAndMessages(null);io.shutdownNow();detach()
     }
 }

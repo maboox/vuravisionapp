@@ -45,6 +45,7 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.zxing:core:3.5.3")
     implementation("org.nanohttpd:nanohttpd:2.3.1")
+    implementation("org.nanohttpd:nanohttpd-websocket:2.3.1")
     implementation("net.objecthunter:exp4j:0.4.8")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")

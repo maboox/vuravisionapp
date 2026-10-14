@@ -49,4 +49,16 @@ class RoomNetworkTest {
         val seal=RoomCrypto.seal(key,"lesson".toByteArray(),"x");assertFalse(String(seal,Charsets.ISO_8859_1).contains("lesson"))
         try{RoomCrypto.open(key,seal,"y");fail("a message cannot be moved to another endpoint")}catch(_:Exception){}
     }
+    /** The persistent socket answers sealed polls; a wrong credential gets the socket closed. */
+    @Test fun webSocketCarriesSealedPolls(){
+        val p=guest();engine.setRole(p.peer,RoomRoles.VIEW)
+        val socket=RoomSocket(address,p.peer,p.credential,keys.getValue(p.peer))
+        try{
+            repeat(100){if(!socket.open)Thread.sleep(20)};assertTrue("socket opened",socket.open)
+            assertNotNull(gson.fromJson(socket.poll(RoomPoll()),RoomFrame::class.java).lesson)
+            assertNotNull("several polls on the same socket",gson.fromJson(socket.poll(RoomPoll()),RoomFrame::class.java).lesson)
+        }finally{socket.close()}
+        val intruder=RoomSocket(address,p.peer,RoomEngine.secret(),keys.getValue(p.peer))
+        try{repeat(100){if(intruder.usable)Thread.sleep(20)};assertFalse("a wrong credential is closed",intruder.usable)}finally{intruder.close()}
+    }
 }
