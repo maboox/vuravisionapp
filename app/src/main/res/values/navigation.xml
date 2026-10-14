@@ -6,6 +6,7 @@
     <item name="tool_dock" type="id" />
     <item name="add_panel" type="id" />
     <item name="ai_status" type="id" />
+    <item name="room_follow" type="id" />
     <item name="ai_status_text" type="id" />
     <item name="page_bar" type="id" />
     <item name="main_bar" type="id" />

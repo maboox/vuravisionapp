@@ -338,7 +338,17 @@ internal fun MainActivity.engineering() {
                         pad(18)
                         setTextIsSelectable(true)
                     }
-                dialog(s("report"), ScrollView(this).apply { addView(text) })
+                val box = column().apply {
+                    addView(text)
+                    // One tap to send it to support, instead of selecting a long text by hand.
+                    addView(
+                        button(tr("Copy report", "کپی گزارش"), true) {
+                            (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("VuraVision report", report))
+                            toast(s("done"))
+                        }
+                    )
+                }
+                dialog(s("report"), ScrollView(this).apply { addView(box) })
             }
             "stress" -> {
                 if (board.hasActiveInteraction)return@choices

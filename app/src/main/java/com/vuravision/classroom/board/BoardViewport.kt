@@ -69,6 +69,18 @@ internal fun Board.showArea(r: RectF) {
     invalidate()
 }
 
+/** Shows the world area [r] as large as it fits, no margin: a viewer following the teacher sees the same area. */
+internal fun Board.showWorld(r: RectF) {
+    val panel = paneRect(activePane)
+    if (panel.width() <= 0 || panel.height() <= 0 || r.width() <= 0 || r.height() <= 0)return
+    zoom = min(panel.width() / density / r.width(), panel.height() / density / r.height()).coerceIn(.05f, 20f)
+    tx = panel.width() / 2 / density - r.centerX() * zoom
+    ty = panel.height() / 2 / density - r.centerY() * zoom
+    backingDirty = true
+    onViewportChanged()
+    invalidate()
+}
+
 internal fun Board.center(): PointF {
     if (fixedPageWidth != null) {
         val visible = Rect()

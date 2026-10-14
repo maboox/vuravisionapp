@@ -210,10 +210,25 @@ class RoomSocket(address: RoomAddress, peer: String, private val credential: Str
     }
 }
 
-class RoomServer(val engine: RoomEngine, private val media: Media) : NanoWSD("0.0.0.0", 0) {
+class RoomServer(val engine: RoomEngine, private val media: Media, private val appPackage: String = "com.vuravision.classroom") : NanoWSD("0.0.0.0", 0) {
     val invite = RoomEngine.secret()
     private val base = "/r/$invite"
     private val gson = Gson()
+
+    /**
+     * What a phone camera opens from the invitation QR: a small page that hands the address to the app
+     * (vuravision://join) or, when the app is not installed, says so. Before, the bare address answered "room_closed".
+     */
+    internal fun joinPage(host: String, noApp: Boolean): String {
+        val url = "http://$host$base"
+        val name = engine.name.replace(Regex("[<>&\"']"), "")
+        val intent = "intent://join?u=" + java.net.URLEncoder.encode(url, "UTF-8") + "#Intent;scheme=vuravision;package=$appPackage;S.browser_fallback_url=" + java.net.URLEncoder.encode("$url/noapp", "UTF-8") + ";end"
+        val missing = "<p><b>VuraVision is not installed on this device.</b><br>Install the app, then scan the code again.</p><p dir=rtl><b>ویراویژن روی این دستگاه نصب نیست.</b><br>برنامه را نصب کنید و دوباره کد را اسکن کنید.</p>"
+        val opening = "<p>Opening VuraVision…</p><p dir=rtl>در حال باز کردن ویراویژن…</p><p><a href=\"$intent\" style=\"display:inline-block;padding:14px 28px;border-radius:24px;background:#20194f;color:#fff;text-decoration:none\">Open in VuraVision · باز کردن در برنامه</a></p>" +
+            "<script>setTimeout(function(){location.href=${gson.toJson(intent)}},150)</script>"
+        return "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>VuraVision</title></head>" +
+            "<body style=\"font-family:sans-serif;text-align:center;padding:40px 20px;color:#20194f;background:#f6f5fb\"><h2>$name</h2>" + (if (noApp) missing else opening) + "</body></html>"
+    }
     fun end() {
         engine.end()
         stop()
@@ -263,6 +278,10 @@ class RoomServer(val engine: RoomEngine, private val media: Media) : NanoWSD("0.
         }
     }
     override fun serveHttp(session: IHTTPSession): Response {
+        if (session.method == Method.GET && session.uri.trimEnd('/') in listOf(base, "$base/noapp")) {
+            val host = session.headers["host"].orEmpty().takeIf { it.matches(Regex("[0-9.]{7,15}:[0-9]{1,5}")) } ?: "127.0.0.1:$listeningPort"
+            return newFixedLengthResponse(Response.Status.OK, "text/html; charset=utf-8", joinPage(host, session.uri.trimEnd('/').endsWith("/noapp"))).apply { addHeader("Cache-Control", "no-store") }
+        }
         if (!session.uri.startsWith("$base/"))return response(Response.Status.NOT_FOUND, "room_closed")
         return try {
             val path = session.uri.removePrefix(base)
@@ -359,7 +378,10 @@ class RoomServer(val engine: RoomEngine, private val media: Media) : NanoWSD("0.
         val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         val preferred = manager.allNetworks.flatMap { manager.getLinkProperties(it)?.linkAddresses.orEmpty().map { v -> v.address } }
         val fallback = NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }.flatMap { it.inetAddresses.toList() }
-        (preferred + fallback).filter { it is Inet4Address && it.isSiteLocalAddress }.mapNotNull { it.hostAddress }.distinct().map { RoomAddress(it, listeningPort, invite) }
+        // The usual classroom Wi-Fi ranges first: the invitation shows one QR, for the first address.
+        (preferred + fallback).filter { it is Inet4Address && it.isSiteLocalAddress }.mapNotNull { it.hostAddress }.distinct()
+            .sortedBy { a -> listOf("192.168.", "10.", "172.").indexOfFirst { a.startsWith(it) }.let { if (it < 0) 9 else it } }
+            .map { RoomAddress(it, listeningPort, invite) }
     }.getOrDefault(emptyList())
 }
 

@@ -17,6 +17,7 @@ import com.vuravision.classroom.boundedCopy
 import com.vuravision.classroom.layoutDirection
 import com.vuravision.classroom.pick
 import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.ui.MUTED
 import com.vuravision.classroom.ui.ORANGE
 import com.vuravision.classroom.ui.TEAL
 import com.vuravision.classroom.ui.WorkspaceIcon
@@ -309,6 +310,21 @@ class RoomUi(private val activity: Activity, private val rooms: RoomController) 
             found.addView(b)
         }, { name -> rows.remove(name)?.let { found.removeView(it) } }, { if (dialog.isShowing)found.addView(c.label(c.s("room_discovery_hint"), 14f)) })
     }
+
+    /** From the invitation QR scanned with the phone camera (vuravision://join): straight into the room. */
+    fun joinLink(address: RoomAddress) {
+        if (rooms.active) {
+            toast("room_leave_first")
+            return
+        }
+        val body = c.column().apply { pad(16) }
+        body.addView(c.label(c.tr("Joining the room…", "در حال ورود به اتاق…"), 16f))
+        val dialog = show(c.s("room_join"), body)
+        rooms.join(address) { error ->
+            dialog.dismiss()
+            if (error == null)details() else toast("room_connect_failed")
+        }
+    }
     fun details(back: (() -> Unit)? = null) {
         if (!rooms.active) {
             home(back)
@@ -386,24 +402,43 @@ class RoomUi(private val activity: Activity, private val rooms: RoomController) 
         body.addView(c.label(c.s("room_network_hint"), 14f))
         val addresses = rooms.invitations
         if (addresses.isEmpty())body.addView(c.label(c.s("room_no_network"), 14f))
-        addresses.forEach { address ->
-            body.addView(
-                ImageView(c).apply {
-                    setImageBitmap(Sharing.qr(address.url))
-                    contentDescription = c.s("room_invite")
-                    scaleType = ImageView.ScaleType.FIT_CENTER
-                },
-                LinearLayout.LayoutParams(-1, c.dp(240))
-            )
-            body.addView(
-                c.label(address.url, 13f).apply {
-                    setTextIsSelectable(true)
-                    layoutDirection = View.LAYOUT_DIRECTION_LTR
+        // One QR (two side by side looked like two rooms). A phone camera opens it in the app, or says the app is missing.
+        var chosen = addresses.firstOrNull()
+        val qr = ImageView(c).apply {
+            contentDescription = c.s("room_invite")
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        val link = c.label("", 13f, MUTED).apply {
+            setTextIsSelectable(true)
+            gravity = Gravity.CENTER
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
+        }
+        fun showAddress() {
+            chosen?.let {
+                qr.setImageBitmap(Sharing.qr(it.url))
+                link.text = it.url
+            }
+        }
+        if (chosen != null) {
+            body.addView(c.label(c.tr("Students scan this with the phone camera or with VuraVision; the app opens and joins.", "دانش‌آموزان این کد را با دوربین گوشی یا با ویراویژن اسکن کنند؛ برنامه باز می‌شود و وارد اتاق می‌شود."), 14f))
+            body.addView(qr, LinearLayout.LayoutParams(-1, c.dp(260)))
+            body.addView(link, LinearLayout.LayoutParams(-1, -2))
+            showAddress()
+            if (addresses.size > 1) {
+                // Another network on this panel (e.g. cable and Wi-Fi): pick it only if students are on that one.
+                body.addView(c.label(c.tr("Other network on this panel:", "شبکهٔ دیگر این پنل:"), 13f, MUTED))
+                addresses.drop(1).forEach { other ->
+                    body.addView(
+                        c.button(other.host) {
+                            chosen = other
+                            showAddress()
+                        }
+                    )
                 }
-            )
+            }
             body.addView(
                 c.button(c.s("room_copy_address")) {
-                    (c.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision", address.url))
+                    chosen?.let { (c.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision", it.url)) }
                     toast("done")
                 }
             )

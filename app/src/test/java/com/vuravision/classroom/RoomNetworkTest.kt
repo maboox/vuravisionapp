@@ -59,6 +59,22 @@ class RoomNetworkTest {
         } catch (_: IllegalStateException) {}
     }
 
+    /** A phone camera opening the invitation gets a page that opens the app, or says the app is not installed. */
+    @Test fun invitationAddressServesTheJoinPage() {
+        fun get(url: String) = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).run {
+            connectTimeout = 3000
+            readTimeout = 3000
+            (responseCode to inputStream.bufferedReader().readText()).also { disconnect() }
+        }
+        val (code, page) = get(address.url)
+        assertEquals(200, code)
+        assertTrue(page.contains("intent://join?u=" + java.net.URLEncoder.encode(address.url, "UTF-8")))
+        assertTrue(page.contains("Network room"))
+        val (missingCode, missing) = get(address.url + "/noapp")
+        assertEquals(200, missingCode)
+        assertTrue(missing.contains("not installed"))
+    }
+
     @Test fun pendingApprovalAndPrivateCredentialAreEnforcedOverHttp() {
         val p = guest()
         assertNull(gson.fromJson(client(p).json("/poll", RoomPoll()), RoomFrame::class.java).lesson)

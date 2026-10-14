@@ -190,3 +190,40 @@ class ArtPlayer(
         controls.dismiss()
     }
 }
+
+/** The finished artwork, small: drawn once into a bitmap, as the card picture in the secret studio. */
+@android.annotation.SuppressLint("ViewConstructor")
+class ArtPreview(context: Context, private val art: Artwork) : android.view.View(context) {
+    private var picture: android.graphics.Bitmap? = null
+    override fun onDraw(c: android.graphics.Canvas) {
+        if (width <= 0 || height <= 0)return
+        val bitmap = picture?.takeIf { it.width == width && it.height == height } ?: android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888).also { b ->
+            picture?.recycle()
+            picture = b
+            val canvas = android.graphics.Canvas(b)
+            val s = minOf(width / art.width, height / art.height)
+            canvas.translate((width - art.width * s) / 2, (height - art.height * s) / 2)
+            canvas.scale(s, s)
+            val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeCap = android.graphics.Paint.Cap.ROUND
+                strokeJoin = android.graphics.Paint.Join.ROUND
+            }
+            val path = android.graphics.Path()
+            art.strokes.forEach { stroke ->
+                p.color = Color.parseColor(stroke.color)
+                p.strokeWidth = stroke.width
+                path.reset()
+                path.moveTo(stroke.points[0][0], stroke.points[0][1])
+                for (i in 1 until stroke.points.size)path.lineTo(stroke.points[i][0], stroke.points[i][1])
+                canvas.drawPath(path, p)
+            }
+        }
+        c.drawBitmap(bitmap, 0f, 0f, null)
+    }
+    override fun onDetachedFromWindow() {
+        picture?.recycle()
+        picture = null
+        super.onDetachedFromWindow()
+    }
+}

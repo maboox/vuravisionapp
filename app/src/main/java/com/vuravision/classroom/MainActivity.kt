@@ -50,11 +50,13 @@ import com.vuravision.classroom.games.Games
 import com.vuravision.classroom.labs.Labs
 import com.vuravision.classroom.pdf.PdfPane
 import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.room.RoomAddress
 import com.vuravision.classroom.room.RoomController
 import com.vuravision.classroom.room.RoomRoles
 import com.vuravision.classroom.room.RoomUi
 import com.vuravision.classroom.room.Sharing
 import com.vuravision.classroom.tools.ArtPlayer
+import com.vuravision.classroom.tools.ArtPreview
 import com.vuravision.classroom.tools.Artwork
 import com.vuravision.classroom.tools.ClassroomWidgets
 import com.vuravision.classroom.tools.CoordinateTools
@@ -293,6 +295,7 @@ class MainActivity : Activity() {
         }
         setupRooms()
         installLabAssistant()
+        openLink(intent)
     }
 
     private fun setupRooms() {
@@ -302,6 +305,24 @@ class MainActivity : Activity() {
             prefs.edit().putString("current", documentId).apply()
         }, ::roomStateChanged)
         roomUi = RoomUi(this, rooms!!)
+        rooms!!.onFollowChanged = ::refreshFollowChip
+    }
+    private var followChip: View? = null
+
+    /** For a viewer who looked around on their own: one tap returns to the teacher's view. */
+    private fun refreshFollowChip() {
+        val r = rooms
+        val show = r != null && r.active && r.frame.role == RoomRoles.VIEW && r.frame.approved && !r.following
+        if (!show) {
+            followChip?.let { canvasHost.removeView(it) }
+            followChip = null
+            return
+        }
+        if (followChip != null)return
+        followChip = button(tr("Follow the teacher", "دنبال کردن معلم"), true) { rooms?.following = true }.apply {
+            id = R.id.room_follow
+            elevation = dp(8).toFloat()
+        }.also { canvasHost.addView(it, FrameLayout.LayoutParams(-2, dp(52), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(14) }) }
     }
     private fun roomStateChanged() {
         if (destroyed || !::roomBadge.isInitialized)return
@@ -312,7 +333,31 @@ class MainActivity : Activity() {
         refreshDock()
         refreshTitle()
         roomUi?.refresh()
+        refreshFollowChip()
         whiteboard.invalidate()
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openLink(intent)
+    }
+
+    /** vuravision://join?u=<room address>, from the page a phone camera opens for the invitation QR. */
+    internal fun openLink(intent: Intent?, tries: Int = 0) {
+        val data = intent?.data ?: return
+        if (data.scheme != "vuravision" || data.host != "join")return
+        if ((loading || roomUi == null) && tries < 40) {
+            handler.postDelayed({ openLink(intent, tries + 1) }, 250)
+            return
+        }
+        intent.data = null
+        val address = runCatching { RoomAddress.parse(data.getQueryParameter("u").orEmpty()) }.getOrNull()
+        if (address == null) {
+            toast(s("room_invalid_address"))
+            return
+        }
+        activateBoard(whiteboard)
+        roomUi?.joinLink(address)
     }
     internal fun sharedRoom() {
         if (loading || whiteboard.hasActiveInteraction) {
@@ -3358,24 +3403,32 @@ class MainActivity : Activity() {
         c.addView(label(tr("The secret studio", "آتلیهٔ مخفی"), 24f, NAVY, true))
         c.addView(infoTitle(tr("Information", "اطلاعات"), tr("Watch portraits drawn stroke by stroke with the board's own pens. Each drawing opens on a new page and can be edited, erased, saved or exported. Undo removes the new page. These are original stylized illustrations.", "پرتره‌ها با قلم خود تخته، خط‌به‌خط رسم می‌شوند. هر نقاشی در صفحهٔ تازه باز می‌شود و قابل ویرایش، پاک‌کردن، ذخیره و خروجی است. بازگردانی، صفحهٔ نقاشی را حذف می‌کند. این‌ها تصویرسازی‌های گرافیکی اختصاصی‌اند.")))
         val d = dialog(tr("The secret studio", "آتلیهٔ مخفی"), ScrollView(this).apply { addView(c) })
-        listOf("mona-vura" to tr("Mona × Vura · Renaissance remix", "مونا × ویورا · برداشت رنسانسی"), "aurora" to tr("Aurora · anime portrait", "آرورا · پرترهٔ انیمه")).forEach { (key, title) ->
-            c.addView(
-                button(title) {
+        // A gallery of the portraits themselves (a small finished picture on each card) instead of two plain buttons.
+        val gallery = row()
+        listOf("mona-vura" to tr("Mona × Vura\nRenaissance remix", "مونا × ویورا\nبرداشت رنسانسی"), "aurora" to tr("Aurora\nanime portrait", "آرورا\nپرترهٔ انیمه")).forEach { (key, title) ->
+            val artwork = runCatching { Artwork.load(this, key) }.getOrNull() ?: return@forEach
+            val card = column().apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                background = rounded(SURFACE, dp(20).toFloat(), OUTLINE)
+                setPadding(dp(10), dp(10), dp(10), dp(12))
+                isClickable = true
+                isFocusable = true
+                contentDescription = title.replace('\n', ' ')
+                addView(ArtPreview(this@MainActivity, artwork), LinearLayout.LayoutParams(dp(150), dp(200)))
+                addView(label(title, 14f, NAVY, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8) })
+                setOnClickListener {
                     if (board.hasActiveInteraction) {
                         toast(tr("Finish the stroke first", "ابتدا رسم را تمام کنید"))
-                        return@button
+                        return@setOnClickListener
                     }
-                    try {
-                        val artwork = Artwork.load(this, key)
-                        d.dismiss()
-                        artPlayer?.stop()
-                        artPlayer = ArtPlayer(this, board, store, artwork).also { it.start() }
-                    } catch (e: Exception) {
-                        error(e)
-                    }
+                    d.dismiss()
+                    artPlayer?.stop()
+                    artPlayer = ArtPlayer(this@MainActivity, board, store, artwork).also { it.start() }
                 }
-            )
+            }
+            gallery.addView(card, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dp(12) })
         }
+        c.addView(gallery, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8) })
         c.addView(
             button(tr("A tiny surprise: constellation", "سورپرایز کوچک: صورت فلکی")) {
                 if (board.hasActiveInteraction)return@button

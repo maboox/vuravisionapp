@@ -11,6 +11,7 @@ import com.vuravision.classroom.board.Board
 import com.vuravision.classroom.board.Lesson
 import com.vuravision.classroom.board.Store
 import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.board.showWorld
 import com.vuravision.classroom.board.world
 import com.vuravision.classroom.pdf.allAssetItems
 import com.vuravision.classroom.ui.s
@@ -95,10 +96,31 @@ class RoomController(
     val sharedView get() = frame.role in listOf(RoomRoles.HOST, RoomRoles.CONTROL, RoomRoles.VIEW)
     val invitations get() = server?.addresses(context).orEmpty()
     val canResume get() = recovery.isFile
+
+    /** Viewers see what the teacher sees (page area, zoom) while this is on; it turns off when they navigate. */
+    var following = true
+        set(value) {
+            field = value
+            lastFollowed = null
+            onFollowChanged()
+            if (value)follow()
+        }
+    var onFollowChanged: () -> Unit = {}
+    private var lastFollowed: RoomRect? = null
+    private fun follow() {
+        if (!following || !active || frame.role != RoomRoles.VIEW || board.hasActiveInteraction)return
+        val host = frame.members.firstOrNull { it.role == RoomRoles.HOST }?.profile?.id ?: return
+        val view = frame.presence.firstOrNull { it.peer == host && it.page == store.page.id }?.viewport ?: return
+        if (view == lastFollowed || view.right <= view.left || view.bottom <= view.top)return
+        lastFollowed = view
+        board.showWorld(android.graphics.RectF(view.left, view.top, view.right, view.bottom))
+    }
     init {
         store.editAllowed = { !active || applying || canEdit }
         board.onInteraction = { event ->
             if (active) {
+                // A viewer who pans or zooms looks around freely; "Follow the teacher" brings the teacher's view back.
+                if (following && frame.role == RoomRoles.VIEW && event.actionMasked == MotionEvent.ACTION_DOWN)following = false
                 point = board.world(event.x, event.y)
                 touching = event.actionMasked !in listOf(MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL)
                 refreshPresence()
@@ -139,7 +161,7 @@ class RoomController(
         require(name.isNotBlank() && name.length <= 60)
         profile = DeviceProfiles.load(context)
         val engine = RoomEngine(store.lesson, profile, name.trim()).apply { setHistoryLimit(store.historyLimit) }
-        val service = RoomServer(engine, media)
+        val service = RoomServer(engine, media, context.packageName)
         service.start(8000, false)
         server = service
         peer = engine.hostId
@@ -335,9 +357,13 @@ class RoomController(
                 p.penStyle = v.style
                 p.dashLength = v.dashLength
                 p.dashGap = v.dashGap
-                p.zoom = v.zoom
-                p.tx = v.tx
-                p.ty = v.ty
+                // A viewer's screen is not the teacher's: copying pan and zoom showed the wrong area and undid every
+                // pan within 140 ms. Viewers follow the teacher's visible area instead (see [follow]).
+                if (frame.role != RoomRoles.VIEW) {
+                    p.zoom = v.zoom
+                    p.tx = v.tx
+                    p.ty = v.ty
+                }
             }
         }
         if (store.page.layers.any { it.id == t.activeLayer })store.page.activeLayerId = t.activeLayer
@@ -468,6 +494,7 @@ class RoomController(
         }
         if (oldRole != incoming.role)lastTools = null
         overlay.update(incoming, peer)
+        follow()
         board.invalidate()
         refreshPresence()
     }
