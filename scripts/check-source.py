@@ -42,15 +42,15 @@ topics=json.loads((root/'app/src/main/assets/guide/topics.json').read_text())
 assert len(topics)==28 and len({t['id'] for t in topics})==28
 assert all(len(t['stepsEn'])==len(t['stepsFa']) for t in topics)
 assets=root/'app/src/main/java/com/vuravision/classroom'
-lab_ids=re.search(r'val ids=listOf\((.*?)\)',(assets/'NativeLabs.kt').read_text()).group(1)
+lab_ids=re.search(r'val ids=listOf\((.*?)\)',(assets/'labs/NativeLabs.kt').read_text()).group(1)
 keys=re.findall(r'"([^"]+)"',lab_ids)+['energy','triangle_area','statistics','dilution','trig','periodic_table']
 classified=[]
-for ids in re.findall(r'"([a-z_ ]+)"\.split\(" "\)',(assets/'LabCatalog.kt').read_text()):classified+=ids.split()
+for ids in re.findall(r'"([a-z_ ]+)"\.split\(" "\)',(assets/'labs/LabCatalog.kt').read_text()):classified+=ids.split()
 assert len(keys)==74 and set(classified)==set(keys) and len(classified)==len(set(classified))
 fonts=root/'app/src/main/assets/fonts'
 manifest=json.loads((fonts/'manifest.json').read_text())
 assert len(manifest)==21
-assert {m['file'] for m in manifest}==set(re.findall(r'"([a-z_]+\.ttf)"',(assets/'Fonts.kt').read_text()))
+assert {m['file'] for m in manifest}==set(re.findall(r'"([a-z_]+\.ttf)"',(assets/'ui/Fonts.kt').read_text()))
 for m in manifest:
     data=(fonts/m['file']).read_bytes()
     assert data[:4] in [b'\x00\x01\x00\x00',b'OTTO'] and len(data)==m['bytes'] and hashlib.sha256(data).hexdigest()==m['sha256']
