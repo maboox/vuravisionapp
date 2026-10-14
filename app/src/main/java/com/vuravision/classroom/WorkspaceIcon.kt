@@ -24,6 +24,7 @@ open class WorkspaceIcon(context:Context,val key:String,title:String,active:Bool
     var active=active
         private set
     private val dotPaint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val ring=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE}
     init {
         scaleType=android.widget.ImageView.ScaleType.FIT_CENTER
         setPadding(context.dp(13),context.dp(13),context.dp(13),context.dp(13))
@@ -44,6 +45,11 @@ open class WorkspaceIcon(context:Context,val key:String,title:String,active:Bool
     override fun onDraw(c:Canvas){
         super.onDraw(c)
         val color=dotColor?:return
+        // Third cue for the active pen (item 30): a ring in its own ink color around the capsule, readable from afar.
+        if(active){
+            val stroke=context.dp(3).toFloat();ring.strokeWidth=stroke;ring.color=if(Color.luminance(color)>.85)OUTLINE else color
+            c.drawRoundRect(stroke/2,stroke/2,width-stroke/2,height-stroke/2,context.dp(12).toFloat(),context.dp(12).toFloat(),ring)
+        }
         val r=context.dp(4).toFloat();val cx=width/2f;val cy=height-context.dp(7).toFloat()
         dotPaint.color=if(active)Color.WHITE else SURFACE;c.drawCircle(cx,cy,r+context.dp(2),dotPaint)
         dotPaint.color=color;c.drawCircle(cx,cy,r,dotPaint)
