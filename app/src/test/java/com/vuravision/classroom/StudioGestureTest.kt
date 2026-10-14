@@ -164,4 +164,12 @@ class StudioGestureTest {
         fun tap(time:Long){send(0,time,1);send(5 or (1 shl 8),time+10,2);send(6 or (1 shl 8),time+30,2);send(1,time+40,1)}
         try{tap(200);assertEquals("B",store.lesson.title);tap(400);assertEquals("A",store.lesson.title);assertEquals(1,store.page.items.size)}finally{pane.dispose()}
     }
+    /** Item 13: one EditorState holds the teacher's choices; copying a board's tools copies all of them. */
+    @Test fun editorStateCarriesEveryToolChoice(){
+        board.tool="erase";board.penColor=0xff123456.toInt();board.eraserRadius=33f;board.fillColor=null;board.dashGap=5f
+        assertEquals("erase",board.state.tool);assertEquals(33f,board.state.eraserRadius,0f)
+        val other=Board(context,Store(),Renderer(media));other.copyToolsFrom(board)
+        assertEquals("erase",other.tool);assertEquals(0xff123456.toInt(),other.penColor);assertEquals(33f,other.eraserRadius,0f);assertNull(other.fillColor);assertEquals(5f,other.dashGap,0f)
+        other.tool="pen";assertEquals("copies, not shared","erase",board.tool)
+    }
 }

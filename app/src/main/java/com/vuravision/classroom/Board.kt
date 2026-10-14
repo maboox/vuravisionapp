@@ -38,14 +38,12 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var onActivate:()->Unit={}
     internal var transforming:Set<String> = emptySet()
     val isTransforming get()=transforming.isNotEmpty()
+    /** Item 13: the teacher's choices (tool, pens, eraser, shape, fill…) live in one [EditorState]; the fields below delegate to it. */
+    val state=EditorState()
     fun copyToolsFrom(b:Board){
-        tool=b.tool;shape=b.shape;touchMode=b.touchMode;selectionMode=b.selectionMode;profile=b.profile.copy()
-        penColor=b.penColor;highlightColor=b.highlightColor;penWidth=b.penWidth;highlightWidth=b.highlightWidth
-        penStyle=b.penStyle;penOpacity=b.penOpacity;dashLength=b.dashLength;dashGap=b.dashGap
-        eraserMode=b.eraserMode;eraserRadius=b.eraserRadius;eraseObjects=b.eraseObjects
-        erasePdfContent=b.erasePdfContent;pdfPalmErase=b.pdfPalmErase
-        holdRecognitionEnabled=b.holdRecognitionEnabled;holdDelayMillis=b.holdDelayMillis
-        holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode;fillColor=b.fillColor;fillAlpha=b.fillAlpha;gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled;gestures.pieHold=b.gestures.pieHold
+        state.copyFrom(b.state);profile=b.profile.copy()
+        erasePdfContent=b.erasePdfContent;pdfPalmErase=b.pdfPalmErase;keepToolAfterInsert=b.keepToolAfterInsert
+        gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled;gestures.pieHold=b.gestures.pieHold
     }
     override fun onDetachedFromWindow(){
         smoothers.clear();removeCallbacks(smoothFrame);measurements.clear();gestures.reset();super.onDetachedFromWindow()
@@ -57,11 +55,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     val measurements=MeasurementOverlay(this)
     fun showMeasurements(o:Item){measurements.show(o)}
     var onEducationalTap:(Item,PointF)->Unit={_,_->}
-    var fillColor:Int?=INK_TEAL
-    var fillAlpha=255
-    var tool = "pen"
-    var selectionMode="free"
-    var touchMode=false
+    var fillColor by state::fillColor
+    var fillAlpha by state::fillAlpha
+    var tool by state::tool
+    var selectionMode by state::selectionMode
+    var touchMode by state::touchMode
     var activePane=0
         private set
     internal val pointerPanes=mutableMapOf<Int,Int>()
@@ -80,15 +78,15 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     internal var touchSpan=0f
     internal var touchFocus:PointF?=null
     internal val lasso=mutableListOf<PointF>()
-    var shape = "rectangle"
-    var eraserMode="stroke"
-    var eraserRadius=18f
-    var eraseObjects=true
-    var holdRecognitionEnabled=true
-    var holdDelayMillis=1000L
-    var holdTolerance=4f
-    var guideSnapEnabled=true
-    var smartMode="text"
+    var shape by state::shape
+    var eraserMode by state::eraserMode
+    var eraserRadius by state::eraserRadius
+    var eraseObjects by state::eraseObjects
+    var holdRecognitionEnabled by state::holdRecognitionEnabled
+    var holdDelayMillis by state::holdDelayMillis
+    var holdTolerance by state::holdTolerance
+    var guideSnapEnabled by state::guideSnapEnabled
+    var smartMode by state::smartMode
     var onSmart:(List<Item>)->Unit={}
     var onObjectActions:()->Unit={}
     /** Laser strokes that are fading out: drawn on top, never stored. */
@@ -99,14 +97,14 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
     internal var tappedSelected=false
     internal val eraseLast=mutableMapOf<Int,PointF>()
-    var penColor=INK_NAVY
-    var highlightColor=0xffffcf40.toInt()
-    var penWidth=4f
-    var highlightWidth=6f
-    var penStyle="round"
-    var penOpacity=255
-    var dashLength=12f
-    var dashGap=8f
+    var penColor by state::penColor
+    var highlightColor by state::highlightColor
+    var penWidth by state::penWidth
+    var highlightWidth by state::highlightWidth
+    var penStyle by state::penStyle
+    var penOpacity by state::penOpacity
+    var dashLength by state::dashLength
+    var dashGap by state::dashGap
     var inkColor:Int
         get()=if(store.page.visiblePaneCount>1)pane.color else if(tool=="highlight")highlightColor else penColor
         set(v) { if(store.page.visiblePaneCount>1)store.editMetadata{pane.color=v} else if(tool=="highlight")highlightColor=v else penColor=v }
