@@ -215,4 +215,21 @@ class AiTest {
         val g=AiTasks.parseGroups(JSONObject("""{"groups":[{"title":"A","notes":[1,2,2]},{"title":"B","notes":[2,7,0]},{"title":"C","notes":[]}]}"""),4)
         assertEquals(listOf(0,1),g[0].notes);assertEquals("B had only duplicates and bad numbers",2,g.size);assertEquals(listOf(2,3),g[1].notes);assertEquals("",g[1].title)
     }
+
+    /** End of lesson: the summary becomes a last page with a QR of its text, readable by any phone camera offline. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun summaryPageCarriesAQr(){
+        context.getSharedPreferences("vura",0).edit().putString("language","fa").putString("aiProvider","openai").commit()
+        reply={_,_->openAi("""{"title":"فتوسنتز","points":["گیاه نور را به انرژی تبدیل می‌کند","کلروفیل نور را جذب می‌کند"],"homework":"یک برگ را زیر نور بگذارید"}""")}
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        try{
+            a.store.editMetadata{a.store.page.items.add(Item(kind="text",text="نور",x=100f,y=100f,w=200f,h=60f))}
+            val pages=a.store.lesson.pages.size
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"ai_summary")
+            waitFor{a.store.lesson.pages.size==pages+1}
+            val last=a.store.lesson.pages.last()
+            assertTrue("summary text",last.items.any{it.text.contains("کلروفیل")})
+            assertTrue("a QR image beside the summary",last.items.any{it.kind=="image"})
+            idle();shot(a,"summary")
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+    }
 }

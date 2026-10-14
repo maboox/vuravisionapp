@@ -50,8 +50,10 @@ class Sharing(private val file: File, private val mime: String) : NanoHTTPD("0.0
     fun url():String?=urls().firstOrNull()
 
     companion object {
+        /** Any text, UTF-8 (Persian included), so a phone camera shows it without a network or an app. */
         fun qr(url: String): Bitmap {
-            val m = MultiFormatWriter().encode(url, BarcodeFormat.QR_CODE, 512, 512)
+            val hints=mapOf(com.google.zxing.EncodeHintType.CHARACTER_SET to "UTF-8",com.google.zxing.EncodeHintType.MARGIN to 2)
+            val m = MultiFormatWriter().encode(url, BarcodeFormat.QR_CODE, 512, 512, hints)
             return Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888).apply {
                 setPixels(
                     IntArray(512 * 512) { i ->

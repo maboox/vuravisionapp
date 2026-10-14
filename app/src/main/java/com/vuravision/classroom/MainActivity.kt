@@ -2372,10 +2372,18 @@ c.addView(row().apply{
             val points=text(summary.points.joinToString("\n"){"• $it"},28f,title.y+title.h+30f)
             val items=mutableListOf(title,points)
             if(summary.homework.isNotBlank())items.add(text(tr("Practice: ","تمرین: ")+summary.homework,26f,points.y+points.h+30f,TEAL))
+            // A QR of the summary text: students scan it with the phone camera and keep it, no network or app needed.
+            val qrText=(listOf(title.text)+summary.points.map{"• $it"}+listOfNotNull(summary.homework.takeIf{it.isNotBlank()}?.let{tr("Practice: ","تمرین: ")+it})).joinToString("\n").take(1100)
+            val qrName=try{media.save(Sharing.qr(qrText))}catch(_:Exception){null}
+            if(qrName!=null){
+                items.add(Item(kind="image",asset=qrName,x=1360f,y=80f,w=260f,h=260f,layerId=layer))
+                items.add(text(tr("Scan to keep the summary","برای داشتن خلاصه اسکن کنید"),18f,350f,MUTED).also{it.x=1340f;it.w=300f;TextLayout.fit(it)})
+            }
             page.items.addAll(items)
             projectStore.editMetadata{projectStore.lesson.pages.add(page);projectStore.lesson.current=projectStore.lesson.pages.lastIndex}
             whiteboard.clearSelection();whiteboard.reset();refreshPages()
-            toast(tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"))
+            com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                .setAction(tr("Share PDF with the class","PDF برای کلاس")){share()}.show()
         }
     }
     private var spotlight:Spotlight?=null
