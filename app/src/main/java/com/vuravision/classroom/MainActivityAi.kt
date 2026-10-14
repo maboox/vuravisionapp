@@ -640,11 +640,13 @@ internal fun MainActivity.aiSummary() {
             null
         }
         if (qrName != null) {
-            items.add(Item(kind = "image", asset = qrName, x = 1360f, y = 80f, w = 260f, h = 260f, layerId = layer))
+            // Under the summary, where it is in view without panning; the caption beside it says what it is for.
+            val top = items.maxOf { it.y + it.h } + 40f
+            items.add(Item(kind = "image", asset = qrName, x = 120f, y = top, w = 240f, h = 240f, layerId = layer))
             items.add(
-                text(tr("Scan to keep the summary", "برای داشتن خلاصه اسکن کنید"), 18f, 350f, INK_MUTED).also {
-                    it.x = 1340f
-                    it.w = 300f
+                text(tr("Scan with a phone camera to keep this summary", "با دوربین گوشی اسکن کنید تا این خلاصه را داشته باشید"), 22f, top + 100f, INK_MUTED).also {
+                    it.x = 390f
+                    it.w = 700f
                     TextLayout.fit(it)
                 }
             )

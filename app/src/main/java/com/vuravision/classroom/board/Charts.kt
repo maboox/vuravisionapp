@@ -79,7 +79,10 @@ object Charts {
         t.textSize = 48f
         t.typeface = Typeface.DEFAULT_BOLD
         val title = spec.title + if (spec.unit.isNotBlank() && spec.type != "pie")" (${spec.unit})" else ""
-        c.drawText(TextUtils.ellipsize(title, t, w - 80f, TextUtils.TruncateAt.END).toString(), 40f, 80f, t)
+        // A Persian (or Arabic) title starts at the right edge, like the rest of the Persian page.
+        val shown = TextUtils.ellipsize(title, t, w - 80f, TextUtils.TruncateAt.END).toString()
+        val rtl = title.any { Character.getDirectionality(it) == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC }
+        c.drawText(shown, if (rtl) w - 40f - t.measureText(shown) else 40f, 80f, t)
         t.typeface = Typeface.DEFAULT
         t.textSize = 30f
         if (spec.type == "pie") {
