@@ -32,4 +32,8 @@ class GoogleSearchQueryTest {
         assertEquals(SearchWindowBounds(0,0,200,180),SearchWindowBounds(700,400,600,500).fit(200,180,280,240))
         assertEquals(SearchWindowBounds(0,0,1,1),SearchWindowBounds(10,10,600,500).fit(0,0,280,240))
     }
+    @Test fun imageSearchUsesGoogleImages(){
+        val url=GoogleSearchQuery.imageUrl("آتشفشان")
+        assertTrue(url.startsWith("https://www.google.com/search?q="));assertTrue(url.endsWith("&tbm=isch"))
+    }
 }

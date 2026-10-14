@@ -2057,7 +2057,7 @@ c.addView(row().apply{
     private fun reviewGoogleSearch(candidates:List<String>){
         val target=GoogleSearchSettings.load(this)
         val floating:(String)->Unit={query->
-            googleSearch?.close();googleSearch=GoogleSearchWindow(this,canvasHost).also{it.open(query)}
+            googleSearch?.close();googleSearch=GoogleSearchWindow(this,canvasHost){src->addWebImage(src)}.also{it.open(query)}
         }
         val browser:(String,Boolean)->Unit={query,adjacent->googleSearch?.close();googleSearch=null;GoogleSearchBrowser.open(this,query,adjacent)}
         val query=candidates.firstOrNull().orEmpty().trim()
@@ -2431,6 +2431,22 @@ c.addView(row().apply{
         board.clearSelection()
         framePresenter=FramePresenter(this,frames,{f->board.showArea(contentBounds(listOf(f)))}){framePresenter?.let{canvasHost.removeView(it)};framePresenter=null}
             .also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
+    }
+    /** A picture from the search window: https or inline data only, at most 10 MB, scaled down to 2048 px, then placed in view. */
+    private fun addWebImage(src:String){
+        work({
+            val bytes=if(src.startsWith("data:image/")){android.util.Base64.decode(src.substringAfter("base64,"),android.util.Base64.DEFAULT)}
+            else{require(src.startsWith("https://")){tr("Only secure (https) pictures can be added","فقط تصویر امن (https) اضافه می‌شود")}
+                okhttp3.OkHttpClient.Builder().callTimeout(30,java.util.concurrent.TimeUnit.SECONDS).build().newCall(okhttp3.Request.Builder().url(src).build()).execute().use{r->
+                    require(r.isSuccessful);val body=r.body?:throw IllegalStateException("empty");require(body.contentLength()<=10_000_000);body.byteStream().readNBytesCompat(10_000_001).also{require(it.size<=10_000_000)}}}
+            val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true};android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
+            var sample=1;while(maxOf(bounds.outWidth,bounds.outHeight)/sample>2048)sample*=2
+            val bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,android.graphics.BitmapFactory.Options().apply{inSampleSize=sample})?:throw IllegalStateException(tr("Not a picture","تصویر نیست"))
+            val name=media.save(bitmap);val size=bitmap.width to bitmap.height;bitmap.recycle();name to size
+        }){(name,size)->
+            val w=minOf(600f,size.first.toFloat().coerceAtLeast(120f));val item=Item(kind="image",asset=name,w=w,h=w*size.second/size.first.coerceAtLeast(1))
+            board.insert(item);refreshDock();toast(tr("Picture added","تصویر اضافه شد"))
+        }
     }
     private fun insertIranMap(){
         val c=board.center();val m=Maps.create(this,c.x-450f,c.y-400f,store.page.activeLayerId,board.activePane,if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"fa" else "en")
@@ -2921,4 +2937,11 @@ c.addView(row().apply{
         worker.execute{media.close()}
         super.onDestroy()
     }
+}
+
+/** InputStream.readNBytes needs API 33; this reads at most [limit] bytes on every supported version. */
+private fun java.io.InputStream.readNBytesCompat(limit:Int):ByteArray{
+    val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(16384);var total=0
+    while(total<limit){val n=read(buffer,0,minOf(buffer.size,limit-total));if(n<0)break;out.write(buffer,0,n);total+=n}
+    return out.toByteArray()
 }

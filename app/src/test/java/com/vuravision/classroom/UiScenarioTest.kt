@@ -440,6 +440,23 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Item 86: a picture long-pressed in the search window lands on the board (inline data here, so no network). */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun searchPictureIsAddedToTheBoard(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a)
+            val png=java.io.ByteArrayOutputStream().also{Bitmap.createBitmap(300,200,Bitmap.Config.ARGB_8888).apply{eraseColor(Color.RED)}.compress(Bitmap.CompressFormat.PNG,100,it)}.toByteArray()
+            val src="data:image/png;base64,"+android.util.Base64.encodeToString(png,android.util.Base64.NO_WRAP)
+            MainActivity::class.java.getDeclaredMethod("addWebImage",String::class.java).apply{isAccessible=true}.invoke(a,src)
+            repeat(50){if(a.store.page.items.none{it.kind=="image"}){Thread.sleep(20);idle(50)}}
+            val image=a.store.page.items.single{it.kind=="image"}
+            assertEquals("keeps the picture's shape",1.5f,image.w/image.h,.01f)
+            MainActivity::class.java.getDeclaredMethod("addWebImage",String::class.java).apply{isAccessible=true}.invoke(a,"http://example.com/a.png")
+            repeat(20){Thread.sleep(20);idle(50)}
+            assertEquals("plain http is refused",1,a.store.page.items.count{it.kind=="image"})
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()

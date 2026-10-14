@@ -47,7 +47,8 @@ object GoogleSearchBrowser {
 }
 
 /** One interactive in-app window; WebView exists only while the window is open. */
-class GoogleSearchWindow(private val activity:Activity,private val host:FrameLayout) {
+class GoogleSearchWindow(private val activity:Activity,private val host:FrameLayout,private val addImage:((String)->Unit)?=null) {
+    private var images=false
     private var panel:LinearLayout?=null
     private var web:WebView?=null
     private var currentQuery=""
@@ -70,6 +71,9 @@ class GoogleSearchWindow(private val activity:Activity,private val host:FrameLay
             if(!expanded){compact=bounds;place(SearchWindowBounds(0,0,host.width,host.height));expanded=true}
             else{expanded=false;place(compact)}
         })
+        if(addImage!=null)heading.addView(control("image",tr("Images (long-press one to add it to the board)","تصویرها (یکی را نگه دارید تا به تخته اضافه شود)")){
+            images=!images;web?.loadUrl(if(images)GoogleSearchQuery.imageUrl(currentQuery)else GoogleSearchQuery.url(currentQuery))
+            Toast.makeText(activity,if(images)tr("Long-press a picture to add it to the board","تصویری را نگه دارید تا به تخته اضافه شود")else tr("Web results","نتایج وب"),Toast.LENGTH_SHORT).show()})
         heading.addView(control("share",tr("Open search in browser","بازکردن جستجو در مرورگر")){val q=currentQuery;close();GoogleSearchBrowser.open(activity,q,false)})
         heading.addView(control("close",activity.s("close")){close()});box.addView(heading)
         val navigation=activity.row()
@@ -102,6 +106,14 @@ class GoogleSearchWindow(private val activity:Activity,private val host:FrameLay
             override fun onRenderProcessGone(view:WebView,detail:RenderProcessGoneDetail):Boolean{
                 if(web===view){close();Toast.makeText(activity,tr("Search window closed. Try again or use your browser.","پنجرهٔ جستجو بسته شد؛ دوباره تلاش کنید یا مرورگر را باز کنید."),Toast.LENGTH_LONG).show()};return true
             }
+        }
+        // A long press on a picture offers "Add to board": the window floats beside the board, so the picture lands next to it.
+        if(addImage!=null)browser.setOnLongClickListener{
+            val hit=browser.hitTestResult
+            val src=hit.extra?.takeIf{hit.type==WebView.HitTestResult.IMAGE_TYPE||hit.type==WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE}
+            if(src==null)false else{
+                MaterialAlertDialogBuilder(activity).setMessage(tr("Add this picture to the board?","این تصویر به تخته اضافه شود؟"))
+                    .setNegativeButton(activity.s("cancel"),null).setPositiveButton(tr("Add to board","افزودن به تخته")){_,_->addImage.invoke(src)}.show().also{Fonts.onShown(it)};true}
         }
         box.addView(browser,LinearLayout.LayoutParams(-1,0,1f))
         val resize=activity.label(tr("Drag to resize ↘","برای تغییر اندازه بکشید ↘"),12f,MUTED).apply{gravity=Gravity.RIGHT or Gravity.CENTER_VERTICAL;minHeight=activity.dp(40);setPadding(0,0,activity.dp(12),0)}
@@ -136,6 +148,6 @@ class GoogleSearchWindow(private val activity:Activity,private val host:FrameLay
         host.removeOnLayoutChangeListener(layoutListener)
         panel?.let{host.removeView(it);it.removeAllViews()};panel=null
         web?.let{it.stopLoading();(it.parent as? android.view.ViewGroup)?.removeView(it);it.webChromeClient=null;it.webViewClient=WebViewClient();it.destroy()};web=null
-        expanded=false;currentQuery=""
+        expanded=false;currentQuery="";images=false
     }
 }

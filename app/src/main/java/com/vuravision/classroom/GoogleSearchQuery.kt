@@ -9,6 +9,8 @@ object GoogleSearchQuery {
         require(value.isNotEmpty() && value.length<=MAX_LENGTH){"Invalid search text"}
         return "https://www.google.com/search?q="+URLEncoder.encode(value,"UTF-8")
     }
+    /** Google Images for the same words (item 86): pictures are long-pressed in the window to put them on the board. */
+    fun imageUrl(query:String)=url(query)+"&tbm=isch"
 }
 
 data class SearchWindowBounds(val x:Int,val y:Int,val width:Int,val height:Int) {
