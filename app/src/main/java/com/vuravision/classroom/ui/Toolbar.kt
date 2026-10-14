@@ -540,6 +540,7 @@ class AddPanel(
         background = rounded(SURFACE, context.dp(20).toFloat(), OUTLINE)
         elevation = context.dp(8).toFloat()
     }
+
     /** Not offered: the lesson summary (not needed), and AI pictures unless switched on in the hidden settings (costly). */
     private val hidden = setOf("ai_summary") + if (context.getSharedPreferences("vura", 0).getBoolean("aiImages", false)) emptySet() else setOf("ai_image")
 
