@@ -71,7 +71,7 @@ class FontsTest {
             val text=Item(kind="text",text="Hello",fontFa="system",fontEn="system",width=30f)
             val locked=text.copy(id=newId(),locked=true)
             a.store.editMetadata{a.store.page.items.addAll(listOf(text,locked))}
-            MainActivity::class.java.getDeclaredMethod("fontSettings").apply{isAccessible=true}.invoke(a)
+            a.callHidden("fontSettings")
             val dialog=org.robolectric.shadows.ShadowDialog.getLatestDialog()
             val decor=dialog.window!!.decorView
             views(decor).forEach{it.setScrollIndicators(0)}

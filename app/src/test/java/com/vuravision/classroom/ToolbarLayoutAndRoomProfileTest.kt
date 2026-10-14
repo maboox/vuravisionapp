@@ -18,7 +18,7 @@ class ToolbarLayoutAndRoomProfileTest {
     private val context get()=RuntimeEnvironment.getApplication()
     @Before fun clean(){context.getSharedPreferences("vura",0).edit().clear().commit()}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
-    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun call(a:MainActivity,name:String)=a.callHidden(name)
     private fun layout(v:View){v.measure(View.MeasureSpec.makeMeasureSpec(1280,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(800,View.MeasureSpec.EXACTLY));v.layout(0,0,1280,800)}
     private fun screen(a:MainActivity)=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen
     private fun keys()=(ShadowDialog.getLatestDialog() as AlertDialog).listView.adapter.let{adapter->(0 until adapter.count).map{adapter.getItem(it).toString()}}

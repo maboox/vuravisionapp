@@ -26,7 +26,7 @@ class SelectionGeometryAndCropTest {
     private fun event(view:View,action:Int,x:Float,y:Float,time:Long=200){val e=MotionEvent.obtain(100,time,action,x,y,0);view.onTouchEvent(e);e.recycle()}
     private fun trace(vararg points:Pair<Float,Float>){points.forEachIndexed{i,p->event(board,if(i==0)0 else if(i==points.lastIndex)1 else 2,p.first,p.second,200+i*20L)}}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
-    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun call(a:MainActivity,name:String)=a.callHidden(name)
     private fun choose(d:AlertDialog,label:String){
         val list=requireNotNull(d.listView){"Expected an open menu containing $label"}
         val labels=(0 until list.adapter.count).map{list.adapter.getItem(it).toString()}

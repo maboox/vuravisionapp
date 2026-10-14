@@ -155,7 +155,7 @@ class AiTest {
             try{Canvas(b).apply{drawColor(Color.DKGRAY);decor.draw(this)};File("build/qa/ai-$name.png").apply{parentFile!!.mkdirs()}.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}}
         fun button(d:android.app.Dialog,text:String)=views(layout(d)).filterIsInstance<Button>().first{it.text.toString()==text}
         try{
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"class_quiz");idle()
+            a.callHidden("runShortcut","class_quiz");idle()
             val manager=ShadowDialog.getLatestDialog();capture(manager,"quiz-manager-empty")
             button(manager,a.tr("New quiz","آزمونک جدید")).performClick();idle()
             val editor=ShadowDialog.getLatestDialog();assertNotSame(manager,editor)
@@ -205,7 +205,7 @@ class AiTest {
             a.store.undo();assertEquals("one Undo restores the notes",200f,a.store.page.items.first{it.text=="سیب"}.x,0.1f)
             assertTrue(a.store.page.items.none{it.kind=="text"})
             val all=a.store.page.items.filter{it.kind=="sticky"}
-            MainActivity::class.java.getDeclaredMethod("groupByColor",List::class.java).apply{isAccessible=true}.invoke(a,all);idle()
+            a.callHidden("groupByColor",all);idle()
             val after=a.store.page.items.filter{it.kind=="sticky"}.groupBy{it.noteColor}
             after.values.forEach{same->assertEquals("one column per color",1,same.map{it.x}.distinct().size)}
             assertEquals(2,after.values.map{it.first().x}.distinct().size)
@@ -224,7 +224,7 @@ class AiTest {
         try{
             a.store.editMetadata{a.store.page.items.add(Item(kind="text",text="نور",x=100f,y=100f,w=200f,h=60f))}
             val pages=a.store.lesson.pages.size
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"ai_summary")
+            a.callHidden("runShortcut","ai_summary")
             waitFor{a.store.lesson.pages.size==pages+1}
             val last=a.store.lesson.pages.last()
             assertTrue("summary text",last.items.any{it.text.contains("کلروفیل")})
@@ -239,7 +239,7 @@ class AiTest {
         reply={_,_->openAi("""{"title":"بارش تهران","type":"bar","labels":["دی","بهمن","اسفند","فروردین"],"values":[38,34,46,30],"unit":"میلی‌متر"}""")}
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"ai_chart");idle()
+            a.callHidden("runShortcut","ai_chart");idle()
             val d=ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog
             views(d.window!!.decorView).filterIsInstance<EditText>().single().setText("بارش ماهانهٔ تهران")
             d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).performClick()

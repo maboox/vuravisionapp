@@ -50,7 +50,7 @@ class BackgroundMindMapTest {
             assertNotEquals(activity.store.page.panes[0].background,second.panes[0].background)
             val node=Item(kind="sticky",shape="mindnode")
             activity.store.page.items.add(node);activity.board.selected.add(node.id)
-            MainActivity::class.java.getDeclaredMethod("colors").apply{isAccessible=true}.invoke(activity)
+            activity.callHidden("colors")
             val colors=ShadowDialog.getLatestDialog()
             views(colors.window!!.decorView)
                 .single{it.contentDescription=="#000000"}.performClick()

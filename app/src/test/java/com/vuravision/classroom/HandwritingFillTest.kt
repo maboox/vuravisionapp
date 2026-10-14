@@ -92,18 +92,18 @@ class HandwritingFillTest {
         }finally{ctl.pause().stop().destroy()}
     }
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
-    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun call(a:MainActivity,name:String)=a.callHidden(name)
     private fun capture(v:View,name:String,w:Int=1280,h:Int=800){views(v).forEach{it.setScrollIndicators(0)};v.measure(View.MeasureSpec.makeMeasureSpec(w,1073741824),View.MeasureSpec.makeMeasureSpec(h,1073741824));v.layout(0,0,w,h);val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);try{v.draw(Canvas(b));val file=File("build/qa/studio113-$name.png");file.parentFile!!.mkdirs();file.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}finally{b.recycle()}}
     @Test fun pieSettingsRefreshImmediatelyAndOnlyAssignedSlotsAppear(){
         val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
         try{a.getSharedPreferences("vura",0).edit().putBoolean("pieEnabled",true).putString("pieSlots","[\"undo\",\"erase\"]").commit()
             call(a,"pieSettings");val settings=ShadowDialog.getLatestDialog()
-            MainActivity::class.java.getDeclaredMethod("assignPie",Int::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,1)
+            a.callHidden("assignPie",1)
             val choices=ShadowDialog.getLatestDialog();val list=views(choices.window!!.decorView).filterIsInstance<ListView>().single();val n=ShortcutCatalog.keys.indexOf("redo")+1
             list.performItemClick(list.adapter.getView(n,null,list),n,n.toLong())
             assertTrue(views(settings.window!!.decorView).filterIsInstance<TextView>().any{it.text.toString()=="2 · "+a.s("redo")});settings.dismiss()
             capture(a.window.decorView,"workspace")
-            MainActivity::class.java.getDeclaredMethod("pieMenu",Float::class.javaPrimitiveType,Float::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,640f,400f)
+            a.callHidden("pieMenu",640f,400f)
             val overlay=MainActivity::class.java.getDeclaredField("pieOverlay").apply{isAccessible=true}.get(a) as ViewGroup
             assertEquals(2,overlay.childCount);capture(a.window.decorView,"two-slot-pie")
         }finally{ctl.pause().stop().destroy()}

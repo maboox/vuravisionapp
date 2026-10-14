@@ -17,63 +17,63 @@ import java.util.concurrent.Executors
 import kotlin.math.*
 
 class MainActivity : Activity() {
-    private var rooms:RoomController?=null
-    private var roomUi:RoomUi?=null
+    internal var rooms:RoomController?=null
+    internal var roomUi:RoomUi?=null
     private lateinit var roomBadge:WorkspaceIcon
-    private val projectStore=Store()
+    internal val projectStore=Store()
     val store:Store get()=if(::board.isInitialized)board.store else projectStore
-    private lateinit var whiteboard:Board
-    private lateinit var workspaceHost:FrameLayout
-    private var pdfPane:PdfPane?=null
-    private var shownPdf:PdfWorkspaceState?=null
-    private var pendingPdfMode=0
-    private var afterPdfSave:(()->Unit)?=null
-    private var pendingPdfRevision:Long?=null
-    private var pendingPdfAsset:String?=null
+    internal lateinit var whiteboard:Board
+    internal lateinit var workspaceHost:FrameLayout
+    internal var pdfPane:PdfPane?=null
+    internal var shownPdf:PdfWorkspaceState?=null
+    internal var pendingPdfMode=0
+    internal var afterPdfSave:(()->Unit)?=null
+    internal var pendingPdfRevision:Long?=null
+    internal var pendingPdfAsset:String?=null
     lateinit var board: Board
     lateinit var media: Media
-    private lateinit var files: LessonFiles
-    private lateinit var root: LinearLayout
+    internal lateinit var files: LessonFiles
+    internal lateinit var root: LinearLayout
     private lateinit var titleView: TextView
-    private lateinit var status: TextView
-    private lateinit var toolDock: ToolDock
+    internal lateinit var status: TextView
+    internal lateinit var toolDock: ToolDock
     private lateinit var pageLabel: TextView
     private lateinit var pageStrip:LinearLayout
-    private lateinit var canvasHost:FrameLayout
+    internal lateinit var canvasHost:FrameLayout
     private lateinit var floatingTools:ClassroomWidgets
     private lateinit var selectionBar:LinearLayout
     private lateinit var selectionHost:HorizontalScrollView
     private var pageSignature=""
-    private val handler = Handler(Looper.getMainLooper())
-    private val worker = ProjectIO.executor
-    private val saveQueue by lazy{ProjectSaveQueue(worker){doc,target->files.atomic(doc,target)}}
-    private var lastSaveTicket=0L
+    internal val handler = Handler(Looper.getMainLooper())
+    internal val worker = ProjectIO.executor
+    internal val saveQueue by lazy{ProjectSaveQueue(worker){doc,target->files.atomic(doc,target)}}
+    internal var lastSaveTicket=0L
     private var busyDialog:AlertDialog?=null
-    private val recognition = Recognition()
-    private val prefs by lazy { getSharedPreferences("vura", MODE_PRIVATE) }
-    private var documentId = ""
-    private var pendingExport: File? = null
-    private var sharing: Sharing? = null
-    private var shareDialog: Dialog? = null
-    private var taps = 0
+    internal val recognition = Recognition()
+    internal val prefs by lazy { getSharedPreferences("vura", MODE_PRIVATE) }
+    internal var documentId = ""
+    internal var pendingExport: File? = null
+    internal var sharing: Sharing? = null
+    internal var shareDialog: Dialog? = null
+    internal var taps = 0
     private var artPlayer: ArtPlayer? = null
-    private val autosave = Runnable { persist() }
-    private var dirty = false
+    internal val autosave = Runnable { persist() }
+    internal var dirty = false
     private var loading = false
-    private var lastError = ""
-    @Volatile private var destroyed = false
-    private var voiceAssistant:VoiceConversation?=null
+    internal var lastError = ""
+    @Volatile internal var destroyed = false
+    internal var voiceAssistant:VoiceConversation?=null
     private var googleSearch:GoogleSearchWindow?=null
-    private var voiceScreen:VoiceScreen?=null
-    private lateinit var voiceButton:com.google.android.material.button.MaterialButton
-    private var voiceMuted=false
-    private lateinit var voiceMuteButton:WorkspaceIcon
-    private var voiceStarting=false
-    private var voiceStartGeneration=0
-    private var lastUserTouch=0L
-    private val voiceWorker=Executors.newSingleThreadExecutor()
-    private val voiceKeys by lazy{VoiceKeys(this)}
-    private val voicePermissionRequest=7410
+    internal var voiceScreen:VoiceScreen?=null
+    internal lateinit var voiceButton:com.google.android.material.button.MaterialButton
+    internal var voiceMuted=false
+    internal lateinit var voiceMuteButton:WorkspaceIcon
+    internal var voiceStarting=false
+    internal var voiceStartGeneration=0
+    internal var lastUserTouch=0L
+    internal val voiceWorker=Executors.newSingleThreadExecutor()
+    internal val voiceKeys by lazy{VoiceKeys(this)}
+    internal val voicePermissionRequest=7410
     private val voicePreferenceListener=SharedPreferences.OnSharedPreferenceChangeListener{_,key->
         if(key=="voiceEnabled"){if(!VoiceSettings.enabled(this))stopVoice()else setVoiceState("voice_assistant")}
     }
@@ -182,7 +182,7 @@ class MainActivity : Activity() {
         roomBadge.alpha=if(session?.connected==true)1f else .5f;roomBadge.contentDescription=s("shared_room")+" · "+session?.frame?.room.orEmpty()
         refreshDock();refreshTitle();roomUi?.refresh();whiteboard.invalidate()
     }
-    private fun sharedRoom(){
+    internal fun sharedRoom(){
         if(loading||whiteboard.hasActiveInteraction){toast(s("room_finish_first"));return}
         activateBoard(whiteboard);projectStore.lesson.pdf?.let{it.fullscreen=false};syncPdfWorkspace()
         roomUi?.home(menuReturn.also{menuReturn=null})
@@ -193,7 +193,7 @@ class MainActivity : Activity() {
     private var sidePanelPage: Page? = null
     private var splitControls: FrameLayout? = null
     private var splitControlsPage: Page? = null
-    private fun icon(key:String, title:String, active:Boolean=false, action:()->Unit)=WorkspaceIcon(this,key,title,active,action)
+    internal fun icon(key:String, title:String, active:Boolean=false, action:()->Unit)=WorkspaceIcon(this,key,title,active,action)
     private fun surface(view:View):View = view.apply {
         background=rounded(SURFACE,dp(12).toFloat(),OUTLINE)
         elevation=dp(4).toFloat()
@@ -299,7 +299,7 @@ class MainActivity : Activity() {
         refreshPages()
     }
 
-    private fun refreshDock() {
+    internal fun refreshDock() {
         rooms?.refreshPresence()
         if(!::toolDock.isInitialized)return
         syncPdfWorkspace()
@@ -321,7 +321,7 @@ class MainActivity : Activity() {
         refreshDock()
     }
     /** What the selection bar shows: its main actions, or one of them opened in place ("smart", "color", "more"). */
-    private var selectionBarMode="main"
+    internal var selectionBarMode="main"
     private var selectionBarKey=""
     /**
      * Bar above the selection: at most six labeled actions, chosen by what is selected.
@@ -329,7 +329,7 @@ class MainActivity : Activity() {
      * the eye and hand stay on the object, and the board is not covered.
      * Hidden while the selection is being dragged; shown again at the new position on release.
      */
-    private fun refreshSelectionBar(){
+    internal fun refreshSelectionBar(){
         if(!::selectionBar.isInitialized)return
         val items=board.chosen()
         selectionHost.visibility=if(items.isEmpty()||focusMode||board.isTransforming)View.GONE else View.VISIBLE
@@ -586,7 +586,7 @@ class MainActivity : Activity() {
         })
         paneBarView=bar;paneBarKey=key
     }
-    private fun refreshPages() {
+    internal fun refreshPages() {
         if(!::pageStrip.isInitialized)return
         val signature="${projectStore.lesson.current}:${projectStore.lesson.pages.joinToString{it.id}}:${projectStore.page.visiblePaneCount}"
         pageLabel.text="${projectStore.lesson.current+1} / ${projectStore.lesson.pages.size}"
@@ -610,11 +610,11 @@ class MainActivity : Activity() {
         activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pages.add(projectStore.lesson.current+1,newBoardPage(projectStore.page));projectStore.lesson.current++}
         whiteboard.clearSelection();whiteboard.reset()
     }
-    private fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).putInt("penOpacity",board.penOpacity).apply()
+    internal fun savePens() {prefs.edit().putFloat("dashLength",board.dashLength).putFloat("dashGap",board.dashGap).putString("thickStyle",board.profile.thickStyle).putFloat("thickWidth",board.profile.thickWidth).putInt("thickColor",board.profile.thickColor).putInt("penColor",board.penColor).putInt("highlightColor",board.highlightColor).putFloat("penWidth",board.penWidth).putFloat("highlightWidth",board.highlightWidth).putString("penStyle",board.penStyle).putInt("penOpacity",board.penOpacity).apply()
         // Every pen change also belongs to the active dock preset at once, and its dot shows the new color.
         if(::toolDock.isInitialized)toolDock.refresh()}
     private val backgroundSwatches get()=listOf(Color.WHITE,Color.BLACK,0xff172a36.toInt(),PAPER,0xfffff5dc.toInt(),0xffeaf7f3.toInt(),0xffe9f0ff.toInt(),0xfff7ecfc.toInt(),0xfff4e8df.toInt(),0xffdce9ef.toInt())
-    private fun palette(c:LinearLayout,initial:Int,background:Boolean=false,changed:(Int)->Unit){
+    internal fun palette(c:LinearLayout,initial:Int,background:Boolean=false,changed:(Int)->Unit){
         val holder=column();c.addView(holder);var current=initial
         fun refresh(){
             holder.removeAllViews()
@@ -679,44 +679,13 @@ class MainActivity : Activity() {
         val d=toolSheet(s("fill"),c)
         c.addView(button(tr("Use bucket","استفاده از سطل رنگ"),true){board.tool="fill";board.clearSelection();refreshDock();d.dismiss()})
     }
-    private fun newBoardPage(previous:Page?):Page {
+    internal fun newBoardPage(previous:Page?):Page {
         val inherit=previous!=null && prefs.getBoolean("inheritBackground",false)
         val pattern=if(inherit)previous!!.pattern(whiteboard.activePane) else prefs.getString("defaultPattern","dots")?:"dots"
         val old=previous?.panes?.getOrNull(whiteboard.activePane)?:previous?.panes?.firstOrNull()
         var color=if(inherit)old?.background?:Color.WHITE else prefs.getInt("defaultBackground",Color.WHITE)
         if(pattern=="dark"&&color==Color.WHITE)color=0xff172a36.toInt()
         return Page(background=if(pattern in listOf("white","dark"))"plain"else pattern,panes=mutableListOf(Pane(background=color)))
-    }
-    /** Defaults for new pages; every choice applies at once (no Apply button), like the rest of Settings. */
-    private fun defaultBackgroundSettings(){
-        val c=column().apply{pad(16)}
-        var color=prefs.getInt("defaultBackground",Color.WHITE)
-        c.addView(sectionTitle(tr("Pattern","الگو")))
-        val current=(prefs.getString("defaultPattern","dots")?:"dots").let{if(it in listOf("white","dark"))"plain" else it}
-        val grid=PatternGrid(this,board.renderer,patternChoices(),current,4,{color}){prefs.edit().putString("defaultPattern",it).apply()}
-        c.addView(grid)
-        c.addView(sectionTitle(tr("Color","رنگ")))
-        palette(c,color,true){color=it;prefs.edit().putInt("defaultBackground",it).apply();grid.refresh()}
-        c.addView(switchRow(tr("New page uses the current page's background","صفحهٔ جدید از پس‌زمینهٔ صفحهٔ فعلی استفاده کند"),prefs.getBoolean("inheritBackground",false),
-            tr("Only the color and pattern are copied. Existing pages are unchanged. The first page of a new lesson uses the defaults above.","فقط رنگ و طرح کپی می‌شوند. صفحه‌های موجود تغییر نمی‌کنند. صفحهٔ اول درس جدید از پیش‌فرض بالا استفاده می‌کند.")){prefs.edit().putBoolean("inheritBackground",it).apply()})
-        dialog(s("page_background"),ScrollView(this).apply{addView(c)})
-    }
-    private fun calibrationSettings(){
-        val c=column().apply{pad(16)}
-        c.addView(sectionTitle(tr("Pen and touch","قلم و لمس")))
-        c.addView(row().apply{
-            addView(button(tr("Pen tips and palm","سر قلم و کف دست")){calibrateTips()},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(8)})
-            addView(button(s("touch_test")){dialog(s("touch_test"),TouchDiagnostics(this@MainActivity,board.profile).apply{minimumHeight=dp(320)})},LinearLayout.LayoutParams(0,dp(52),1f))
-        })
-        c.addView(sectionTitle(tr("Size on screen","اندازه روی صفحه")))
-        c.addView(infoTitle(tr("Real centimetres","سانتی‌متر واقعی"),tr("Measure the line below with a physical ruler, then enter its length in cm. Calibration belongs to this display. Without calibration, geometry uses board units (u).", "خط زیر را با خطکش واقعی اندازه بگیرید و طولش را به سانتی‌متر وارد کنید. کالیبراسیون مخصوص همین نمایشگر است. بدون آن، واحد هندسی u است.")))
-        val line=object:View(this){override fun onDraw(c:Canvas){val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=NAVY;strokeWidth=3f};c.drawLine(dp(16).toFloat(),height/2f,width-dp(16).toFloat(),height/2f,p);listOf(dp(16).toFloat(),width-dp(16).toFloat()).forEach{x->c.drawLine(x,8f,x,height-8f,p)}}};c.addView(line,LinearLayout.LayoutParams(-1,dp(40)))
-        val length=field(hintValue=tr("Measured line length (cm)","طول واقعی خط (سانتی‌متر)"));length.inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;c.addView(length)
-        val d=dialog(s("calibration"),c)
-c.addView(row().apply{
-            addView(button(tr("Use board units","استفاده از واحد تخته")){prefs.edit().remove("pixelsPerCm").apply();board.sceneChanged();d.dismiss()},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(8)})
-            addView(button(s("apply"),true){val n=length.text.toString().toFloatOrNull();val px=line.width-dp(32);if(n==null||!n.isFinite()||n<=0||px<=0||px/n !in 5f..1000f){length.error=tr("Enter a valid measured length","طول واقعی معتبر وارد کنید");return@button};prefs.edit().putFloat("pixelsPerCm",px/n).apply();board.sceneChanged();d.dismiss()},LinearLayout.LayoutParams(0,dp(52),1f))
-        },LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
     }
     private fun measureShape(o:Item){
         if(Measurements.of(o)!=null)board.showMeasurements(o)
@@ -744,7 +713,7 @@ c.addView(row().apply{
         refresh();dialog(s("coordinates"),ScrollView(this).apply{addView(c)})
     }
     private var pieOverlay:View?=null
-    private var refreshPieSettings:(()->Unit)?=null
+    internal var refreshPieSettings:(()->Unit)?=null
     private var historyOverlay:HistoryScrubView?=null
     private fun historyHud(position:Int,total:Int){
         if(!::canvasHost.isInitialized)return
@@ -754,23 +723,9 @@ c.addView(row().apply{
         }
         hud.update(position,total)
     }
-    private fun pieSlots():List<String> = try{val a=org.json.JSONArray(prefs.getString("pieSlots","[]"));(0..5).map{a.optString(it).takeIf{key->key in ShortcutCatalog.keys}.orEmpty()}}catch(_:Exception){List(6){""}}
-    private fun assignPie(index:Int){
+    internal fun pieSlots():List<String> = try{val a=org.json.JSONArray(prefs.getString("pieSlots","[]"));(0..5).map{a.optString(it).takeIf{key->key in ShortcutCatalog.keys}.orEmpty()}}catch(_:Exception){List(6){""}}
+    internal fun assignPie(index:Int){
         choices(tr("Choose shortcut","انتخاب میان‌بر"),listOf("clear_shortcut")+ShortcutCatalog.keys){n->val slots=pieSlots().toMutableList();slots[index]=if(n==0)""else ShortcutCatalog.keys[n-1];prefs.edit().putString("pieSlots",org.json.JSONArray(slots).toString()).apply();pieOverlay?.let{canvasHost.removeView(it)};pieOverlay=null;refreshPieSettings?.invoke()}
-    }
-    private fun pieSettings(){
-        val c=column().apply{pad(16)}
-        c.addView(switchRow(tr("Enable five-finger pie menu","فعال‌سازی منوی پنج‌انگشتی"),prefs.getBoolean("pieEnabled",false),
-            tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")){v->
-            prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v})
-        c.addView(switchRow(tr("Also open it by holding two fingers still","با نگه داشتن دو انگشت هم باز شود"),prefs.getBoolean("pieHold",false),
-            tr("Half a second without moving. Pinch and two-finger Undo keep working, because they move or tap.","نیم ثانیه بدون حرکت. بزرگ‌نمایی و بازگردانی دوانگشتی کار می‌کنند، چون حرکت یا ضربه‌اند.")){v->
-            prefs.edit().putBoolean("pieHold",v).apply();board.gestures.reset();whiteboard.gestures.pieHold=v;board.gestures.pieHold=v})
-        c.addView(sectionTitle(tr("Shortcuts","میان‌برها")))
-        val slots=column();c.addView(slots)
-        fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())tr("Empty","خالی")else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginStart=dp(8)});slots.addView(r,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})}}
-        refreshPieSettings=::refresh;refresh()
-        dialog(s("pie_settings"),ScrollView(this).apply{addView(c)}).setOnDismissListener{refreshPieSettings=null}
     }
     private fun pieMenu(x:Float,y:Float){
         if(!prefs.getBoolean("pieEnabled",false)||destroyed)return
@@ -825,15 +780,6 @@ c.addView(row().apply{
             "front","back"->{val chosen=board.chosen();store.editMetadata{store.page.items.removeAll(chosen.toSet());if(key=="front")store.page.items.addAll(chosen)else store.page.items.addAll(0,chosen)}}
         }
     }
-    private fun refreshMute(){
-        if(!::voiceMuteButton.isInitialized)return
-        voiceMuteButton.visibility=if(VoiceSettings.enabled(this)&&(voiceStarting||voiceAssistant?.active==true))View.VISIBLE else View.GONE
-        voiceMuteButton.isSelected=voiceMuted;voiceMuteButton.alpha=if(voiceMuted)1f else .6f
-        voiceMuteButton.setImageResource(IconCatalog.resource(if(voiceMuted)"mute"else"voice_assistant"))
-        voiceMuteButton.contentDescription=if(voiceMuted)tr("Microphone muted · tap to unmute","میکروفن بی‌صدا · برای فعال کردن بزنید")else tr("Microphone active · tap to mute","میکروفن فعال · برای بی‌صدا کردن بزنید")
-        voiceMuteButton.tooltipText=voiceMuteButton.contentDescription
-    }
-
     private fun penSettings(){
         // The highlighter has its own color and width; "More settings" from its strip must edit it, not the pen.
         if(board.tool=="highlight"&&store.page.visiblePaneCount==1){
@@ -938,7 +884,7 @@ c.addView(row().apply{
         }
         refresh();showSidePanel(tr("Layers","لایه‌ها"),content)
     }
-    private fun calibrateTips(){
+    internal fun calibrateTips(){
         val c=column().apply{pad(20)}
         c.addView(infoTitle(tr("Information","اطلاعات"),tr("Contact width comes from the touch controller. Calibrate in raw pixels, not screen centimetres. Unknown/zero contact sizes use the fine tip.","اندازهٔ تماس را کنترلر لمس گزارش می‌کند. آستانه‌ها با پیکسل خام تنظیم می‌شوند، نه سانتی‌متر صفحه. اندازهٔ صفر یا نامشخص، سر باریک محسوب می‌شود.")))
         c.addView(label(tr("Fine tip maximum contact width (px)","بیشترین عرض تماس سر باریک (پیکسل)"),14f));val thin=field(board.profile.thin.toString());c.addView(thin)
@@ -999,7 +945,7 @@ c.addView(row().apply{
             if(item.shape=="mindnode"){item.w=maxOf(oldWidth,item.w);item.h=maxOf(oldHeight,item.h)}
             if(existing==null)board.insert(item)else store.editMetadata{val index=store.page.items.indexOfFirst{it.id==existing.id};if(index>=0)store.page.items[index]=item};d.dismiss()})
     }
-    private fun graph(initial:String="y=2x-5",existing:Item?=null){
+    internal fun graph(initial:String="y=2x-5",existing:Item?=null){
         val c=column().apply{pad(20)};c.addView(infoTitle(tr("Information","اطلاعات"),tr("Enter y=f(x). Use x^2, sin(x), sqrt(x), abs(x); angles are radians. Separate up to 3 curves with ;. Both axes use the same scale.","تابع را به صورت y=f(x) وارد کنید. x^2، sin(x)، sqrt(x) و abs(x) مجازند؛ زاویه‌ها رادیانی‌اند. حداکثر ۳ تابع را با ; جدا کنید. مقیاس دو محور برابر است.")))
         val field=field(existing?.text?:initial).apply{layoutDirection=View.LAYOUT_DIRECTION_LTR;textDirection=View.TEXT_DIRECTION_LTR};c.addView(field)
         val examples=row();listOf("y=2x-5","y=x^2","sin(x);cos(x)","sqrt(x)").forEach{v->examples.addView(button(v){field.setText(v)})};c.addView(scrollRow(examples))
@@ -1008,7 +954,7 @@ c.addView(row().apply{
         c.addView(button(tr("Plot","رسم نمودار"),true){try{val text=field.text.toString();require(text.split(';').size in 1..3);text.split(';').forEach{MathTools().compile(it)};val span=domain.text.toString().toFloat();require(span in .1f..1000f);if(existing==null)board.insert(Item(kind="graph",text=text,w=560f,h=400f,domain=span))else store.editMetadata{existing.text=text;existing.domain=span;existing.plotIntersections=emptyList()};d.dismiss()}catch(e:Exception){field.error=e.message?:s("error")}})
     }
 
-    private fun shapes() {
+    internal fun shapes() {
         val c=column().apply{pad(12)};val d=toolSheet(s("shape"),ScrollView(this).apply{addView(c)})
         c.addView(button(tr("Automatic shape recognition","تشخیص خودکار شکل")){board.tool="smart";board.smartMode="shape";board.clearSelection();refreshDock();d.dismiss()})
         Shapes.keys.chunked(4).forEach{chunk->val r=row();chunk.forEach{key->
@@ -1028,9 +974,9 @@ c.addView(row().apply{
         };c.addView(r)}
     }
 
-    private var menuReturn:(()->Unit)?=null
+    internal var menuReturn:(()->Unit)?=null
     private val menuDialogs=mutableListOf<java.lang.ref.WeakReference<AlertDialog>>()
-    private fun navigationBuilder(title:String):MaterialAlertDialogBuilder {
+    internal fun navigationBuilder(title:String):MaterialAlertDialogBuilder {
         val back=menuReturn;menuReturn=null
         menuDialogs.removeAll{it.get()?.isShowing!=true}
         val nested=back!=null || menuDialogs.isNotEmpty()
@@ -1040,7 +986,7 @@ c.addView(row().apply{
             .setNegativeButton(s("close"),null)
             .setOnCancelListener{d->d.dismiss();back?.invoke()}
     }
-    private fun shown(d:AlertDialog):AlertDialog {
+    internal fun shown(d:AlertDialog):AlertDialog {
         menuDialogs.add(java.lang.ref.WeakReference(d))
         Fonts.onShown(d)
         d.window?.setGravity(Gravity.CENTER)
@@ -1050,7 +996,7 @@ c.addView(row().apply{
         }
         return d
     }
-    private fun dialog(title:String,content:View):AlertDialog =
+    internal fun dialog(title:String,content:View):AlertDialog =
         navigationBuilder(title).setView(content).create().also{it.show();shown(it)}
     /**
      * Settings for the tool just tapped: a sheet beside the dock instead of a centered dialog, with no dimming,
@@ -1076,7 +1022,7 @@ c.addView(row().apply{
             }
         }
 
-    private fun choices(title:String,keys:List<String>,action:(Int)->Unit) {
+    internal fun choices(title:String,keys:List<String>,action:(Int)->Unit) {
         val parent=menuReturn
         navigationBuilder(title).setAdapter(MenuRows(this,keys)){d,i->
             d.dismiss()
@@ -1096,7 +1042,7 @@ c.addView(row().apply{
         toolSheet(s("selection_settings"),c)
     }
 
-    private fun confirm(title: String, action: () -> Unit) {
+    internal fun confirm(title: String, action: () -> Unit) {
         MaterialAlertDialogBuilder(this)
             .setMessage(title)
             .setNegativeButton(s("cancel"), null)
@@ -1104,7 +1050,7 @@ c.addView(row().apply{
             .show()
     }
 
-    private fun input(
+    internal fun input(
         title: String,
         value: String = "",
         multi: Boolean = false,
@@ -1133,7 +1079,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun error(e: Exception) {
+    internal fun error(e: Exception) {
         lastError = "${e.javaClass.simpleName}: ${e.message}"
         if (!destroyed) {
             status.text = s("error")
@@ -1145,7 +1091,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun <T> work(task: () -> T, done: (T) -> Unit) {
+    internal fun <T> work(task: () -> T, done: (T) -> Unit) {
         if (loading || destroyed) return
         loading = true
         val progress =
@@ -1185,55 +1131,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun lessonFile(id: String = documentId) = File(filesDir, "lessons/$id.vura")
-
-    private fun persist() {
-        if(!dirty || destroyed)return
-        if(whiteboard.hasActiveInteraction || board.hasActiveInteraction){handler.removeCallbacks(autosave);handler.postDelayed(autosave,1000);return}
-        val doc=projectStore.lesson.copyForSave()
-        val id=documentId
-        dirty=false
-        lastSaveTicket=saveQueue.submit(doc,lessonFile()){ticket,failure->
-            if(!destroyed)handler.post{
-                if(!destroyed && id==documentId && ticket==lastSaveTicket){
-                    if(failure==null){if(!dirty)status.text=s("saved")}
-                    else{dirty=true;lastError=failure.message.orEmpty();status.text=s("save_error");toast(s("save_error"))}
-                }
-            }
-        }
-    }
-
-    private fun loadFile(f: File, changeId: Boolean = true) {
-        handler.removeCallbacks(autosave)
-        persist()
-        work({
-            try {
-                files.read(f.inputStream(),true) to false
-            } catch (e: Exception) {
-                val backup = File(f.path + ".bak")
-                if (!backup.exists()) throw e
-                files.read(backup.inputStream(),true) to true
-            }
-        }) { (doc, backup) ->
-            if (changeId || backup) {
-                documentId = if (backup) newId() else f.nameWithoutExtension
-                prefs.edit().putString("current", documentId).apply()
-            }
-            projectStore.replace(doc)
-            whiteboard.clearSelection()
-            whiteboard.reset()
-            if (backup) {status.text = s("restored_backup");toast(s("restored_backup"))}
-        }
-    }
-
-    private fun rename() {
-        input(s("lesson"), projectStore.lesson.title) { value ->
-            require(value.isNotBlank())
-            projectStore.editMetadata { projectStore.lesson.title = value.take(100) }
-        }
-    }
-
-    private fun menu() {
+    internal fun menu() {
         choices(projectStore.lesson.title.ifBlank{"VuraVision"}+" · "+status.text, listOf("lab", "games", "settings", "help")) {
             when (it) {
                 0 -> openExplorer(true)
@@ -1248,79 +1146,7 @@ c.addView(row().apply{
         UserGuide.show(this,media,{},menuReturn.also{menuReturn=null})
     }
 
-    private fun fileMenu() {
-        if(projectStore.lesson.pdf!=null){
-            choices(s("files"),listOf(tr("PDF file and workspace","فایل PDF و فضای مطالعه"),tr("Board projects and exports","پروژه‌ها و خروجی تخته"))){i->if(i==0)pdfMenu()else projectFileMenu()}
-        } else projectFileMenu()
-    }
-    private fun projectFileMenu() {
-        if(rooms?.active==true){choices(s("files"),listOf("save","export_pdf","export_png","export_jpg")){i->if(i==0)export("vura",true){createDocument(it,"application/octet-stream")}else exportChoice(listOf("pdf","png","jpg")[i-1])};return}
-        activateBoard(whiteboard)
-        choices(
-            s("files"),
-            listOf("new", "open", "save", "recent", "export_pdf", "export_png", "export_jpg", "rename"),
-        ) {
-            when (it) {
-                0 ->
-                    withPdfExit{confirm(s("new_confirm")) {
-                        persist()
-                        documentId = newId()
-                        prefs.edit().putString("current", documentId).apply()
-                        projectStore.replace(Lesson(title = s("lesson"),pages=mutableListOf(newBoardPage(null))))
-                        whiteboard.clearSelection()
-                        whiteboard.reset()
-                    }
-                    }
-                1 -> withPdfExit{pick("application/octet-stream", 101)}
-                2 -> export("vura", true) { createDocument(it, "application/octet-stream") }
-                3 -> withPdfExit{recent()}
-                4 -> exportChoice("pdf")
-                5 -> exportChoice("png")
-                6 -> exportChoice("jpg")
-                7 -> rename()
-            }
-        }
-    }
-
-    private fun recent() {
-        val list =
-            File(filesDir, "lessons")
-                .listFiles()
-                ?.filter { it.extension == "vura" }
-                ?.sortedByDescending { it.lastModified() }
-                ?.take(30)
-                .orEmpty()
-        if (list.isEmpty()) {
-            toast(s("empty"))
-            return
-        }
-        work({
-            list.map { f ->
-                val name =
-                    runCatching {
-                            java.util.zip.ZipFile(f).use { z ->
-                                com.google.gson
-                                    .Gson()
-                                    .fromJson(
-                                        z.getInputStream(z.getEntry("document.json")).reader(),
-                                        Lesson::class.java,
-                                    )
-                                    .title
-                            }
-                        }
-                        .getOrDefault(f.name)
-                "$name  ·  ${java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT,java.text.DateFormat.SHORT).format(java.util.Date(f.lastModified()))}"
-            }
-        }) { names ->
-            MaterialAlertDialogBuilder(this)
-                .setTitle(s("recent"))
-                .setItems(names.toTypedArray()) { _, i -> loadFile(list[i]) }
-                .setNegativeButton(s("cancel"), null)
-                .show()
-        }
-    }
-
-    private fun colors() {
+    internal fun colors() {
         val chosen=board.chosen().filter{ObjectActions.canColor(it)}
         if(board.chosen().isNotEmpty() && chosen.isEmpty())return
         val initial=chosen.singleOrNull()?.let{if(it.kind=="sticky")it.noteColor else it.color}?:board.inkColor
@@ -1332,13 +1158,13 @@ c.addView(row().apply{
         dialog(tr("Color","رنگ"),ScrollView(this).apply{addView(c)})
     }
 
-    private fun insert() {
+    internal fun insert() {
         choices(s("insert"), listOf("sticky", "graph", "image", "pdf", "math")) { when(it){
             0->addText(true);1->graph();2->pick("image/*",102);3->choosePdfImport();4->math()
         }}
     }
 
-    private fun math() {
+    internal fun math() {
         choices(s("math"), listOf("evaluate", "solve")) { i ->
             input(s(if (i == 0) "evaluate" else "solve"), if (i == 0) "2*(3+4)" else "2x+3=11") {
                 value ->
@@ -1466,7 +1292,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun crop(o:Item) {
+    internal fun crop(o:Item) {
         if(o.locked || o.kind !in listOf("image","pdf"))return
         val targetPage=store.page;val targetStore=store;val original=o.deepCopy()
         val returnMenu=menuReturn;menuReturn=null
@@ -1508,7 +1334,7 @@ c.addView(row().apply{
     }
 
     private var pagesUndo:String?=null
-    private fun pages() {
+    internal fun pages() {
         val returnMenu=menuReturn
         val c=column().apply{pad(14);layoutDirection=resources.configuration.layoutDirection}
         c.addView(label(s("pages"),20f,NAVY,true).apply{setPadding(dp(8),dp(6),dp(8),dp(10))})
@@ -1569,7 +1395,7 @@ c.addView(row().apply{
         list.setSelection(projectStore.lesson.current)
     }
 
-    private fun activateBoard(target:Board){
+    internal fun activateBoard(target:Board){
         bindBoardExtras(target)
         if(board!==target){target.copyToolsFrom(board);board=target;closeSidePanel()}
         target.onObjectActions={editSelection()}
@@ -1577,155 +1403,9 @@ c.addView(row().apply{
         target.onMindAdd={node,sibling->mindNode(node,sibling)}
         refreshDock()
     }
-    private fun projectChanged(){
+    internal fun projectChanged(){
         dirty=true;status.text=s("saving")
         handler.removeCallbacks(autosave);handler.postDelayed(autosave,1800)
-    }
-    private fun syncPdfWorkspace(){
-        if(!::workspaceHost.isInitialized)return
-        val state=projectStore.lesson.pdf
-        if(shownPdf===state)return
-        shownPdf=state
-        if(board!==whiteboard){whiteboard.copyToolsFrom(board);board=whiteboard}
-        pdfPane?.dispose();pdfPane=null
-        (whiteboard.parent as? ViewGroup)?.removeView(whiteboard)
-        workspaceHost.removeAllViews()
-        // PDF fullscreen hides the board (GONE) inside the split layout; it must be visible again on its own.
-        whiteboard.visibility=View.VISIBLE
-        if(state==null){workspaceHost.addView(whiteboard,FrameLayout.LayoutParams(-1,-1));whiteboard.sceneChanged();return}
-        val reader=PdfPane(this,state,media,{board},{activateBoard(it)},{projectChanged()},{projectChanged()},{pdfMenu()},{savePens();refreshDock()})
-        pdfPane=reader
-        val split=PdfSplitLayout(this,state,whiteboard,reader){projectChanged()}
-        workspaceHost.addView(split,FrameLayout.LayoutParams(-1,-1).apply{setMargins(dp(78),dp(76),dp(12),dp(76))})
-    }
-    private fun refreshPdfPresentation(){
-        (pdfPane?.parent as? PdfSplitLayout)?.applyPresentation()
-        workspaceHost.post{if(!destroyed){pdfPane?.redraw();whiteboard.sceneChanged()}}
-    }
-    private fun choosePdfImport(){
-        navigationBuilder(tr("Open PDF","بازکردن PDF"))
-            .setItems(arrayOf(tr("PDF object on board","PDF به‌صورت شیء روی تخته"),tr("Scrollable PDF beside board","PDF قابل اسکرول کنار تخته"))){_,i->
-                pendingPdfMode=i
-                if(i==1)withPdfExit{pick("application/pdf",103)}else pick("application/pdf",103)
-            }.show().also{shown(it)}
-    }
-    private fun openPdf(uri:android.net.Uri,flags:Int){
-        try{contentResolver.takePersistableUriPermission(uri,flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))}catch(_:SecurityException){}
-        val mode=pendingPdfMode
-        work({
-            val asset=media.import(requireNotNull(contentResolver.openInputStream(uri)),"pdf")
-            try{
-                if(mode==0){
-                    val item=Item(kind="pdf",asset=asset,pageCount=media.pdfCount(asset),w=560f)
-                    val image=requireNotNull(media.image(item,true));item.h=item.w*image.height/image.width
-                    item to null
-                }else{
-                    val sizes=media.pdfSizes(asset)
-                    val title=contentResolver.query(uri,arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),null,null,null)?.use{c->if(c.moveToFirst())c.getString(0)else "PDF"}?:"PDF"
-                    val state=PdfWorkspaceState(asset=asset,sourceUri=uri.toString(),title=title.take(250),originalHash=PdfExport.hash(media.file(asset).inputStream()))
-                    state.sheets=sizes.mapIndexed{i,(w,h)->
-                        PdfSheet(w,h,Page(background="plain",items=mutableListOf(Item(kind="pdf",asset=asset,pdfPage=i,pageCount=sizes.size,x=0f,y=0f,w=w,h=h,locked=true))))
-                    }.toMutableList()
-                    null to state
-                }
-            }catch(e:Exception){media.file(asset).delete();throw e}
-        }){(item,state)->
-            if(item!=null){activateBoard(whiteboard);whiteboard.insert(item)}
-            else if(state!=null){activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pdf=state};syncPdfWorkspace();projectChanged()}
-        }
-    }
-    private fun pdfMenu(){
-        val state=projectStore.lesson.pdf?:return
-        val entries=listOf(tr("Save annotations to the original PDF","ذخیرهٔ یادداشت‌ها روی همان PDF"),tr("Save as a new PDF","ذخیره به‌صورت PDF جدید"),
-            tr("Keep annotations in the project only","یادداشت‌ها فقط در پروژه بمانند"),tr("Hand / writing mode","حالت دست / نوشتن"),
-            tr("Swap PDF and board sides","تعویض سمت PDF و تخته"),tr("PDF fullscreen / split","PDF تمام‌صفحه / کنار تخته"),
-            tr("Fit PDF to width","نمایش PDF متناسب با عرض"),tr("Copy page or region to board","کپی صفحه یا بخشی از آن به تخته"),
-            tr("Export board pages as PDF","خروجی PDF از صفحات تخته"),tr("Close PDF workspace","بستن بخش PDF"))
-        choices(state.title+if(state.unsaved)" •"else"",entries){i->when(i){
-            0->savePdf(true)
-            1->savePdf(false)
-            2->{persist();toast(tr("Editable annotations are saved in the project","یادداشت‌های قابل‌ویرایش در پروژه ذخیره می‌شوند"))}
-            3->{pdfPane?.toggleHand();toast(if(pdfPane?.hand==true)tr("Hand: drag to scroll","دست: برای اسکرول بکشید")else tr("Writing: use the selected tool","نوشتن: از ابزار انتخاب‌شده استفاده کنید"))}
-            4->{state.onRight=!state.onRight;refreshPdfPresentation();projectChanged()}
-            5->{state.fullscreen=!state.fullscreen;refreshPdfPresentation();projectChanged()}
-            6->pdfPane?.fitWidth()
-            7->copyPdfPage()
-            8->choices(s("export_pdf"),listOf("current_page","all_pages")){n->export("pdf",n==1){createDocument(it,"application/pdf")}}
-            9->withPdfExit{activateBoard(whiteboard);projectStore.editMetadata{projectStore.lesson.pdf=null}}
-        }}
-    }
-    private fun withPdfExit(action:()->Unit){
-        val state=projectStore.lesson.pdf
-        if(state==null || !state.unsaved){action();return}
-        MaterialAlertDialogBuilder(this).setTitle(tr("PDF has unsaved annotations","یادداشت‌های PDF ذخیره نشده‌اند"))
-            .setMessage(tr("The project keeps editable notes. Choose whether to also save them into a PDF before leaving.","پروژه یادداشت‌های قابل‌ویرایش را نگه می‌دارد. انتخاب کنید قبل از خروج در PDF هم ذخیره شوند یا نه."))
-            .setPositiveButton(tr("Save PDF","ذخیرهٔ PDF")){_,_->
-                MaterialAlertDialogBuilder(this).setTitle(tr("Save PDF","ذخیرهٔ PDF")).setItems(arrayOf(tr("Original file","همان فایل"),tr("New file","فایل جدید"))){_,i->savePdf(i==0,action)}.show()
-            }.setNegativeButton(tr("Leave without PDF save","خروج بدون ذخیره در PDF")){_,_->persist();action()}
-            .setNeutralButton(tr("Continue editing","ادامهٔ کار"),null).show()
-    }
-    private fun savePdf(overwrite:Boolean,then:(()->Unit)?=null){
-        val live=projectStore.lesson.pdf?:return
-        if(board.hasActiveInteraction)return
-        if(overwrite && live.sourceUri.isBlank()){
-            MaterialAlertDialogBuilder(this).setTitle(tr("Original file is unavailable","فایل اصلی در دسترس نیست"))
-                .setMessage(tr("This project was imported or its original file permission is unavailable. Save a new PDF.","این پروژه وارد شده یا دسترسی به فایل اصلی موجود نیست. یک PDF جدید ذخیره کنید."))
-                .setPositiveButton(tr("Save new PDF","ذخیرهٔ PDF جدید")){_,_->savePdf(false,then)}.setNegativeButton(s("cancel"),null).show();return
-        }
-        val snapshot=live.deepCopy()
-        work({
-            val output=File(cacheDir,"exports/PDF-${System.currentTimeMillis()}.pdf")
-            PdfExport.write(media,snapshot,output)
-            if(overwrite){
-                val uri=android.net.Uri.parse(snapshot.sourceUri)
-                val backup=File(cacheDir,"exports/Original-${System.currentTimeMillis()}.pdf")
-                requireNotNull(contentResolver.openInputStream(uri)).use{input->backup.outputStream().use{boundedCopy(input,it,128L*1024*1024)}}
-                check(PdfExport.hash(backup.inputStream())==snapshot.originalHash){tr("The original PDF changed outside the app. Save a new file to keep both versions.","فایل اصلی بیرون از برنامه تغییر کرده؛ برای حفظ هر دو نسخه، فایل جدید ذخیره کنید.")}
-                try{
-                    requireNotNull(contentResolver.openOutputStream(uri,"wt")).use{out->output.inputStream().use{it.copyTo(out)};out.flush()}
-                    check(PdfExport.hash(requireNotNull(contentResolver.openInputStream(uri)))==PdfExport.hash(output.inputStream())){"PDF write verification failed"}
-                }catch(e:Exception){
-                    try{requireNotNull(contentResolver.openOutputStream(uri,"wt")).use{out->backup.inputStream().use{it.copyTo(out)}}}catch(_:Exception){}
-                    throw java.io.IOException(tr("Could not replace the original PDF. Recovery copies remain in the app; save a new PDF.","جایگزینی PDF اصلی انجام نشد. نسخه‌های بازیابی داخل برنامه حفظ شده‌اند؛ PDF جدید ذخیره کنید."),e)
-                }
-                output to PdfExport.hash(output.inputStream())
-            }else output to ""
-        }){(output,hash)->
-            if(overwrite){live.savedRevision=snapshot.revision;live.originalHash=hash;projectChanged();toast(s("saved"));then?.invoke()}
-            else{pendingPdfAsset=live.asset;pendingPdfRevision=snapshot.revision;afterPdfSave=then;createDocument(output,"application/pdf")}
-        }
-    }
-    private fun copyPdfPage(){
-        val state=projectStore.lesson.pdf?:return
-        val sheet=state.sheets[state.current]
-        fun copy(region:android.graphics.RectF){
-            val page=sheet.page.copy(items=sheet.page.items.map{it.deepCopy()}.toMutableList())
-            work({
-                val scale=1920f/maxOf(sheet.width,sheet.height)
-                val full=Bitmap.createBitmap((sheet.width*scale).toInt().coerceAtLeast(1),(sheet.height*scale).toInt().coerceAtLeast(1),Bitmap.Config.ARGB_8888)
-                try{
-                    val canvas=Canvas(full);canvas.drawColor(Color.WHITE);canvas.scale(scale,scale);Renderer(media).scene(canvas,page,true)
-                    val left=(region.left*full.width).toInt().coerceIn(0,full.width-1);val top=(region.top*full.height).toInt().coerceIn(0,full.height-1)
-                    val w=((region.right-region.left)*full.width).toInt().coerceIn(1,full.width-left);val h=((region.bottom-region.top)*full.height).toInt().coerceIn(1,full.height-top)
-                    val crop=Bitmap.createBitmap(full,left,top,w,h)
-                    try{Item(kind="image",asset=media.save(crop),w=560f,h=560f*h/w)}finally{if(crop!==full)crop.recycle()}
-                }finally{full.recycle()}
-            }){item->activateBoard(whiteboard);state.fullscreen=false;refreshPdfPresentation();whiteboard.insert(item)}
-        }
-        MaterialAlertDialogBuilder(this).setTitle(tr("Copy PDF to board","کپی PDF به تخته"))
-            .setItems(arrayOf(tr("Whole current page","تمام صفحهٔ فعلی"),tr("Select a region","انتخاب بخشی از صفحه"))){_,i->
-                if(i==0)copy(RectF(0f,0f,1f,1f))
-                else work({
-                    val scale=1536f/maxOf(sheet.width,sheet.height)
-                    val bitmap=Bitmap.createBitmap((sheet.width*scale).toInt().coerceAtLeast(1),(sheet.height*scale).toInt().coerceAtLeast(1),Bitmap.Config.ARGB_8888)
-                    val canvas=Canvas(bitmap);canvas.drawColor(Color.WHITE);canvas.scale(scale,scale)
-                    Renderer(media).scene(canvas,sheet.page,true);bitmap
-                }){bitmap->
-                    val selector=PdfRegionSelector(this,bitmap)
-                    MaterialAlertDialogBuilder(this).setTitle(tr("Drag a rectangle","یک مستطیل بکشید")).setView(selector)
-                        .setPositiveButton(s("apply")){_,_->copy(RectF(selector.region))}.setNegativeButton(s("cancel"),null).show().setOnDismissListener{bitmap.recycle()}
-                }
-            }.show()
     }
     @Deprecated("Platform compatibility")
     override fun onBackPressed(){withPdfExit{persist();super.onBackPressed()}}
@@ -1736,23 +1416,6 @@ c.addView(row().apply{
     private fun registerBack(){
         if(android.os.Build.VERSION.SDK_INT>=33)onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT){
             withPdfExit{persist();if(isTaskRoot)moveTaskToBack(true) else finish()}}
-    }
-
-    private fun pick(mime: String, code: Int) {
-        try {
-            startActivityForResult(
-                Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    type = mime
-                    if (code == 101) type = "*/*"
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                    if(code==103)addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                },
-                code,
-            )
-        } catch (e: Exception) {
-            error(e)
-        }
     }
 
     @Deprecated("Platform compatibility")
@@ -1822,166 +1485,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun exportChoice(ext: String) {
-        if(ext=="pdf" && projectStore.lesson.pdf!=null){pdfMenu();return}
-        if (ext == "pdf")
-            choices(s("export_pdf"), listOf("current_page", "all_pages")) { i ->
-                export(ext, i == 1) { createDocument(it, "application/pdf") }
-            }
-        else export(ext, false) { createDocument(it, "image/${if(ext=="jpg")"jpeg"else"png"}") }
-    }
-
-    private fun export(ext: String, all: Boolean, done: (File) -> Unit) {
-        val doc = projectStore.lesson.copyForSave()
-        work({
-            val folder = File(cacheDir, "exports").apply { mkdirs() }
-            val target = File(folder, "VuraVision-${System.currentTimeMillis()}.$ext")
-            val renderer = Renderer(media)
-            if (ext == "vura") files.atomic(doc, target)
-            else if (ext == "pdf") {
-                val pdf = PdfDocument()
-                try {
-                    val pages = if (all) doc.pages else listOf(doc.pages[doc.current])
-                    pages.forEachIndexed { i, page ->
-                        val p =
-                            pdf.startPage(PdfDocument.PageInfo.Builder(1190, 842, i + 1).create())
-                        renderer.page(p.canvas, page, 1190, 842, true)
-                        pdf.finishPage(p)
-                    }
-                    target.outputStream().use { pdf.writeTo(it) }
-                } finally {
-                    pdf.close()
-                }
-            } else {
-                val bitmap = Bitmap.createBitmap(1920, 1200, Bitmap.Config.ARGB_8888)
-                renderer.page(Canvas(bitmap), doc.pages[doc.current], 1920, 1200, true)
-                target.outputStream().use {
-                    check(bitmap.compress(
-                        if (ext == "jpg") Bitmap.CompressFormat.JPEG else Bitmap.CompressFormat.PNG,
-                        92,
-                        it,
-                    )) { "Image export failed" }
-                }
-                bitmap.recycle()
-            }
-            check(target.isFile && target.length()>0){"Export is empty"}
-            target
-        }) {
-            done(it)
-        }
-    }
-
-    private fun createDocument(file: File, mime: String) {
-        pendingExport = file
-        prefs.edit().putString("pendingExport", file.name).apply()
-        try {
-            startActivityForResult(
-                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    type = mime
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    putExtra(Intent.EXTRA_TITLE, file.name)
-                },
-                104,
-            )
-        } catch (e: Exception) {
-            error(e)
-        }
-    }
-
-    private fun shareOptions(){
-        val choices=arrayOf(tr("Send PDF via another app / cloud","فرستادن PDF با برنامهٔ دیگر / فضای ابری"),
-            tr("QR for a public HTTPS link","QR برای لینک عمومی HTTPS"),
-            tr("QR on the same local network","QR روی شبکهٔ محلی"),
-            // Where a teacher looks for "share with the class"; it was only in the hidden Engineering menu.
-            tr("Live class on this network (experimental)","کلاس زنده روی همین شبکه (آزمایشی)"))
-        MaterialAlertDialogBuilder(this).setTitle(s("share"))
-            .setItems(choices){_,index->when(index){0->sharePdf();1->publicQr();2->share();else->sharedRoom()}}
-            .setNegativeButton(s("cancel"),null).show()
-    }
-    private fun sharePdf(){
-        export("pdf",true){file->try{
-            val uri=FileProvider.getUriForFile(this,"$packageName.files",file)
-            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{
-                type="application/pdf";putExtra(Intent.EXTRA_STREAM,uri)
-                clipData=ClipData.newRawUri(file.name,uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            },s("share")))
-        }catch(e:Exception){error(e)}}
-    }
-    private fun publicQr(){
-        input(tr("Paste a public HTTPS link to your uploaded PDF","لینک عمومی HTTPS فایل PDF بارگذاری‌شده را وارد کنید")) {raw->
-            val url=raw.trim();val uri=android.net.Uri.parse(url)
-            require(uri.scheme=="https" && !uri.host.isNullOrBlank() && uri.authority?.contains('@')!=true){
-                tr("Enter a valid public HTTPS address","نشانی معتبر و عمومی HTTPS وارد کنید")
-            }
-            val c=column().apply{pad(20);gravity=Gravity.CENTER}
-            c.addView(label(tr("Anyone with access to this public link can open it from another network. Check sharing permissions in the cloud app.","هر کسی که به این لینک عمومی دسترسی داشته باشد می‌تواند از شبکهٔ دیگر آن را باز کند. مجوزهای اشتراک را در برنامهٔ ابری بررسی کنید."),14f,MUTED))
-            c.addView(ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url},LinearLayout.LayoutParams(dp(230),dp(230)))
-            c.addView(label(url,12f).apply{setTextIsSelectable(true)})
-            c.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",url));toast(s("done"))})
-            dialog(s("share"),c)
-        }
-    }
-    private fun share() {
-        export("pdf", true) { file ->
-            try {
-                shareDialog?.dismiss()
-                sharing?.stop()
-                val server = Sharing(file, "application/pdf")
-                server.start(5000, false)
-                val urls=server.urls(this)
-                val url=urls.firstOrNull()
-                if (url == null) {
-                    server.stop()
-                    toast(s("no_network"))
-                    return@export
-                }
-                sharing = server
-                val c =
-                    column().apply {
-                        pad(20)
-                        gravity = Gravity.CENTER
-                    }
-                c.addView(label(s("share_help"), 15f))
-                val qr=ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url}
-                c.addView(qr,LinearLayout.LayoutParams(dp(230),dp(230)))
-                val address=label(url,12f).apply{setTextIsSelectable(true)};c.addView(address)
-                c.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",address.text));toast(s("done"))})
-                if(urls.size>1)c.addView(button(s("network_address")){MaterialAlertDialogBuilder(this).setItems(urls.toTypedArray()){_,index->address.text=urls[index];qr.setImageBitmap(Sharing.qr(urls[index]));qr.contentDescription=urls[index]}.show()})
-                c.addView(label(s("share_troubleshoot"),12f,MUTED))
-                val count = label("${s("downloads")}: 0", 12f, MUTED)
-                c.addView(count)
-                val d = dialog(s("share"), c)
-                shareDialog = d
-                val update =
-                    object : Runnable {
-                        override fun run() {
-                            if (d.isShowing) {
-                                count.text = "${s("downloads")}: ${server.downloads}"
-                                handler.postDelayed(this, 1000)
-                            }
-                        }
-                    }
-                handler.post(update)
-                handler.postDelayed(
-                    {
-                        if (sharing === server) {
-                            server.stop()
-                            d.dismiss()
-                            toast(s("expired"))
-                        }
-                    },
-                    1800000,
-                )
-                c.addView(button(s("stop_sharing")){server.stop();if(sharing===server)sharing=null;d.dismiss()})
-                d.setOnDismissListener{handler.removeCallbacks(update);server.stop();if(sharing===server)sharing=null;shareDialog=null}
-            } catch (e: Exception) {
-                error(e)
-            }
-        }
-    }
-
-    private var smartSource="auto"
+    internal var smartSource="auto"
     private fun smartSettings(){
         val c=column().apply{pad(20)}
         c.addView(infoTitle(tr("Information","اطلاعات"),tr("Select writing, then use the actions above it to recognize text, solve, convert units, search Google, or recognize shapes. Drawing a loop is not needed.","نوشته را انتخاب کنید و از نوار بالای آن متن، حل، تبدیل واحد، جستجو در گوگل یا تشخیص شکل را بزنید. نیازی به دور کشیدن نیست.")))
@@ -2009,8 +1513,8 @@ c.addView(row().apply{
         store.editMetadata{if(mode=="text")store.page.items.removeAll(original.toSet());store.page.items.add(o)}
         board.selected.clear();board.selected.add(o.id);refreshDock()
     }
-    private fun smart(){smartSettings()}
-    private fun processSmart(items:List<Item>){
+    internal fun smart(){smartSettings()}
+    internal fun processSmart(items:List<Item>){
         val chosen=items.filter{store.page.editable(it)&&!it.locked&&ObjectActions.canSmart(it)};if(chosen.isEmpty())return
         val pageId=store.page.id;val mode=board.smartMode
         fun reviewResult(values:List<String>){if(destroyed)return;status.text=s("ready");if(store.page.id!=pageId){toast(tr("Return to the original page and try again","به صفحهٔ اصلی برگردید و دوباره تلاش کنید"));return};if(mode=="search"){reviewGoogleSearch(values);return};if(values.isEmpty()||prefs.getBoolean("smartReview",false))reviewSmart(chosen,values,mode)else try{applySmart(chosen,values.first(),mode)}catch(e:Exception){toast(e.message?:s("error"));reviewSmart(chosen,values,mode)}}
@@ -2067,430 +1571,18 @@ c.addView(row().apply{
         }else GoogleSearchReview(this).show(candidates,floating,browser,target)
     }
 
-    private fun models(){
-        val c=column().apply{pad(20)}
-        c.addView(label(tr("Offline Latin OCR is already included","تشخیص لاتین آفلاین همراه برنامه نصب است"),18f,TEAL,true))
-        c.addView(infoTitle(tr("Information","اطلاعات"),tr("No model download is needed for clear Latin characters and simple arithmetic. Google digital-ink models below are optional for handwriting; Persian still needs its language model.","برای حروف واضح لاتین و محاسبات ساده نیازی به دانلود نیست. مدل‌های زیر برای دست‌نویس گوگل‌اند؛ تشخیص دست‌نویس فارسی همچنان به مدل زبان نیاز دارد.")))
-        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Model downloads need access to dl.google.com over HTTPS. If the connection is refused, try another network and check VPN, proxy or firewall settings, then Retry. Offline Latin OCR remains available.","دانلود مدل به دسترسی HTTPS به dl.google.com نیاز دارد. اگر اتصال رد شد، شبکهٔ دیگری را امتحان و تنظیمات VPN، پراکسی یا فایروال را بررسی کنید؛ سپس دوباره تلاش کنید. تشخیص لاتین آفلاین در دسترس است.")))
-        c.addView(button(tr("Network settings","تنظیمات شبکه")){try{startActivity(Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))}catch(e:Exception){error(e)}})
-        c.addView(button(tr("Use offline Latin OCR","استفاده از تشخیص لاتین آفلاین")){smartSource="offline";prefs.edit().putString("smartSource",smartSource).apply();toast(s("done"))})
-        listOf("en-US" to "english","fa" to "persian").forEach{(lang,key)->
-            val card=column().apply{pad(14);background=rounded(PAPER,dp(14).toFloat())};c.addView(card,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(12),0,dp(12))})
-            card.addView(label(s(key),18f,NAVY,true));val state=label(s("check_status"),14f,MUTED);card.addView(state)
-            val progress=ProgressBar(this).apply{visibility=View.GONE};card.addView(progress,LinearLayout.LayoutParams(dp(32),dp(32)))
-            val r=row();card.addView(scrollRow(r));var raw="";var busy=false
-            val install=button(s("install")){};r.addView(install)
-            fun failed(e:Exception){busy=false;progress.visibility=View.GONE;raw=android.util.Log.getStackTraceString(e);lastError=raw;state.text=recognition.failure(this,e);install.isEnabled=true;install.text=s("retry")}
-            fun update(){recognition.installed(lang,{ready->if(!destroyed){state.text=s(if(ready)"installed"else"not_installed");install.text=s(if(ready)"installed"else"install");install.isEnabled=!ready&&!busy}},::failed)}
-            fun download(){if(busy)return;busy=true;install.isEnabled=false;progress.visibility=View.VISIBLE;state.text=s("downloading");recognition.download(lang,{if(!destroyed){busy=false;progress.visibility=View.GONE;update()}},{if(!destroyed)failed(it)})}
-            install.setOnClickListener{download()}
-            r.addView(button(tr("Retry download","تلاش مجدد")){if(!busy){recognition.installed(lang,{ready->if(ready)update()else download()},::failed)}})
-            r.addView(button(s("check_status")){if(!busy)update()})
-            r.addView(button(tr("Details","جزئیات")){val details="Model: $lang\nSDK: digital-ink 19.0.0\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\nAPI: ${Build.VERSION.SDK_INT}\nLocale: ${Locale.getDefault()}\n\n${raw.ifBlank{tr("No error recorded","خطایی ثبت نشده است")}}";val body=column().apply{pad(16)};body.addView(label(details,12f).apply{setTextIsSelectable(true)});body.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision diagnostics",details));toast(s("done"))});dialog(tr("Download diagnostics","گزارش دانلود"),ScrollView(this).apply{addView(body)})})
-            update()
-        }
-        dialog(s("models"),ScrollView(this).apply{addView(c)})
-    }
-
-
-    /**
-     * Board style: page color for new pages plus a first pen that reads on it (white chalk on green or dark boards).
-     * The current page changes too, but only while it is empty: existing navy ink would vanish on a dark board.
-     */
-    private fun applyBoardStyle(style:String){
-        val background=when(style){"chalk"->CHALKBOARD;"dark"->DARK_BOARD;else->Color.WHITE}
-        val ink=if(style=="white")NAVY else 0xfff4f4f0.toInt();val second=if(style=="white")0xffdc2626.toInt() else 0xfffff176.toInt()
-        prefs.edit().putInt("defaultBackground",background).putInt("dockPen0Color",ink).putInt("dockPen1Color",second).apply()
-        if(store.page.visiblePaneCount==1&&board.tool=="pen"&&prefs.getInt("dockPen",0)<2){board.penColor=if(prefs.getInt("dockPen",0)==0)ink else second;savePens()}
-        val page=store.page
-        if(board===whiteboard&&page.items.none{it.pane in page.visiblePaneIndices})store.editMetadata{page.visiblePaneIndices.forEach{page.panes[it].background=background}}
-        else toast(tr("Applies to new pages; this page already has content","برای صفحه‌های جدید اعمال می‌شود؛ این صفحه محتوا دارد"))
-        board.sceneChanged();refreshDock()
-    }
     // ---- Board AI (phase 6) ----
-    private val smartAi by lazy{SmartAi(this,{p->voiceKeys.forProvider(p).read()})}
-    private val aiWorker=Executors.newSingleThreadExecutor()
-    private var aiTicket=0
-    private var aiBusyLabel=""
-    /**
-     * Runs one AI request off the main thread. The selection bar shows what is happening with Cancel, the board stays
-     * usable, and any failure becomes one sentence saying what to do (never a dialog full of errors).
-     */
-    private fun <T> runAi(label:String,work:(SmartAi)->T,done:(T)->Unit){
-        if(!smartAi.configured()){toast(AiMessages.text(this,"no_key"));aiSettings();return}
-        val ticket=++aiTicket;aiBusyLabel=label;selectionBarMode="busy";refreshSelectionBar()
-        if(board.chosen().isEmpty())toast(label)
-        aiWorker.execute{
-            val result=runCatching{work(smartAi)}
-            handler.post{
-                if(destroyed||ticket!=aiTicket)return@post
-                if(selectionBarMode=="busy")selectionBarMode="main"
-                result.onSuccess{done(it)}.onFailure{e->toast(AiMessages.text(this,(e as? AiException)?.reason?:"service"))}
-                refreshSelectionBar()
-            }
-        }
-    }
-    /** The offline smart tools (no internet, no key): recognition, solving, plotting, units, search, shapes. */
-    private fun offlineSmart(smart:Boolean,ink:Boolean,action:(String,String,String,()->Unit)->Unit){
-        if(smart){
-            action("text",tr("To text","به متن"),tr("Convert to text · detect language","تبدیل به متن · تشخیص زبان")){board.smartMode="text";processSmart(board.chosen())}
-            action("formula",tr("Solve","حل کن"),tr("Calculate / solve","محاسبه / حل")){board.smartMode="formula";processSmart(board.chosen())}
-            action("graph",tr("Plot","نمودار"),tr("Plot function","رسم تابع")){board.smartMode="graph";processSmart(board.chosen())}
-            action("convert",tr("Units","تبدیل واحد"),tr("Convert units","تبدیل واحد")){board.smartMode="convert";processSmart(board.chosen())}
-            action("search",tr("Search","جستجو"),tr("Search Google","جستجو در گوگل")){board.smartMode="search";processSmart(board.chosen())}
-        }
-        if(ink)action("shape",tr("To shape","به شکل"),tr("Recognize shape","تشخیص شکل")){board.smartMode="shape";processSmart(board.chosen())}
-    }
-    private fun providerName(p:String)=mapOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI")[p]?:p
-    /**
-     * The AI service for board actions: which service, which model, the key (shared with the smart assistant, entered once),
-     * the students' level the answers are written for, and a daily cap. "Test" sends one tiny request.
-     */
-    private fun aiSettings(){
-        val c=column().apply{pad(16)};var s=AiSettings.load(this)
-        val model=field(s.model).apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
-        val imageModel=field("").apply{setSingleLine(true);textDirection=View.TEXT_DIRECTION_LTR}
-        val keyState=label("",13f,MUTED)
-        val key=field("",tr("API key","کلید API")).apply{setSingleLine(true);inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;textDirection=View.TEXT_DIRECTION_LTR}
-        val presets=FlowRow(this,dp(6))
-        fun refresh(){
-            model.setText(AiSettings.load(this).let{if(it.provider==s.provider)it.model else AiSettings.defaults.getValue(s.provider)})
-            imageModel.setText(AiSettings.imageModel(this,s.provider))
-            keyState.text=if(voiceKeys.forProvider(s.provider).hasKey())tr("A key is saved for this service (also used by the smart assistant). Leave empty to keep it.","برای این سرویس کلید ذخیره شده است (دستیار هوشمند هم از آن استفاده می‌کند). برای حفظ آن خالی بگذارید.")
-                else tr("No key yet for this service.","هنوز کلیدی برای این سرویس نیست.")
-            presets.removeAllViews()
-            val ids=when(s.provider){"gemini"->listOf("gemini-2.5-flash","gemini-2.5-pro");"openai"->listOf("gpt-4o-mini","gpt-4.1-mini","gpt-4o");"openrouter"->listOf("google/gemini-2.5-flash","openai/gpt-4o-mini");else->listOf("gpt-4o-mini","gemini-2.5-flash","gpt-4.1-mini")}
-            ids.forEach{id->presets.addView(button(id){model.setText(id)},ViewGroup.LayoutParams(-2,dp(40)))}
-        }
-        c.addView(sectionTitle(tr("Service","سرویس")))
-        c.addView(segmented(listOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI"),s.provider){s=s.copy(provider=it);refresh()})
-        c.addView(label(tr("AvalAI's address is the one set in the smart assistant page.","آدرس AvalAI همان است که در صفحهٔ دستیار هوشمند تنظیم شده."),12f,MUTED))
-        c.addView(sectionTitle(tr("Model","مدل")));c.addView(model);c.addView(presets)
-        c.addView(sectionTitle(tr("Picture model","مدل تصویر")));c.addView(imageModel)
-        c.addView(sectionTitle(tr("Key","کلید")));c.addView(keyState);c.addView(key)
-        c.addView(sectionTitle(tr("Write answers for","پاسخ‌ها برای")))
-        c.addView(segmented(listOf("primary" to tr("Primary","دبستان"),"middle" to tr("Grades 7–9","متوسطهٔ اول"),"high" to tr("Grades 10–12","متوسطهٔ دوم")),s.grade){s=s.copy(grade=it)})
-        c.addView(sectionTitle(tr("Requests per day on this panel","سقف درخواست روزانهٔ این پنل")))
-        c.addView(segmented(listOf("50" to "50","150" to "150","500" to "500"),s.dailyLimit.toString()){s=s.copy(dailyLimit=it.toInt())})
-        c.addView(label(tr("Only what you select is sent, as one picture. Nothing is sent until you tap an AI action.","فقط چیزی که انتخاب می‌کنید، به‌صورت یک تصویر، فرستاده می‌شود؛ تا یکی از کارهای هوشمند را نزنید چیزی ارسال نمی‌شود."),12f,MUTED).apply{setPadding(dp(4),dp(10),dp(4),dp(4))})
-        refresh()
-        fun store():Boolean{
-            val id=model.text.toString().trim().removePrefix("models/")
-            if(!VoiceSettings.validCompatModel(id)){model.error=s("voice_model_error");return false}
-            val pasted=key.text.toString()
-            if(pasted.isNotBlank()){val v=VoiceApiKey.normalize(pasted);if(!VoiceApiKey.isAcceptable(v)){key.error=s("voice_key_invalid");return false}
-                try{voiceKeys.forProvider(s.provider).save(pasted)}catch(_:Exception){key.error=s("voice_key_invalid");return false}}
-            val picture=imageModel.text.toString().trim()
-            if(!VoiceSettings.validCompatModel(picture)){imageModel.error=s("voice_model_error");return false}
-            s=s.copy(model=id);s.save(this);AiSettings.saveImageModel(this,s.provider,picture);SmartAi.clearCache();key.setText("");refresh();return true
-        }
-        val d=dialog(tr("AI service","سرویس هوش"),ScrollView(this).apply{addView(c)})
-        c.addView(row().apply{
-            addView(button(s("apply"),true){if(store()){toast(s("saved"));d.dismiss();refreshSelectionBar()}},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginEnd=dp(6)})
-            addView(button(tr("Test","آزمایش")){if(store())runAi(tr("Testing…","در حال آزمایش…"),{ai->ai.ask("Reply with the single word OK.","Are you there?")}){r->toast(tr("Connected: ","وصل شد: ")+r.take(40))}},LinearLayout.LayoutParams(0,dp(52),1f))
-        },LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
-    }
-    /** Lets labs ask the AI about the running simulation, when a service is configured. */
-    private fun installLabAssistant(){
-        Labs.assistant={name,description,values,picture,answer->
-            if(!smartAi.configured()){picture.recycle();toast(AiMessages.text(this,"no_key"));answer(null)}
-            else aiWorker.execute{
-                val result=runCatching{try{smartAi.ask(aiSystem(),AiTasks.lab(name,description,values),picture)}finally{picture.recycle()}}
-                handler.post{if(destroyed)return@post
-                    result.onSuccess{answer(it)}.onFailure{e->toast(AiMessages.text(this,(e as? AiException)?.reason?:"service"));answer(null)}}
-            }
-        }
-    }
-    private fun cancelAi(){aiTicket++;selectionBarMode="main";refreshSelectionBar()}
-    private fun aiSystem()=AiTasks.system(this,smartAi.settings.grade)
-    /** Sends only the selection, as one picture; the bitmap is released as soon as the request is built. */
-    private fun <T> aiOnSelection(label:String,ask:(SmartAi,android.graphics.Bitmap)->T,done:(T,RectF)->Unit){
-        val items=board.chosen();if(items.isEmpty())return
-        val (bitmap,bounds)=board.snapshotItems(items)
-        runAi(label,{ai->try{ask(ai,bitmap)}finally{bitmap.recycle()}}){done(it,bounds)}
-    }
-    /**
-     * A free place for a [w]×[h] block near [near]: to its side first (or below when [below]), then the other options,
-     * each nudged past anything already there, so AI answers never land on the teacher's own work.
-     */
-    private fun freeSpot(near:RectF,w:Float,h:Float,below:Boolean=false,extra:List<RectF> =emptyList()):PointF{
-        val others=store.page.items.filter{it.pane==board.activePane}.map{contentBounds(listOf(it))}+extra
-        val gap=32f;val start=layoutDirection(near,w,gap)
-        val options=if(below)listOf(PointF(near.left,near.bottom+gap),start,PointF(near.left,near.top-gap-h))else listOf(start,PointF(near.left,near.bottom+gap),PointF(near.left,near.top-gap-h))
-        for(o in options){var y=o.y;repeat(16){
-            val r=RectF(o.x,y,o.x+w,y+h);val hit=others.filter{RectF.intersects(it,r)}.maxByOrNull{it.bottom}
-            if(hit==null)return PointF(o.x,y);y=hit.bottom+gap}}
-        return options.first()
-    }
-    /** Beside the work toward the reading direction's end: right in English, left in Persian. */
-    private fun layoutDirection(near:RectF,w:Float,gap:Float)=if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)PointF(near.left-gap-w,near.top)else PointF(near.right+gap,near.top)
-    private fun aiNote(bounds:RectF,text:String,color:Int=0xfffff6c7.toInt(),extra:List<RectF> =emptyList()):Item{
-        val note=Item(kind="sticky",text=text,width=22f,w=380f,h=160f,noteColor=color,layerId=store.page.activeLayerId,pane=board.activePane)
-        Fonts.stamp(note,true);TextLayout.fit(note)
-        freeSpot(bounds,note.w,note.h,extra=extra).let{note.x=it.x;note.y=it.y}
-        return note
-    }
-    /** Adds the AI's result as one Undo step, selects its first part and brings it into view with the work it is about. */
-    private fun addAndSelect(items:List<Item>,about:RectF?=null){
-        if(items.isEmpty())return
-        store.editMetadata{store.page.items.addAll(items)}
-        board.selected.clear();board.selected.add(items.first().id);board.tool="select"
-        val area=contentBounds(items);about?.let{area.union(it)};board.reveal(area)
-        board.sceneChanged();refreshDock()
-    }
-    private fun aiExplain(kind:String){
-        val prompt=when(kind){"simplify"->AiTasks.simplify();"translate"->AiTasks.translate(this);else->AiTasks.explain()}
-        val label=when(kind){"simplify"->tr("Simplifying…","در حال ساده‌سازی…");"translate"->tr("Translating…","در حال ترجمه…");else->tr("Explaining…","در حال توضیح…")}
-        aiOnSelection(label,{ai,b->ai.ask(aiSystem(),prompt,b)}){text,bounds->addAndSelect(listOf(aiNote(bounds,text)),bounds)}
-    }
-    /** Mistakes are circled in red on the work itself, each with a short fix beside it; one Undo removes them all. */
-    private fun aiCheck(){
-        aiOnSelection(tr("Checking…","در حال بررسی…"),{ai,b->AiTasks.parseCheck(ai.askJson(aiSystem(),AiTasks.check(),b))}){check,bounds->
-            val red=0xffdc2626.toInt();val added=mutableListOf<Item>()
-            check.mistakes.forEach{(r,note)->
-                val x=bounds.left+r.left*bounds.width()-10f;val y=bounds.top+r.top*bounds.height()-10f
-                val w=r.width()*bounds.width()+20f;val h=r.height()*bounds.height()+20f
-                added.add(Item(kind="shape",shape="ellipse",x=x,y=y,w=w,h=h,color=red,width=4f,layerId=store.page.activeLayerId,pane=board.activePane))
-                // The fix goes beside the work, in a free spot, numbered to match its circle.
-                if(note.isNotBlank()){
-                    val n=check.mistakes.indexOfFirst{it.first===r}+1
-                    added.add(Item(kind="text",text=n.toString(),color=red,width=22f,x=x+w-8f,y=y-30f,w=40f,h=40f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)})
-                    val fix=Item(kind="text",text="$n. $note",color=red,width=22f,w=360f,h=60f,layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
-                    freeSpot(bounds,fix.w,fix.h,extra=added.filter{it.kind=="text"}.map{contentBounds(listOf(it))}).let{fix.x=it.x;fix.y=it.y};added.add(fix)
-                }
-            }
-            if(check.mistakes.isEmpty())added.add(aiNote(bounds,(if(check.correct)"✓ " else "")+check.summary.ifBlank{tr("No mistakes found","اشتباهی پیدا نشد")},0xffdcfce7.toInt()))
-            else Sounds.play(this,Sounds.Cue.TICK)
-            addAndSelect(added,bounds);if(check.summary.isNotBlank())toast(check.summary)
-        }
-    }
-    /** Steps appear on the board one at a time, under the work, when the teacher taps Next. */
-    private fun aiSteps(){
-        aiOnSelection(tr("Solving…","در حال حل…"),{ai,b->AiTasks.parseSteps(ai.askJson(aiSystem(),AiTasks.steps(),b))}){steps,bounds->
-            stepReveal?.let{canvasHost.removeView(it)}
-            val start=freeSpot(bounds,maxOf(bounds.width(),420f),60f*(steps.steps.size+1),below=true)
-            var y=start.y;val page=store.page
-            val lines=steps.steps.mapIndexed{i,t->"${i+1}. $t"}+listOfNotNull(steps.answer.takeIf{it.isNotBlank()}?.let{"= $it"})
-            stepReveal=StepReveal(this,lines,{i->
-                // Only onto the page the steps belong to; switching pages pauses the reveal.
-                if(store.page===page){
-                val item=Item(kind="text",text=lines[i],color=if(i==lines.lastIndex&&steps.answer.isNotBlank())TEAL else NAVY,width=26f,x=start.x,y=y,w=maxOf(bounds.width(),420f),h=60f,
-                    layerId=store.page.activeLayerId,pane=board.activePane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
-                y+=item.h+10f;store.editMetadata{store.page.items.add(item)};board.reveal(contentBounds(listOf(item)));board.sceneChanged()
-                }
-            }){stepReveal?.let{canvasHost.removeView(it)};stepReveal=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply{bottomMargin=dp(96)})}
-        }
-    }
-    private var stepReveal:StepReveal?=null
-    /** Handwriting (Persian included) becomes typed text in place, through the AI's vision; the ink goes, Undo brings it back. */
-    private fun aiCleanup(){
-        val ink=board.chosen().filter{it.kind=="ink"&&!it.locked&&store.page.editable(it)};if(ink.isEmpty())return
-        val (bitmap,bounds)=board.snapshotItems(ink)
-        runAi(tr("Reading the handwriting…","در حال خواندن دست‌خط…"),{ai->try{ai.askJson(aiSystem(),AiTasks.transcribe(),bitmap).optString("text").trim()}finally{bitmap.recycle()}}){text->
-            if(text.isBlank()){toast(AiMessages.text(this,"format"));return@runAi}
-            val item=Item(kind="text",text=text,color=ink.first().color,width=(bounds.height()/maxOf(1,text.lines().size)*.55f).coerceIn(18f,64f),x=bounds.left,y=bounds.top,w=maxOf(bounds.width(),200f),h=bounds.height(),
-                layerId=ink.first().layerId,pane=ink.first().pane).also{Fonts.stamp(it,true);TextLayout.fit(it)}
-            store.editMetadata{store.page.items.removeAll(ink.toSet());store.page.items.add(item)}
-            board.selected.clear();board.selected.add(item.id);board.sceneChanged();refreshDock()
-        }
-    }
-    /** A picture from a description (Add panel), placed in the free middle of the board. */
-    private fun aiPicture(){
-        input(tr("Describe the picture","تصویر را توصیف کنید"),""){text->require(text.isNotBlank())
-            runAi(tr("Drawing…","در حال کشیدن…"),{ai->ai.picture(text)}){bitmap->insertBitmap(bitmap)}}
-    }
-    /** The teacher's rough sketch becomes a clean illustration beside it; the sketch stays. */
-    private fun aiSketchToPicture(){
-        aiOnSelection(tr("Drawing from the sketch…","در حال کشیدن از روی طرح…"),{ai,b->ai.picture("",b)}){bitmap,bounds->
-            work({media.save(bitmap)}){name->
-                val w=maxOf(bounds.width(),420f);val h=w*bitmap.height/bitmap.width
-                val item=Item(kind="image",asset=name,w=w,h=h,layerId=store.page.activeLayerId,pane=board.activePane)
-                freeSpot(bounds,w,h).let{item.x=it.x;item.y=it.y}
-                bitmap.recycle();addAndSelect(listOf(item),bounds)
-            }
-        }
-    }
-    private fun groupableNotes(items:List<Item>)=items.filter{it.kind=="sticky"&&it.shape !in listOf("mindnode","element_card")&&!it.locked}
-    /** After a brainstorm: the notes' words go to the AI, which sorts them into titled groups; the notes then move into columns. */
-    private fun aiGroups(){
-        val notes=groupableNotes(board.chosen());if(notes.size<3)return
-        val texts=notes.map{it.text}
-        runAi(tr("Grouping ideas…","در حال دسته‌بندی ایده‌ها…"),{ai->AiTasks.parseGroups(ai.askJson(aiSystem(),AiTasks.groups(texts)),texts.size)}){groups->
-            arrangeGroups(groups.map{g->g.title.ifBlank{if(groups.size>1)tr("Other","سایر")else ""} to g.notes.map{notes[it]}})
-        }
-    }
-    /** Offline: one column per note color, in the order the colors first appear. */
-    private fun groupByColor(notes:List<Item>){
-        val byColor=notes.groupBy{it.noteColor}.values.toList()
-        // A single color would make one tall column: tidy into a near-square grid instead.
-        val columns=if(byColor.size>1)byColor else notes.chunked(kotlin.math.ceil(kotlin.math.sqrt(notes.size.toDouble())).toInt())
-        arrangeGroups(columns.map{"" to it})
-    }
-    /**
-     * Moves the notes into one column per group, from the selection's reading-start corner, each under a bold title;
-     * the notes themselves are kept as they are (text, color, size). One Undo puts everything back.
-     */
-    private fun arrangeGroups(groups:List<Pair<String,List<Item>>>){
-        val notes=groups.flatMap{it.second}.filter{n->store.page.items.any{it===n}}
-        if(notes.isEmpty())return
-        val bounds=contentBounds(notes);val rtl=resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL
-        val column=notes.maxOf{it.w}+48f;val gap=20f
-        val titles=mutableListOf<Item>()
-        store.editMetadata{
-            groups.filter{g->g.second.any{it in notes}}.forEachIndexed{i,(title,members)->
-                val x=if(rtl)bounds.right-(i+1)*column+48f else bounds.left+i*column
-                var y=bounds.top
-                if(title.isNotBlank()){
-                    val t=Item(kind="text",text=title,bold=true,width=28f,x=x,y=y,w=column-48f,h=56f,layerId=store.page.activeLayerId,pane=board.activePane)
-                    Fonts.stamp(t,true);TextLayout.fit(t);titles.add(t);y+=t.h+16f
-                }
-                members.filter{it in notes}.forEach{n->n.x=x;n.y=y;y+=n.h+gap}
-            }
-            store.page.items.addAll(titles)
-        }
-        board.selected.clear();board.selected.addAll((notes+titles).map{it.id});board.tool="select"
-        board.reveal(contentBounds(notes+titles));board.sceneChanged();refreshSelectionBar();refreshDock()
-    }
-    /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */
-    private fun aiQuiz(){
-        if(board.chosen().isNotEmpty())aiOnSelection(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai,b->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quiz(5),b))}){q,_->ClassQuiz.show(this,tr("Quiz","آزمونک"),q,{keepQuiz(tr("Quiz","آزمونک"),q)})}
-        else input(tr("Quiz topic","موضوع آزمونک"),""){topic->require(topic.isNotBlank())
-            runAi(tr("Writing questions…","در حال نوشتن سؤال‌ها…"),{ai->AiTasks.parseQuiz(ai.askJson(aiSystem(),AiTasks.quizFromTopic(topic,5)))}){q->ClassQuiz.show(this,topic,q,{keepQuiz(topic,q)})}}
-    }
-    /** Quizzes live in the lesson file: written by hand or kept from the AI, and played again next lesson. */
-    private fun saveQuiz(quiz:SavedQuiz){projectStore.editMetadata{val list=projectStore.lesson.quizzes?:mutableListOf<SavedQuiz>().also{projectStore.lesson.quizzes=it}
-        val at=list.indexOfFirst{it.id==quiz.id};if(at>=0)list[at]=quiz else if(list.size<50)list.add(quiz)}}
-    private fun keepQuiz(title:String,questions:List<AiTasks.Question>)=saveQuiz(SavedQuiz(title=title.take(200),questions=questions.take(100).map{SavedQuestion(it.text.take(1000),it.options.map{o->o.take(300)},it.answer)}))
-    private fun classQuizzes()=QuizBuilder.manager(this,{projectStore.lesson.quizzes.orEmpty().toList()},{saveQuiz(it)},
-        {id->projectStore.editMetadata{projectStore.lesson.quizzes?.removeAll{it.id==id}}},if(smartAi.configured())({aiQuiz()})else null)
-    /** A mind map of real mind-map nodes (editable, movable), beside the selection or in the middle of the board. */
-    private fun aiMindMap(){
-        fun build(root:AiTasks.Node,at:PointF){
-            val layer=store.page.activeLayerId;val pane=board.activePane;val items=mutableListOf<Item>()
-            fun node(title:String,x:Float,y:Float,parent:String,color:Int)=Item(kind="sticky",shape="mindnode",text=title,width=22f,w=200f,h=90f,x=x,y=y,noteColor=color,parentNode=parent,layerId=layer,pane=pane).also{Fonts.stamp(it,true)}
-            val leaves=root.children.sumOf{maxOf(1,it.children.size)}
-            var y=at.y-leaves*55f
-            val top=node(root.title,at.x,at.y-45f,"",0xffe2f2f0.toInt());items.add(top)
-            root.children.forEach{branch->
-                val span=maxOf(1,branch.children.size)*110f
-                val b=node(branch.title,at.x+300f,y+span/2-45f,top.id,0xffeceaf7.toInt());items.add(b)
-                branch.children.forEachIndexed{i,leaf->items.add(node(leaf.title,at.x+600f,y+i*110f,b.id,0xfffff6e0.toInt()))}
-                y+=span
-            }
-            addAndSelect(items)
-        }
-        // The whole tree needs about 800 × (110 per leaf): find that much free room beside or below the selection.
-        fun spot(root:AiTasks.Node,near:RectF):PointF{val h=maxOf(1,root.children.sumOf{maxOf(1,it.children.size)})*110f;val p=freeSpot(near,820f,h);return PointF(p.x,p.y+h/2)}
-        if(board.chosen().isNotEmpty())aiOnSelection(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai,b->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMap(),b))}){root,bounds->build(root,spot(root,bounds))}
-        else input(tr("Mind map topic","موضوع نقشهٔ ذهنی"),""){topic->require(topic.isNotBlank())
-            runAi(tr("Building the mind map…","در حال ساخت نقشهٔ ذهنی…"),{ai->AiTasks.parseMindMap(ai.askJson(aiSystem(),AiTasks.mindMapFromTopic(topic)))}){root->val c=board.center();build(root,PointF(c.x-400f,c.y))}}
-    }
-    /** End of lesson: the pages go to the AI as one contact sheet; the summary becomes a new last page. */
-    private fun aiSummary(){
-        val pages=projectStore.lesson.pages.filter{it.items.isNotEmpty()}.takeLast(6)
-        if(pages.isEmpty()){toast(tr("The lesson has no content yet","درس هنوز محتوایی ندارد"));return}
-        val sheet=android.graphics.Bitmap.createBitmap(960,810,android.graphics.Bitmap.Config.ARGB_8888)
-        val canvas=Canvas(sheet);canvas.drawColor(Color.WHITE)
-        pages.forEachIndexed{i,page->canvas.save();canvas.translate((i%2)*480f,(i/2)*270f);canvas.clipRect(0f,0f,476f,266f);board.renderer.page(canvas,page,476,266,true);canvas.restore()}
-        runAi(tr("Summarizing the lesson…","در حال خلاصه‌کردن درس…"),{ai->try{AiTasks.parseSummary(ai.askJson(aiSystem(),AiTasks.summary(),sheet))}finally{sheet.recycle()}}){summary->
-            if(projectStore.lesson.pages.size>=200)return@runAi
-            activateBoard(whiteboard)
-            val page=newBoardPage(projectStore.page);val layer=page.activeLayerId
-            fun text(t:String,size:Float,y:Float,color:Int=INK_NAVY)=Item(kind="text",text=t,width=size,x=120f,y=y,w=1200f,h=size*2,color=color,layerId=layer).also{Fonts.stamp(it,true);TextLayout.fit(it)}
-            val title=text(summary.title.ifBlank{tr("Lesson summary","خلاصهٔ درس")},48f,80f)
-            val points=text(summary.points.joinToString("\n"){"• $it"},28f,title.y+title.h+30f)
-            val items=mutableListOf(title,points)
-            if(summary.homework.isNotBlank())items.add(text(tr("Practice: ","تمرین: ")+summary.homework,26f,points.y+points.h+30f,INK_TEAL))
-            // A QR of the summary text: students scan it with the phone camera and keep it, no network or app needed.
-            val qrText=(listOf(title.text)+summary.points.map{"• $it"}+listOfNotNull(summary.homework.takeIf{it.isNotBlank()}?.let{tr("Practice: ","تمرین: ")+it})).joinToString("\n").take(1100)
-            val qrName=try{media.save(Sharing.qr(qrText))}catch(_:Exception){null}
-            if(qrName!=null){
-                items.add(Item(kind="image",asset=qrName,x=1360f,y=80f,w=260f,h=260f,layerId=layer))
-                items.add(text(tr("Scan to keep the summary","برای داشتن خلاصه اسکن کنید"),18f,350f,INK_MUTED).also{it.x=1340f;it.w=300f;TextLayout.fit(it)})
-            }
-            page.items.addAll(items)
-            projectStore.editMetadata{projectStore.lesson.pages.add(page);projectStore.lesson.current=projectStore.lesson.pages.lastIndex}
-            whiteboard.clearSelection();whiteboard.reset();refreshPages()
-            com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-                .setAction(tr("Share PDF with the class","PDF برای کلاس")){share()}.show()
-        }
-    }
-    /** A frame around what is on screen now, numbered; lay the lesson out on a big board, then present frame by frame. */
-    private fun insertFrame(){
-        val v=board.viewportWorld();val w=(v.right-v.left)*.8f;val h=(v.bottom-v.top)*.8f
-        val n=Frames.of(store.page,board.activePane).size+1
-        val f=Frames.create(v.left+(v.right-v.left-w)/2,v.top+(v.bottom-v.top-h)/2,w,h,tr("Frame $n","قاب $n"),store.page.activeLayerId,board.activePane)
-        store.editMetadata{store.page.items.add(f)}
-        board.selected.clear();board.selected.add(f.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
-    }
-    private var framePresenter:FramePresenter?=null
-    private fun presentFrames(){
-        val frames=Frames.of(store.page,board.activePane)
-        if(frames.isEmpty()){toast(tr("Add frames first: Add → Frame","اول قاب بگذارید: افزودن ← قاب"));return}
-        framePresenter?.let{canvasHost.removeView(it)}
-        board.clearSelection()
-        framePresenter=FramePresenter(this,frames,{f->board.showArea(contentBounds(listOf(f)))}){framePresenter?.let{canvasHost.removeView(it)};framePresenter=null}
-            .also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
-    }
-    /** A picture from the search window: https or inline data only, at most 10 MB, scaled down to 2048 px, then placed in view. */
-    private fun addWebImage(src:String){
-        work({
-            val bytes=if(src.startsWith("data:image/")){android.util.Base64.decode(src.substringAfter("base64,"),android.util.Base64.DEFAULT)}
-            else{require(src.startsWith("https://")){tr("Only secure (https) pictures can be added","فقط تصویر امن (https) اضافه می‌شود")}
-                okhttp3.OkHttpClient.Builder().callTimeout(30,java.util.concurrent.TimeUnit.SECONDS).build().newCall(okhttp3.Request.Builder().url(src).build()).execute().use{r->
-                    require(r.isSuccessful);val body=r.body?:throw IllegalStateException("empty");require(body.contentLength()<=10_000_000);body.byteStream().readNBytesCompat(10_000_001).also{require(it.size<=10_000_000)}}}
-            val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true};android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
-            var sample=1;while(maxOf(bounds.outWidth,bounds.outHeight)/sample>2048)sample*=2
-            val bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size,android.graphics.BitmapFactory.Options().apply{inSampleSize=sample})?:throw IllegalStateException(tr("Not a picture","تصویر نیست"))
-            val name=media.save(bitmap);val size=bitmap.width to bitmap.height;bitmap.recycle();name to size
-        }){(name,size)->
-            val w=minOf(600f,size.first.toFloat().coerceAtLeast(120f));val item=Item(kind="image",asset=name,w=w,h=w*size.second/size.first.coerceAtLeast(1))
-            board.insert(item);refreshDock();toast(tr("Picture added","تصویر اضافه شد"))
-        }
-    }
-    private fun insertIranMap(){
-        val c=board.center();val m=Maps.create(this,c.x-450f,c.y-400f,store.page.activeLayerId,board.activePane,if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"fa" else "en")
-        m.y=c.y-m.h/2
-        store.editMetadata{store.page.items.add(m)}
-        board.selected.clear();board.selected.add(m.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
-    }
-    /** A 3 × 3 table in the middle of the view, selected, with its cells open for typing at once. */
-    private fun insertTable(){
-        val c=board.center();val t=Tables.create(3,3,c.x-300f,c.y-108f,store.page.activeLayerId,board.activePane).apply{flipX=resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL}
-        store.editMetadata{store.page.items.add(t)}
-        board.selected.clear();board.selected.add(t.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
-        editTable(t)
-    }
-    /** Cell size stays the same when rows or columns change, so the table grows instead of squeezing. */
-    private fun editTable(t:Item)=Tables.editor(this,t){rows->
-        val before=Tables.cells(t);val cw=t.w/before.first().size;val rh=t.h/before.size
-        store.page.items.firstOrNull{it.id==t.id&&!it.locked}?.let{o->store.editMetadata{o.text=Tables.encode(rows);o.w=cw*rows.first().size;o.h=rh*rows.size};board.sceneChanged()};refreshSelectionBar()
-    }
-    /** Offline: a bar chart from the table's first numeric column, beside the table. */
-    private fun chartFromTable(t:Item){
-        val spec=Charts.fromTable(Tables.cells(t))?:run{toast(tr("Add a column of numbers under a heading (two rows or more)","یک ستون عدد زیر یک عنوان بنویسید (دست‌کم دو ردیف)"));return}
-        insertChart(spec,contentBounds(listOf(t)))
-    }
-    /** A chart for any request ("rainfall in Tehran by month"), with data written by the AI. */
-    private fun aiChart(){
-        input(tr("What should the chart show?","نمودار چه چیزی را نشان دهد؟"),""){request->require(request.isNotBlank())
-            runAi(tr("Making the chart…","در حال ساخت نمودار…"),{ai->Charts.parse(ai.askJson(aiSystem(),Charts.prompt(request)))}){spec->
-                val c=board.center();insertChart(spec,RectF(c.x-350f,c.y-225f,c.x-350f,c.y-225f))}}
-    }
-    private fun insertChart(spec:Charts.Spec,near:RectF){
-        val dark=Color.luminance(store.page.panes.getOrNull(board.activePane)?.background?:Color.WHITE)<.35
-        val bitmap=Charts.render(spec,dark)
-        work({media.save(bitmap)}){name->
-            val item=Item(kind="image",asset=name,w=700f,h=450f,layerId=store.page.activeLayerId,pane=board.activePane)
-            (if(near.width()>0)freeSpot(near,item.w,item.h) else PointF(near.left,near.top)).let{item.x=it.x;item.y=it.y}
-            bitmap.recycle();addAndSelect(listOf(item),near.takeIf{it.width()>0})
-        }
-    }
+    internal val smartAi by lazy{SmartAi(this,{p->voiceKeys.forProvider(p).read()})}
+    internal val aiWorker=Executors.newSingleThreadExecutor()
+    internal var aiTicket=0
+    internal var aiBusyLabel=""
+    internal var stepReveal:StepReveal?=null
+    internal var framePresenter:FramePresenter?=null
     /**
      * Voice commands (item 70), on the main thread, only from [VoiceCommands]' list; off with the "Voice commands" switch.
      * Each one is reversible and a toast shows what was done, so a misheard command is visible and easy to undo.
      */
-    private val voiceCommand:((VoiceCommands.Call)->String)? get()=if(!prefs.getBoolean("voiceCommands",true))null else {call->
+    internal val voiceCommand:((VoiceCommands.Call)->String)? get()=if(!prefs.getBoolean("voiceCommands",true))null else {call->
         val a=call.args
         val done=when(call.name){
             "go_to_page"->when(a.optString("where")){"next"->{switchPage(projectStore.lesson.current+1);tr("Next page","صفحهٔ بعد")}
@@ -2506,149 +1598,14 @@ c.addView(row().apply{
         }
         if(done==null)"not allowed" else {toast("🎙 $done");"done"}
     }
-    private var spotlight:Spotlight?=null
-    private var replay:Replay?=null
-    /** Recap: the page redrawn stroke by stroke, over the board; the page itself is untouched. */
-    private fun showReplay(){
-        if(store.page.visibleItems().none{it.pane==board.activePane}){toast(tr("This page is empty","این صفحه خالی است"));return}
-        replay?.let{canvasHost.removeView(it)}
-        replay=Replay(this,store.page,board.activePane,board.renderer){replay?.let{canvasHost.removeView(it)};replay=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
-    }
-    private fun showSpotlight(){
-        spotlight?.let{canvasHost.removeView(it)}
-        spotlight=Spotlight(this){spotlight?.let{canvasHost.removeView(it)};spotlight=null}.also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
-    }
-    /** Every page background, named for teachers: also staff paper for music, four-line paper for first writing, axes for graphs. */
-    private fun patternChoices()=Subjects.patternsFirst(Subjects.current(this),listOf("plain" to tr("Plain","ساده"),"dots" to s("dots"),"grid" to s("grid"),"ruled" to s("ruled"),"hatch" to tr("Hatched","هاشور"),
-        "isometric" to tr("Isometric","ایزومتریک"),"axes" to tr("Axes","محور مختصات"),"staff" to tr("Music staff","حامل موسیقی"),"handwriting" to tr("Handwriting","خط‌نویسی")))
-    private var settingsScreen:SettingsScreen?=null
-    private fun settings()=settingsAt(prefs.getString("settingsTab",null))
-    /**
-     * One settings screen with categories (item 44). On/off and few-option settings apply in place;
-     * only settings that need room open a page, which returns here with its back arrow.
-     */
-    private val panelSizes get()=listOf(Triple("tablet",tr("Tablet / small","تبلت / کوچک"),.8f),Triple("65","65″",1f),Triple("75","75″",1.1f),Triple("86","86″",1.25f),Triple("98","98–110″",1.4f))
-    private fun settingsAt(tab:String?){
-        menuReturn=null
-        fun page(title:String,value:()->String={""},open:()->Unit)=SettingRow.Page(title,value){menuReturn={};try{open()}finally{menuReturn=null}}
-        fun roomSafe(action:()->Unit){if(rooms?.active==true)toast(s("room_leave_first"))else action()}
-        fun restart(edit:SharedPreferences.Editor.()->Unit){persist();prefs.edit().apply(edit).apply();worker.execute{handler.post{if(!destroyed)recreate()}}}
-        val providers=mapOf("gemini" to "Gemini","openai" to "OpenAI","openrouter" to "OpenRouter","avalai" to "AvalAI")
-        val categories=listOf(
-            SettingsCategory("general",tr("General","عمومی"),"settings",listOf(
-                SettingRow.Choice(s("language"),listOf("en" to "English","fa" to "فارسی"),{prefs.getString("language","en")?:"en"}){v->roomSafe{restart{putString("language",v)}}},
-                // Item 29: the panel's size, not "small/large": bigger panels are read from farther away, so controls grow with them.
-                SettingRow.Choice(tr("Panel size","اندازهٔ نمایشگر"),panelSizes.map{it.first to it.second},
-                    {prefs.getFloat("uiScale",1f).let{v->panelSizes.minByOrNull{kotlin.math.abs(it.third-v)}!!.first}}){v->roomSafe{restart{putFloat("uiScale",panelSizes.first{it.first==v}.third)}}},
-                SettingRow.Choice(tr("Interface","ظاهر برنامه"),listOf("light" to tr("Light","روشن"),"dark" to tr("Dark","تیره")),{if(UiTheme.dark)"dark" else "light"}){v->roomSafe{restart{putString("uiTheme",v)}}},
-                SettingRow.Toggle(tr("Reduce motion","کاهش حرکت"),tr("No sliding panels, shaking or confetti","بدون لغزش پنل‌ها، لرزش و کاغذ رنگی"),{prefs.getBoolean("reduceMotion",false)}){v->prefs.edit().putBoolean("reduceMotion",v).apply();Motion.load(this)},
-                SettingRow.Choice(tr("Toolbar height on the side","ارتفاع نوار ابزار کنار صفحه"),listOf("top" to tr("Higher","بالاتر"),"middle" to tr("Middle","وسط"),"bottom" to tr("Lower","پایین‌تر")),
-                    {toolDock.position}){toolDock.position=it},
-                page(s("fonts"),{Fonts.persian.first{it.id==Fonts.persianId}.let{tr(it.en,it.fa)}+" · "+Fonts.english.first{it.id==Fonts.englishId}.let{tr(it.en,it.fa)}}){fontSettings()},
-            )),
-            SettingsCategory("input",tr("Pen and touch","قلم و لمس"),"pen",listOf(
-                SettingRow.Toggle(tr("Keep my tool after adding text or a note","بعد از افزودن متن یا یادداشت، ابزار عوض نشود"),tr("Off: the new object is selected so it can be moved at once","خاموش: شیء تازه انتخاب می‌شود تا فوراً جابه‌جا شود"),{prefs.getBoolean("keepTool",false)}){v->prefs.edit().putBoolean("keepTool",v).apply();whiteboard.keepToolAfterInsert=v;board.keepToolAfterInsert=v},
-                SettingRow.Toggle(tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)"),null,{board.touchMode}){v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();refreshDock()}},
-                SettingRow.Toggle(s("multi_touch_short"),null,{board.profile.multiTouch}){v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}},
-                SettingRow.Toggle(tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی"),tr("Hold the second tap and slide to browse history","ضربهٔ دوم را نگه دارید و بکشید تا تاریخچه را مرور کنید"),{prefs.getBoolean("twoFingerUndo",true)}){v->
-                    prefs.edit().putBoolean("twoFingerUndo",v).apply();whiteboard.gestures.undoEnabled=v;board.gestures.undoEnabled=v;board.gestures.reset()},
-                SettingRow.Toggle(tr("Pie menu (five fingers)","منوی شعاعی (پنج انگشت)"),tr("Double tap with five fingers to open your shortcuts","با پنج انگشت دو بار ضربه بزنید تا میان‌برهایتان باز شود"),{prefs.getBoolean("pieEnabled",false)}){v->
-                    prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v},
-                page(s("pie_settings")){pieSettings()},
-                page(s("calibration"),{tr("Pen tips, palm and real centimetres","سر قلم، کف دست و سانتی‌متر واقعی")}){calibrationSettings()},
-            )),
-            SettingsCategory("board",tr("Board","تخته"),"background",listOf(
-                SettingRow.Choice(tr("Board style","سبک تخته"),listOf("white" to tr("Whiteboard","وایت‌برد"),"chalk" to tr("Chalkboard","تخته‌سبز"),"dark" to tr("Dark","تیره")),
-                    {when(prefs.getInt("defaultBackground",Color.WHITE)){CHALKBOARD->"chalk";DARK_BOARD->"dark";else->"white"}}){applyBoardStyle(it)},
-                page(s("page_background"),{tr("For new pages","برای صفحه‌های جدید")}){defaultBackgroundSettings()},
-                page(s("history_settings"),{tr("${HistorySettings.load(this)} steps","${HistorySettings.load(this)} مرحله")}){historySettings()},
-            )),
-            SettingsCategory("smart",tr("Smart","هوشمند"),"sparkle",listOf(
-                page(tr("AI service","سرویس هوش"),{if(smartAi.configured())smartAi.settings.let{"${providerName(it.provider)} · ${it.model} · "+tr("${smartAi.usedToday()} of ${it.dailyLimit} today","${smartAi.usedToday()} از ${it.dailyLimit} امروز")}else tr("Not set up","راه‌اندازی نشده")}){aiSettings()},
-                page(s("voice_assistant"),{if(VoiceSettings.enabled(this))tr("On","روشن")+" · "+(providers[VoiceSettings.load(this).provider]?:VoiceSettings.load(this).provider)else tr("Off","خاموش")}){voiceSettings()},
-                SettingRow.Toggle(tr("Voice commands","فرمان صوتی"),tr("The assistant can turn pages, change pen and tool, start a timer or open a class tool when you ask; never deletes","دستیار در صورت درخواست صفحه را عوض می‌کند، قلم و ابزار را تغییر می‌دهد، تایمر می‌گذارد یا ابزار کلاس باز می‌کند؛ هرگز چیزی پاک نمی‌کند"),{prefs.getBoolean("voiceCommands",true)}){v->prefs.edit().putBoolean("voiceCommands",v).apply()},
-                page(s("models"),{tr("Handwriting recognition","تشخیص دست‌خط")}){models()},
-                page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
-            )),
-            SettingsCategory("class",tr("Class","کلاس"),"users",listOf(
-                SettingRow.Choice(tr("I teach","درس من"),Subjects.keys.map{it to Subjects.name(this,it)},{Subjects.current(this)}){v->prefs.edit().putString("subject",v).apply()},
-                SettingRow.Toggle(tr("Game sounds","صدای بازی‌ها"),tr("Short sounds for right answers and winners","صدای کوتاه برای پاسخ درست و برنده"),{Sounds.enabled(this)}){prefs.edit().putBoolean("gameSounds",it).apply()},
-                page(s("device_profile"),{DeviceProfiles.load(this).name}){roomUi?.profile(menuReturn)},
-                page(s("shared_room"),{tr("Share this board with devices on the same network","اشتراک همین تخته با دستگاه‌های همان شبکه")}){sharedRoom()},
-            )),
-            SettingsCategory("about",tr("About","درباره"),"info",listOf(
-                page(s("cache"),{tr("Frees memory used by images and PDF pages","حافظهٔ تصاویر و صفحه‌های PDF را آزاد می‌کند")}){media.clear();board.sceneChanged();toast(s("done"))},
-                page(s("about"),{"VuraVision ${BuildConfig.VERSION_NAME}"}){about()},
-            )),
-        )
-        settingsScreen=SettingsScreen(this,categories){prefs.edit().putString("settingsTab",it).apply()}.also{it.show(tab)}
-    }
-
-    private fun about(){
-        val c=column().apply{pad(20)};val gesture=AboutGesture();var close:()->Unit={}
-        c.addView(ImageView(this).apply{
-            setImageResource(R.drawable.vura_brand);scaleType=ImageView.ScaleType.FIT_CENTER;contentDescription="VuraVision logo"
-            setOnClickListener{if(gesture.click(android.os.SystemClock.uptimeMillis())){prefs.edit().putBoolean("engineering",true).apply();close();engineering()}}
-        },LinearLayout.LayoutParams(-1,dp(150)))
-        c.addView(label("VuraVision ${BuildConfig.VERSION_NAME}\nBeyond Vision\n\n${s("about_text")}",16f))
-        close=dialog(s("about"),c)::dismiss
-    }
-
-    private fun fontSettings(){
-        val content=column().apply{pad(16)}
-        content.addView(infoTitle(tr("Information","اطلاعات"),tr("Choose independent fonts for Persian and English. New text, sticky notes and smart conversion keep these fonts in the project and PDF exports.","فونت فارسی و انگلیسی را جدا انتخاب کنید. متن تازه، یادداشت و تبدیل هوشمند این فونت‌ها را در پروژه و خروجی PDF حفظ می‌کنند.")))
-        var fa=Fonts.persianId;var en=Fonts.englishId
-        val faChoice=button(""){};val enChoice=button(""){}
-        val preview=label("نمونهٔ فارسی: یادگیری با ویوراویژن\nEnglish: Learning with VuraVision\n۱۲۳۴۵۶۷۸۹۰ · 1234567890",21f)
-        fun refreshPreview(){
-            faChoice.text=tr("Persian","فارسی")+": "+Fonts.persian.first{it.id==fa}.let{tr(it.en,it.fa)}
-            enChoice.text=tr("English","انگلیسی")+": "+Fonts.english.first{it.id==en}.let{tr(it.en,it.fa)}
-            Fonts.bind(preview,fontFa=fa,fontEn=en)
-        }
-        fun choose(families:List<Fonts.Family>,persian:Boolean){
-            val list=column().apply{pad(8)}
-            val picker=dialog(tr("Choose font","انتخاب فونت"),ScrollView(this).apply{addView(list)})
-            families.forEach{family->
-                val row=column().apply{pad(10)}
-                row.addView(label(tr(family.en,family.fa),15f,NAVY,true))
-                val sample=label(if(persian)"یادگیری، خلاقیت و نوشتن ۱۲۳"else"Learning, creativity and writing 123",22f)
-                // Preview each row with that family's face, not the current global choice.
-                Fonts.bind(sample,fontFa=if(persian)family.id else fa,fontEn=if(persian)en else family.id)
-                row.addView(sample);row.setOnClickListener{if(persian)fa=family.id else en=family.id;refreshPreview();picker.dismiss()}
-                list.addView(row,LinearLayout.LayoutParams(-1,-2))
-            }
-        }
-        faChoice.setOnClickListener{choose(Fonts.persian,true)};enChoice.setOnClickListener{choose(Fonts.english,false)}
-        content.addView(sectionTitle(tr("Fonts for the board and the app","فونت تخته و برنامه")))
-        content.addView(faChoice,LinearLayout.LayoutParams(-1,dp(52)).apply{bottomMargin=dp(6)});content.addView(enChoice,LinearLayout.LayoutParams(-1,dp(52)))
-        content.addView(sectionTitle(tr("Preview","پیش‌نمایش")));content.addView(preview)
-        val existing=CheckBox(this).apply{text=tr("Also apply to editable text on the active page (Undo available)","روی متن‌های قابل‌ویرایش صفحهٔ فعال هم اعمال شود (قابل بازگردانی)")}
-        content.addView(existing)
-        val dialog=dialog(s("fonts"),ScrollView(this).apply{addView(content)})
-        refreshPreview()
-        content.addView(button(s("apply"),true){
-            if(board.hasActiveInteraction)return@button
-            Fonts.choose(this,fa,en)
-            if(existing.isChecked){
-                val items=store.page.items.filter{it.kind in listOf("text","sticky") && !it.locked && store.page.editable(it)}
-                if(items.isNotEmpty())store.editMetadata{items.forEach{item->val w=item.w;val h=item.h;Fonts.stamp(item,true);TextLayout.fit(item);if(item.kind=="sticky"){item.w=maxOf(w,item.w);item.h=maxOf(h,item.h)}}}
-            }
-            Fonts.applyTree(window.decorView);whiteboard.sceneChanged();pdfPane?.refreshText()
-            dialog.dismiss();toast(s("saved"))
-        })
-    }
-
+    internal var spotlight:Spotlight?=null
+    internal var replay:Replay?=null
+    internal var settingsScreen:SettingsScreen?=null
     private fun insertConstruction(guide:Item,perpendicular:Boolean=false){
         if(guide.locked||!store.page.editable(guide)||!store.page.canDraw()||!board.canEditItem(guide))return
         val result=GeometryTools.construction(guide,perpendicular).apply{color=board.guideInkColor(guide.pane);width=board.guideInkWidth(guide.pane);layerId=store.page.activeLayerId}
         val label=GuideLabels.construction(board,guide,result)
         store.editMetadata{store.page.items.add(result);store.page.items.add(label)}
-    }
-    private fun historySettings(){
-        val c=column().apply{pad(16)};val values=listOf(10,25,50,100,200)
-        c.addView(infoTitle(s("history_settings"),tr("History steps on this device; per author in a room. Larger limits use more memory.","تعداد مراحل بازگردانی این دستگاه؛ در اتاق برای هر کاربر. مقدار بیشتر حافظهٔ بیشتری مصرف می‌کند.")))
-        val pick=Spinner(this).apply{adapter=OptionAdapter(this@MainActivity,values.map{it.toString()});setSelection(values.indexOf(HistorySettings.load(this@MainActivity)).coerceAtLeast(0))};c.addView(pick)
-        val d=dialog(s("history_settings"),c);c.addView(button(s("apply"),true){val value=values[pick.selectedItemPosition];prefs.edit().putInt("historyLimit",value).apply();projectStore.historyLimit=value;board.store.historyLimit=value;pdfPane?.setHistoryLimit(value);rooms?.setHistoryLimit(value);d.dismiss()})
     }
     /** Clear unlocked, editable items in the active panel; Undo restores them. */
     private fun clearActivePane():Boolean{
@@ -2673,98 +1630,7 @@ c.addView(row().apply{
             .setAction(tr("Undo","بازگردانی")){board.undo()}.show()
     }
 
-    private fun engineering() {
-        val keys=listOf("shared_room","history_settings","report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
-        choices(s("engineering"),keys) {
-            when (keys[it]) {
-                "history_settings"->historySettings()
-                "shared_room"->sharedRoom()
-                "advanced_board" -> advancedBoard()
-                "secret_studio" -> secretStudio()
-                "maboox" -> maboox()
-                "voice_behavior" -> VoiceSettingsUi(this,menuReturn.also{menuReturn=null}).advanced{stopVoice()}
-                "report" -> {
-                    val report =
-                        "VuraVision ${BuildConfig.VERSION_NAME}\n${Build.MANUFACTURER} ${Build.MODEL}\nAndroid ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}\n${resources.displayMetrics}\nPointers: device-reported only\nObjects: ${store.page.items.size}\nLast error: $lastError\n" +
-                            InputDevice.getDeviceIds().joinToString("\n") { id ->
-                                InputDevice.getDevice(id)
-                                    ?.let { "${it.name}: sources=${it.sources}" }
-                                    .orEmpty()
-                            }
-                    val text =
-                        label(report, 13f).apply {
-                            pad(18)
-                            setTextIsSelectable(true)
-                        }
-                    dialog(s("report"), ScrollView(this).apply { addView(text) })
-                }
-                "stress" -> {
-                    if(board.hasActiveInteraction)return@choices
-                    confirm(tr("Add 300 test strokes? Undo removes them.","۳۰۰ خط آزمایشی اضافه شود؟ با بازگردانی حذف می‌شوند.")) {
-                    store.editMetadata {
-                        repeat(300) { n ->
-                            store.page.items.add(
-                                Item(
-                                    layerId = store.page.activeLayerId,
-                                    x = (n % 30) * 24f,
-                                    y = (n / 30) * 30f,
-                                    w = 20f,
-                                    h = 20f,
-                                    inkW = 20f,
-                                    inkH = 20f,
-                                    color = if (n % 2 == 0) ORANGE else TEAL,
-                                    points =
-                                        (0..30)
-                                            .map { v ->
-                                                Point(v * 20f / 30, 10 + sin(v * .4).toFloat() * 8)
-                                            }
-                                            .toMutableList(),
-                                )
-                            )
-                        }
-                    }
-                    board.fit()
-                    }
-                }
-            }
-        }
-    }
-
-    private fun advancedBoard(){
-        if(board.hasActiveInteraction){toast(tr("Finish the stroke first","ابتدا رسم را تمام کنید"));return}
-        val c=column().apply{pad(20)}
-        c.addView(label(tr("Behind the board","پشت پردهٔ تخته"),22f,NAVY,true))
-        fun toggle(en:String,fa:String,initial:Boolean,change:(Boolean)->Unit){
-            c.addView(Switch(this).apply{text=tr(en,fa);isChecked=initial;setOnCheckedChangeListener{_,v->change(v)}})
-        }
-        toggle("Hold to recognize geometry","تشخیص هندسی با مکث",board.holdRecognitionEnabled){v->board.holdRecognitionEnabled=v;prefs.edit().putBoolean("holdRecognition",v).apply()}
-        val delayLabel=label("");c.addView(delayLabel)
-        fun delayText(){delayLabel.text=tr("Hold time: ${board.holdDelayMillis} ms","زمان مکث: ${board.holdDelayMillis} میلی‌ثانیه")}
-        delayText()
-        c.addView(SeekBar(this).apply{max=20;progress=((board.holdDelayMillis-500)/100).toInt();contentDescription=tr("Shape hold time","زمان مکث تشخیص شکل");setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
-            override fun onStartTrackingTouch(v:SeekBar?){}
-            override fun onStopTrackingTouch(v:SeekBar?){}
-            override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){if(user){board.holdDelayMillis=500L+n*100L;prefs.edit().putLong("holdDelay",board.holdDelayMillis).apply();delayText()}}
-        })})
-        val toleranceLabel=label("");c.addView(toleranceLabel)
-        fun toleranceText(){toleranceLabel.text=tr("Stationary pen tolerance: ${board.holdTolerance.toInt()}","حساسیت ثابت‌ماندن قلم: ${board.holdTolerance.toInt()}")}
-        toleranceText()
-        c.addView(SeekBar(this).apply{max=10;progress=board.holdTolerance.toInt()-2;contentDescription=tr("Stationary pen tolerance","حساسیت ثابت‌ماندن قلم");setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
-            override fun onStartTrackingTouch(v:SeekBar?){}
-            override fun onStopTrackingTouch(v:SeekBar?){}
-            override fun onProgressChanged(v:SeekBar?,n:Int,user:Boolean){if(user){board.holdTolerance=(n+2).toFloat();prefs.edit().putFloat("holdTolerance",board.holdTolerance).apply();toleranceText()}}
-        })})
-        toggle("Snap pen to ruler / compass","اتصال قلم به خط‌کش و پرگار",board.guideSnapEnabled){v->board.guideSnapEnabled=v;prefs.edit().putBoolean("guideSnap",v).apply()}
-        toggle("Reject palm instead of erasing","نادیده‌گرفتن کف دست به‌جای پاک‌کردن",!board.profile.palmErase){v->board.profile.palmErase=!v;prefs.edit().putBoolean("palmErase",!v).apply()}
-        c.addView(infoTitle(tr("Information","اطلاعات"),tr("Lower hold time responds faster. A larger tolerance accepts more small hand movements. These settings are saved on this device.","زمان مکث کمتر، تشخیص سریع‌تر می‌دهد. مقدار حساسیت بزرگ‌تر، لرزش بیشتری را می‌پذیرد. تنظیمات روی همین دستگاه ذخیره می‌شوند.")))
-        c.addView(button(tr("Reset advanced settings","بازنشانی تنظیمات پیشرفته")){
-            board.holdRecognitionEnabled=true;board.holdDelayMillis=1000L;board.holdTolerance=4f;board.guideSnapEnabled=true
-            prefs.edit().remove("holdRecognition").remove("holdDelay").remove("holdTolerance").remove("guideSnap").apply()
-            toast(tr("Defaults restored; reopen this panel to refresh controls","مقادیر پیش‌فرض برگشت؛ برای نمایش مقادیر تازه پنل را دوباره باز کنید"))
-        })
-        dialog(tr("Behind the board","پشت پردهٔ تخته"),ScrollView(this).apply{addView(c)})
-    }
-    private fun secretStudio(){
+    internal fun secretStudio(){
         val c=column().apply{pad(20)}
         c.addView(label(tr("The secret studio","آتلیهٔ مخفی"),24f,NAVY,true))
         c.addView(infoTitle(tr("Information","اطلاعات"),tr("Watch portraits drawn stroke by stroke with the board's own pens. Each drawing opens on a new page and can be edited, erased, saved or exported. Undo removes the new page. These are original stylized illustrations.","پرتره‌ها با قلم خود تخته، خط‌به‌خط رسم می‌شوند. هر نقاشی در صفحهٔ تازه باز می‌شود و قابل ویرایش، پاک‌کردن، ذخیره و خروجی است. بازگردانی، صفحهٔ نقاشی را حذف می‌کند. این‌ها تصویرسازی‌های گرافیکی اختصاصی‌اند.")))
@@ -2788,7 +1654,7 @@ c.addView(row().apply{
         })
         c.addView(label("Powered by Maboox",14f,TEAL,true))
     }
-    private fun maboox(){
+    internal fun maboox(){
         val c=column().apply{pad(24)}
         c.addView(label("Powered by Maboox",25f,NAVY,true))
         c.addView(label(tr("A little craft behind every classroom.","کمی هنر، پشت هر کلاس."),16f,MUTED))
@@ -2825,7 +1691,7 @@ c.addView(row().apply{
         if(lab)Labs.show(this,{insertBitmap(it)},{board.insert(it)},back)else Games.show(this,back)
     }
 
-    private fun insertBitmap(bitmap: Bitmap) {
+    internal fun insertBitmap(bitmap: Bitmap) {
         work({ media.save(bitmap) }) { name ->
             board.insert(
                 Item(
@@ -2839,7 +1705,7 @@ c.addView(row().apply{
         }
     }
 
-    private fun toast(message: String) {
+    internal fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
@@ -2873,62 +1739,6 @@ c.addView(row().apply{
             if(grantResults.firstOrNull()==android.content.pm.PackageManager.PERMISSION_GRANTED)toggleVoice()
             else toast(s("voice_permission_needed"))
         }
-    }
-
-    /** Opens even while the assistant is off: this page is where it is turned on (it used to silently do nothing). */
-    private fun voiceSettings(){
-        VoiceSettingsUi(this,menuReturn.also{menuReturn=null}).connection(voiceKeys,voiceWorker){stopVoice()}
-    }
-    private fun toggleVoice(){
-        if(!VoiceSettings.enabled(this)){stopVoice();return}
-        if(voiceStarting || voiceAssistant?.active==true){stopVoice();return}
-        val settings=VoiceSettings.load(this)
-        val keys=voiceKeys.forProvider(settings.provider)
-        if(!keys.hasKey()){voiceSettings();return}
-        if(checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO),voicePermissionRequest);return
-        }
-        val generation=++voiceStartGeneration
-        voiceStarting=true;setVoiceState("voice_connecting")
-        voiceWorker.execute{
-            try{
-                val key=keys.read();val knowledge=VoiceKnowledge.load(this)
-                handler.post{
-                    if(destroyed || !VoiceSettings.enabled(this) || !voiceStarting || generation!=voiceStartGeneration)return@post
-                    voiceStarting=false
-                    val ended:(String?)->Unit={reason->
-                        voiceScreen?.close();voiceScreen=null;voiceAssistant=null;setVoiceState("voice_assistant")
-                        if(reason!=null)toast(s(reason))
-                    }
-                    val audio=VoiceAudio(this,if(settings.provider=="openai")24000 else 16000)
-                    val assistant:VoiceConversation=if(settings.provider in listOf("openrouter","avalai"))RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key,RouterEndpoint.of(settings)),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()},commands=voiceCommand)
-                        else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()},commands=voiceCommand)
-                    voiceAssistant=assistant
-                    assistant.setMuted(voiceMuted)
-                    voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},
-                        {board.hasActiveInteraction || SystemClock.uptimeMillis()-lastUserTouch<500},assistant::sendImage,{if(assistant.active)assistant.stop("voice_vision_error")})
-                    assistant.start();voiceScreen?.start()
-                }
-            }catch(_:Exception){handler.post{if(!destroyed && voiceStarting && generation==voiceStartGeneration){voiceStarting=false;setVoiceState("voice_assistant");toast(s("voice_key_storage_error"))}}}
-        }
-    }
-    private fun setVoiceState(value:String){
-        if(!::voiceButton.isInitialized)return
-        voiceButton.visibility=if(VoiceSettings.enabled(this))View.VISIBLE else View.GONE
-        voiceButton.text=s(value)
-        refreshMute()
-        val active=value!="voice_assistant"
-        voiceButton.setIconResource(if(active)R.drawable.ph_stop else R.drawable.ph_mic)
-        voiceButton.contentDescription=if(active)s(value)+". "+s("voice_stop")else s("voice_assistant")
-        voiceButton.backgroundTintList=android.content.res.ColorStateList.valueOf(if(active)PRIMARY_CONTAINER else SURFACE)
-    }
-    private fun stopVoice(){
-        voiceMuted=false
-        ++voiceStartGeneration
-        voiceStarting=false
-        voiceScreen?.close();voiceScreen=null
-        voiceAssistant?.stop();voiceAssistant=null
-        setVoiceState("voice_assistant")
     }
 
     override fun onStop() {

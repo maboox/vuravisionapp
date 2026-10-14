@@ -24,7 +24,7 @@ class SplitPanelsTest {
     @Before fun setup(){context.getSharedPreferences("vura",0).edit().clear().commit();Fonts.initialize(context);media=Media(context)}
     @After fun close(){media.close()}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
-    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun call(a:MainActivity,name:String)=a.callHidden(name)
     private fun event(v:View,action:Int,x:Float,y:Float,t:Long=200){val e=MotionEvent.obtain(100,t,action,x,y,0);v.onTouchEvent(e);e.recycle()}
     private fun trace(board:Board,vararg points:Pair<Float,Float>){points.forEachIndexed{i,p->event(board,if(i==0)0 else if(i==points.lastIndex)1 else 2,p.first,p.second,200+i*20L)}}
     private fun board(store:Store)=Board(context,store,Renderer(media)).apply{layout(0,0,1000,600);holdRecognitionEnabled=false}
@@ -71,7 +71,7 @@ class SplitPanelsTest {
         assertThrows(IllegalArgumentException::class.java){lesson.validate()}
     }
     @Test fun changingAPanelPatternLeavesOtherPanelsUntouched(){withActivity{a->
-        a.board.split(2);MainActivity::class.java.getDeclaredMethod("backgroundSettings",Int::class.javaPrimitiveType).apply{isAccessible=true}.invoke(a,1)
+        a.board.split(2);a.callHidden("backgroundSettings",1)
         dialogViews().single{it.contentDescription=="Hatched"&&it.isClickable}.performClick()
         assertEquals("hatch",a.store.page.pattern(1));assertEquals("dots",a.store.page.pattern(0));ShadowDialog.getLatestDialog().dismiss()
     }}
@@ -209,7 +209,7 @@ class SplitPanelsTest {
     }}
     @Test fun pieClearPageActsDirectlyAndUndoRestores(){withActivity{a->
         val locked=Item(kind="shape",locked=true);val local=Item(kind="shape");a.store.page.items.addAll(listOf(locked,local));val count=a.store.undoCount
-        assertTrue("clear_page" in ShortcutCatalog.keys);MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"clear_page")
+        assertTrue("clear_page" in ShortcutCatalog.keys);a.callHidden("runShortcut","clear_page")
         ShadowDialog.getLatestDialog()?.let{d->assertTrue(views(d.window!!.decorView).none{it is SlideToClearView})};assertEquals(setOf(locked.id),a.store.page.items.map{it.id}.toSet());assertEquals(count+1,a.store.undoCount)
         a.store.undo();assertEquals(2,a.store.page.items.size)
     }}

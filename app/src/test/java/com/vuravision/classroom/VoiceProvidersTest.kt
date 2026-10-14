@@ -54,13 +54,13 @@ class VoiceProvidersTest {
         try{
             val a=controller.get();val button=a.findViewById<Button>(R.id.voice_assistant_button)
             assertEquals(View.GONE,button.visibility)
-            val settings=MainActivity::class.java.getDeclaredMethod("settings").apply{isAccessible=true}
+            val settings={a.callHidden("settings")}
             fun screen()=MainActivity::class.java.getDeclaredField("settingsScreen").apply{isAccessible=true}.get(a) as SettingsScreen
-            settings.invoke(a);assertTrue(screen().titles().contains(a.s("voice_assistant")))
+            settings();assertTrue(screen().titles().contains(a.s("voice_assistant")))
             // Opens while the assistant is off: that page is where it is turned on.
             screen().open(a.s("voice_assistant"));assertTrue(ShadowDialog.getLatestDialog().isShowing);ShadowDialog.getLatestDialog().dismiss();screen().dialog.dismiss()
             VoiceSettings.setEnabled(a,true);idle();assertEquals(View.VISIBLE,button.visibility)
-            settings.invoke(a);assertTrue(screen().titles().contains(a.s("voice_assistant")));screen().dialog.dismiss()
+            settings();assertTrue(screen().titles().contains(a.s("voice_assistant")));screen().dialog.dismiss()
             var ended=false
             val session=object:VoiceConversation{
                 override var active=true;override val ready=true

@@ -18,7 +18,7 @@ class LayersPaletteAndConversionTest {
     private val ctx get()=RuntimeEnvironment.getApplication()
     @Before fun reset(){ctx.getSharedPreferences("vura",0).edit().clear().commit()}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()
-    private fun call(a:MainActivity,name:String){MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)}
+    private fun call(a:MainActivity,name:String){a.callHidden(name)}
     private fun capture(a:MainActivity,name:String){
         val v=a.findViewById<View>(android.R.id.content)
         v.measure(View.MeasureSpec.makeMeasureSpec(1920,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(1080,View.MeasureSpec.EXACTLY));v.layout(0,0,1920,1080)
@@ -79,7 +79,7 @@ class LayersPaletteAndConversionTest {
         val c=Robolectric.buildActivity(MainActivity::class.java).setup();val a=c.get()
         try{
             val original=Item(kind="text",text="12 inch to cm");a.board.insert(original)
-            MainActivity::class.java.getDeclaredMethod("applySmart",List::class.java,String::class.java,String::class.java).apply{isAccessible=true}.invoke(a,listOf(original),original.text,"convert")
+            a.callHidden("applySmart",listOf(original),original.text,"convert")
             assertEquals(2,a.store.page.items.size);assertEquals("12 in = 30.48 cm",a.store.page.items.last().text)
             a.store.undo();assertEquals(original.id,a.store.page.items.single().id)
         }finally{c.pause().stop().destroy()}

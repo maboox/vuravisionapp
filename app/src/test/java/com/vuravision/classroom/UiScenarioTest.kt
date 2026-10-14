@@ -167,7 +167,7 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
 
-    private fun call(a:MainActivity,name:String)=MainActivity::class.java.getDeclaredMethod(name).apply{isAccessible=true}.invoke(a)
+    private fun call(a:MainActivity,name:String)=a.callHidden(name)
     private fun open(language:String="fa"):org.robolectric.android.controller.ActivityController<MainActivity>{
         context.getSharedPreferences("vura",0).edit().clear().putString("language",language).commit()
         return Robolectric.buildActivity(MainActivity::class.java).setup()
@@ -267,13 +267,13 @@ class UiScenarioTest {
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun chalkboardStyleOnlyRecolorsAnEmptyPage(){
         val ctl=open();val a=ctl.get()
         try{
-            settle(a);val apply=MainActivity::class.java.getDeclaredMethod("applyBoardStyle",String::class.java).apply{isAccessible=true}
+            settle(a);val apply={style:String->a.callHidden("applyBoardStyle",style)}
             views(a.window.decorView).filterIsInstance<WorkspaceIcon>().first{it.key=="pen"}.performClick();settle(a)
-            apply.invoke(a,"chalk");settle(a)
+            apply("chalk");settle(a)
             assertEquals(CHALKBOARD,a.store.page.panes[0].background);assertEquals(0xfff4f4f0.toInt(),a.board.penColor)
             shot(a,"chalkboard-style")
             a.store.editMetadata{a.store.page.items.add(Item(kind="text",text="x",x=10f,y=10f,w=50f,h=30f))}
-            apply.invoke(a,"white");settle(a)
+            apply("white");settle(a)
             assertEquals("a page with content changed color",CHALKBOARD,a.store.page.panes[0].background)
             assertEquals(NAVY,a.board.penColor)
         }finally{ctl.pause().stop().destroy()}
@@ -352,7 +352,7 @@ class UiScenarioTest {
         val ctl=open();val a=ctl.get()
         try{
             settle(a)
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"table");settle(a)
+            a.callHidden("runShortcut","table");settle(a)
             val t=a.store.page.items.single{it.shape=="table"};assertTrue("a Persian table runs right to left",t.flipX)
             val editor=org.robolectric.shadows.ShadowDialog.getLatestDialog();val decor=editor.window!!.decorView;val m=a.resources.displayMetrics
             fun layout(){decor.measure(View.MeasureSpec.makeMeasureSpec(m.widthPixels,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(m.heightPixels,View.MeasureSpec.EXACTLY));decor.layout(0,0,m.widthPixels,m.heightPixels)}
@@ -395,7 +395,7 @@ class UiScenarioTest {
         try{
             settle(a);assertEquals(31,Maps.iran(a).provinces.size)
             assertTrue(Maps.iran(a).provinces.any{it.fa=="تهران"})
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"map_iran");settle(a)
+            a.callHidden("runShortcut","map_iran");settle(a)
             val m=a.store.page.items.single{it.shape=="map_iran"};assertEquals("fa",m.text)
             assertTrue("Iran is wider than tall",m.w>m.h&&m.h>m.w*.6f)
             shot(a,"iran-map")
@@ -447,11 +447,11 @@ class UiScenarioTest {
             settle(a)
             val png=java.io.ByteArrayOutputStream().also{Bitmap.createBitmap(300,200,Bitmap.Config.ARGB_8888).apply{eraseColor(Color.RED)}.compress(Bitmap.CompressFormat.PNG,100,it)}.toByteArray()
             val src="data:image/png;base64,"+android.util.Base64.encodeToString(png,android.util.Base64.NO_WRAP)
-            MainActivity::class.java.getDeclaredMethod("addWebImage",String::class.java).apply{isAccessible=true}.invoke(a,src)
+            a.callHidden("addWebImage",src)
             repeat(50){if(a.store.page.items.none{it.kind=="image"}){Thread.sleep(20);idle(50)}}
             val image=a.store.page.items.single{it.kind=="image"}
             assertEquals("keeps the picture's shape",1.5f,image.w/image.h,.01f)
-            MainActivity::class.java.getDeclaredMethod("addWebImage",String::class.java).apply{isAccessible=true}.invoke(a,"http://example.com/a.png")
+            a.callHidden("addWebImage","http://example.com/a.png")
             repeat(20){Thread.sleep(20);idle(50)}
             assertEquals("plain http is refused",1,a.store.page.items.count{it.kind=="image"})
         }finally{ctl.pause().stop().destroy()}
@@ -466,7 +466,7 @@ class UiScenarioTest {
             val note=Item(kind="sticky",text="جمع‌بندی",x=400f,y=420f,w=220f,h=120f)
             a.store.editMetadata{a.store.page.items.addAll(strokes+note)}
             val before=com.google.gson.Gson().toJson(a.store.page)
-            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"replay");settle(a)
+            a.callHidden("runShortcut","replay");settle(a)
             val replay=views(a.window.decorView).filterIsInstance<Replay>().single()
             replay.seek(1500.0);shot(a,"replay-middle")
             replay.seek(Double.MAX_VALUE);shot(a,"replay-end")
