@@ -389,6 +389,22 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit();UiTheme.load(context)}
     }
 
+    /** Map of Iran: 31 provinces, Persian names in a Persian lesson, and names cycle to English and off for a quiz. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun iranMapWithProvinceNames(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);assertEquals(31,Maps.iran(a).provinces.size)
+            assertTrue(Maps.iran(a).provinces.any{it.fa=="تهران"})
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"map_iran");settle(a)
+            val m=a.store.page.items.single{it.shape=="map_iran"};assertEquals("fa",m.text)
+            assertTrue("Iran is wider than tall",m.w>m.h&&m.h>m.w*.6f)
+            shot(a,"iran-map")
+            fun tap(){views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().first{it.symbol=="text"}.performClick();settle(a)}
+            tap();assertEquals("en",a.store.page.items.single{it.shape=="map_iran"}.text)
+            tap();assertEquals("",a.store.page.items.single{it.shape=="map_iran"}.text);shot(a,"iran-map-blank")
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()

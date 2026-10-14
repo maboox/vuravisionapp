@@ -15,3 +15,7 @@ Application icons are generated from Phosphor Icons 2.1.1 (Bold and Fill weights
 ## PDFBox-Android
 
 PDF modification uses TomRoush PDFBox-Android 2.0.27.0, a port of Apache PDFBox 2.0.27, under the Apache License 2.0. Source and license: https://github.com/TomRoush/PdfBox-Android . Library fonts/assets retain their bundled notices. Original PDF page content is retained; application annotations are appended as a fixed overlay.
+
+## Natural Earth
+
+The map of Iran and its provinces (`app/src/main/assets/maps/iran.json`) is simplified from Natural Earth 1:10m Admin 1 – States, Provinces. Natural Earth data is in the public domain (https://www.naturalearthdata.com/about/terms-of-use/).

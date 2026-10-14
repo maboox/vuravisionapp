@@ -404,6 +404,10 @@ class MainActivity : Activity() {
         if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
         items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("table",tr("Edit cells","ویرایش خانه‌ها")){editTable(t)}}
+        items.singleOrNull()?.takeIf{it.shape=="map_iran"}?.let{m->
+            // Names cycle Persian → English → none (a blank map for "where is …?").
+            val next=when(m.text){"fa"->"en";"en"->"";else->"fa"}
+            action("text",when(m.text){"fa"->tr("Names: Persian","نام‌ها: فارسی");"en"->tr("Names: English","نام‌ها: انگلیسی");else->tr("No names","بدون نام")}){board.edit{if(it.id==m.id)it.text=next};refreshSelectionBar()}}
         items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("chart",tr("Chart","نمودار"),tr("Chart from this table","نمودار از این جدول")){chartFromTable(t)}}
         if(items.size==2){
             // Two objects selected: connect them with an arrow from the first chosen to the second, or remove the link.
@@ -796,7 +800,7 @@ c.addView(row().apply{
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"ai_chart"->aiChart();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"map_iran"->insertIranMap();"ai_chart"->aiChart();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2388,6 +2392,12 @@ c.addView(row().apply{
             com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
                 .setAction(tr("Share PDF with the class","PDF برای کلاس")){share()}.show()
         }
+    }
+    private fun insertIranMap(){
+        val c=board.center();val m=Maps.create(this,c.x-450f,c.y-400f,store.page.activeLayerId,board.activePane,if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"fa" else "en")
+        m.y=c.y-m.h/2
+        store.editMetadata{store.page.items.add(m)}
+        board.selected.clear();board.selected.add(m.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
     }
     /** A 3 × 3 table in the middle of the view, selected, with its cells open for typing at once. */
     private fun insertTable(){
