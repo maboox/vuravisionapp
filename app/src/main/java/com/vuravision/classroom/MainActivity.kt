@@ -662,7 +662,7 @@ class MainActivity : Activity() {
         target.keepToolAfterInsert=prefs.getBoolean("keepTool",false)
         target.onViewportChanged={positionSelectionBar()}
         target.gestures.onHistory=::historyHud
-        target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
+        target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false);target.gestures.pieHold=prefs.getBoolean("pieHold",false)
         target.gestures.onPie={x,y->val a=IntArray(2);val b=IntArray(2);target.getLocationInWindow(a);canvasHost.getLocationInWindow(b);pieMenu(x+a[0]-b[0],y+a[1]-b[1])}
         target.onEducationalTap={o,point->when(o.kind){
             "periodic"->PeriodicTable.hit(this,o,point.x,point.y)?.let{e->if(!o.locked&&store.page.editable(o))store.editMetadata{o.selectedElement=e.number};PeriodicTable.elementDialog(this,e){board.insert(it)}}
@@ -762,6 +762,9 @@ c.addView(row().apply{
         c.addView(switchRow(tr("Enable five-finger pie menu","فعال‌سازی منوی پنج‌انگشتی"),prefs.getBoolean("pieEnabled",false),
             tr("Double tap with five fingers, lift your hand, then tap a shortcut. Long-press to change a shortcut. Movement and palm contact do not trigger the menu.","دو بار سریع با پنج انگشت ضربه بزنید، دست را بردارید و میان‌بر را بزنید. برای تغییر میان‌بر، آن را نگه دارید. حرکت و تماس کف دست منو را باز نمی‌کنند.")){v->
             prefs.edit().putBoolean("pieEnabled",v).apply();board.gestures.reset();whiteboard.gestures.pieEnabled=v;board.gestures.pieEnabled=v})
+        c.addView(switchRow(tr("Also open it by holding two fingers still","با نگه داشتن دو انگشت هم باز شود"),prefs.getBoolean("pieHold",false),
+            tr("Half a second without moving. Pinch and two-finger Undo keep working, because they move or tap.","نیم ثانیه بدون حرکت. بزرگ‌نمایی و بازگردانی دوانگشتی کار می‌کنند، چون حرکت یا ضربه‌اند.")){v->
+            prefs.edit().putBoolean("pieHold",v).apply();board.gestures.reset();whiteboard.gestures.pieHold=v;board.gestures.pieHold=v})
         c.addView(sectionTitle(tr("Shortcuts","میان‌برها")))
         val slots=column();c.addView(slots)
         fun refresh(){slots.removeAllViews();pieSlots().forEachIndexed{i,key->val r=row();r.addView(icon(if(key.isBlank())"insert"else key,if(key.isBlank())tr("Assign shortcut","تعیین میان‌بر")else s(key)){assignPie(i)});r.addView(button("${i+1} · "+if(key.isBlank())tr("Empty","خالی")else s(key)){assignPie(i)},LinearLayout.LayoutParams(0,dp(52),1f).apply{marginStart=dp(8)});slots.addView(r,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(6)})}}

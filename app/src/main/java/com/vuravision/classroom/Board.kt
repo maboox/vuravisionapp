@@ -54,7 +54,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         eraserMode=b.eraserMode;eraserRadius=b.eraserRadius;eraseObjects=b.eraseObjects
         erasePdfContent=b.erasePdfContent;pdfPalmErase=b.pdfPalmErase
         holdRecognitionEnabled=b.holdRecognitionEnabled;holdDelayMillis=b.holdDelayMillis
-        holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode;fillColor=b.fillColor;fillAlpha=b.fillAlpha;gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled
+        holdTolerance=b.holdTolerance;guideSnapEnabled=b.guideSnapEnabled;smartMode=b.smartMode;fillColor=b.fillColor;fillAlpha=b.fillAlpha;gestures.undoEnabled=b.gestures.undoEnabled;gestures.pieEnabled=b.gestures.pieEnabled;gestures.pieHold=b.gestures.pieHold
     }
     override fun onDetachedFromWindow(){
         smoothers.clear();removeCallbacks(smoothFrame);measurements.clear();gestures.reset();super.onDetachedFromWindow()

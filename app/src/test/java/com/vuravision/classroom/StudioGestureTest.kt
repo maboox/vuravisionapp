@@ -52,6 +52,25 @@ class StudioGestureTest {
         board.gestures.pieEnabled=true;board.gestures.reset();tap(800);assertEquals(0,calls);tap(1000);assertEquals(1,calls)
         board.gestures.reset();tap(1500,true);tap(1700);assertEquals(1,calls)
     }
+    /** Item 46: two still fingers for half a second open the pie only when switched on; a pinch never does; double tap still undoes. */
+    @Test fun twoFingerHoldOpensThePieOnlyWhenOnAndStill(){
+        val host=Robolectric.buildActivity(Activity::class.java).setup();host.get().setContentView(board);board.layout(0,0,1000,600)
+        try{
+            var calls=0;board.gestures.onPie={_,_->calls++}
+            fun hold(time:Long,pinch:Boolean=false){
+                event(0,time,listOf(300f to 300f));event(5 or (1 shl 8),time+10,listOf(300f to 300f,340f to 300f))
+                if(pinch)event(2,time+100,listOf(280f to 300f,380f to 300f))
+                Shadows.shadowOf(Looper.getMainLooper()).idleFor(600,TimeUnit.MILLISECONDS)
+                event(6 or (1 shl 8),time+700,listOf(300f to 300f,340f to 300f));event(1,time+710,listOf(300f to 300f))
+            }
+            hold(200);assertEquals("off by default",0,calls)
+            board.gestures.pieEnabled=true;board.gestures.pieHold=true;board.gestures.reset()
+            hold(2000);assertEquals(1,calls)
+            board.gestures.reset();hold(4000,true);assertEquals("a pinch is not a hold",1,calls)
+            store.editMetadata{store.lesson.title="A"};store.editMetadata{store.lesson.title="B"}
+            board.gestures.reset();pairTap(6000);pairTap(6150);assertEquals("double tap still undoes","A",store.lesson.title);assertEquals(1,calls)
+        }finally{host.pause().stop().destroy()}
+    }
     @Test fun secondPairHoldBrowsesMultipleStepsAndReleaseKeepsChosenHistory(){
         val host=Robolectric.buildActivity(Activity::class.java).setup();host.get().setContentView(board);board.layout(0,0,1000,600)
         try{repeat(12){i->store.editMetadata{store.lesson.title="step $i"}};var shown=-1;board.gestures.onHistory={n,_->shown=n}
