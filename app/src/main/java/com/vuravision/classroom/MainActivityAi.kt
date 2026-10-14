@@ -21,10 +21,8 @@ import com.vuravision.classroom.board.contentBounds
 import com.vuravision.classroom.board.fit
 import com.vuravision.classroom.board.reset
 import com.vuravision.classroom.board.reveal
-import com.vuravision.classroom.board.snapshotItems
 import com.vuravision.classroom.games.ClassQuiz
 import com.vuravision.classroom.games.QuizBuilder
-import com.vuravision.classroom.games.Sounds
 import com.vuravision.classroom.labs.Labs
 import com.vuravision.classroom.room.Sharing
 import com.vuravision.classroom.tools.StepReveal
@@ -267,26 +265,52 @@ internal fun MainActivity.cancelAi() {
     refreshSelectionBar()
 }
 
-/** Typed words in the current selection, for the request running on this worker thread (see [aiOnSelection]). */
-private val selectionWords = ThreadLocal<String>()
-internal fun MainActivity.aiSystem() = AiTasks.system(this, smartAi.settings.grade) + selectionWords.get().orEmpty().takeIf { it.isNotBlank() }?.let { "\nTyped text in the selection (exact): $it" }.orEmpty()
+internal fun MainActivity.aiSystem() = AiTasks.system(this, smartAi.settings.grade)
 
-/** Sends only the selection, as one picture; the bitmap is released as soon as the request is built. */
-internal fun <T> MainActivity.aiOnSelection(label: String, ask: (SmartAi, android.graphics.Bitmap) -> T, done: (T, RectF) -> Unit) {
+/** Test seam: what offline recognition "reads" from ink, so the board's AI actions run without the ML Kit models. */
+object InkReading {
+    @Volatile var fake: String? = null
+}
+
+/** The selection as text: typed text as it is, handwriting through the offline recognition models. */
+internal fun MainActivity.readSelection(items: List<Item>, done: (String) -> Unit) {
+    val typed = items.filter { it.kind in listOf("text", "sticky") && it.text.isNotBlank() }.joinToString("\n") { it.text.trim() }
+    val strokes = items.filter { it.kind == "ink" }
+    fun join(read: String?) = listOf(typed, read.orEmpty().trim()).filter { it.isNotBlank() }.joinToString("\n")
+    if (strokes.isEmpty()) {
+        done(typed)
+        return
+    }
+    InkReading.fake?.let {
+        done(join(it))
+        return
+    }
+    recognizeInk(items, strokes, { values -> done(join(values.firstOrNull())) }, { done(typed) }) { done(typed) }
+}
+
+/**
+ * Reads the selection on the device, then sends only that text. Nothing readable means nothing is sent, and the
+ * teacher is told so (no tokens spent on a guess).
+ */
+internal fun <T> MainActivity.aiOnSelection(label: String, ask: (SmartAi, String) -> T, done: (T, RectF) -> Unit) {
     val items = board.chosen()
     if (items.isEmpty())return
-    val (bitmap, bounds) = board.snapshotItems(items)
-    // Typed text goes along as text too: exact words (and their language) instead of only a picture of them.
-    val words = items.filter { it.kind in listOf("text", "sticky") && it.text.isNotBlank() }.joinToString(" | ") { it.text.replace('\n', ' ') }.take(2000)
-    runAi(label, { ai ->
-        try {
-            selectionWords.set(words)
-            ask(ai, bitmap)
-        } finally {
-            selectionWords.remove()
-            bitmap.recycle()
+    if (!smartAi.configured()) {
+        toast(AiMessages.text(this, "no_key"))
+        aiSettings()
+        return
+    }
+    val bounds = contentBounds(items)
+    val ticket = ++aiTicket
+    aiStatus.working(tr("Reading the board…", "در حال خواندن نوشته…")) { cancelAi() }
+    readSelection(items) { text ->
+        if (destroyed || ticket != aiTicket)return@readSelection
+        if (text.isBlank()) {
+            aiStatus.failed(tr("The writing could not be read, so nothing was sent. Write a little clearer, or use «To text» and correct it first.", "نوشته خوانده نشد، پس چیزی ارسال نشد. کمی واضح‌تر بنویسید یا اول «به متن» را بزنید و اصلاحش کنید."), null)
+            return@readSelection
         }
-    }, { aiOnSelection(label, ask, done) }) { done(it, bounds) }
+        runAi(label, { ai -> ask(ai, text) }, { aiOnSelection(label, ask, done) }) { done(it, bounds) }
+    }
 }
 
 /**
@@ -337,7 +361,7 @@ internal fun MainActivity.addAndSelect(items: List<Item>, about: RectF? = null) 
     refreshDock()
 }
 internal fun MainActivity.aiExplain(kind: String) {
-    val prompt = when (kind) {
+    val task = when (kind) {
         "simplify" -> AiTasks.simplify()
         "translate" -> AiTasks.translate()
         else -> AiTasks.explain()
@@ -345,55 +369,14 @@ internal fun MainActivity.aiExplain(kind: String) {
     val label = when (kind) {
         "simplify" -> tr("Simplifying…", "در حال ساده‌سازی…")
         "translate" -> tr("Translating…", "در حال ترجمه…")
-        else -> tr("Explaining…", "در حال توضیح…")
+        else -> tr("Explaining and checking…", "در حال توضیح و بررسی…")
     }
-    aiOnSelection(label, { ai, b -> ai.ask(aiSystem(), prompt, b) }) { text, bounds -> addAndSelect(listOf(aiNote(bounds, text)), bounds) }
-}
-
-/** Mistakes are circled in red on the work itself, each with a short fix beside it; one Undo removes them all. */
-internal fun MainActivity.aiCheck() {
-    aiOnSelection(tr("Checking…", "در حال بررسی…"), { ai, b -> AiTasks.parseCheck(ai.askJson(aiSystem(), AiTasks.check(), b)) }) { check, bounds ->
-        val red = 0xffdc2626.toInt()
-        val added = mutableListOf<Item>()
-        check.mistakes.forEach { (r, note) ->
-            val x = bounds.left + r.left * bounds.width() - 10f
-            val y = bounds.top + r.top * bounds.height() - 10f
-            val w = r.width() * bounds.width() + 20f
-            val h = r.height() * bounds.height() + 20f
-            added.add(Item(kind = "shape", shape = "ellipse", x = x, y = y, w = w, h = h, color = red, width = 4f, layerId = store.page.activeLayerId, pane = board.activePane))
-            // The fix goes beside the work, in a free spot, numbered to match its circle.
-            if (note.isNotBlank()) {
-                val n = check.mistakes.indexOfFirst { it.first === r } + 1
-                added.add(
-                    Item(kind = "text", text = n.toString(), color = red, width = 22f, x = x + w - 8f, y = y - 30f, w = 40f, h = 40f, layerId = store.page.activeLayerId, pane = board.activePane).also {
-                        Fonts.stamp(it, true)
-                        TextLayout.fit(it)
-                    }
-                )
-                val fix = Item(kind = "text", text = "$n. $note", color = red, width = 22f, w = 360f, h = 60f, layerId = store.page.activeLayerId, pane = board.activePane).also {
-                    Fonts.stamp(it, true)
-                    TextLayout.fit(it)
-                }
-                freeSpot(bounds, fix.w, fix.h, extra = added.filter { it.kind == "text" }.map { contentBounds(listOf(it)) }).let {
-                    fix.x = it.x
-                    fix.y = it.y
-                }
-                added.add(fix)
-            }
-        }
-        if (check.mistakes.isEmpty()) {
-            added.add(aiNote(bounds, (if (check.correct)"✓ " else "") + check.summary.ifBlank { tr("No mistakes found", "اشتباهی پیدا نشد") }, 0xffdcfce7.toInt()))
-        } else {
-            Sounds.play(this, Sounds.Cue.TICK)
-        }
-        addAndSelect(added, bounds)
-        if (check.summary.isNotBlank())toast(check.summary)
-    }
+    aiOnSelection(label, { ai, text -> ai.ask(aiSystem(), AiTasks.on(this, text, task)) }) { text, bounds -> addAndSelect(listOf(aiNote(bounds, text)), bounds) }
 }
 
 /** Steps appear on the board one at a time, under the work, when the teacher taps Next. */
 internal fun MainActivity.aiSteps() {
-    aiOnSelection(tr("Solving…", "در حال حل…"), { ai, b -> AiTasks.parseSteps(ai.askJson(aiSystem(), AiTasks.steps(), b)) }) { steps, bounds ->
+    aiOnSelection(tr("Solving…", "در حال حل…"), { ai, text -> AiTasks.parseSteps(ai.askJson(aiSystem(), AiTasks.on(this, text, AiTasks.steps()))) }) { steps, bounds ->
         stepReveal?.let { canvasHost.removeView(it) }
         val start = freeSpot(bounds, maxOf(bounds.width(), 420f), 60f * (steps.steps.size + 1), below = true)
         var y = start.y
@@ -421,64 +404,19 @@ internal fun MainActivity.aiSteps() {
     }
 }
 
-/** Handwriting (Persian included) becomes typed text in place, through the AI's vision; the ink goes, Undo brings it back. */
-internal fun MainActivity.aiCleanup() {
-    val ink = board.chosen().filter { it.kind == "ink" && !it.locked && store.page.editable(it) }
-    if (ink.isEmpty())return
-    val (bitmap, bounds) = board.snapshotItems(ink)
-    runAi(tr("Reading the handwriting…", "در حال خواندن دست‌خط…"), { ai ->
-        try {
-            ai.askJson(aiSystem(), AiTasks.transcribe(), bitmap).optString("text").trim()
-        } finally {
-            bitmap.recycle()
-        }
-    }, { aiCleanup() }) { text ->
-        if (text.isBlank()) {
-            toast(AiMessages.text(this, "format"))
-            return@runAi
-        }
-        val item = Item(
-            kind = "text", text = text, color = ink.first().color, width = (bounds.height() / maxOf(1, text.lines().size) * .55f).coerceIn(18f, 64f), x = bounds.left, y = bounds.top, w = maxOf(bounds.width(), 200f), h = bounds.height(),
-            layerId = ink.first().layerId, pane = ink.first().pane
-        ).also {
-            Fonts.stamp(it, true)
-            TextLayout.fit(it)
-        }
-        store.editMetadata {
-            store.page.items.removeAll(ink.toSet())
-            store.page.items.add(item)
-        }
-        board.selected.clear()
-        board.selected.add(item.id)
-        board.sceneChanged()
-        refreshDock()
-    }
-}
-
 /** A picture from a description (Add panel), placed in the free middle of the board. */
 internal fun MainActivity.aiPicture() {
+    // Picture models spend a lot of credit: only when switched on in the hidden settings.
+    if (!prefs.getBoolean("aiImages", false)) {
+        toast(tr("AI pictures are turned off", "ساخت تصویر با هوش خاموش است"))
+        return
+    }
     input(tr("Describe the picture", "تصویر را توصیف کنید"), "") { text ->
         require(text.isNotBlank())
         runAi(tr("Drawing…", "در حال کشیدن…"), { ai -> ai.picture(text) }) { bitmap -> insertBitmap(bitmap) }
     }
 }
 
-/** The teacher's rough sketch becomes a clean illustration beside it; the sketch stays. */
-internal fun MainActivity.aiSketchToPicture() {
-    aiOnSelection(tr("Drawing from the sketch…", "در حال کشیدن از روی طرح…"), { ai, b -> ai.picture("", b) }) { bitmap, bounds ->
-        work({ media.save(bitmap) }) { name ->
-            val w = maxOf(bounds.width(), 420f)
-            val h = w * bitmap.height / bitmap.width
-            val item = Item(kind = "image", asset = name, w = w, h = h, layerId = store.page.activeLayerId, pane = board.activePane)
-            freeSpot(bounds, w, h).let {
-                item.x = it.x
-                item.y = it.y
-            }
-            bitmap.recycle()
-            addAndSelect(listOf(item), bounds)
-        }
-    }
-}
 internal fun MainActivity.groupableNotes(items: List<Item>) = items.filter { it.kind == "sticky" && it.shape !in listOf("mindnode", "element_card") && !it.locked }
 
 /** After a brainstorm: the notes' words go to the AI, which sorts them into titled groups; the notes then move into columns. */
@@ -542,11 +480,11 @@ internal fun MainActivity.arrangeGroups(groups: List<Pair<String, List<Item>>>) 
 /** A whole-class quiz from what is selected, or from a typed topic when nothing is. */
 internal fun MainActivity.aiQuiz() {
     if (board.chosen().isNotEmpty()) {
-        aiOnSelection(tr("Writing questions…", "در حال نوشتن سؤال‌ها…"), { ai, b -> AiTasks.parseQuiz(ai.askJson(aiSystem(), AiTasks.quiz(5), b)) }) { q, _ -> ClassQuiz.show(this, tr("Quiz", "آزمونک"), q, { keepQuiz(tr("Quiz", "آزمونک"), q) }) }
+        aiOnSelection(tr("Writing questions…", "در حال نوشتن سؤال‌ها…"), { ai, text -> AiTasks.parseQuiz(ai.askJson(aiSystem(), AiTasks.on(this, text, AiTasks.quiz(5)))) }) { q, _ -> ClassQuiz.show(this, tr("Quiz", "آزمونک"), q, { keepQuiz(tr("Quiz", "آزمونک"), q) }) }
     } else {
         input(tr("Quiz topic", "موضوع آزمونک"), "") { topic ->
             require(topic.isNotBlank())
-            runAi(tr("Writing questions…", "در حال نوشتن سؤال‌ها…"), { ai -> AiTasks.parseQuiz(ai.askJson(aiSystem(), AiTasks.quizFromTopic(topic, 5))) }) { q -> ClassQuiz.show(this, topic, q, { keepQuiz(topic, q) }) }
+            runAi(tr("Writing questions…", "در حال نوشتن سؤال‌ها…"), { ai -> AiTasks.parseQuiz(ai.askJson(aiSystem(), AiTasks.quizFromTopic(this, topic, 5))) }) { q -> ClassQuiz.show(this, topic, q, { keepQuiz(topic, q) }) }
         }
     }
 }
@@ -600,11 +538,11 @@ internal fun MainActivity.aiMindMap() {
         return PointF(p.x, p.y + h / 2)
     }
     if (board.chosen().isNotEmpty()) {
-        aiOnSelection(tr("Building the mind map…", "در حال ساخت نقشهٔ ذهنی…"), { ai, b -> AiTasks.parseMindMap(ai.askJson(aiSystem(), AiTasks.mindMap(), b)) }) { root, bounds -> build(root, spot(root, bounds)) }
+        aiOnSelection(tr("Building the mind map…", "در حال ساخت نقشهٔ ذهنی…"), { ai, text -> AiTasks.parseMindMap(ai.askJson(aiSystem(), AiTasks.on(this, text, AiTasks.mindMap()))) }) { root, bounds -> build(root, spot(root, bounds)) }
     } else {
         input(tr("Mind map topic", "موضوع نقشهٔ ذهنی"), "") { topic ->
             require(topic.isNotBlank())
-            runAi(tr("Building the mind map…", "در حال ساخت نقشهٔ ذهنی…"), { ai -> AiTasks.parseMindMap(ai.askJson(aiSystem(), AiTasks.mindMapFromTopic(topic))) }) { root ->
+            runAi(tr("Building the mind map…", "در حال ساخت نقشهٔ ذهنی…"), { ai -> AiTasks.parseMindMap(ai.askJson(aiSystem(), AiTasks.mindMapFromTopic(this, topic))) }) { root ->
                 val c = board.center()
                 build(root, PointF(c.x - 400f, c.y))
             }

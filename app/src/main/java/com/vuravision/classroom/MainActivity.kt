@@ -345,13 +345,17 @@ class MainActivity : Activity() {
     /** vuravision://join?u=<room address>, from the page a phone camera opens for the invitation QR. */
     internal fun openLink(intent: Intent?, tries: Int = 0) {
         val data = intent?.data ?: return
-        if (data.scheme != "vuravision" || data.host != "join")return
+        val link = when {
+            data.scheme == "vuravision" && data.host == "join" -> data.getQueryParameter("u").orEmpty()
+            data.scheme == "http" && data.path.orEmpty().startsWith("/r/") -> data.toString().removeSuffix("/noapp")
+            else -> return
+        }
         if ((loading || roomUi == null) && tries < 40) {
             handler.postDelayed({ openLink(intent, tries + 1) }, 250)
             return
         }
         intent.data = null
-        val address = runCatching { RoomAddress.parse(data.getQueryParameter("u").orEmpty()) }.getOrNull()
+        val address = runCatching { RoomAddress.parse(link) }.getOrNull()
         if (address == null) {
             toast(s("room_invalid_address"))
             return
@@ -635,32 +639,20 @@ class MainActivity : Activity() {
                 back()
                 // AI first when a service is set up: it understands any handwriting, drawing or language.
                 val notes = groupableNotes(items)
+                // Everything on one bar (no "More"): the AI tools work on the text read from the board on the device,
+                // then the offline tools. Converting to text is offline only: the AI guessed other languages.
                 if (smartAi.configured()) {
-                    if (notes.size >= 3)action("ai_group", tr("Group ideas", "دسته‌بندی ایده‌ها"), tr("Sort the notes into groups by meaning (AI)", "چیدن یادداشت‌ها در دسته‌های هم‌معنا (هوش)")) { aiGroups() }
-                    // Names say what happens; the long press / tooltip says what comes back (teachers found "Check" and "Clean up" unclear).
-                    action("ai_explain", tr("Explain", "توضیح بده"), tr("Explains the topic for students in a note beside it (AI)", "موضوع را برای دانش‌آموز در یادداشتی کنارش توضیح می‌دهد (هوش)")) { aiExplain("explain") }
-                    action("ai_check", tr("Is it right?", "درسته؟"), tr("Checks the answer or the work and circles mistakes in red (AI)", "جواب یا راه‌حل را بررسی و اشتباه‌ها را با قرمز مشخص می‌کند (هوش)")) { aiCheck() }
+                    action("ai_explain", tr("Explain and check", "توضیح و بررسی"), tr("Explains it for students; for an answer or a solution it also says whether it is right (AI)", "برای دانش‌آموز توضیح می‌دهد؛ اگر جواب یا راه‌حل باشد می‌گوید درست است یا نه (هوش)")) { aiExplain("explain") }
                     action("ai_steps", tr("Solve step by step", "حل قدم‌به‌قدم"), tr("Solves the exercise; each step appears when you tap Next (AI)", "تمرین را حل می‌کند؛ هر قدم با «بعدی» نمایش داده می‌شود (هوش)")) { aiSteps() }
                     action("ai_quiz", tr("Quiz on this", "آزمونک از این"), tr("Five questions about this topic for the class (AI)", "پنج سؤال دربارهٔ همین موضوع برای کلاس (هوش)")) { aiQuiz() }
                     action("ai_mindmap", tr("Mind map", "نقشهٔ ذهنی"), tr("A mind map of this topic beside it (AI)", "نقشهٔ ذهنی همین موضوع، کنارش (هوش)")) { aiMindMap() }
-                    action("more", tr("More", "بیشتر")) { open("smart_more") }
-                } else {
-                    if (notes.size >= 3)action("group_color", tr("By color", "بر اساس رنگ"), tr("Arrange the notes in columns by color", "چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")) { groupByColor(notes) }
-                    offlineSmart(smart, ink) { symbol, text, title, run -> action(symbol, text, title) { run() } }
-                    action("ai_setup", tr("Set up AI", "راه‌اندازی هوش")) { aiSettings() }
+                    action("ai_simplify", tr("Say it simpler", "ساده‌تر بگو"), tr("The same content in simpler words, in a note (AI)", "همین مطلب با کلمات ساده‌تر، در یک یادداشت (هوش)")) { aiExplain("simplify") }
+                    action("ai_translate", tr("Translate", "ترجمه کن"), tr("Persian to English, other languages to Persian (AI)", "فارسی به انگلیسی، زبان‌های دیگر به فارسی (هوش)")) { aiExplain("translate") }
+                    if (notes.size >= 3)action("ai_group", tr("Group ideas", "دسته‌بندی ایده‌ها"), tr("Sort the notes into groups by meaning (AI)", "چیدن یادداشت‌ها در دسته‌های هم‌معنا (هوش)")) { aiGroups() }
                 }
-                fillSelectionBar(actions)
-                positionSelectionBar()
-                return
-            }
-            "smart_more" -> {
-                action(if (resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL)"next" else "menu_back", tr("Back", "بازگشت")) { open("smart") }
-                action("ai_simplify", tr("Say it simpler", "ساده‌تر بگو"), tr("The same content in simpler words, in a note (AI)", "همین مطلب با کلمات ساده‌تر، در یک یادداشت (هوش)")) { aiExplain("simplify") }
-                action("ai_translate", tr("Translate", "ترجمه کن"), tr("Persian to English, other languages to Persian (AI)", "فارسی به انگلیسی، زبان‌های دیگر به فارسی (هوش)")) { aiExplain("translate") }
-                if (ink)action("ai_cleanup", tr("To typed text", "به متن تایپی"), tr("Replaces the handwriting with typed text; Undo brings it back (AI)", "دست‌خط را با متن تایپی جایگزین می‌کند؛ با بازگردانی برمی‌گردد (هوش)")) { aiCleanup() }
-                if (ink)action("ai_picture", tr("To picture", "به تصویر"), tr("Turn the sketch into a clean picture (AI)", "تبدیل طرح به تصویر تمیز (هوش)")) { aiSketchToPicture() }
-                if (groupableNotes(items).size >= 3)action("group_color", tr("By color", "بر اساس رنگ"), tr("Arrange the notes in columns by color", "چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")) { groupByColor(groupableNotes(items)) }
+                if (notes.size >= 3)action("group_color", tr("By color", "بر اساس رنگ"), tr("Arrange the notes in columns by color", "چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")) { groupByColor(notes) }
                 offlineSmart(smart, ink) { symbol, text, title, run -> action(symbol, text, title) { run() } }
+                if (!smartAi.configured())action("ai_setup", tr("Set up AI", "راه‌اندازی هوش")) { aiSettings() }
                 fillSelectionBar(actions)
                 positionSelectionBar()
                 return
@@ -1442,7 +1434,7 @@ class MainActivity : Activity() {
             isClickable = true
         }
         pieOverlay = overlay
-        val radius = dp(100).toFloat()
+        val radius = dp(116).toFloat()
         val margin = dp(150).toFloat()
         val cx = x.coerceIn(min(margin, canvasHost.width / 2f), max(canvasHost.width - margin, canvasHost.width / 2f))
         val cy = y.coerceIn(min(margin, canvasHost.height / 2f), max(canvasHost.height - margin, canvasHost.height / 2f))
@@ -1472,19 +1464,23 @@ class MainActivity : Activity() {
             }
             cell.addView(b)
             if (key.isNotBlank()) {
+                // Persian names are taller and often longer: two lines that shrink to fit, in the reading direction of the app
+                // (the overlay itself is LTR for positioning), instead of one line cut in half.
                 cell.addView(
                     label(s(key), 11f).apply {
-                        maxLines = 1
-                        ellipsize = android.text.TextUtils.TruncateAt.END
+                        maxLines = 2
                         gravity = Gravity.CENTER
-                    }
+                        textDirection = View.TEXT_DIRECTION_LOCALE
+                        setAutoSizeTextTypeUniformWithConfiguration(8, 11, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+                    },
+                    LinearLayout.LayoutParams(-1, dp(32))
                 )
             }
             overlay.addView(
                 cell,
-                FrameLayout.LayoutParams(dp(84), dp(80), Gravity.TOP or Gravity.LEFT).apply {
-                    leftMargin = (cx + radius * cos(angle) - dp(42)).toInt()
-                    topMargin = (cy + radius * sin(angle) - dp(40)).toInt()
+                FrameLayout.LayoutParams(dp(100), dp(96), Gravity.TOP or Gravity.LEFT).apply {
+                    leftMargin = (cx + radius * cos(angle) - dp(50)).toInt()
+                    topMargin = (cy + radius * sin(angle) - dp(48)).toInt()
                 }
             )
         }
@@ -2238,7 +2234,8 @@ class MainActivity : Activity() {
             tr("Lines and axes", "خط و محور") to Shapes.lines
         ).forEach { (title, keys) ->
             c.addView(sectionTitle(title))
-            val grid = GridLayout(this).apply { columnCount = 6 }
+            // Wraps to the sheet's width (a fixed 6-column grid ran past the sheet's edge on smaller sheets).
+            val grid = FlowRow(this, dp(2))
             keys.forEach { key ->
                 val on = key == current
                 val cell = column().apply {
@@ -2288,9 +2285,9 @@ class MainActivity : Activity() {
                     refreshDock()
                     d.dismiss()
                 }
-                grid.addView(cell, GridLayout.LayoutParams().apply { setMargins(dp(1), dp(1), dp(1), dp(1)) })
+                grid.addView(cell, ViewGroup.LayoutParams(-2, -2))
             }
-            c.addView(grid)
+            c.addView(grid, LinearLayout.LayoutParams(-1, -2))
         }
     }
 
@@ -3156,35 +3153,45 @@ class MainActivity : Activity() {
             toast(recognition.failure(this, e))
             reviewResult(emptyList())
         }
+        recognizeInk(chosen, strokes, ::reviewResult, ::fallback) {
+            status.text = s("model_required")
+            reviewResult(emptyList())
+            toast(s("model_required"))
+        }
+    }
+
+    /**
+     * Offline handwriting recognition (the downloaded Persian and English models, or Latin OCR): [result] gets the
+     * candidates, best first. Shared by «To text» and the AI tools, which send only this text, never a picture.
+     */
+    internal fun recognizeInk(chosen: List<Item>, strokes: List<Item>, result: (List<String>) -> Unit, failed: (Exception) -> Unit, missing: () -> Unit) {
         if (smartSource == "auto") {
-            fun latin() = OfflineText.recognize(chosen, board.renderer, ::reviewResult, ::fallback)
+            fun latin() = OfflineText.recognize(chosen, board.renderer, result, failed)
             fun english(persian: List<String>) {
                 recognition.installed("en-US", { ready ->
                     if (ready) {
                         recognition.recognize("en-US", strokes, { english ->
                             val faText = persian.firstOrNull().orEmpty()
-                            reviewResult(if (faText.any { it in '\u0600'..'\u06ff' })persian + english else english + persian)
-                        }, { if (persian.isNotEmpty())reviewResult(persian)else latin() })
+                            result(if (faText.any { it in '\u0600'..'\u06ff' })persian + english else english + persian)
+                        }, { if (persian.isNotEmpty())result(persian)else latin() })
                     } else if (persian.isNotEmpty()) {
-                        reviewResult(persian)
+                        result(persian)
                     } else {
                         latin()
                     }
-                }, { if (persian.isNotEmpty())reviewResult(persian)else latin() })
+                }, { if (persian.isNotEmpty())result(persian)else latin() })
             }
             recognition.installed("fa", { ready -> if (ready)recognition.recognize("fa", strokes, ::english, { english(emptyList()) })else english(emptyList()) }, { english(emptyList()) })
         } else if (smartSource == "offline") {
-            OfflineText.recognize(chosen, board.renderer, ::reviewResult, ::fallback)
+            OfflineText.recognize(chosen, board.renderer, result, failed)
         } else {
             recognition.installed(smartSource, { installed ->
                 if (installed) {
-                    recognition.recognize(smartSource, strokes, ::reviewResult, ::fallback)
+                    recognition.recognize(smartSource, strokes, result, failed)
                 } else {
-                    status.text = s("model_required")
-                    reviewResult(emptyList())
-                    toast(s("model_required"))
+                    missing()
                 }
-            }, ::fallback)
+            }, failed)
         }
     }
     private fun reviewSmart(original: List<Item>, candidates: List<String>, mode: String) {
@@ -3385,9 +3392,6 @@ class MainActivity : Activity() {
     internal var spotlight: Spotlight? = null
     internal var replay: Replay? = null
     internal val aiStatus by lazy { AiStatus(this, canvasHost) }
-
-    /** Replay start marks per page: the ids on the page when the teacher pressed "Start here" (this session only). */
-    internal val replayMarks = mutableMapOf<String, Set<String>>()
     internal var settingsScreen: SettingsScreen? = null
     private fun insertConstruction(guide: Item, perpendicular: Boolean = false) {
         if (guide.locked || !store.page.editable(guide) || !store.page.canDraw() || !board.canEditItem(guide))return

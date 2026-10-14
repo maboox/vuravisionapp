@@ -521,7 +521,7 @@ class AddPanel(
         val groups = listOf(
             "board" to listOf("shape", "text", "sticky", "table", "mind_map", "map_iran", "frame", "image", "pdf", "graph", "coordinates"),
             "geometry" to listOf("ruler", "set_square", "protractor", "compass"),
-            "smart" to listOf("smart", "ai_image", "ai_chart", "ai_quiz", "ai_mindmap", "ai_summary", "layers", "split", "fill", "background", "touch"),
+            "smart" to listOf("smart", "ai_image", "ai_chart", "ai_quiz", "ai_mindmap", "layers", "split", "fill", "background", "touch"),
             "class" to listOf("laser", "spotlight", "picker", "class_quiz", "replay", "present_frames", "timer", "stopwatch", "dice", "scoreboard", "periodic", "lab", "games")
         )
     }
@@ -579,8 +579,11 @@ class AddPanel(
         host.addView(scrim, FrameLayout.LayoutParams(-1, -1))
     }
 
+    /** Not offered: the lesson summary (not needed), and AI pictures unless switched on in the hidden settings (costly). */
+    private val hidden = setOf("ai_summary") + if (context.getSharedPreferences("vura", 0).getBoolean("aiImages", false)) emptySet() else setOf("ai_image")
+
     /** Every searchable command: the tiles here first, then the rest of the app's commands. */
-    private fun searchable() = (groups.flatMap { it.second } + ShortcutCatalog.keys).distinct().filter { it !in listOf("insert", "pen", "erase", "select", "undo", "redo") }
+    private fun searchable() = (groups.flatMap { it.second } + ShortcutCatalog.keys).distinct().filter { it !in listOf("insert", "pen", "erase", "select", "undo", "redo") && it !in hidden }
     fun matches(query: String) = searchable().filter { key -> listOf(label(key), key.replace('_', ' ')).any { it.contains(query, ignoreCase = true) } }
     private fun show(query: String) {
         body.removeAllViews()
@@ -589,7 +592,7 @@ class AddPanel(
             (listOfNotNull(Subjects.tools(subject).takeIf { it.isNotEmpty() }?.let { "subject" to it }) + groups).forEach { (group, keys) ->
                 body.addView(context.label(title(group), 15f, MUTED, true).apply { setPadding(context.dp(4), context.dp(8), context.dp(4), context.dp(4)) })
                 val grid = GridLayout(context).apply { columnCount = columns }
-                keys.forEach { key -> grid.addView(tile(key)) }
+                keys.filter { it !in hidden }.forEach { key -> grid.addView(tile(key)) }
                 body.addView(grid)
             }
             return

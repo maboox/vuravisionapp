@@ -89,6 +89,11 @@ internal fun MainActivity.settingsAt(tab: String?) {
                     panelSizes.map { it.first to it.second },
                     { prefs.getFloat("uiScale", 1f).let { v -> panelSizes.minByOrNull { kotlin.math.abs(it.third - v) }!!.first } }
                 ) { v -> roomSafe { restart { putFloat("uiScale", panelSizes.first { it.first == v }.third) } } },
+                SettingRow.Choice(
+                    tr("Interface size", "اندازهٔ رابط"),
+                    listOf("0.85" to tr("Smaller", "کوچک‌تر"), "1.0" to tr("Normal", "معمولی"), "1.15" to tr("Larger", "بزرگ‌تر"), "1.3" to tr("Largest", "خیلی بزرگ")),
+                    { listOf(.85f, 1f, 1.15f, 1.3f).minByOrNull { kotlin.math.abs(it - prefs.getFloat("uiZoom", 1f)) }!!.let { if (it == 1f) "1.0" else it.toString() } }
+                ) { v -> roomSafe { restart { putFloat("uiZoom", v.toFloat()) } } },
                 SettingRow.Choice(tr("Interface", "ظاهر برنامه"), listOf("light" to tr("Light", "روشن"), "dark" to tr("Dark", "تیره")), { if (UiTheme.dark)"dark" else "light" }) { v -> roomSafe { restart { putString("uiTheme", v) } } },
                 SettingRow.Toggle(tr("Reduce motion", "کاهش حرکت"), tr("No sliding panels, shaking or confetti", "بدون لغزش پنل‌ها، لرزش و کاغذ رنگی"), { prefs.getBoolean("reduceMotion", false) }) { v ->
                     prefs.edit().putBoolean("reduceMotion", v).apply()
@@ -320,9 +325,14 @@ internal fun MainActivity.historySettings() {
 }
 internal fun MainActivity.engineering() {
     // Only diagnostics and the secret studio live here; every teacher setting is in Settings.
-    val keys = listOf("secret_studio", "report", "stress", "maboox")
+    val keys = listOf("secret_studio", "ai_images", "report", "stress", "maboox")
     choices(s("engineering"), keys) {
         when (keys[it]) {
+            "ai_images" -> {
+                val on = !prefs.getBoolean("aiImages", false)
+                prefs.edit().putBoolean("aiImages", on).apply()
+                toast(if (on) tr("AI pictures on (+ → AI image). They use a lot of credit.", "ساخت تصویر با هوش روشن شد (+ ← تصویر هوشمند). اعتبار زیادی مصرف می‌کند.") else tr("AI pictures off", "ساخت تصویر با هوش خاموش شد"))
+            }
             "secret_studio" -> secretStudio()
             "maboox" -> maboox()
             "report" -> {

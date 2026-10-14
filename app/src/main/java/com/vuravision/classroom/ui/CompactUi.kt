@@ -208,7 +208,7 @@ object IconCatalog {
         "ai_cleanup" -> "fonts"
         "ai_setup", "ai_service" -> "sparkle"
         "ai_summary" -> "file"
-        "ai_image", "ai_picture" -> "image"
+        "ai_image", "ai_picture", "ai_images" -> "image"
         else -> key
     }
     fun drawable(c: Context, key: String): Drawable? = ContextCompat.getDrawable(c, resource(key))?.mutate()?.apply { setTint(NAVY) }

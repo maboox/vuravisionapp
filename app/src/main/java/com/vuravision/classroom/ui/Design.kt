@@ -109,7 +109,8 @@ fun Context.s(key: String): String {
     return if (id == 0) key.replace('_', ' ') else getString(id)
 }
 
-fun Context.uiScale() = getSharedPreferences("vura", Context.MODE_PRIVATE).getFloat("uiScale", 1f).coerceIn(.75f, 1.5f)
+/** The panel size sets the base scale; "Interface size" makes everything a step smaller or larger on top of it. */
+fun Context.uiScale() = getSharedPreferences("vura", Context.MODE_PRIVATE).let { it.getFloat("uiScale", 1f).coerceIn(.75f, 1.5f) * it.getFloat("uiZoom", 1f).coerceIn(.8f, 1.35f) }
 
 /** Item 32: "Reduce motion" in Settings, or animations turned off for the whole device. */
 object Motion {

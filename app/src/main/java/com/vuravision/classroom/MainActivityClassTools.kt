@@ -101,8 +101,7 @@ internal fun MainActivity.showReplay() {
         return
     }
     replay?.let { canvasHost.removeView(it) }
-    val page = store.page
-    replay = Replay(this, page, board.activePane, board.renderer, replayMarks[page.id], { replayMarks[page.id] = page.items.map { it.id }.toSet() }) {
+    replay = Replay(this, store.page, board.activePane, board.renderer) {
         replay?.let { canvasHost.removeView(it) }
         replay = null
     }.also { canvasHost.addView(it, FrameLayout.LayoutParams(-1, -1)) }

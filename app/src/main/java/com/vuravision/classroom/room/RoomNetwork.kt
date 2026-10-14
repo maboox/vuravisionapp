@@ -224,8 +224,13 @@ class RoomServer(val engine: RoomEngine, private val media: Media, private val a
         val name = engine.name.replace(Regex("[<>&\"']"), "")
         val intent = "intent://join?u=" + java.net.URLEncoder.encode(url, "UTF-8") + "#Intent;scheme=vuravision;package=$appPackage;S.browser_fallback_url=" + java.net.URLEncoder.encode("$url/noapp", "UTF-8") + ";end"
         val missing = "<p><b>VuraVision is not installed on this device.</b><br>Install the app, then scan the code again.</p><p dir=rtl><b>ویراویژن روی این دستگاه نصب نیست.</b><br>برنامه را نصب کنید و دوباره کد را اسکن کنید.</p>"
-        val opening = "<p>Opening VuraVision…</p><p dir=rtl>در حال باز کردن ویراویژن…</p><p><a href=\"$intent\" style=\"display:inline-block;padding:14px 28px;border-radius:24px;background:#20194f;color:#fff;text-decoration:none\">Open in VuraVision · باز کردن در برنامه</a></p>" +
-            "<script>setTimeout(function(){location.href=${gson.toJson(intent)}},150)</script>"
+        val direct = "vuravision://join?u=" + java.net.URLEncoder.encode(url, "UTF-8")
+        val button = "display:inline-block;margin:8px;padding:16px 30px;border-radius:26px;background:#20194f;color:#fff;text-decoration:none;font-size:18px"
+        val opening = "<p>Tap to join with VuraVision</p><p dir=rtl>برای ورود به اتاق با ویراویژن بزنید</p>" +
+            "<p><a href=\"$intent\" style=\"$button\">Open in VuraVision · باز کردن در برنامه</a></p>" +
+            "<p><a href=\"$direct\" style=\"color:#20194f\">If nothing opens, tap here · اگر باز نشد اینجا را بزنید</a></p>" +
+            "<p style=\"color:#666;font-size:14px\">In the camera's own browser, choose «Open in Chrome» first.<br><span dir=rtl>اگر در مرورگر داخلی دوربین هستید، اول «باز کردن در Chrome» را بزنید.</span></p>" +
+            "<script>setTimeout(function(){location.href=${gson.toJson(intent)}},300)</script>"
         return "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>VuraVision</title></head>" +
             "<body style=\"font-family:sans-serif;text-align:center;padding:40px 20px;color:#20194f;background:#f6f5fb\"><h2>$name</h2>" + (if (noApp) missing else opening) + "</body></html>"
     }
@@ -376,11 +381,19 @@ class RoomServer(val engine: RoomEngine, private val media: Media, private val a
     private fun response(status: Response.Status, message: String) = newFixedLengthResponse(status, "text/plain", message)
     fun addresses(context: Context): List<RoomAddress> = runCatching {
         val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-        val preferred = manager.allNetworks.flatMap { manager.getLinkProperties(it)?.linkAddresses.orEmpty().map { v -> v.address } }
+
+        // Wi-Fi first (where the students' phones are), then cable, then anything else; the invitation QR uses the first.
+        fun rank(n: android.net.Network) = manager.getNetworkCapabilities(n)?.let { c ->
+            when {
+                c.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> 0
+                c.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> 1
+                else -> 2
+            }
+        } ?: 3
+        val preferred = manager.allNetworks.sortedBy { rank(it) }.flatMap { manager.getLinkProperties(it)?.linkAddresses.orEmpty().map { v -> v.address } }
         val fallback = NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }.flatMap { it.inetAddresses.toList() }
         // The usual classroom Wi-Fi ranges first: the invitation shows one QR, for the first address.
         (preferred + fallback).filter { it is Inet4Address && it.isSiteLocalAddress }.mapNotNull { it.hostAddress }.distinct()
-            .sortedBy { a -> listOf("192.168.", "10.", "172.").indexOfFirst { a.startsWith(it) }.let { if (it < 0) 9 else it } }
             .map { RoomAddress(it, listeningPort, invite) }
     }.getOrDefault(emptyList())
 }

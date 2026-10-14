@@ -1,5 +1,6 @@
 <resources>
 <string name="advanced_board">پشت پردهٔ تخته</string>
 <string name="secret_studio">آتلیهٔ مخفی</string>
+<string name="ai_images">روشن/خاموش ساخت تصویر با هوش (اعتبار زیادی مصرف می‌کند)</string>
 <string name="maboox">Powered by Maboox</string>
 </resources>

@@ -16,6 +16,8 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
             <!-- The room invitation page hands the address over as vuravision://join?u=… -->
             <intent-filter><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="vuravision" android:host="join" /></intent-filter>
+            <!-- The invitation QR itself (http://<panel address>:<port>/r/<invite>): the phone can open it straight in the app. -->
+            <intent-filter><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="http" android:host="*" android:pathPrefix="/r/" /></intent-filter>
         </activity>
     </application>
 </manifest>

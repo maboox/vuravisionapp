@@ -50,6 +50,7 @@ class AiTest {
     }
 
     @After fun real() {
+        InkReading.fake = null
         SmartAi.testKey = null
         SmartAi.testTransport = null
         SmartAi.clearCache()
@@ -119,10 +120,6 @@ class AiTest {
     }
 
     @Test fun parsersAcceptRealWorldReplies() {
-        val check = AiTasks.parseCheck(JSONObject("""{"correct":false,"summary":"2+2 is 4","mistakes":[{"box":[10,20,40,60],"note":"should be 4"},{"box":[0.5]}]}"""))
-        assertEquals(1, check.mistakes.size)
-        assertEquals(.1f, check.mistakes[0].first.left, .001f)
-        assertEquals(.6f, check.mistakes[0].first.bottom, .001f)
         val quiz = AiTasks.parseQuiz(JSONObject("""{"questions":[{"q":"2+2?","options":["3","4","5","6"],"answer":1},{"q":"bad","options":["a","a"],"answer":0},{"q":"x","options":["a","b"],"answer":7}]}"""))
         assertEquals(1, quiz.size)
         assertEquals(1, quiz[0].answer)
@@ -186,22 +183,25 @@ class AiTest {
                 views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().first { it.symbol == symbol }.performClick()
                 idle()
             }
+            InkReading.fake = "۲x + ۳ = ۱۱"
             select()
             tap("smart")
             shot(a, "smart-bar")
+            // One bar: no "More"; the AI never turns handwriting into text (offline «To text» does).
+            val symbols = views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().map { it.symbol }
+            assertFalse(symbols.contains("more"))
+            assertFalse(symbols.contains("ai_cleanup"))
+            assertTrue(symbols.contains("text") && symbols.contains("ai_translate"))
             assertTrue("AI actions should lead when configured", views(a.findViewById(R.id.selection_toolbar)).filterIsInstance<ActionIcon>().any { it.symbol == "ai_explain" })
             val count = a.store.page.items.size
             tap("ai_explain")
             waitFor { a.store.page.items.size == count + 1 }
             assertTrue(a.store.page.items.last().text.contains("معادله"))
+            // Only the text read on the device is sent, never a picture, and the answer is asked for in Persian.
+            assertTrue(sent.last().second.contains("۲x + ۳ = ۱۱"))
+            assertTrue(sent.last().second.contains("Persian (Farsi)"))
+            assertTrue(sent.none { it.second.contains("image_url") })
             shot(a, "explain")
-            select()
-            tap("smart")
-            tap("ai_check")
-            waitFor { a.store.page.items.any { it.shape == "ellipse" } }
-            val circle = a.store.page.items.first { it.shape == "ellipse" }
-            assertTrue("mistake circle should sit on the work", circle.x >= ink.x + 100f && circle.x < ink.x + ink.w)
-            shot(a, "check")
             select()
             tap("smart")
             tap("ai_steps")
@@ -216,7 +216,7 @@ class AiTest {
             waitFor { a.store.page.items.count { it.shape == "mindnode" } == 6 }
             shot(a, "mindmap")
             // Nothing the AI added may cover the teacher's work or another answer (circles on the work aside).
-            val added = a.store.page.items.filter { it.id != ink.id && it.shape != "ellipse" && !(it.kind == "text" && it.text.length <= 2) }
+            val added = a.store.page.items.filter { it.id != ink.id && !(it.kind == "text" && it.text.length <= 2) }
             added.forEach { x ->
                 val r = contentBounds(listOf(x))
                 assertFalse("${x.text} covers the work", RectF.intersects(r, contentBounds(listOf(ink))))
@@ -261,6 +261,32 @@ class AiTest {
     }
 
     /** A teacher writes a quiz by hand: half-filled questions are refused, a good one is kept in the lesson and survives saving. */
+    /** Nothing readable in the selection: nothing is sent, and the teacher is told why. */
+    @Test
+    @Config(qualifiers = "fa-w1280dp-h720dp-land-hdpi")
+    fun unreadableSelectionSendsNothing() {
+        context.getSharedPreferences("vura", 0).edit().putString("language", "fa").putString("aiProvider", "openai").commit()
+        reply = { _, _ -> openAi("x") }
+        val ctl = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val a = ctl.get()
+        try {
+            InkReading.fake = ""
+            val ink = Item(kind = "ink", x = 300f, y = 200f, w = 300f, h = 120f, inkW = 300f, inkH = 120f, width = 4f, points = mutableListOf(Point(0f, 60f), Point(300f, 60f)))
+            a.store.editMetadata { a.store.page.items.add(ink) }
+            a.board.tool = "select"
+            a.board.selected.add(ink.id)
+            a.board.onSelection()
+            idle()
+            a.callHidden("aiExplain", "explain")
+            idle()
+            assertTrue("nothing may be sent for unreadable writing", sent.isEmpty())
+            assertTrue(views(a.window.decorView).filterIsInstance<TextView>().any { it.id == R.id.ai_status_text && it.text.toString().contains(a.tr("nothing was sent", "چیزی ارسال نشد")) })
+            shot(a, "unreadable")
+        } finally {
+            ctl.pause().stop().destroy()
+        }
+    }
+
     @Test
     @Config(qualifiers = "fa-w1280dp-h720dp-land-hdpi")
     fun quizBuilderWritesKeepsAndPlays() {

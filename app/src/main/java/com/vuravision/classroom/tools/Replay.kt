@@ -31,52 +31,21 @@ import kotlin.math.min
  * Replays the page as it was built: every object on the page now, in the order it was added (strokes drawn again,
  * other objects fading in one by one). It works from the page itself, by action and not by clock, so what was erased
  * is not replayed and pauses while teaching are skipped. Read only: the page itself is never touched.
- * Length: 30 s, 1 or 3 minutes, or the natural pace (no limit). [mark] (ids on the page when the teacher pressed
- * "Start here") lets the replay show only what came after it.
+ * Kept simple on purpose: pause, speed, a step back or forward, and from the start; at most [MAX_MS] at 1×.
  */
 @SuppressLint("ViewConstructor")
-class Replay(
-    context: Context,
-    source: Page,
-    pane: Int,
-    private val renderer: Renderer,
-    private val mark: Set<String>? = null,
-    private val setMark: (() -> Unit)? = null,
-    private val close: () -> Unit
-) : FrameLayout(context) {
+class Replay(context: Context, source: Page, pane: Int, private val renderer: Renderer, private val close: () -> Unit) : FrameLayout(context) {
     companion object {
-        val LENGTHS = listOf(30_000.0, 60_000.0, 180_000.0, Double.MAX_VALUE)
+        const val MAX_MS = 60_000.0
+        const val STEP_MS = 5_000.0
     }
-    private val prefs = context.getSharedPreferences("vura", 0)
     private val page = source.copied().let { p -> p.copy(items = p.items.filter { it.pane == pane }.map { it.copy(pane = 0) }.toMutableList(), panes = mutableListOf(p.panes.getOrElse(pane) { p.panes.first() }.copy()), paneCount = 1, alternateCanvas = null, background = p.pattern(pane)) }
-    private val everything = page.visibleItems()
-    private val afterMark = mark?.let { m -> everything.filter { it.id !in m } }?.takeIf { it.isNotEmpty() }
+    private val order = page.visibleItems()
 
-    /** True while only what was added after the mark is replayed; what came before stays on screen from the start. */
-    var sinceMark = afterMark != null
-        private set
-    private var before: List<Item> = emptyList()
-    private var order: List<Item> = everything
-    private var durations: List<Double> = emptyList()
-    var length = prefs.getFloat("replayLength", 60_000f).toDouble().let { v -> LENGTHS.minByOrNull { kotlin.math.abs(it - v) }!! }
-        private set
-    private var scale = 1.0
-    private var total = 0.0
-    private fun plan() {
-        order = if (sinceMark)afterMark!! else everything
-        before = if (sinceMark)everything.filter { it.id in mark!! } else emptyList()
-        // Each item's share of the replay: strokes by their length, everything else a short fade-in.
-        durations = order.map { if (it.kind == "ink")(it.points.size * 12.0).coerceIn(180.0, 1600.0)else 450.0 }
-        scale = min(1.0, length / durations.sum().coerceAtLeast(1.0))
-        total = durations.sum() * scale
-        position = position.coerceAtMost(total)
-    }
-    private fun lengthText() = when (length) {
-        30_000.0 -> context.tr("30 s", "۳۰ ثانیه")
-        60_000.0 -> context.tr("1 min", "۱ دقیقه")
-        180_000.0 -> context.tr("3 min", "۳ دقیقه")
-        else -> context.tr("Natural pace", "سرعت واقعی")
-    }
+    /** Each item's share of the replay: strokes by their length, everything else a short fade-in. */
+    private val durations = order.map { if (it.kind == "ink")(it.points.size * 12.0).coerceIn(180.0, 1600.0)else 450.0 }
+    private val scale = min(1.0, MAX_MS / durations.sum().coerceAtLeast(1.0))
+    private val total = durations.sum() * scale
     var position = 0.0
         private set
     var speed = 1.0
@@ -84,7 +53,7 @@ class Replay(
     var playing = true
         private set
     private var last = 0L
-    private val bounds = contentBounds(everything).apply { inset(-40f, -40f) }
+    private val bounds = contentBounds(order).apply { inset(-40f, -40f) }
     private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x3320194f }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INK_TEAL }
     private lateinit var playButton: android.widget.Button
@@ -99,6 +68,7 @@ class Replay(
             setPadding(context.dp(6), context.dp(6), context.dp(6), context.dp(6))
             elevation = context.dp(6).toFloat()
             gravity = Gravity.CENTER_VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_LTR
         }
         playButton = context.button(context.s("pause"), true) { toggle() }
         speedButton = context.button("1×") {
@@ -109,31 +79,11 @@ class Replay(
             }
             speedButton.text = "${speed.toInt()}×"
         }.apply { contentDescription = context.tr("Speed", "سرعت") }
-        plan()
-        bar.addView(playButton, LinearLayout.LayoutParams(context.dp(120), context.dp(52)))
+        fun step(by: Double) = seek(position + by)
+        bar.addView(context.button("⏪") { step(-STEP_MS) }.apply { contentDescription = context.tr("Back 5 seconds", "۵ ثانیه عقب") }, LinearLayout.LayoutParams(context.dp(64), context.dp(52)))
+        bar.addView(playButton, LinearLayout.LayoutParams(context.dp(120), context.dp(52)).apply { marginStart = context.dp(6) })
+        bar.addView(context.button("⏩") { step(STEP_MS) }.apply { contentDescription = context.tr("Forward 5 seconds", "۵ ثانیه جلو") }, LinearLayout.LayoutParams(context.dp(64), context.dp(52)).apply { marginStart = context.dp(6) })
         bar.addView(speedButton, LinearLayout.LayoutParams(context.dp(72), context.dp(52)).apply { marginStart = context.dp(6) })
-        lateinit var lengthButton: android.widget.Button
-        lengthButton = context.button(lengthText()) {
-            length = LENGTHS[(LENGTHS.indexOf(length) + 1) % LENGTHS.size]
-            prefs.edit().putFloat("replayLength", length.toFloat()).apply()
-            lengthButton.text = lengthText()
-            val fraction = if (total > 0)position / total else 0.0
-            plan()
-            position = fraction * total
-            invalidate()
-        }.apply { contentDescription = context.tr("Replay length", "مدت بازپخش") }
-        bar.addView(lengthButton, LinearLayout.LayoutParams(-2, context.dp(52)).apply { marginStart = context.dp(6) })
-        if (afterMark != null) {
-            lateinit var scope: android.widget.Button
-            scope = context.button(context.tr("Since the mark", "از علامت")) {
-                sinceMark = !sinceMark
-                scope.text = if (sinceMark)context.tr("Since the mark", "از علامت")else context.tr("Whole page", "کل صفحه")
-                position = 0.0
-                plan()
-                invalidate()
-            }
-            bar.addView(scope, LinearLayout.LayoutParams(-2, context.dp(52)).apply { marginStart = context.dp(6) })
-        }
         bar.addView(
             context.button(context.tr("From the start", "از اول")) {
                 position = 0.0
@@ -142,17 +92,6 @@ class Replay(
             },
             LinearLayout.LayoutParams(-2, context.dp(52)).apply { marginStart = context.dp(6) }
         )
-        setMark?.let { set ->
-            // "Start here": the next replay of this page begins with what is added from now on.
-            bar.addView(
-                context.button(context.tr("Start here", "شروع از اینجا")) {
-                    set()
-                    android.widget.Toast.makeText(context, context.tr("The next replay starts with what you add from now", "بازپخش بعدی از چیزهایی شروع می‌شود که از حالا اضافه می‌کنید"), android.widget.Toast.LENGTH_LONG).show()
-                    close()
-                }.apply { contentDescription = context.tr("Mark the replay start", "علامت شروع بازپخش") },
-                LinearLayout.LayoutParams(-2, context.dp(52)).apply { marginStart = context.dp(6) }
-            )
-        }
         bar.addView(WorkspaceIcon(context, "close", context.s("close")) { close() }, LinearLayout.LayoutParams(context.dp(52), context.dp(52)).apply { marginStart = context.dp(6) })
         // Controls at the bottom, within reach on a tall panel, like the spotlight's.
         addView(bar, LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = context.dp(28) })
@@ -186,7 +125,7 @@ class Replay(
         c.translate(-bounds.left + ex, -bounds.top + ey)
         renderer.background(c, page, RectF(bounds.left - ex, bounds.top - ey, bounds.right + ex, bounds.bottom + ey))
         var t = position
-        val shown = before.toMutableList()
+        val shown = mutableListOf<Item>()
         var partial: Item? = null
         var fade = 1f
         for (i in order.indices) {

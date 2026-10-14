@@ -172,13 +172,13 @@
    "+ → Text or Note. Type with the keyboard and tap outside to finish.",
    "Select text to change its size, bold, alignment and color.",
    "Persian and English fonts are in Settings → General → Fonts; you can apply them to the text already on the page.",
-   "Handwriting can become typed text: select it → smart → «To typed text»."
+   "Handwriting can become typed text: select it → smart → «To text». It works offline, with the downloaded Persian and English models."
   ],
   "stepsFa": [
    "+ ← متن یا یادداشت. با صفحه‌کلید بنویسید و برای پایان بیرون از آن بزنید.",
    "متن را انتخاب کنید تا اندازه، پررنگی، تراز و رنگش را تغییر دهید.",
    "فونت فارسی و انگلیسی در تنظیمات ← عمومی ← فونت است و می‌توانید آن را روی متن‌های همین صفحه هم اعمال کنید.",
-   "دست‌خط را می‌توان به متن تایپی تبدیل کرد: آن را انتخاب کنید ← هوشمند ← «به متن تایپی»."
+   "دست‌خط را می‌توان به متن تایپی تبدیل کرد: آن را انتخاب کنید ← هوشمند ← «به متن». این کار آفلاین و با مدل‌های فارسی و انگلیسی دانلودشده انجام می‌شود."
   ],
   "tipEn": "Write a title as text and three ideas as notes in different colors.",
   "tipFa": "یک عنوان به‌صورت متن و سه ایده به‌صورت یادداشت با رنگ‌های مختلف بنویسید."
@@ -301,17 +301,15 @@
   "stepsEn": [
    "+ → Replay redraws this page step by step: strokes in the order they were written, other objects fading in.",
    "It is built from what is on the page now, in the order it was added. It is not a video: erased work and pauses are not replayed.",
-   "Choose its length (30 s, 1 min, 3 min or natural pace) and speed (1×, 2×, 4×). Tap the progress line to jump.",
-   "«Start here» marks the moment: the next replay of this page shows only what you add after it."
+   "Pause or play, change the speed (1×, 2×, 4×), and go 5 seconds back or forward with ⏪ ⏩. Tapping the progress line jumps there."
   ],
   "stepsFa": [
    "+ ← بازپخش این صفحه را قدم‌به‌قدم دوباره می‌کشد: خط‌ها به ترتیب نوشتن و اشیای دیگر با محو شدن تدریجی.",
    "از چیزهایی ساخته می‌شود که الان روی صفحه است، به ترتیب اضافه شدن. فیلم نیست: نوشته‌های پاک‌شده و مکث‌ها پخش نمی‌شوند.",
-   "مدت (۳۰ ثانیه، ۱ دقیقه، ۳ دقیقه یا سرعت واقعی) و سرعت (۱×، ۲×، ۴×) را انتخاب کنید. روی خط پیشرفت بزنید تا به آن نقطه بروید.",
-   "«شروع از اینجا» آن لحظه را علامت می‌زند: بازپخش بعدی این صفحه فقط چیزهایی را نشان می‌دهد که بعد از آن اضافه کنید."
+   "مکث یا پخش کنید، سرعت را عوض کنید (۱×، ۲×، ۴×) و با ⏪ ⏩ پنج ثانیه عقب یا جلو بروید. زدن روی خط پیشرفت به همان نقطه می‌رود."
   ],
-  "tipEn": "At the start of a lesson press Replay → Start here; at the end, replay only today's work.",
-  "tipFa": "اول درس بازپخش ← شروع از اینجا را بزنید؛ آخر درس فقط کار امروز را بازپخش کنید."
+  "tipEn": "At the end of the lesson replay the page at 2× as a recap.",
+  "tipFa": "آخر درس صفحه را با سرعت ۲× به‌عنوان مرور بازپخش کنید."
  },
  {
   "id": "games",
@@ -356,15 +354,15 @@
   "titleFa": "ابزارهای هوشمند (هوش مصنوعی)",
   "stepsEn": [
    "Set up once: Settings → Smart → AI service. Choose Gemini, OpenAI, OpenRouter or AvalAI and enter your key.",
-   "Select something on the board → smart: Explain, «Is it right?» (circles mistakes), «Solve step by step», «Quiz on this», Mind map. More: say it simpler, translate, to typed text, to picture.",
-   "Answers come in the language you wrote in. A bar at the top shows what is happening and the seconds, with Cancel; if something fails it says why, with Try again.",
-   "Without a selection use + → AI image, AI chart, AI quiz or lesson summary. The voice assistant (Settings → Smart) answers questions about the board aloud."
+   "Select writing on the board → smart. All tools are on one bar: «Explain and check» (explains it, and says ✓ or ✗ when there is an answer to check), «Solve step by step», «Quiz on this», Mind map, «Say it simpler», Translate.",
+   "Your writing is read on the panel first, with the offline models, and only that text is sent; if it cannot be read, nothing is sent. Answers come in the language you wrote in.",
+   "A bar at the top shows what is happening and the seconds, with Cancel; if something fails it says why, with Try again. Without a selection, + → AI chart, AI quiz or AI mind map make one from a topic you type."
   ],
   "stepsFa": [
    "یک بار راه‌اندازی کنید: تنظیمات ← هوشمند ← سرویس هوش. Gemini، OpenAI، OpenRouter یا AvalAI را انتخاب و کلید را وارد کنید.",
-   "چیزی را روی تخته انتخاب کنید ← هوشمند: توضیح بده، «درسته؟» (اشتباه‌ها را مشخص می‌کند)، «حل قدم‌به‌قدم»، «آزمونک از این»، نقشهٔ ذهنی. بیشتر: ساده‌تر بگو، ترجمه کن، به متن تایپی، به تصویر.",
-   "پاسخ‌ها به زبانی می‌آیند که نوشته‌اید. نواری در بالا کار در حال انجام و ثانیه‌ها را با دکمهٔ لغو نشان می‌دهد؛ اگر چیزی شکست بخورد دلیلش را با «دوباره» می‌گوید.",
-   "بدون انتخاب از + ← تصویر هوشمند، نمودار هوشمند، آزمونک هوشمند یا خلاصهٔ درس استفاده کنید. دستیار صوتی (تنظیمات ← هوشمند) دربارهٔ تخته با صدا پاسخ می‌دهد."
+   "نوشته‌ای را روی تخته انتخاب کنید ← هوشمند. همهٔ ابزارها در یک نوار هستند: «توضیح و بررسی» (توضیح می‌دهد و اگر جوابی باشد با ✓ یا ✗ می‌گوید درست است یا نه)، «حل قدم‌به‌قدم»، «آزمونک از این»، نقشهٔ ذهنی، «ساده‌تر بگو» و «ترجمه کن».",
+   "نوشتهٔ شما اول روی خود پنل با مدل‌های آفلاین خوانده می‌شود و فقط همان متن ارسال می‌شود؛ اگر خوانده نشود، چیزی ارسال نمی‌شود. پاسخ‌ها به زبانی می‌آیند که نوشته‌اید.",
+   "نواری در بالا کار در حال انجام و ثانیه‌ها را با دکمهٔ لغو نشان می‌دهد؛ اگر چیزی شکست بخورد دلیلش را با «دوباره» می‌گوید. بدون انتخاب، + ← نمودار هوشمند، آزمونک هوشمند یا نقشهٔ ذهنی هوشمند از موضوعی که می‌نویسید می‌سازند."
   ],
   "tipEn": "Write «2x + 3 = 11», select it and tap «Solve step by step».",
   "tipFa": "«۲x + ۳ = ۱۱» را بنویسید، انتخابش کنید و «حل قدم‌به‌قدم» را بزنید."
@@ -486,13 +484,13 @@
   "titleFa": "اتاق مشترک",
   "stepsEn": [
    "Share → «Live class on this network», or Settings → Class → Shared room. Create the room: one QR code appears.",
-   "Students scan it with the phone camera: VuraVision opens and joins. If the app is not installed, the page says so.",
+   "Students scan it with the phone camera and tap «Open in VuraVision» (in Chrome), or scan it from inside VuraVision: Shared room → Join → Scan QR. If the app is not installed, the page says so.",
    "Approve each device after checking its 4-digit code, and give it View, Control or Collaborate.",
    "Viewers follow your view as you write; when they move around on their own, «Follow the teacher» brings them back."
   ],
   "stepsFa": [
    "اشتراک ← «کلاس زنده روی همین شبکه» یا تنظیمات ← کلاس ← اتاق مشترک. اتاق را بسازید تا یک کد QR نمایش داده شود.",
-   "دانش‌آموزان آن را با دوربین گوشی اسکن می‌کنند: ویراویژن باز می‌شود و وارد اتاق می‌شود. اگر برنامه نصب نباشد، صفحه همین را می‌گوید.",
+   "دانش‌آموزان آن را با دوربین گوشی اسکن می‌کنند و در Chrome «باز کردن در برنامه» را می‌زنند، یا از داخل خود ویراویژن اسکن می‌کنند: اتاق مشترک ← ورود ← اسکن QR. اگر برنامه نصب نباشد، صفحه همین را می‌گوید.",
    "هر دستگاه را پس از بررسی کد ۴ رقمی‌اش بپذیرید و به آن نقش مشاهده، کنترل یا همکاری بدهید.",
    "بینندگان هنگام نوشتن شما نمای شما را دنبال می‌کنند؛ اگر خودشان جابه‌جا شوند، «دنبال کردن معلم» آن‌ها را برمی‌گرداند."
   ],
@@ -505,13 +503,13 @@
   "titleEn": "Settings, calibration and a clean board",
   "titleFa": "تنظیمات، کالیبراسیون و تختهٔ تمیز",
   "stepsEn": [
-   "Settings (bottom right) has General (language, panel size, light or dark, fonts), Pen and touch, Board, Smart, Class and About.",
+   "Settings (bottom right) has General (language, panel size, interface size, light or dark, fonts), Pen and touch, Board, Smart, Class and About. Choose your panel size first, then make the interface a step smaller or larger if you like.",
    "Calibration: pen tips and palm, the shape hold time (half a second by default) and real centimetres.",
    "«I teach» (Settings → Class) puts your subject's tools first in +.",
    "The corner button hides every tool, leaving only itself, for a clean board while you present."
   ],
   "stepsFa": [
-   "تنظیمات (پایین راست) شامل عمومی (زبان، اندازهٔ نمایشگر، روشن یا تیره، فونت)، قلم و لمس، تخته، هوشمند، کلاس و درباره است.",
+   "تنظیمات (پایین راست) شامل عمومی (زبان، اندازهٔ نمایشگر، اندازهٔ رابط، روشن یا تیره، فونت)، قلم و لمس، تخته، هوشمند، کلاس و درباره است. اول اندازهٔ نمایشگر را انتخاب کنید، بعد اگر خواستید رابط را یک پله کوچک‌تر یا بزرگ‌تر کنید.",
    "کالیبراسیون: سر قلم و کف دست، زمان مکث برای شکل (پیش‌فرض نیم ثانیه) و سانتی‌متر واقعی.",
    "«درس من» (تنظیمات ← کلاس) ابزارهای درس شما را اول فهرست + می‌آورد.",
    "دکمهٔ گوشه همهٔ ابزارها را پنهان می‌کند و فقط خودش می‌ماند تا هنگام ارائه تخته تمیز باشد."
