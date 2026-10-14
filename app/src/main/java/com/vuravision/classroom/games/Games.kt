@@ -10,18 +10,12 @@ import android.widget.*
 import com.vuravision.classroom.R
 import com.vuravision.classroom.rename
 import com.vuravision.classroom.ui.Gallery
-import com.vuravision.classroom.ui.IconCatalog
-import com.vuravision.classroom.ui.MUTED
-import com.vuravision.classroom.ui.NAVY
 import com.vuravision.classroom.ui.ORANGE
-import com.vuravision.classroom.ui.PAPER
 import com.vuravision.classroom.ui.TEAL
 import com.vuravision.classroom.ui.button
-import com.vuravision.classroom.ui.card
 import com.vuravision.classroom.ui.column
 import com.vuravision.classroom.ui.dp
 import com.vuravision.classroom.ui.label
-import com.vuravision.classroom.ui.navigationHeading
 import com.vuravision.classroom.ui.pad
 import com.vuravision.classroom.ui.rounded
 import com.vuravision.classroom.ui.row
@@ -261,7 +255,7 @@ object Games {
         NativeGames.keys + QuizCatalog.keys
 
     fun show(context: Context, back: (() -> Unit)? = null) {
-        val g = Gallery(context, context.s("games"), context.s("games_intro"), back)
+        val g = Gallery(context, context.s("games"), context.s("games_intro"), back, 210)
         g.search.hint = context.tr("Search games", "جستجوی بازی‌ها")
         var category = "all"
         val cards = keys.mapIndexed { i, key ->
@@ -296,41 +290,52 @@ object Games {
         else -> if (key in QuizCatalog.keys)"math" else key
     }
 
-    /** A card per game: who plays (two players or the class), the name, the rule in short, and a sample question for quizzes. */
+    /** One picture per game: games are chosen by sight, like on a phone's game shelf. */
+    private val glyphs = mapOf(
+        "reaction" to "⚡", "draw" to "🤠", "potato" to "🥔", "timing" to "🎯", "stroop" to "🎨", "tap" to "👆", "tug" to "🪢", "swipe" to "🌀", "numrace" to "🔢", "sort" to "📶",
+        "pin" to "📍", "tiles" to "🧩", "gridlight" to "💡", "math" to "➕", "sum" to "🧮", "chain" to "🔗", "tfmath" to "✅", "evenodd" to "⚖️", "operator" to "✖️", "compare" to "🔍",
+        "digits" to "🔟", "dots" to "🔵", "sheep" to "🐑", "clock" to "⏰", "simon" to "🎵", "pattern" to "🔳", "colormem" to "🌈", "emojiseq" to "😀", "scramble" to "🔤", "odd" to "👀",
+        "letter" to "🅰️", "shade" to "🌓", "arrow" to "➡️", "rstroop" to "🔴", "bigger" to "📏", "bigcircle" to "⭕", "trap" to "🪤", "evens" to "2️⃣", "mole" to "🐹", "hold" to "⏱️",
+        "pong" to "🏓", "ttt" to "❌", "c4" to "🟡", "rps" to "✊", "penalty" to "⚽", "pairs" to "🃏", "hilo" to "📈", "dice" to "🎲", "balloon" to "🎈"
+    )
+    private val tileColors = listOf(0xff0f9488.toInt() to 0xff22c3b0.toInt(), 0xfff97316.toInt() to 0xfffbab5d.toInt(), 0xff6d4bd8.toInt() to 0xff9b7bf2.toInt(), 0xffe11d63.toInt() to 0xfff2628f.toInt(), 0xff2563eb.toInt() to 0xff5b8ff5.toInt(), 0xff16a34a.toInt() to 0xff4cc777.toInt(), 0xffd97706.toInt() to 0xfff4b13d.toInt(), 0xff0891b2.toInt() to 0xff3cc0dc.toInt())
+    fun glyph(key: String) = glyphs[key.removePrefix("arc_")] ?: if (key in QuizCatalog.keys) "🧠" else "🎮"
+
+    /** A colorful tile per game: its picture, its name and who plays; the rule is shown when the game opens. */
     private fun card(context: Context, key: String, open: () -> Unit): View {
         val duel = key in NativeGames.keys
-        val content = context.column().apply {
-            setPadding(context.dp(16), context.dp(14), context.dp(16), context.dp(16))
-            addView(
-                context.row().apply {
-                    addView(
-                        android.widget.ImageView(context).apply {
-                            setImageResource(IconCatalog.resource(if (duel)"games" else "math", true))
-                            setColorFilter(Color.WHITE)
-                            background = rounded(if (duel)TEAL else NAVY, context.dp(14).toFloat())
-                            setPadding(context.dp(10), context.dp(10), context.dp(10), context.dp(10))
-                        },
-                        LinearLayout.LayoutParams(context.dp(48), context.dp(48))
-                    )
-                    addView(context.label(if (duel)context.tr("Two players", "دو نفره")else context.tr("Whole class", "کل کلاس"), 12f, if (duel)TEAL else NAVY, true).apply { setPaddingRelative(context.dp(10), 0, 0, 0) })
-                }
-            )
-            addView(context.label(context.s(key), 19f, NAVY, true).apply { setPadding(context.dp(4), context.dp(10), context.dp(4), 0) })
-            addView(
-                context.label(context.s(rule(key)), 13f, MUTED).apply {
-                    maxLines = 3
-                    ellipsize = android.text.TextUtils.TruncateAt.END
-                }
-            )
-            if (key in QuizCatalog.keys || key == "math_race") {
-                val example = GameEngine(key, Random(42)).apply { next(0) }
-                addView(context.label(example.question, 16f, TEAL, true))
-            }
-        }
-        return context.card(content, cornerRadius = 20, elevation = 1).apply {
+        val (from, to) = tileColors[(keys.indexOf(key).coerceAtLeast(0) * 5) % tileColors.size]
+        return context.column().apply {
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            setPadding(context.dp(12), context.dp(16), context.dp(12), context.dp(14))
+            background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR, intArrayOf(from, to)).apply { cornerRadius = context.dp(24).toFloat() }
+            elevation = context.dp(3).toFloat()
+            minimumHeight = context.dp(176)
             isClickable = true
             isFocusable = true
             contentDescription = context.s(key)
+            addView(
+                context.label(glyph(key), 44f, Color.WHITE).apply {
+                    gravity = android.view.Gravity.CENTER
+                    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                },
+                LinearLayout.LayoutParams(-1, context.dp(72))
+            )
+            addView(
+                context.label(context.s(key), 17f, Color.WHITE, true).apply {
+                    gravity = android.view.Gravity.CENTER
+                    maxLines = 2
+                },
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(6) }
+            )
+            addView(
+                context.label(if (duel) context.tr("2 players", "دو نفره") else context.tr("Whole class", "کل کلاس"), 12f, 0xddffffff.toInt(), true).apply {
+                    gravity = android.view.Gravity.CENTER
+                    background = rounded(0x33ffffff, context.dp(10).toFloat())
+                    setPadding(context.dp(10), context.dp(2), context.dp(10), context.dp(2))
+                },
+                LinearLayout.LayoutParams(-2, -2).apply { topMargin = context.dp(8) }
+            )
             setOnClickListener { open() }
         }
     }
@@ -364,36 +369,42 @@ object Games {
         }
         val root =
             context.column().apply {
-                setBackgroundColor(PAPER)
+                // The same dark arena as the two-player games: player colors glow, it reads as a game, not a form.
+                background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(NativeGames.ARENA_TOP, NativeGames.ARENA_BOTTOM))
                 fitsSystemWindows = true
                 pad(14)
             }
         val header = context.row()
         root.addView(
-            context.navigationHeading(
-                title ?: context.s(key),
-                back?.let { action ->
-                    {
-                        d.dismiss()
-                        action()
-                    }
+            context.row().apply {
+                gravity = Gravity.CENTER_VERTICAL
+                if (back != null) {
+                    addView(
+                        com.vuravision.classroom.ui.WorkspaceIcon(context, "menu_back", context.s("menu_back")) {
+                            d.dismiss()
+                            back()
+                        }.apply { setColorFilter(Color.WHITE) },
+                        LinearLayout.LayoutParams(context.dp(48), context.dp(48))
+                    )
                 }
-            )
+                addView(context.label(glyph(key) + "  " + (title ?: context.s(key)), 22f, Color.WHITE, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = context.dp(8) })
+            }
         )
-        val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
+        val score = context.label("0 : 0", 27f, Color.WHITE, true).apply { gravity = Gravity.CENTER }
         val names = context.row()
         repeat(2) { i ->
-            val label = context.label(GamePlayers.name(context, i), 16f, if (i == 0)TEAL else ORANGE, true).apply {
+            val label = context.label(GamePlayers.name(context, i), 16f, Color.WHITE, true).apply {
                 gravity = Gravity.CENTER
-                minimumHeight = context.dp(48)
+                minimumHeight = context.dp(44)
+                background = rounded(if (i == 0)TEAL else ORANGE, context.dp(22).toFloat())
                 setOnClickListener { rename(i) }
             }
             nameLabels.add(label)
-            names.addView(label, LinearLayout.LayoutParams(0, -2, 1f))
+            names.addView(label, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(context.dp(6), context.dp(8), context.dp(6), 0) })
         }
         root.addView(names)
         root.addView(score)
-        root.addView(context.label(context.s("game_layout_help"), 13f, MUTED))
+        root.addView(context.label(context.s("game_layout_help"), 13f, 0xb3ffffff.toInt()).apply { gravity = Gravity.CENTER })
         val area = context.column()
         val prompts = mutableListOf<TextView>()
         root.addView(area, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -419,7 +430,8 @@ object Games {
                                         else -> if (key in QuizCatalog.keys) "math" else key
                                     }
                             ),
-                            24f
+                            26f,
+                            Color.WHITE
                         )
                         .apply { gravity = Gravity.CENTER },
                     LinearLayout.LayoutParams(-1, -1)
@@ -456,8 +468,8 @@ object Games {
                     context
                         .label(
                             "${context.s("winner")}: ${GamePlayers.display(context,if (game.finished)game.leader()else game.result)}",
-                            24f,
-                            TEAL,
+                            28f,
+                            0xffffd166.toInt(),
                             true
                         )
                         .apply { gravity = Gravity.CENTER }
@@ -471,7 +483,8 @@ object Games {
                                         "${i + 1}: ${a?.let{context.s(game.options[it])} ?: "—"}"
                                     }
                                     .joinToString("    "),
-                                18f
+                                18f,
+                                Color.WHITE
                             )
                             .apply { gravity = Gravity.CENTER }
                     )
@@ -479,7 +492,7 @@ object Games {
             }
             if (key == "tictac") {
                 area.addView(
-                    context.label("${context.s("turn")}: ${GamePlayers.name(context,game.turn)}", 18f)
+                    context.label("${context.s("turn")}: ${GamePlayers.name(context,game.turn)}", 18f, Color.WHITE)
                 )
                 repeat(3) { r ->
                     val row = context.row()
@@ -518,17 +531,16 @@ object Games {
                     context.column().apply {
                         pad(16)
                         gravity = Gravity.CENTER
-                        background =
-                            rounded(
-                                if (player == 0) 0xffe9f1ef.toInt() else 0xffffeee3.toInt(),
-                                24f
-                            )
+                        background = android.graphics.drawable.GradientDrawable(
+                            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+                            if (player == 0) intArrayOf(0xff0f8f84.toInt(), 0xff14b8a6.toInt()) else intArrayOf(0xffea6a12.toInt(), 0xfffb9a4b.toInt())
+                        ).apply { cornerRadius = context.dp(24).toFloat() }
                     }
                 col.addView(
                     context.label(
                         GamePlayers.name(context, player),
                         14f,
-                        if (player == 0) TEAL else ORANGE,
+                        0xccffffff.toInt(),
                         true
                     ).apply { setOnClickListener { rename(player) } }
                 )
@@ -541,13 +553,13 @@ object Games {
                     }
                 col.addView(
                     // Read from the back of the room: the question is the largest text on screen.
-                    context.label(prompt, if (prompt.length > 32)24f else 34f, NAVY, true).apply {
+                    context.label(prompt, if (prompt.length > 32)24f else 34f, Color.WHITE, true).apply {
                         gravity = Gravity.CENTER
                         prompts.add(this)
                     }
                 )
                 if (game.answers[player] != null && !game.resolved) {
-                    col.addView(context.label(context.s("choice_locked"), 16f))
+                    col.addView(context.label(context.s("choice_locked"), 16f, Color.WHITE))
                 }
                 val verticalOptions = game.options.size > 2
                 val opts = if (verticalOptions)context.column()else context.row()
@@ -567,7 +579,7 @@ object Games {
                                                 .getChildAt(j)
                                                 .isEnabled = false
                                         }
-                                        col.addView(context.label(context.s("choice_locked"), 16f))
+                                        col.addView(context.label(context.s("choice_locked"), 16f, Color.WHITE))
                                     }
                                 }
                             }

@@ -36,8 +36,8 @@ class PatternPreview(context: Context, private val renderer: Renderer, val key: 
         clip.addCircle(cx, cy, r, Path.Direction.CW)
         c.save()
         c.clipPath(clip)
-        // One board unit per dp, as on the board at 100%: lines as crisp and as dense as the teacher will see them.
-        val s = context.resources.displayMetrics.density
+        // Zoomed out (about 2.5 board units per dp) so a small circle still shows several dots, lines or squares.
+        val s = context.resources.displayMetrics.density * .4f
         c.translate(cx, cy)
         c.scale(s, s)
         val page = Page(background = key, panes = mutableListOf(Pane(background = color(), pattern = key)))

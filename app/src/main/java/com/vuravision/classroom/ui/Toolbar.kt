@@ -694,7 +694,11 @@ class AddPanel(
         row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val at = IntArray(2).also { anchor.getLocationInWindow(it) }
         val base = IntArray(2).also { scrim.getLocationInWindow(it) }
-        val left = (at[0] - base[0] + anchor.width / 2 - row.measuredWidth / 2).coerceIn(context.dp(8), (scrim.width - row.measuredWidth - context.dp(8)).coerceAtLeast(context.dp(8)))
+        // Inside the panel's own width: beside it is the toolbar, which would cover the bubble's end.
+        val box = IntArray(2).also { scroll.getLocationInWindow(it) }
+        val minLeft = box[0] - base[0] + context.dp(8)
+        val maxLeft = (box[0] - base[0] + scroll.width - row.measuredWidth - context.dp(8)).coerceAtLeast(minLeft)
+        val left = (at[0] - base[0] + anchor.width / 2 - row.measuredWidth / 2).coerceIn(minLeft, maxLeft)
         val top = (at[1] - base[1] - row.measuredHeight - context.dp(6)).let { if (it < context.dp(8)) at[1] - base[1] + anchor.height + context.dp(6) else it }
         scrim.addView(
             row,

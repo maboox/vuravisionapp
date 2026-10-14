@@ -19,7 +19,7 @@ import com.vuravision.classroom.pick
  * Why one shared screen: both catalogs answer the same question ("what can I show the class now?") and should
  * look and behave the same.
  */
-class Gallery(private val context: Context, title: String, intro: String, back: (() -> Unit)?) {
+class Gallery(private val context: Context, title: String, intro: String, back: (() -> Unit)?, private val tileDp: Int = 0) {
     val dialog = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
     val count = context.label("", 14f, MUTED)
     val filters = context.column()
@@ -46,6 +46,7 @@ class Gallery(private val context: Context, title: String, intro: String, back: 
     /** 1 column on a phone, up to 4 on a wide panel; cards stay at least ~300dp wide. */
     val columns = context.resources.configuration.screenWidthDp.let { w ->
         when {
+            tileDp > 0 -> (w / tileDp).coerceIn(2, 7)
             w < 620 -> 1
             w < 1000 -> 2
             w < 1400 -> 3

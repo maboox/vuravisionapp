@@ -7,16 +7,13 @@ import android.widget.*
 import com.vuravision.classroom.ActivityClock
 import com.vuravision.classroom.R
 import com.vuravision.classroom.rename
-import com.vuravision.classroom.ui.MUTED
 import com.vuravision.classroom.ui.NAVY
 import com.vuravision.classroom.ui.ORANGE
-import com.vuravision.classroom.ui.PAPER
 import com.vuravision.classroom.ui.TEAL
 import com.vuravision.classroom.ui.button
 import com.vuravision.classroom.ui.column
 import com.vuravision.classroom.ui.dp
 import com.vuravision.classroom.ui.label
-import com.vuravision.classroom.ui.navigationHeading
 import com.vuravision.classroom.ui.pad
 import com.vuravision.classroom.ui.row
 import com.vuravision.classroom.ui.s
@@ -28,37 +25,44 @@ import kotlin.random.Random
 object NativeGames {
     val ids = listOf("reaction", "draw", "potato", "timing", "stroop", "tap", "tug", "swipe", "numrace", "sort", "pin", "tiles", "gridlight", "math", "sum", "chain", "tfmath", "evenodd", "operator", "compare", "digits", "dots", "sheep", "clock", "simon", "pattern", "colormem", "emojiseq", "scramble", "odd", "letter", "shade", "arrow", "rstroop", "bigger", "bigcircle", "trap", "evens", "mole", "hold", "pong", "ttt", "c4", "rps", "penalty", "pairs", "hilo", "dice", "balloon")
     val keys = ids.map { "arc_$it" }
+
+    /** The arena behind every two-player game: deep night blue, so the two player colors glow. */
+    const val ARENA_TOP = 0xff1d1748.toInt()
+    const val ARENA_BOTTOM = 0xff2d2470.toInt()
+
+    /**
+     * A game screen like a phone game: a dark arena, the two players as colored name pills (tap to rename), the game
+     * itself as large as possible, and one footer with Start, layout, restart and Close.
+     */
     fun open(context: Context, key: String, back: (() -> Unit)? = null) {
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val root = context.column().apply {
-            setBackgroundColor(PAPER)
+            background = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(ARENA_TOP, ARENA_BOTTOM))
             fitsSystemWindows = true
             pad(12)
         }
-        val header = context.row()
-        header.addView(context.label(context.s(key), 22f, NAVY, true), LinearLayout.LayoutParams(0, -2, 1f))
-        header.addView(context.button(context.s("close")) { d.dismiss() })
-        header.removeViewAt(0)
-        root.addView(
-            context.navigationHeading(
-                context.s(key),
-                back?.let { action ->
-                    {
-                        d.dismiss()
-                        action()
-                    }
-                }
+        val heading = context.row().apply { gravity = Gravity.CENTER_VERTICAL }
+        if (back != null) {
+            heading.addView(
+                com.vuravision.classroom.ui.WorkspaceIcon(context, "menu_back", context.s("menu_back")) {
+                    d.dismiss()
+                    back()
+                }.apply { setColorFilter(Color.WHITE) },
+                LinearLayout.LayoutParams(context.dp(48), context.dp(48))
             )
-        )
-        root.addView(context.label(context.s("rule_$key"), 14f, MUTED))
+        }
+        heading.addView(context.label(Games.glyph(key) + "  " + context.s(key), 22f, Color.WHITE, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = context.dp(8) })
+        heading.addView(context.label(context.s("rule_$key"), 14f, 0xccffffff.toInt()).apply { maxLines = 2 }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = context.dp(16) })
+        root.addView(heading)
         val game = ArcadeView(context, key.removePrefix("arc_"))
-        val names = context.row()
+        val names = context.row().apply { setPadding(0, context.dp(8), 0, context.dp(4)) }
         val labels = (0..1).map { i ->
-            context.label(GamePlayers.name(context, i), 16f, if (i == 0)TEAL else ORANGE, true).apply {
+            context.label(GamePlayers.name(context, i), 16f, Color.WHITE, true).apply {
                 gravity = Gravity.CENTER
-                minimumHeight = context.dp(48)
+                minimumHeight = context.dp(44)
+                background = com.vuravision.classroom.ui.rounded(if (i == 0) TEAL else ORANGE, context.dp(22).toFloat())
                 contentDescription = context.tr("Rename player ${i + 1}", "تغییر نام بازیکن ${i + 1}")
-                names.addView(this, LinearLayout.LayoutParams(0, -2, 1f))
+                names.addView(this, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(context.dp(6), 0, context.dp(6), 0) })
             }
         }
         fun rename(i: Int) {
@@ -74,17 +78,18 @@ object NativeGames {
         game.onRename = ::rename
         root.addView(names)
         root.addView(game, LinearLayout.LayoutParams(-1, 0, 1f))
-        val actions = context.row()
-        actions.addView(context.button(context.tr("Start / next round", "شروع / دور بعد"), true) { game.startRound() })
+        val actions = context.row().apply { gravity = Gravity.CENTER_VERTICAL }
+        actions.addView(context.button(context.tr("Start / next round", "شروع / دور بعد"), true) { game.startRound() }, LinearLayout.LayoutParams(-2, context.dp(56)))
         actions.addView(
             context.button(context.tr("Side / face-to-face", "کنار هم / روبه‌رو")) {
                 game.face = !game.face
                 game.invalidate()
-            }
+            },
+            LinearLayout.LayoutParams(-2, context.dp(56)).apply { marginStart = context.dp(8) }
         )
-        actions.addView(context.button(context.s("restart")) { game.restart() })
-        root.addView(context.scrollRow(actions))
-        root.addView(context.scrollRow(header))
+        actions.addView(context.button(context.s("restart")) { game.restart() }, LinearLayout.LayoutParams(-2, context.dp(56)).apply { marginStart = context.dp(8) })
+        actions.addView(context.button(context.s("close")) { d.dismiss() }, LinearLayout.LayoutParams(-2, context.dp(56)).apply { marginStart = context.dp(8) })
+        root.addView(context.scrollRow(actions), LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(8) })
         d.setContentView(root)
         d.setOnDismissListener { game.stop() }
         d.show()
@@ -533,7 +538,7 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         last = now
         // The score swells for a moment when it changes, so everyone notices the point.
         val pop = fx.pop()
-        text(c, "${scores[0]}   :   ${scores[1]}    ·    ${context.s("game_round")} $round", width / 2f, 42f + pop * 6f, 28f * (1f + pop * .45f))
+        hud(c, pop)
         if (key in setOf("ttt", "c4")) {
             drawBoard(c)
             fx.confetti(c, height)
@@ -541,12 +546,15 @@ class ArcadeView(context: Context, val key: String) : View(context) {
             return
         }
         if (key == "pong") {
-            rect(c, RectF(0f, 70f, width.toFloat(), height.toFloat()), PAPER)
+            rect(c, RectF(0f, 70f, width.toFloat(), height.toFloat()), 0x1affffff)
+            p.color = 0x33ffffff
+            p.strokeWidth = 3f
+            c.drawLine(width / 2f, 80f, width / 2f, height - 10f, p)
             val h = height - 70f
             rect(c, RectF(20f, 70 + (paddles[0].toFloat() - .12f) * h, 34f, 70 + (paddles[0].toFloat() + .12f) * h), TEAL)
             rect(c, RectF(width - 34f, 70 + (paddles[1].toFloat() - .12f) * h, width - 20f, 70 + (paddles[1].toFloat() + .12f) * h), ORANGE)
-            circle(c, (ballX * width).toFloat(), 70 + (ballY * h).toFloat(), 12f, NAVY)
-            if (!active)text(c, message.ifBlank { context.s("start") }, width / 2f, height / 2f, 28f)
+            circle(c, (ballX * width).toFloat(), 70 + (ballY * h).toFloat(), 14f, Color.WHITE)
+            if (!active)text(c, message.ifBlank { context.s("start") }, width / 2f, height / 2f, 30f, Color.WHITE)
             countdown(c, now)
             fx.confetti(c, height)
             if ((active && !clock.paused || fx.busy) && isShown)postInvalidateOnAnimation()
@@ -556,7 +564,7 @@ class ArcadeView(context: Context, val key: String) : View(context) {
             c.save()
             c.clipRect(r)
             c.translate(fx.shake(player), 0f)
-            rect(c, r, if (player == 0)0xffeef8f7.toInt()else 0xfffff6e8.toInt())
+            panelBackground(c, r, player)
             val scale = min(r.width() / 500f, r.height() / 600f).coerceAtLeast(.001f)
             c.translate(r.left + (r.width() - 500f * scale) / 2, r.top + (r.height() - 600f * scale) / 2)
             if (face && player == 0) {
@@ -574,6 +582,27 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         val animating = key in timed || (key in memory && elapsed < 2.5) || key in setOf("reaction", "draw", "potato", "timing", "balloon") || (key == "pairs" && opened.any { it.size == 2 })
         if (active && !clock.paused && isAttachedToWindow && isShown && animating)postInvalidateOnAnimation()
     }
+
+    /** Score board: each player's score in their color, the round between them. */
+    private fun hud(c: Canvas, pop: Float) {
+        val size = 30f * (1f + pop * .45f)
+        val mid = width / 2f
+        p.style = Paint.Style.FILL
+        p.color = 0x22ffffff
+        c.drawRoundRect(mid - 170f, 8f, mid + 170f, 62f, 27f, 27f, p)
+        text(c, scores[0].toString(), mid - 110f, 46f + pop * 6f, size, 0xff5eead4.toInt())
+        text(c, scores[1].toString(), mid + 110f, 46f + pop * 6f, size, 0xfffdba74.toInt())
+        text(c, "${context.s("game_round")} $round", mid, 43f, 18f, 0xccffffff.toInt())
+    }
+
+    /** Each player's half: their color as a soft gradient, rounded like a card. */
+    private fun panelBackground(c: Canvas, r: RectF, player: Int) {
+        val (from, to) = if (player == 0) 0xff0f8f84.toInt() to 0xff14b8a6.toInt() else 0xffea6a12.toInt() to 0xfffb9a4b.toInt()
+        p.style = Paint.Style.FILL
+        p.shader = android.graphics.LinearGradient(r.left, r.top, r.right, r.bottom, from, to, android.graphics.Shader.TileMode.CLAMP)
+        c.drawRoundRect(r, 28f, 28f, p)
+        p.shader = null
+    }
     private fun countdown(c: Canvas, now: Long) {
         if (active && now < start) {
             val left = ((start - now + 799) / 800).toInt().coerceIn(1, 3)
@@ -581,7 +610,10 @@ class ArcadeView(context: Context, val key: String) : View(context) {
             p.color = 0x99000000.toInt()
             p.style = Paint.Style.FILL
             c.drawRect(0f, 70f, width.toFloat(), height.toFloat(), p)
-            text(c, left.toString(), width / 2f, height / 2f + 60f, min(width, height) * .32f * (1f + (1f - t) * .25f), Color.WHITE)
+            val radius = min(width, height) * .2f * (1f + (1f - t) * .15f)
+            p.color = 0x33ffffff
+            c.drawCircle(width / 2f, height / 2f, radius, p)
+            text(c, left.toString(), width / 2f, height / 2f + radius * .45f, radius * 1.25f, Color.WHITE)
             if (left != lastCount) {
                 lastCount = left
                 Sounds.play(context, Sounds.Cue.TICK)
@@ -592,20 +624,19 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         }
     }
     private fun drawPanel(c: Canvas, i: Int, now: Long, elapsed: Double) {
-        val accent = if (i == 0)TEAL else ORANGE
-        rect(c, RectF(0f, 0f, 500f, 600f), if (i == 0)0xffeef8f7.toInt()else 0xfffff6e8.toInt())
-        text(c, GamePlayers.name(context, i), 250f, 38f, 24f, accent)
+        val accent = Color.WHITE
+        text(c, GamePlayers.name(context, i), 250f, 38f, 24f, 0xccffffff.toInt())
         if (!active) {
-            text(c, message.ifBlank { context.s("start") }, 250f, 250f, 24f)
+            text(c, message.ifBlank { context.s("start") }, 250f, 250f, 26f, Color.WHITE)
             return
         }
         if (now < start)return // the 3-2-1 countdown is drawn over both panels
         if (choices[i] >= 0 && key in setOf("rps", "penalty", "dice", "hilo")) {
-            text(c, context.tr("Choice locked", "انتخاب ثبت شد"), 250f, 270f, 25f)
+            text(c, context.tr("Choice locked", "انتخاب ثبت شد"), 250f, 270f, 25f, Color.WHITE)
             return
         }
         if (measure[i].isFinite()) {
-            text(c, context.tr("Done — wait", "ثبت شد — صبر کنید"), 250f, 270f, 24f)
+            text(c, context.tr("Done — wait", "ثبت شد — صبر کنید"), 250f, 270f, 24f, Color.WHITE)
             return
         }
         val revealing = key in memory && elapsed < 2.5
@@ -624,24 +655,32 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         if (key in memory && !revealing)prompt = if (key == "sum")"SUM? / جمع؟"else "?"
         if (key == "sum" && revealing)prompt = game.sequence[(elapsed / .83).toInt().coerceAtMost(2)].toString()
         if (key == "penalty")prompt = if (i == round % 2)context.tr("Striker", "مهاجم")else context.tr("Goalkeeper", "دروازه‌بان")
-        text(c, prompt, 250f, 100f, if (prompt.length > 28)18f else 28f, if (key in setOf("stroop", "rstroop"))game.colors[game.colorIndex]else NAVY)
+        if (key in setOf("stroop", "rstroop")) {
+            // The ink color is the puzzle: a white plate keeps every color readable on the player's half.
+            rect(c, RectF(60f, 62f, 440f, 122f), Color.WHITE)
+            text(c, prompt, 250f, 102f, if (prompt.length > 28)18f else 30f, game.colors[game.colorIndex])
+        } else {
+            text(c, prompt, 250f, 104f, if (prompt.length > 28)20f else 34f, Color.WHITE)
+        }
         if (key in setOf("dots", "sheep")) {
             repeat(game.target) { j ->
                 val x = 65f + (j % 6) * 65
                 val y = 145f + (j / 6) * 35
                 circle(c, x, y, 10f, accent)
                 if (key == "sheep") {
-                    circle(c, x + 9, y - 6, 6f, NAVY)
-                    rect(c, RectF(x - 5, y + 6, x - 2, y + 16), NAVY)
+                    circle(c, x + 9, y - 6, 6f, 0xff20194f.toInt())
+                    rect(c, RectF(x - 5, y + 6, x - 2, y + 16), 0xff20194f.toInt())
                 }
             }
             if (key == "sheep")repeat(3) { j -> circle(c, 90f + j * 110, 242f, 7f, ORANGE) }
         }
         if (key == "clock") {
             val min = game.sequence[0]
-            p.color = NAVY
+            circle(c, 250f, 180f, 64f, Color.WHITE)
+            p.color = 0xff20194f.toInt()
             p.style = Paint.Style.STROKE
-            p.strokeWidth = 3f
+            p.strokeWidth = 4f
+            p.strokeCap = Paint.Cap.ROUND
             c.drawCircle(250f, 180f, 62f, p)
             fun hand(angle: Double, len: Float) {
                 c.drawLine(250f, 180f, 250 + sin(angle).toFloat() * len, 180 - cos(angle).toFloat() * len, p)
@@ -651,17 +690,17 @@ class ArcadeView(context: Context, val key: String) : View(context) {
             p.style = Paint.Style.FILL
         }
         if (key == "timing") {
-            rect(c, RectF(40f, 175f, 460f, 205f), 0xffdad6e7.toInt())
-            rect(c, RectF(225f, 170f, 275f, 210f), TEAL)
-            circle(c, (250 + 200 * sin(elapsed * 3)).toFloat(), 190f, 11f, ORANGE)
+            rect(c, RectF(40f, 175f, 460f, 205f), 0x44ffffff)
+            rect(c, RectF(225f, 170f, 275f, 210f), Color.WHITE)
+            circle(c, (250 + 200 * sin(elapsed * 3)).toFloat(), 190f, 13f, 0xff20194f.toInt())
         }
-        if (key == "hold")text(c, if (pressed[i] > 0)"…"else "Hold → 5 s → release", 250f, 190f, 23f)
+        if (key == "hold")text(c, if (pressed[i] > 0)"…"else "Hold → 5 s → release", 250f, 190f, 23f, Color.WHITE)
         if (key == "balloon") {
             val size = if (pressed[i] > 0)min(75.0, 20 + (now - pressed[i]) / 65.0)else 20.0
             circle(c, 250f, 185f, size.toFloat(), accent)
         }
         if (key == "colormem" && revealing)rect(c, RectF(180f, 145f, 320f, 240f), game.colors[game.colorIndex])
-        if (key in sequenceKeys)text(c, "${progress[i]} / ${if (key == "gridlight")8 else game.sequence.size}", 250f, 235f, 20f, MUTED)
+        if (key in sequenceKeys)text(c, "${progress[i]} / ${if (key == "gridlight")8 else game.sequence.size}", 250f, 235f, 20f, 0xccffffff.toInt())
         if (revealing && key in setOf("digits", "sum", "colormem"))return
         game.options.forEachIndexed { j, value ->
             val rr = optionBounds(j, game.options.size)
@@ -691,9 +730,11 @@ class ArcadeView(context: Context, val key: String) : View(context) {
                 if (j !in used[i] && j !in opened[i])label = "?"else color = 0xffc5e9d7.toInt()
             }
             if (j in used[i] && key in sequenceKeys)color = 0xffd6d9dc.toInt()
+            // Answer buttons as raised white cards (a soft shadow under each), like buttons in a mobile game.
+            rect(c, RectF(r.left, r.top + 5f, r.right, r.bottom + 5f), 0x33000000)
             rect(c, r, color)
             if (key == "bigcircle") {
-                circle(c, r.centerX(), r.centerY(), if (j == game.correct)55f else 32f, accent)
+                circle(c, r.centerX(), r.centerY(), if (j == game.correct)55f else 32f, if (i == 0)TEAL else ORANGE)
             } else {
                 optionText(c, label, r)
             }
@@ -708,11 +749,14 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         for (row in 0 until rows) {
             for (col in 0 until cols) {
                 val idx = row * cols + col
-                rect(c, RectF(left + col * size + 3, top + row * size + 3, left + (col + 1) * size - 3, top + (row + 1) * size - 3), PAPER)
-                if (cells[idx] >= 0)circle(c, left + (col + .5f) * size, top + (row + .5f) * size, size * .3f, if (cells[idx] == 0)TEAL else ORANGE)
+                rect(c, RectF(left + col * size + 4, top + row * size + 4, left + (col + 1) * size - 4, top + (row + 1) * size - 4), 0x22ffffff)
+                if (cells[idx] >= 0) {
+                    circle(c, left + (col + .5f) * size, top + (row + .5f) * size, size * .34f, Color.WHITE)
+                    circle(c, left + (col + .5f) * size, top + (row + .5f) * size, size * .3f, if (cells[idx] == 0)TEAL else ORANGE)
+                }
             }
         }
-        text(c, if (active)GamePlayers.name(context, turn)else message.ifBlank { context.s("start") }, width / 2f, height - 15f, 22f)
+        text(c, if (active)GamePlayers.name(context, turn)else message.ifBlank { context.s("start") }, width / 2f, height - 15f, 24f, if (active) (if (turn == 0) TEAL else ORANGE) else Color.WHITE)
     }
     private fun boardTap(x: Float, y: Float) {
         val cols = if (key == "ttt")3 else 7
