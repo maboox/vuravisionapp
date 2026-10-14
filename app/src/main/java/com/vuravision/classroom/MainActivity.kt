@@ -403,6 +403,7 @@ class MainActivity : Activity() {
         if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
         items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("table",tr("Edit cells","ویرایش خانه‌ها")){editTable(t)}}
+        items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("chart",tr("Chart","نمودار"),tr("Chart from this table","نمودار از این جدول")){chartFromTable(t)}}
         if(items.size==2){
             // Two objects selected: connect them with an arrow from the first chosen to the second, or remove the link.
             val (a,b)=board.selected.mapNotNull{id->items.firstOrNull{it.id==id}}.takeIf{it.size==2}?.let{it[0] to it[1]}?:(items[0] to items[1])
@@ -794,7 +795,7 @@ c.addView(row().apply{
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"ai_chart"->aiChart();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2398,6 +2399,26 @@ c.addView(row().apply{
     private fun editTable(t:Item)=Tables.editor(this,t){rows->
         val before=Tables.cells(t);val cw=t.w/before.first().size;val rh=t.h/before.size
         store.page.items.firstOrNull{it.id==t.id&&!it.locked}?.let{o->store.editMetadata{o.text=Tables.encode(rows);o.w=cw*rows.first().size;o.h=rh*rows.size};board.sceneChanged()};refreshSelectionBar()
+    }
+    /** Offline: a bar chart from the table's first numeric column, beside the table. */
+    private fun chartFromTable(t:Item){
+        val spec=Charts.fromTable(Tables.cells(t))?:run{toast(tr("Add a column of numbers under a heading (two rows or more)","یک ستون عدد زیر یک عنوان بنویسید (دست‌کم دو ردیف)"));return}
+        insertChart(spec,contentBounds(listOf(t)))
+    }
+    /** A chart for any request ("rainfall in Tehran by month"), with data written by the AI. */
+    private fun aiChart(){
+        input(tr("What should the chart show?","نمودار چه چیزی را نشان دهد؟"),""){request->require(request.isNotBlank())
+            runAi(tr("Making the chart…","در حال ساخت نمودار…"),{ai->Charts.parse(ai.askJson(aiSystem(),Charts.prompt(request)))}){spec->
+                val c=board.center();insertChart(spec,RectF(c.x-350f,c.y-225f,c.x-350f,c.y-225f))}}
+    }
+    private fun insertChart(spec:Charts.Spec,near:RectF){
+        val dark=Color.luminance(store.page.panes.getOrNull(board.activePane)?.background?:Color.WHITE)<.35
+        val bitmap=Charts.render(spec,dark)
+        work({media.save(bitmap)}){name->
+            val item=Item(kind="image",asset=name,w=700f,h=450f,layerId=store.page.activeLayerId,pane=board.activePane)
+            (if(near.width()>0)freeSpot(near,item.w,item.h) else PointF(near.left,near.top)).let{item.x=it.x;item.y=it.y}
+            bitmap.recycle();addAndSelect(listOf(item),near.takeIf{it.width()>0})
+        }
     }
     private var spotlight:Spotlight?=null
     private var replay:Replay?=null

@@ -232,4 +232,31 @@ class AiTest {
             idle();shot(a,"summary")
         }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
     }
+
+    /** "Chart of …": the AI writes the data, the chart lands as a picture in the middle of the view. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun chartFromARequest(){
+        context.getSharedPreferences("vura",0).edit().putString("language","fa").putString("aiProvider","openai").commit()
+        reply={_,_->openAi("""{"title":"بارش تهران","type":"bar","labels":["دی","بهمن","اسفند","فروردین"],"values":[38,34,46,30],"unit":"میلی‌متر"}""")}
+        val ctl=Robolectric.buildActivity(MainActivity::class.java).setup();val a=ctl.get()
+        try{
+            MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}.invoke(a,"ai_chart");idle()
+            val d=ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog
+            views(d.window!!.decorView).filterIsInstance<EditText>().single().setText("بارش ماهانهٔ تهران")
+            d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            waitFor{a.store.page.items.any{it.kind=="image"}}
+            assertTrue(sent.last().second.contains("بارش ماهانهٔ تهران"))
+            idle();shot(a,"chart")
+        }finally{ctl.pause().stop().destroy();context.getSharedPreferences("vura",0).edit().clear().commit()}
+    }
+    @Test fun chartDataFromRepliesAndTables(){
+        val pie=Charts.parse(JSONObject("""{"title":"t","type":"pie","labels":["a","b","c"],"values":[1,-2,3]}"""))
+        assertEquals("a pie cannot show negative parts","bar",pie.type)
+        assertThrows(AiException::class.java){Charts.parse(JSONObject("""{"labels":["a"],"values":[1]}"""))}
+        val table=Charts.fromTable(listOf(listOf("شهر","استان","جمعیت"),listOf("تهران","تهران","۸٬۷۰۰"),listOf("مشهد","خراسان","3,001.5"),listOf("یادداشت","","")))!!
+        assertEquals("the first numeric column is used, Persian digits included",listOf(8700.0,3001.5),table.values)
+        assertEquals("جمعیت",table.title)
+        assertNull("a table without numbers makes no chart",Charts.fromTable(listOf(listOf("a","b"),listOf("x","y"),listOf("z","w"))))
+        listOf("bar","line","pie").forEach{type->val b=Charts.render(Charts.Spec("عنوان",type,listOf("یک","دو","سه"),listOf(3.0,7.0,5.0),"kg"));assertEquals(1400,b.width)
+            File("build/qa/chart-$type.png").apply{parentFile!!.mkdirs()}.outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)};b.recycle()}
+    }
 }
