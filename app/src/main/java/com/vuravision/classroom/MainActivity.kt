@@ -405,6 +405,7 @@ class MainActivity : Activity() {
         if(items.any{ObjectActions.canColor(it)})action("color",s("color")){open("color")}
         if(items.singleOrNull()?.kind in listOf("image","pdf"))action("crop",s("crop")){crop(items.single())}
         items.singleOrNull()?.takeIf{it.shape=="table"}?.let{t->action("table",tr("Edit cells","ویرایش خانه‌ها")){editTable(t)}}
+        items.singleOrNull()?.takeIf{it.shape=="frame"}?.let{f->action("rename",tr("Rename","نام قاب")){input(tr("Frame name","نام قاب"),f.text){v->require(v.length<=60);board.edit{if(it.id==f.id)it.text=v.trim()}}}}
         items.singleOrNull()?.takeIf{it.shape=="map_iran"}?.let{m->
             // Names cycle Persian → English → none (a blank map for "where is …?").
             val next=when(m.text){"fa"->"en";"en"->"";else->"fa"}
@@ -805,7 +806,7 @@ c.addView(row().apply{
             "timer","stopwatch","dice","scoreboard","picker"->floatingTools.open(key)
             "laser"->{board.tool="laser";board.clearSelection();refreshDock();toast(tr("Laser pen: lines fade by themselves","قلم لیزری: خط‌ها خودشان محو می‌شوند"))}
             "spotlight"->showSpotlight()
-            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"map_iran"->insertIranMap();"ai_chart"->aiChart();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
+            "ai_quiz"->aiQuiz();"class_quiz"->classQuizzes();"table"->insertTable();"map_iran"->insertIranMap();"frame"->insertFrame();"present_frames"->presentFrames();"ai_chart"->aiChart();"replay"->showReplay();"ai_mindmap"->aiMindMap();"ai_summary"->aiSummary();"ai_service"->aiSettings();"ai_image"->aiPicture()
             "files"->projectFileMenu()
             "new"->withPdfExit{confirm(s("new_confirm")){persist();documentId=newId();prefs.edit().putString("current",documentId).apply();projectStore.replace(Lesson(title=s("lesson"),pages=mutableListOf(newBoardPage(null))));whiteboard.clearSelection();whiteboard.reset()}}
             "open"->withPdfExit{pick("application/octet-stream",101)}
@@ -2413,6 +2414,23 @@ c.addView(row().apply{
             com.google.android.material.snackbar.Snackbar.make(canvasHost,tr("Summary added as the last page","خلاصه به‌عنوان صفحهٔ آخر اضافه شد"),com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
                 .setAction(tr("Share PDF with the class","PDF برای کلاس")){share()}.show()
         }
+    }
+    /** A frame around what is on screen now, numbered; lay the lesson out on a big board, then present frame by frame. */
+    private fun insertFrame(){
+        val v=board.viewportWorld();val w=(v.right-v.left)*.8f;val h=(v.bottom-v.top)*.8f
+        val n=Frames.of(store.page,board.activePane).size+1
+        val f=Frames.create(v.left+(v.right-v.left-w)/2,v.top+(v.bottom-v.top-h)/2,w,h,tr("Frame $n","قاب $n"),store.page.activeLayerId,board.activePane)
+        store.editMetadata{store.page.items.add(f)}
+        board.selected.clear();board.selected.add(f.id);board.tool="select";board.sceneChanged();refreshDock();refreshSelectionBar()
+    }
+    private var framePresenter:FramePresenter?=null
+    private fun presentFrames(){
+        val frames=Frames.of(store.page,board.activePane)
+        if(frames.isEmpty()){toast(tr("Add frames first: Add → Frame","اول قاب بگذارید: افزودن ← قاب"));return}
+        framePresenter?.let{canvasHost.removeView(it)}
+        board.clearSelection()
+        framePresenter=FramePresenter(this,frames,{f->board.showArea(contentBounds(listOf(f)))}){framePresenter?.let{canvasHost.removeView(it)};framePresenter=null}
+            .also{canvasHost.addView(it,FrameLayout.LayoutParams(-1,-1))}
     }
     private fun insertIranMap(){
         val c=board.center();val m=Maps.create(this,c.x-450f,c.y-400f,store.page.activeLayerId,board.activePane,if(resources.configuration.layoutDirection==View.LAYOUT_DIRECTION_RTL)"fa" else "en")

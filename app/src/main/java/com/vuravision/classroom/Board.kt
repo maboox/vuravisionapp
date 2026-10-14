@@ -357,6 +357,16 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         backingDirty=true;invalidate()
     }
 
+    /** Shows exactly [r] (plus a margin) in the free area: used to step through frames. */
+    fun showArea(r:RectF){
+        val panel=paneRect(activePane);val viewport=RectF(panel)
+        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
+        zoom=min(viewport.width()/density/(r.width()+80),viewport.height()/density/(r.height()+80)).coerceIn(.05f,20f)
+        tx=(viewport.centerX()-panel.left)/density-r.centerX()*zoom
+        ty=(viewport.centerY()-panel.top)/density-r.centerY()*zoom
+        backingDirty=true;onViewportChanged();invalidate()
+    }
+
     var keepToolAfterInsert = false
     fun insert(o: Item) {
         if(!sessionCanEdit||!store.editAllowed()||!store.page.canDraw())return

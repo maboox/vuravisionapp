@@ -417,6 +417,29 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Frames (item 62): two frames far apart; presenting zooms to each in turn and the board stays writable underneath. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun framesPresentOneAtATime(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);val run=MainActivity::class.java.getDeclaredMethod("runShortcut",String::class.java).apply{isAccessible=true}
+            run.invoke(a,"frame");settle(a)
+            val first=a.store.page.items.single{it.shape=="frame"}
+            a.store.editMetadata{a.store.page.items.add(Frames.create(first.x+3000f,first.y+1500f,first.w/2,first.h/2,"دوم",first.layerId,0))}
+            shot(a,"frame-inserted")
+            run.invoke(a,"present_frames");settle(a)
+            val presenter=views(a.window.decorView).filterIsInstance<FramePresenter>().single()
+            fun shown()=a.board.viewportWorld().let{RectF(it.left,it.top,it.right,it.bottom)}
+            assertTrue("first frame in view",shown().contains(contentBounds(listOf(first))))
+            presenter.go(1);settle(a)
+            val second=a.store.page.items.last{it.shape=="frame"}
+            assertTrue("second frame in view",shown().contains(contentBounds(listOf(second))));assertFalse("zoomed onto it, not the whole board",shown().contains(contentBounds(listOf(first))))
+            shot(a,"frame-presenting")
+            val bar=views(presenter).filterIsInstance<WorkspaceIcon>().first{it.key=="close"}
+            assertTrue("controls at the bottom",rect(bar).top>rect(presenter).centerY())
+            bar.performClick();settle(a);assertTrue(views(a.window.decorView).none{it is FramePresenter})
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()

@@ -174,6 +174,7 @@ class Renderer(private val media: Media) {
                 if(o.shape in GeometryTools.keys){GeometryTools.draw(c,o,media.context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f));c.restore();return}
                 if(o.shape=="table"){Tables.draw(c,o,p);c.restore();return}
                 if(o.shape=="map_iran"){Maps.draw(c,o,media.context,p);c.restore();return}
+                if(o.shape=="frame"){Frames.draw(c,o,p);c.restore();return}
                 p.style = Paint.Style.STROKE
                 if(o.flipX && o.shape in listOf("line","arrow","double_arrow")) { c.translate(o.w,0f);c.scale(-1f,1f) }
                 if(o.flipY && o.shape in listOf("line","arrow","double_arrow")) { c.translate(0f,o.h);c.scale(1f,-1f) }

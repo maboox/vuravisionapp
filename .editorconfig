@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 4
+indent_style = space
+ktlint_code_style = android_studio
+max_line_length = off
+# Rules that cannot be fixed automatically, or clash with deliberate choices:
+# long bilingual string literals, star imports of android.*, and SCREAMING_CASE theme tokens that are vars.
+ktlint_standard_max-line-length = disabled
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_property-naming = disabled
+ktlint_standard_backing-property-naming = disabled
+ktlint_standard_filename = disabled
+ktlint_standard_function-naming = disabled
+ktlint_standard_discouraged-comment-location = disabled
