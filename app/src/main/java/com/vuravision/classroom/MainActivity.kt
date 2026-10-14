@@ -1502,6 +1502,7 @@ c.addView(row().apply{
         }
     }
 
+    private var pagesUndo:String?=null
     private fun pages() {
         val returnMenu=menuReturn
         val c=column().apply{pad(14);layoutDirection=resources.configuration.layoutDirection}
@@ -1509,6 +1510,11 @@ c.addView(row().apply{
         val d=dialog("",c)
         d.window?.setTitle(s("pages"))
         d.window?.decorView?.layoutDirection=resources.configuration.layoutDirection
+        pagesUndo?.let{message->pagesUndo=null
+            c.addView(row().apply{gravity=Gravity.CENTER_VERTICAL;background=rounded(PRIMARY_CONTAINER,dp(14).toFloat());setPadding(dp(14),dp(4),dp(6),dp(4))
+                addView(label(message,15f,NAVY,true),LinearLayout.LayoutParams(0,-2,1f))
+                addView(button(tr("Undo","بازگردانی"),true){projectStore.undo();whiteboard.clearSelection();whiteboard.reset();refreshPages();d.dismiss();menuReturn=returnMenu;pages()},LinearLayout.LayoutParams(-2,dp(48)))
+            },LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(8)})}
         val actions=row();c.addView(actions)
         actions.addView(icon("new_page",s("add_page")){addPage();d.dismiss()})
         actions.addView(icon("background",s("background")){backgroundSettings()})
@@ -1523,8 +1529,10 @@ c.addView(row().apply{
                 1,2->{val target=i+if(action==1)-1 else 1;if(target in projectStore.lesson.pages.indices){val current=projectStore.page.id;java.util.Collections.swap(projectStore.lesson.pages,i,target);projectStore.lesson.current=projectStore.lesson.pages.indexOfFirst{it.id==current}}}
                 3->{val ids=page.items.filter{it.pane in page.visiblePaneIndices&&!it.locked&&page.editable(it)&&whiteboard.canEditItem(it)}.map{it.id}.toSet();page.items.removeAll{it.id in ids};page.items.filter{it.parentNode in ids}.forEach{it.parentNode=""}}
                 4->if(projectStore.lesson.pages.size>1){val current=projectStore.page.id;projectStore.lesson.pages.removeAt(i);projectStore.lesson.current=projectStore.lesson.pages.indexOfFirst{it.id==current}.takeIf{it>=0}?:i.coerceAtMost(projectStore.lesson.pages.lastIndex)}
-            }};whiteboard.clearSelection();whiteboard.reset();d.dismiss();menuReturn=returnMenu;pages()}
-            if(action>=3)confirm(s("clear_confirm")){applyAction()}else applyAction()
+            }};whiteboard.clearSelection();whiteboard.reset();d.dismiss();menuReturn=returnMenu
+                pagesUndo=when(action){3->tr("Page cleared","صفحه پاک شد");4->tr("Page deleted","صفحه حذف شد");else->null};pages()}
+            // Item 48: no "are you sure?" — the action happens and Undo sits right here in the list.
+            applyAction()
         }
         data class PageRow(val root:LinearLayout,val preview:PageThumbnail,val title:TextView,val detail:TextView,val actions:LinearLayout)
         list.adapter=object:BaseAdapter(){

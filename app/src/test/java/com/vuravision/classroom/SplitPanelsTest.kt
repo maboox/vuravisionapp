@@ -220,6 +220,17 @@ class SplitPanelsTest {
         assertEquals(2,a.store.lesson.pages.size);assertNotEquals(old,a.store.page.alternateCanvas!!.items.single().id);assertEquals(1,a.store.page.alternateCanvas!!.items.single().pane)
         ShadowDialog.getLatestDialog().dismiss()
     }}
+    /** Item 48: deleting a page asks nothing; the page list then offers Undo, which brings the page back. */
+    @Test fun deletingAPageIsDirectWithUndoInTheList(){withActivity{a->
+        a.store.editMetadata{a.store.lesson.pages.add(Page())};val ids=a.store.lesson.pages.map{it.id};call(a,"pages")
+        var list=dialogViews().filterIsInstance<ListView>().single();var row=list.adapter.getView(1,null,list)
+        views(row).filterIsInstance<WorkspaceIcon>().single{it.contentDescription.toString()==a.s("delete")}.performClick()
+        assertEquals("no confirmation: the page is gone at once",1,a.store.lesson.pages.size)
+        dialogViews().filterIsInstance<Button>().single{it.text.toString()==a.tr("Undo","بازگردانی")}.performClick()
+        assertEquals(ids,a.store.lesson.pages.map{it.id})
+        assertTrue("the undo bar goes away after use",dialogViews().filterIsInstance<Button>().none{it.text.toString()==a.tr("Undo","بازگردانی")})
+        ShadowDialog.getLatestDialog().dismiss()
+    }}
     @Test fun uiScaleChangesTheActualDrawableSize(){
         fun size(scale:Float):Float{context.getSharedPreferences("vura",0).edit().putFloat("uiScale",scale).commit();val v=WorkspaceIcon(context,"pen","Pen"){};val n=context.dp(48);v.measure(View.MeasureSpec.makeMeasureSpec(n,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(n,View.MeasureSpec.EXACTLY));v.layout(0,0,n,n);val bounds=RectF(v.drawable.bounds);v.imageMatrix.mapRect(bounds);return bounds.width()}
         assertTrue(size(1.4f)>size(.8f)*1.6f)
