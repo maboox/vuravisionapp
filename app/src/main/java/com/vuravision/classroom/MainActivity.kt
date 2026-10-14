@@ -89,6 +89,7 @@ class MainActivity : Activity() {
     override fun onCreate(state: Bundle?) {
         Motion.load(this);UiTheme.load(this);setTheme(UiTheme.style())
         super.onCreate(state)
+        registerBack()
         Fonts.initialize(this)
         pendingExport = prefs.getString("pendingExport", null)?.let { name ->
             File(cacheDir, "exports").resolve(File(name).name).takeIf { it.isFile && it.length()>0 }
@@ -1715,6 +1716,14 @@ c.addView(row().apply{
     }
     @Deprecated("Platform compatibility")
     override fun onBackPressed(){withPdfExit{persist();super.onBackPressed()}}
+    /**
+     * Android 13+ (and every device once the app targets Android 16) sends Back here instead of onBackPressed.
+     * Same behavior: unsaved PDF annotations are asked about first; the lesson is saved; the app goes to the background.
+     */
+    private fun registerBack(){
+        if(android.os.Build.VERSION.SDK_INT>=33)onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT){
+            withPdfExit{persist();if(isTaskRoot)moveTaskToBack(true) else finish()}}
+    }
 
     private fun pick(mime: String, code: Int) {
         try {

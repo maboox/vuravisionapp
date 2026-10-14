@@ -2,11 +2,11 @@ import java.time.Duration
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "com.vuravision.classroom"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.vuravision.classroom.beta"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 30
         versionName = "3.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -22,7 +22,10 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Item 19: R8 removes unused library code; the app's own classes are kept whole (Gson reads them by reflection).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (!signingPath.isNullOrBlank()) signingConfig = signingConfigs.getByName("production")
         }
     }
