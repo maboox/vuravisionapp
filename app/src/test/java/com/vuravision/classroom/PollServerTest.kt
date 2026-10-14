@@ -5,10 +5,16 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.net.HttpURLConnection
 import java.net.URL
 
 /** Phones answering the class quiz: one vote per phone, changeable until the reveal, and nothing outside the token. */
+// Robolectric for the real org.json (plain JVM tests get Android's stubs).
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28])
 class PollServerTest {
     private lateinit var server: PollServer
     @Before fun start() { server = PollServer(); server.start(5000, false) }
