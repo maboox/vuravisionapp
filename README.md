@@ -33,11 +33,12 @@ The app version lives in `app/build.gradle.kts`; CI names the APK artifact from 
 
 | Path | Contents |
 | --- | --- |
-| `app/src/main/java/com/vuravision/classroom` | All app code |
+| `app/src/main/java/com/vuravision/classroom` | App code in packages by area: `board`, `ai`, `voice`, `room`, `labs`, `games`, `pdf`, `ui`, `tools` (see [architecture](docs/ARCHITECTURE.md)) |
 | `app/src/test`, `app/src/androidTest` | Robolectric unit tests, device tests |
 | `app/src/main/assets` | Fonts, guide, periodic table, maps |
 | `docs/` | Design rationale (`UI_RATIONALE.md`), design system, dependencies, fonts, voice, device acceptance |
 | `docs/archive/` | Release notes and verification records up to 1.17 |
 | `scripts/` | Source checks, APK alignment check, icon generation |
+| `server/ai-proxy/` | Optional AI gateway for schools (keeps the API key off the panels) |
 
 Physical-panel behavior (pen latency, palm detection, two-device rooms) still needs on-device acceptance: see [device checklist](docs/DEVICE_ACCEPTANCE.md).
