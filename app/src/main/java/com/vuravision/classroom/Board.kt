@@ -23,15 +23,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val state=store.page.panes[n]
         return RectF(r.left+density*(state.tx+bounds.left*state.zoom),r.top+density*(state.ty+bounds.top*state.zoom),r.left+density*(state.tx+bounds.right*state.zoom),r.top+density*(state.ty+bounds.bottom*state.zoom))
     }
-    /** The given items alone on white, at most [maxSide] px: the picture sent to the AI. Returns it with its board bounds. */
-    fun snapshotItems(items:List<Item>,maxSide:Int=1024):Pair<Bitmap,RectF>{
-        val b=RectF(contentBounds(items));b.inset(-16f,-16f)
-        val scale=(maxSide/maxOf(b.width(),b.height(),1f)).coerceAtMost(3f)
-        val bmp=Bitmap.createBitmap(maxOf(1,(b.width()*scale).toInt()),maxOf(1,(b.height()*scale).toInt()),Bitmap.Config.ARGB_8888)
-        val c=Canvas(bmp);c.drawColor(Color.WHITE);c.scale(scale,scale);c.translate(-b.left,-b.top)
-        items.forEach{renderer.draw(c,it,sync=true)}
-        return bmp to b
-    }
     fun selectionScreenBounds():RectF?=chosen().takeIf{it.isNotEmpty()}?.let{screenRect(contentBounds(it))}
     fun viewportWorld():RoomRect {val r=paneRect(activePane);val a=world(r.left,r.top);val b=world(r.right,r.bottom);return RoomRect(a.x,a.y,b.x,b.y)}
     fun roomPreviews():List<Item> =(live.values.toList()+listOfNotNull(geometry.preview())+store.page.items.filter{it.id in transforming}).take(8).map {v->
@@ -45,7 +36,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var erasePdfContent=false
     var pdfPalmErase=false
     var onActivate:()->Unit={}
-    private var transforming:Set<String> = emptySet()
+    internal var transforming:Set<String> = emptySet()
     val isTransforming get()=transforming.isNotEmpty()
     fun copyToolsFrom(b:Board){
         tool=b.tool;shape=b.shape;touchMode=b.touchMode;selectionMode=b.selectionMode;profile=b.profile.copy()
@@ -60,9 +51,9 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         smoothers.clear();removeCallbacks(smoothFrame);measurements.clear();gestures.reset();super.onDetachedFromWindow()
     }
     fun releaseBacking(){backing?.recycle();backing=null;backingCanvas=null;backingDirty=true}
-    private fun fitFixed(){fixedPageWidth?.let{if(width>0 && height>0)zoom=min(width/density/it,height/density/(fixedPageHeight?:1f));tx=0f;ty=0f}}
+    internal fun fitFixed(){fixedPageWidth?.let{if(width>0 && height>0)zoom=min(width/density/it,height/density/(fixedPageHeight?:1f));tx=0f;ty=0f}}
     val gestures=BoardGestures(this)
-    private val geometry=GeometryInteraction(this)
+    internal val geometry=GeometryInteraction(this)
     val measurements=MeasurementOverlay(this)
     fun showMeasurements(o:Item){measurements.show(o)}
     var onEducationalTap:(Item,PointF)->Unit={_,_->}
@@ -73,22 +64,22 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var touchMode=false
     var activePane=0
         private set
-    private val pointerPanes=mutableMapOf<Int,Int>()
+    internal val pointerPanes=mutableMapOf<Int,Int>()
     fun split(count:Int){
         if(hasActiveInteraction)return
         require(count in 1..4)
         store.editMetadata{store.page.switchPanels(count)}
         activePane=0;clearSelection();sceneChanged()
     }
-    private fun paneRect(index:Int):RectF{
+    internal fun paneRect(index:Int):RectF{
         val n=store.page.visiblePaneCount
         if(n==1)return RectF(0f,0f,width.toFloat(),height.toFloat())
         return RectF(width*index.toFloat()/n,0f,width*(index+1f)/n,height.toFloat())
     }
-    private val broadPointers=mutableSetOf<Int>()
-    private var touchSpan=0f
-    private var touchFocus:PointF?=null
-    private val lasso=mutableListOf<PointF>()
+    internal val broadPointers=mutableSetOf<Int>()
+    internal var touchSpan=0f
+    internal var touchFocus:PointF?=null
+    internal val lasso=mutableListOf<PointF>()
     var shape = "rectangle"
     var eraserMode="stroke"
     var eraserRadius=18f
@@ -101,13 +92,13 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var onSmart:(List<Item>)->Unit={}
     var onObjectActions:()->Unit={}
     /** Laser strokes that are fading out: drawn on top, never stored. */
-    private val fading=mutableListOf<Pair<Item,Long>>()
+    internal val fading=mutableListOf<Pair<Item,Long>>()
     val laserStrokes get()=fading.size
     val laserPoints get()=fading.sumOf{it.first.points.size}
     val livePoints get()=live.values.sumOf{it.points.size}
     var onMindAdd:(Item,Boolean)->Unit={_,_->}
-    private var tappedSelected=false
-    private val eraseLast=mutableMapOf<Int,PointF>()
+    internal var tappedSelected=false
+    internal val eraseLast=mutableMapOf<Int,PointF>()
     var penColor=INK_NAVY
     var highlightColor=0xffffcf40.toInt()
     var penWidth=4f
@@ -132,11 +123,11 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     private var backing:Bitmap?=null
     private val bitmapPaint=Paint(Paint.FILTER_BITMAP_FLAG)
     private var backingCanvas:Canvas?=null
-    private var backingDirty=true
-    private var navigationActive=false
+    internal var backingDirty=true
+    internal var navigationActive=false
     private var cachedZoom=1f;private var cachedTx=0f;private var cachedTy=0f
     private var lastFullRender=0L
-    private var dirtyRegion:RectF?=null
+    internal var dirtyRegion:RectF?=null
     private var cachedPage:Page?=null
     private var cachedCount=0
     var cacheRebuilds=0
@@ -151,7 +142,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(count>0){store.editMetadata{objects.forEach{it.locked=false};layers.forEach{it.locked=false}};clearSelection();sceneChanged()}
         return count
     }
-    private fun commitToBacking(o:Item){
+    internal fun commitToBacking(o:Item){
         val page=store.page;val layer=page.layers.lastOrNull{it.visible&&it.opacity>0}
         val bitmap=backing
         if(bitmap!=null && !backingDirty && dirtyRegion==null && cachedPage===page && cachedCount==page.items.size-1 && layer?.id==o.layerId && layer.opacity==1f){
@@ -162,108 +153,44 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var profile = TouchProfile()
     var onSelection: () -> Unit = {}
     val selected = linkedSetOf<String>()
-    private val pane get()=store.page.panes[activePane.coerceIn(store.page.visiblePaneIndices)]
-    private var zoom:Float get()=pane.zoom;set(v){pane.zoom=v}
-    private var tx:Float get()=pane.tx;set(v){pane.tx=v}
-    private var ty:Float get()=pane.ty;set(v){pane.ty=v}
-    private val density = resources.displayMetrics.density
-    private val live = mutableMapOf<Int, Item>()
-    private val smoothers=mutableMapOf<Int,StrokeSmoother>()
-    private val smoothFrame=object:Runnable{override fun run(){
+    internal val pane get()=store.page.panes[activePane.coerceIn(store.page.visiblePaneIndices)]
+    internal var zoom:Float get()=pane.zoom;set(v){pane.zoom=v}
+    internal var tx:Float get()=pane.tx;set(v){pane.tx=v}
+    internal var ty:Float get()=pane.ty;set(v){pane.ty=v}
+    internal val density = resources.displayMetrics.density
+    internal val live = mutableMapOf<Int, Item>()
+    internal val smoothers=mutableMapOf<Int,StrokeSmoother>()
+    internal val smoothFrame=object:Runnable{override fun run(){
         val now=android.os.SystemClock.uptimeMillis()
         var changed=false
         smoothers.forEach{(id,filter)->filter.advance(now)?.let{live[id]?.points?.add(it);changed=true}}
         if(changed)postInvalidateOnAnimation()
         if(smoothers.values.any{it.pending})postOnAnimation(this)
     }}
-    private fun sampleInk(id:Int,o:Item,point:Point){
-        val filter=smoothers[id]
-        if(filter==null)o.points.add(point)else{filter.target(point);filter.advance(point.t)?.let{o.points.add(it)};removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
-    }
-    private val guides=mutableMapOf<Int,Item>()
-    private val guideStopped=mutableSetOf<Int>()
-    private val guideLengths=mutableMapOf<Int,Float>()
-    private val guideEdges=mutableMapOf<Int,Int>()
-    private val guideEdgeCandidates=mutableMapOf<Int,List<Int>>()
-    private val guideStart=mutableMapOf<Int,Point>()
-    private val holdCallbacks=mutableMapOf<Int,Runnable>()
-    private val holdAt=mutableMapOf<Int,PointF>()
-    private val heldStart=mutableMapOf<Int,PointF>()
-    private val heldOriginal=mutableMapOf<Int,Item>()
-    private val heldEnd=mutableMapOf<Int,PointF>()
-    private val mindStart=mutableMapOf<Int,PointF>()
-    private val actions = mutableMapOf<Int, String>()
-    private var changed = false
-    private var primary = -1
-    private var anchor = PointF()
-    private var lastFocus = PointF()
-    private var span = 0f
-    private var mode = ""
-    private var original = listOf<Item>()
-    private var box: RectF? = null
-    private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    internal val guides=mutableMapOf<Int,Item>()
+    internal val guideStopped=mutableSetOf<Int>()
+    internal val guideLengths=mutableMapOf<Int,Float>()
+    internal val guideEdges=mutableMapOf<Int,Int>()
+    internal val guideEdgeCandidates=mutableMapOf<Int,List<Int>>()
+    internal val guideStart=mutableMapOf<Int,Point>()
+    internal val holdCallbacks=mutableMapOf<Int,Runnable>()
+    internal val holdAt=mutableMapOf<Int,PointF>()
+    internal val heldStart=mutableMapOf<Int,PointF>()
+    internal val heldOriginal=mutableMapOf<Int,Item>()
+    internal val heldEnd=mutableMapOf<Int,PointF>()
+    internal val mindStart=mutableMapOf<Int,PointF>()
+    internal val actions = mutableMapOf<Int, String>()
+    internal var changed = false
+    internal var primary = -1
+    internal var anchor = PointF()
+    internal var lastFocus = PointF()
+    internal var span = 0f
+    internal var mode = ""
+    internal var original = listOf<Item>()
+    internal var box: RectF? = null
+    internal val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    private fun snap(id:Int,point:PointF):PointF = (if(guideSnapEnabled)guides[id] else null)?.let{
-        GeometryTools.snap(it,point.x,point.y,14f/store.page.panes[it.pane].zoom,guideEdges[id])
-    }?:point
-    private fun sampleGuidedInk(id:Int,o:Item,point:Point) {
-        if(id in guideStopped)return
-        val tolerance=14f/store.page.panes[o.pane].zoom
-        if(!guides.containsKey(id) && guideSnapEnabled && tool!="smart"){
-            val guide=store.page.visibleItems().asReversed().firstOrNull{it.pane==o.pane && canEditItem(it) && it.shape in GeometryTools.keys && GeometryTools.snap(it,point.x,point.y,tolerance)!=null}
-            if(guide!=null){
-                guides[id]=guide;guideLengths[id]=0f;guideEdges[id]=GeometryTools.nearestEdge(guide,point.x,point.y)?:0
-                val candidates=GeometryTools.edgeCandidates(guide,point.x,point.y,tolerance,3f/store.page.panes[o.pane].zoom)
-                if(candidates.size>1){guideEdgeCandidates[id]=candidates;guideStart[id]=point.copy()}
-                o.points.clear();renderer.forgetInk(o.id);smoothers.remove(id);cancelHold(id)
-            }
-        }
-        val guide=guides[id]
-        if(guide==null){sampleInk(id,o,point);return}
-        guideStart[id]?.let{start->
-            if(hypot(point.x-start.x,point.y-start.y)>2f/store.page.panes[o.pane].zoom){
-                guideEdges[id]=GeometryTools.nearestEdge(guide,point.x,point.y,guideEdgeCandidates[id])?:guideEdges.getValue(id)
-                val first=GeometryTools.snap(guide,start.x,start.y,tolerance,guideEdges[id])
-                o.points.clear();renderer.forgetInk(o.id);guideLengths[id]=0f
-                if(first!=null)o.points.add(start.copy(x=first.x,y=first.y))
-                guideStart.remove(id);guideEdgeCandidates.remove(id)
-            }else if(o.points.isNotEmpty())return
-        }
-        val projected=GeometryTools.snap(guide,point.x,point.y,tolerance,guideEdges[id])
-        if(projected==null){guideStopped.add(id);return}
-        o.points.lastOrNull()?.let{last->guideLengths[id]=(guideLengths[id]?:0f)+hypot(projected.x-last.x,projected.y-last.y)}
-        o.points.add(point.copy(x=projected.x,y=projected.y))
-    }
-    private fun drawGuideMeasurements(canvas:Canvas){
-        live.forEach{(id,ink)->val guide=guides[id]?:return@forEach
-            if(ink.pane!=activePane)return@forEach
-            val last=ink.points.lastOrNull()?:return@forEach
-            val text=GuideLabels.strokeText(guide,ink.points,guideLengths[id]?:0f,measureScale(),measurementUnit())
-            measurements.label(canvas,text,last.x,last.y-28/zoom,zoom)
-        }
-    }
     fun measurementUnit()=if(context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)>0)"cm"else"u"
-    private fun cancelHold(id:Int){holdCallbacks.remove(id)?.let{removeCallbacks(it)};holdAt.remove(id)}
-    private fun scheduleHold(id:Int,at:PointF){
-        if(!holdRecognitionEnabled || heldStart.containsKey(id) || guides.containsKey(id))return
-        val last=holdAt[id]
-        if(last!=null && hypot(last.x-at.x,last.y-at.y)<holdTolerance/store.page.panes[pointerPanes[id]?:activePane].zoom)return
-        cancelHold(id);holdAt[id]=PointF(at.x,at.y)
-        val callback=Runnable{
-            holdCallbacks.remove(id);holdAt.remove(id)
-            val ink=live[id]?:return@Runnable
-            if(ink.kind!="ink" || ink.points.size<3)return@Runnable
-            val shape=ShapeRecognition.live(ink)?:return@Runnable
-            shape.id=ink.id;shape.layerId=ink.layerId;shape.pane=ink.pane
-            shape.alpha=ink.alpha;shape.dashLength=ink.dashLength;shape.dashGap=ink.dashGap
-            heldStart[id]=PointF(ink.points.first().x,ink.points.first().y)
-            heldEnd[id]=PointF(ink.points.last().x,ink.points.last().y)
-            heldOriginal[id]=shape.deepCopy()
-            live[id]=shape;renderer.forgetInk(ink.id);postInvalidateOnAnimation()
-        }
-        holdCallbacks[id]=callback;postDelayed(callback,holdDelayMillis)
-    }
-
     init {
         isFocusable = true
         contentDescription = context.s("board")
@@ -278,13 +205,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         invalidate()
     }
 
-    fun world(x: Float, y: Float,index:Int=activePane):PointF{val n=index.coerceIn(store.page.visiblePaneIndices);val r=paneRect(n);val p=store.page.panes[n];return PointF(((x-r.left)/density-p.tx)/p.zoom,((y-r.top)/density-p.ty)/p.zoom)}
-
-    fun measureScale()=measureScale(activePane)
-    fun measureScale(index:Int):Float {
-        val pixels=context.getSharedPreferences("vura",0).getFloat("pixelsPerCm",0f)
-        return if(pixels>0)pixels/(density*store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].zoom) else 10f
-    }
     fun abortPendingGesture(){
         holdCallbacks.keys.toList().forEach(::cancelHold)
         smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear();lasso.clear();box=null
@@ -295,78 +215,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     }
     fun undo(){gestures.reset();abortPendingGesture();store.undo();reconcilePage();clearSelection()}
     fun redo(){gestures.reset();abortPendingGesture();store.redo();reconcilePage();clearSelection()}
-    fun navigateGesture(e:MotionEvent){
-        for(i in 0 until e.pointerCount)pointerPanes[e.getPointerId(i)]=activePane
-        navigate(e)
-    }
-    fun beginGestureNavigation(x:Float,y:Float,initialSpan:Float){navigationActive=true;lastFocus=PointF(x,y);span=initialSpan}
-    fun center():PointF {
-        if(fixedPageWidth!=null){val visible=Rect();if(getLocalVisibleRect(visible))return world(visible.exactCenterX(),visible.exactCenterY())}
-        return paneRect(activePane.coerceIn(store.page.visiblePaneIndices)).let{world(it.centerX(),it.centerY())}
-    }
-
-    fun reset() {
-        measurements.clear()
-        gestures.reset();abortPendingGesture()
-        holdCallbacks.keys.toList().forEach(::cancelHold)
-        smoothers.clear();removeCallbacks(smoothFrame);live.clear();guides.clear();guideStopped.clear();guideLengths.clear();guideEdges.clear();guideEdgeCandidates.clear();guideStart.clear();heldStart.clear();heldOriginal.clear();heldEnd.clear();mindStart.clear()
-        activePane=activePane.coerceIn(store.page.visiblePaneIndices)
-        backingDirty=true
-        zoom = 1f
-        tx = 0f
-        ty = 0f
-        fitFixed()
-        invalidate()
-    }
-
-    fun fit() {
-        backingDirty=true
-        if(fixedPageWidth!=null){fitFixed();invalidate();return}
-        if (store.page.items.isEmpty()) {
-            reset()
-            return
-        }
-        val items=store.page.visibleItems().filter{it.pane==activePane}
-        if(items.isEmpty()){reset();return}
-        val b = contentBounds(items)
-        val panel=paneRect(activePane)
-        val viewport=RectF(panel)
-        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
-        zoom =
-            min(viewport.width() / density / (b.width() + 90), viewport.height() / density / (b.height() + 90))
-                .coerceIn(.15f, 6f)
-        tx = (viewport.centerX()-panel.left) / density - b.centerX() * zoom
-        ty = (viewport.centerY()-panel.top) / density - b.centerY() * zoom
-        invalidate()
-    }
-
-    /**
-     * Pans so [r] is fully visible in the free area beside the toolbars, when it is not already; zooms out only as much
-     * as needed (never below 40%). Used when something is added next to the selection, e.g. an AI answer.
-     */
-    fun reveal(r:RectF){
-        val panel=paneRect(activePane);val viewport=RectF(panel)
-        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
-        val visible=RectF(((viewport.left-panel.left)/density-tx)/zoom,((viewport.top-panel.top)/density-ty)/zoom,
-            ((viewport.right-panel.left)/density-tx)/zoom,((viewport.bottom-panel.top)/density-ty)/zoom)
-        if(visible.contains(r))return
-        val needed=min(viewport.width()/density/(r.width()+60),viewport.height()/density/(r.height()+60))
-        if(needed<zoom)zoom=needed.coerceAtLeast(.4f)
-        tx=(viewport.centerX()-panel.left)/density-r.centerX()*zoom
-        ty=(viewport.centerY()-panel.top)/density-r.centerY()*zoom
-        backingDirty=true;invalidate()
-    }
-
-    /** Shows exactly [r] (plus a margin) in the free area: used to step through frames. */
-    fun showArea(r:RectF){
-        val panel=paneRect(activePane);val viewport=RectF(panel)
-        fitViewport?.invoke()?.let{area->if(area.width()>0&&area.height()>0)viewport.intersect(area)}
-        zoom=min(viewport.width()/density/(r.width()+80),viewport.height()/density/(r.height()+80)).coerceIn(.05f,20f)
-        tx=(viewport.centerX()-panel.left)/density-r.centerX()*zoom
-        ty=(viewport.centerY()-panel.top)/density-r.centerY()*zoom
-        backingDirty=true;onViewportChanged();invalidate()
-    }
-
     var keepToolAfterInsert = false
     fun insert(o: Item) {
         if(!sessionCanEdit||!store.editAllowed()||!store.page.canDraw())return
@@ -399,7 +247,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         clearSelection()
     }
 
-    private fun checkpoint() {
+    internal fun checkpoint() {
         if (!changed) {
             store.checkpoint()
             changed = true
@@ -514,392 +362,6 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     override fun onTouchEvent(e:MotionEvent):Boolean {
         val result=handleTouch(e);onInteraction(e);onViewportChanged();return result
     }
-    private fun handleTouch(e: MotionEvent): Boolean {
-        if(!isEnabled)return true
-        if(gestures.event(e))return true
-        if(e.actionMasked==MotionEvent.ACTION_DOWN)onActivate()
-        val id = e.getPointerId(e.actionIndex)
-        if(e.actionMasked==MotionEvent.ACTION_CANCEL){abortPendingGesture();return true}
-        if(e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN)){
-            val n=store.page.visiblePaneIndices.firstOrNull{paneRect(it).contains(e.getX(e.actionIndex),e.getY(e.actionIndex))}?:0
-            pointerPanes[id]=n
-            if(e.actionMasked==MotionEvent.ACTION_DOWN && activePane!=n){activePane=n;clearSelection()}
-        }
-        if(!sessionCanEdit||!store.editAllowed()){navigate(e);return true}
-        val at = world(e.getX(e.actionIndex), e.getY(e.actionIndex),pointerPanes[id]?:activePane)
-        if(geometry.active){geometry.event(e,at);if(!geometry.active){transforming=emptySet();backingDirty=true;pointerPanes.clear()};invalidate();return true}
-        if(e.actionMasked==MotionEvent.ACTION_DOWN && tool in listOf("pen","highlight","shape","select") && profile.action(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex))=="draw" && geometry.start(at,22f/zoom)){
-            transforming=chosen().map{it.id}.toSet();backingDirty=true;onSelection();invalidate();return true
-        }
-        if(tool=="fill"){
-            if(e.actionMasked==MotionEvent.ACTION_UP){val target=store.page.visibleItems().asReversed().firstOrNull{it.pane==activePane&&(ShapeFill.contains(it,at.x,at.y)||it.hit(at.x,at.y,0f))}
-                if(target!=null&&ShapeFill.contains(target,at.x,at.y)){
-                    if(!target.locked&&canEditItem(target)&&store.page.editable(target))store.editMetadata{target.fillColor=fillColor;target.fillAlpha=fillAlpha}
-                }else if((target==null || target.id==pdfBaseId) && fillColor!=null)HandFill.create(store.page,activePane,at.x,at.y,fillColor!!,fillAlpha)?.let{result->
-                    store.editMetadata{store.page.items.add(result.index,result.item)}
-                }
-            }
-            return true
-        }
-        if(tool=="pan"){navigate(e);return true}
-        if(e.actionMasked==MotionEvent.ACTION_DOWN){broadPointers.clear();touchSpan=0f;touchFocus=null}
-        if(touchMode && pdfBaseId==null && e.actionMasked in listOf(MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN) && e.getToolType(e.actionIndex)!=MotionEvent.TOOL_TYPE_ERASER && e.getTouchMajor(e.actionIndex)>profile.thin && e.getTouchMajor(e.actionIndex)<profile.palm){
-            val index=pointerPanes[id]?:activePane
-            if(broadPointers.isNotEmpty() && index!=activePane){actions[id]="reject";return true}
-            if(activePane!=index){activePane=index;clearSelection()}
-            broadPointers.add(id)
-        }
-        val effectiveTool=if(id in broadPointers)"select" else tool
-        val navIndices=(0 until e.pointerCount).filter{e.getPointerId(it) in broadPointers && pointerPanes[e.getPointerId(it)]==activePane}
-        if(navIndices.size>=2){
-            if(mode!="navigate"){
-                transforming=emptySet()
-                // A second finger changes a selection gesture into navigation.
-                // Restore any tentative drag, without undoing simultaneous ink.
-                if(mode in listOf("move","resize","rotate")){original.forEach{base->store.page.items.firstOrNull{it.id==base.id}?.let{o->o.x=base.x;o.y=base.y;o.w=base.w;o.h=base.h;o.rotation=base.rotation;o.width=base.width}};backingDirty=true}
-                tappedSelected=false
-            }
-            val i=navIndices[0];val j=navIndices[1];val focus=PointF((e.getX(i)+e.getX(j))/2,(e.getY(i)+e.getY(j))/2);val nextSpan=hypot(e.getX(i)-e.getX(j),e.getY(i)-e.getY(j))
-            if(e.actionMasked==MotionEvent.ACTION_MOVE && touchFocus!=null){
-                val before=world(touchFocus!!.x,touchFocus!!.y)
-                if(touchSpan>0)zoom=(zoom*nextSpan/touchSpan).coerceIn(.15f,6f)
-                val rect=paneRect(activePane);tx=(focus.x-rect.left)/density-before.x*zoom;ty=(focus.y-rect.top)/density-before.y*zoom;backingDirty=true
-            }
-            touchSpan=nextSpan;touchFocus=focus;box=null;lasso.clear();mode="navigate"
-        }
-        when (e.actionMasked) {
-            MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                if (e.actionMasked == MotionEvent.ACTION_DOWN) {
-                    changed = false
-                    primary = id
-                    anchor = at
-                    mode = ""
-                    eraseLast.clear();tappedSelected=false
-                    parent?.requestDisallowInterceptTouchEvent(true)
-                }
-                if(!profile.multiTouch && id!=primary) { actions[id]="reject";return true }
-                if(e.actionMasked==MotionEvent.ACTION_DOWN) requestUnbufferedDispatch(e)
-                val behavior =
-                    if(pdfBaseId!=null && profile.classify(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex))=="palm") {if(pdfPalmErase)"erase" else "reject"} else profile.action(e.getToolType(e.actionIndex), e.getTouchMajor(e.actionIndex))
-                actions[id] = behavior
-                if (behavior == "reject") return true
-
-                if(id !in broadPointers && (tool in listOf("pen","highlight","shape") || (tool=="smart" && smartMode=="shape"))) {
-                    if(!store.page.canDraw()){actions[id]="reject";android.widget.Toast.makeText(context,context.tr("Select an unlocked visible layer","یک لایهٔ نمایان و باز انتخاب کنید"),android.widget.Toast.LENGTH_SHORT).show();return true}
-                }
-                if(id in broadPointers){actions[id]="select";if(navIndices.size>=2){postInvalidateOnAnimation();return true};primary=id;anchor=at}
-                else if(e.actionMasked==MotionEvent.ACTION_POINTER_DOWN && effectiveTool in listOf("select","shape")){actions[id]="reject";return true}
-                if (effectiveTool == "erase" || behavior == "erase") {
-                    checkpoint()
-                    erase(at,eraseLast[id]?:at,pointerPanes[id]?:activePane);eraseLast[id]=at
-                } else if (effectiveTool == "select" && id == primary) {
-                    actions[id]="select"
-                    val chosen = chosen()
-                    val bounds = contentBounds(chosen)
-                    original = chosen.filter { !it.locked }.map { it.copy() }
-                    mode =
-                        when {
-                            chosen.isNotEmpty() &&
-                                hypot(at.x - bounds.right, at.y - bounds.bottom) < 23 / zoom ->
-                                "resize"
-                            chosen.isNotEmpty() &&
-                                hypot(at.x - bounds.centerX(), at.y - (bounds.top - 28 / zoom)) <
-                                    23 / zoom -> "rotate"
-                            else -> ""
-                        }
-                    if (mode.isEmpty()) {
-                        val hit =
-                            store.page.visibleItems().asReversed().filter { it.pane==activePane && store.page.editable(it) && canEditItem(it) && !it.locked }.firstOrNull {
-                                it.hit(at.x, at.y, 9 / zoom)
-                            }
-                        if (hit == null) {
-                            selected.clear()
-                            mode = "box"
-                            lasso.clear();lasso.add(at)
-                        } else {
-                            tappedSelected=hit.id in selected
-                            if (hit.id !in selected) {
-                                selected.clear()
-                                selected.add(hit.id)
-                            }
-                            original = MindMap.group(store.page,chosen()).filter{canEditItem(it)&&it.pane==activePane}.map { it.copy() }
-                            mode = "move"
-                        }
-                    }
-                    onSelection()
-                } else if (tool == "shape" && id == primary) {
-                    checkpoint()
-                    live[id] =
-                        Item(
-                            kind = "shape",
-                            layerId = store.page.activeLayerId,
-                            pane=pointerPanes[id]?:activePane,
-                            x = at.x,
-                            y = at.y,
-                            w = 1f,
-                            h = 1f,
-                            shape = shape,
-                            color = inkColor,
-                            width = inkWidth,
-                        )
-                } else if (tool == "laser") {
-                    // Laser pen: for pointing while explaining. The line fades by itself and never enters the page or Undo.
-                    // Points are recorded directly: no ruler snapping, smoothing or hold-to-shape for a pointer that vanishes.
-                    live[id]=Item(layerId=store.page.activeLayerId,pane=pointerPanes[id]?:activePane,w=1f,h=1f,color=LASER_COLOR,width=5f,shape="round",
-                        points=mutableListOf(Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex))))
-                } else if (tool in listOf("pen", "highlight", "smart")) {
-                    if(tool!="smart" || smartMode=="shape")checkpoint()
-                    val drawingPane=store.page.panes[pointerPanes[id]?:activePane]
-                    val splitInk=store.page.visiblePaneCount>1
-                    val style=if(tool=="highlight")"highlight" else if(splitInk)drawingPane.penStyle else profile.style(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),penStyle)
-                    mindStart[id]=at
-                    live[id] =
-                        Item(
-                            layerId=store.page.activeLayerId,
-                            pane=pointerPanes[id]?:activePane,
-                            w = 1f,
-                            h = 1f,
-                            color = if(store.page.visiblePaneCount>1)store.page.panes[pointerPanes[id]?:activePane].color else if(tool=="highlight") inkColor else profile.color(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkColor),
-                            width = (if(splitInk)drawingPane.penWidth else if(tool=="highlight") inkWidth else profile.width(e.getToolType(e.actionIndex),e.getTouchMajor(e.actionIndex),inkWidth)) * if(style=="highlight")4f else 1f,
-                            shape = style,
-                            dashLength=if(splitInk)drawingPane.dashLength else dashLength,
-                            dashGap=if(splitInk)drawingPane.dashGap else dashGap,
-                            alpha = if (style == "highlight") 75*penOpacity/255 else penOpacity,
-                            points = mutableListOf(),
-                        )
-                    sampleGuidedInk(id,live.getValue(id),Point(at.x,at.y,e.eventTime,e.getPressure(e.actionIndex)))
-                    if(style=="smooth" && id !in guides){smoothers[id]=StrokeSmoother(live.getValue(id).points.first());removeCallbacks(smoothFrame);postOnAnimation(smoothFrame)}
-                    if(tool=="pen"&&style!="smooth")scheduleHold(id,at)
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                for (i in 0 until e.pointerCount) {
-                    val pid = e.getPointerId(i)
-                    val point = world(e.getX(i), e.getY(i),pointerPanes[pid]?:activePane)
-                    if (actions[pid] == "reject") continue
-                    if(pid in broadPointers && mode=="navigate")continue
-                    if (tool == "erase" || actions[pid] == "erase") {
-                        checkpoint()
-                        erase(point,eraseLast[pid]?:point,pointerPanes[pid]?:activePane);eraseLast[pid]=point
-                    } else if (actions[pid] == "select" && pid == primary) {
-                        if (mode == "box") {
-                            if(selectionMode=="free")lasso.add(point)
-                            box =
-                                RectF(
-                                    min(anchor.x, point.x),
-                                    min(anchor.y, point.y),
-                                    max(anchor.x, point.x),
-                                    max(anchor.y, point.y),
-                                )
-                        }
-                        else if(hypot(point.x-anchor.x,point.y-anchor.y)>4/zoom) {
-                            checkpoint();transform(point)
-                        }
-                    } else
-                        live[pid]?.let { o ->
-                            if (o.kind == "shape") {
-                                val endpoint=if(pid in heldStart)snap(pid,point) else point
-                                if(pid in heldOriginal && o.shape!="line"){
-                                    val base=heldOriginal.getValue(pid);val last=heldEnd.getValue(pid)
-                                    val start=heldStart.getValue(pid)
-                                    HeldShapeResize.apply(o,base,start.x,start.y,last.x,last.y,endpoint.x,endpoint.y)
-                                }else{
-                                    val start=heldStart[pid]?:anchor
-                                    o.flipX=endpoint.x<start.x;o.flipY=endpoint.y>=start.y
-                                    val dx=endpoint.x-start.x;val dy=endpoint.y-start.y
-                                    o.w=abs(dx).coerceAtLeast(1f);o.h=abs(dy).coerceAtLeast(1f)
-                                    if(Shapes.uniform(o.shape)){val size=max(o.w,o.h);o.w=size;o.h=size}
-                                    o.x=if(dx<0)start.x-o.w else start.x
-                                    o.y=if(dy<0)start.y-o.h else start.y
-                                }
-                            } else if (tool == "laser") {
-                                o.points.add(Point(point.x,point.y,e.eventTime,e.getPressure(i)))
-                            } else {
-                                val paneIndex=pointerPanes[pid]?:activePane
-                                val rect=paneRect(paneIndex)
-                                val state=store.page.panes[paneIndex]
-                                val scale=density*state.zoom
-                                for (j in 0 until e.historySize) {
-                                    val q=PointF((e.getHistoricalX(i,j)-rect.left-density*state.tx)/scale,
-                                        (e.getHistoricalY(i,j)-rect.top-density*state.ty)/scale)
-                                    sampleGuidedInk(pid,o,
-                                        Point(
-                                            q.x,
-                                            q.y,
-                                            e.getHistoricalEventTime(j),
-                                            e.getHistoricalPressure(i, j),
-                                        )
-                                    )
-                                }
-                                sampleGuidedInk(pid,o,Point(point.x,point.y,e.eventTime,e.getPressure(i)))
-                                if(tool=="pen"&&o.shape!="smooth")scheduleHold(pid,point)
-                            }
-                        }
-                }
-            }
-            MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_POINTER_UP -> {
-                cancelHold(id)
-                live.remove(id)?.let { o ->
-                    if(tool=="laser"){fading.add(o to android.os.SystemClock.uptimeMillis());postInvalidateOnAnimation();return@let}
-                    var guideLabel:Item?=null
-                    if (o.kind == "ink") {
-                        val endpoint=Point(at.x,at.y,e.eventTime)
-                        val filter=smoothers.remove(id)
-                        if(filter!=null)o.points.addAll(filter.finish(endpoint))else sampleGuidedInk(id,o,endpoint)
-                        if(o.points.isEmpty() || id in guides && (guideLengths[id]?:0f)<.5f)return@let
-                        if(smoothers.isEmpty())removeCallbacks(smoothFrame)
-                        guides[id]?.let{guide->val last=o.points.last();guideLabel=GuideLabels.text(GuideLabels.strokeText(guide,o.points,guideLengths[id]?:0f,measureScale(o.pane),measurementUnit()),last.x,last.y,store.page.panes[o.pane].zoom,o)}
-                        val left = o.points.minOf { it.x }
-                        val top = o.points.minOf { it.y }
-                        o.w = (o.points.maxOf { it.x } - left).coerceAtLeast(1f)
-                        o.h = (o.points.maxOf { it.y } - top).coerceAtLeast(1f)
-                        o.inkW = o.w
-                        o.inkH = o.h
-                        o.x = left
-                        o.y = top
-                        o.points.forEach {
-                            it.x -= left
-                            it.y -= top
-                        }
-                    }
-                    if(tool=="pen")mindStart[id]?.let{if(MindMap.attach(store.page,o,it.x,it.y,canEditItem))backingDirty=true}
-                    renderer.forgetInk(o.id)
-                    if(tool=="smart" && smartMode!="shape"){
-                        val enclosed=if(SmartSelection.isLoop(o))SmartSelection.enclosed(o,store.page.visibleItems().filter{it.pane==o.pane&&store.page.editable(it)&&canEditItem(it)})else emptyList()
-                        if(enclosed.isNotEmpty())post{onSmart(enclosed)}
-                        else android.widget.Toast.makeText(context,context.tr("Circle existing writing with a closed loop. Use Pen to write.","دور نوشتهٔ قبلی یک خط بسته بکشید. برای نوشتن از قلم استفاده کنید."),android.widget.Toast.LENGTH_SHORT).show()
-                    }else if(tool=="smart" && smartMode=="shape"){
-                        val converted=ShapeRecognition.convert(o)
-                        store.page.items.add((converted?:o).apply{layerId=o.layerId;pane=o.pane})
-                    }else {checkpoint();store.page.items.add(o);guideLabel?.let{store.page.items.add(it);backingDirty=true}}
-                    if(tool!="smart")commitToBacking(o) else if(smartMode=="shape")backingDirty=true
-                }
-                guides.remove(id);guideStopped.remove(id);guideLengths.remove(id);guideEdges.remove(id);guideEdgeCandidates.remove(id);guideStart.remove(id);heldStart.remove(id);heldOriginal.remove(id);heldEnd.remove(id);mindStart.remove(id)
-                val wasSelection=actions[id]=="select"
-                actions.remove(id);eraseLast.remove(id);broadPointers.remove(id);pointerPanes.remove(id)
-                if (id == primary) {
-                    box?.let { rect ->
-                        selected.addAll(SmartSelection.selectGesture(lasso,rect,store.page.visibleItems().filter{it.pane==activePane&&store.page.editable(it)&&canEditItem(it)&&!it.locked},selectionMode).map{it.id})
-                    }
-                    box = null
-                    lasso.clear()
-                    if(wasSelection){
-                        if(mode=="move" && hypot(at.x-anchor.x,at.y-anchor.y)<4/zoom){val education=chosen().singleOrNull()?.takeIf{it.kind in listOf("periodic","graph")}
-                            if(education!=null)post{onEducationalTap(education,at)}else if(tappedSelected)post{onObjectActions()}
-                        }
-                        onSelection()
-                    }
-                }
-                if (e.actionMasked == MotionEvent.ACTION_UP) {
-                    // The object bar hides during a drag; tell the host once it ends so it reappears at the new place.
-                    if(transforming.isNotEmpty()){transforming=emptySet();backingDirty=true;post{onSelection()}}
-                    if(changed || mode=="navigate") { isCommitting=true;try{if(!changed || !store.discardUnchangedCheckpoint())store.changed()}finally{isCommitting=false} }
-                    changed = false
-                    mode = ""
-                    performClick()
-                }
-            }
-        }
-        postInvalidateOnAnimation()
-        return true
-    }
-
-    private fun transform(point: PointF) {
-        if(transforming.isEmpty()){transforming=original.mapTo(mutableSetOf()){it.id};backingDirty=true}
-        if (original.isEmpty()) return
-        val b = contentBounds(original)
-        original.forEach { base ->
-            val o = store.page.items.firstOrNull { it.id == base.id } ?: return@forEach
-            when (mode) {
-                "move" -> {
-                    o.x = base.x + point.x - anchor.x
-                    o.y = base.y + point.y - anchor.y
-                }
-                "resize" -> {
-                    val factor =
-                        max(
-                                (point.x - b.left) / b.width().coerceAtLeast(1f),
-                                (point.y - b.top) / b.height().coerceAtLeast(1f),
-                            )
-                            .coerceIn(.05f, 20f)
-                    o.x = b.left + (base.x - b.left) * factor
-                    o.y = b.top + (base.y - b.top) * factor
-                    if(original.size==1 && base.kind=="shape" && base.shape=="ruler"){
-                        o.w=(base.w+point.x-anchor.x).coerceIn(40f,100000f)
-                        o.h=(base.h*o.w/base.w).coerceIn(.01f,100000f)
-                    }else if(original.size==1 && base.kind=="shape" && !Shapes.uniform(base.shape) && base.shape !in GeometryTools.keys){
-                        o.w=(base.w+point.x-anchor.x).coerceIn(4f,100000f)
-                        o.h=(base.h+point.y-anchor.y).coerceIn(4f,100000f)
-                    }else{o.w=(base.w*factor).coerceIn(.01f,100000f);o.h=(base.h*factor).coerceIn(.01f,100000f);if(base.kind=="text"){o.width=(base.width*factor).coerceIn(.1f,200f);TextLayout.fit(o)}}
-                }
-                "rotate" -> {
-                    val delta =
-                        ((atan2(point.y - b.centerY(), point.x - b.centerX()) -
-                                atan2(anchor.y - b.centerY(), anchor.x - b.centerX())) * 180 / PI)
-                            .toFloat()
-                    o.rotation = base.rotation + delta
-                }
-            }
-        }
-    }
-
-    private fun erase(q: PointF,from:PointF=q,index:Int=activePane) {
-        if(erasePdfContent && pdfBaseId!=null){
-            store.page.items.firstOrNull{it.id==pdfBaseId}?.let{o->
-                val was=o.locked;o.locked=false
-                Erasing.cut(o,from,q,eraserRadius/store.page.panes[index].zoom);o.locked=was
-            }
-            backingDirty=true
-        }
-        if(store.page.visiblePaneCount>1)backingDirty=true
-        val radius=eraserRadius/store.page.panes[index].zoom
-        val region=RectF(min(from.x,q.x)-radius-4/zoom,min(from.y,q.y)-radius-4/zoom,max(from.x,q.x)+radius+4/zoom,max(from.y,q.y)+radius+4/zoom)
-        if(dirtyRegion==null)dirtyRegion=region else dirtyRegion!!.union(region)
-        if(eraserMode=="area")store.page.items.filter{it.pane==index && store.page.editable(it)&&canEditItem(it) && (eraseObjects||it.kind=="ink")}.forEach{Erasing.cut(it,from,q,radius)}
-        else {
-            val steps=ceil(hypot(q.x-from.x,q.y-from.y)/max(radius*.5f,1f)).toInt().coerceIn(1,20000)
-            store.page.items.removeAll { o ->
-                if(o.pane!=index || o.locked || !store.page.editable(o) || !canEditItem(o) || (!eraseObjects&&o.kind!="ink"))false else {
-                    val bounds=itemBounds(o).apply{inset(-o.width*3-4,-o.width*3-4)}
-                    val removed=RectF.intersects(bounds,region) && if(o.kind=="ink"&&o.shape!="region_fill"&&o.cuts.isEmpty())Erasing.hitsInk(o,from,q,radius)
-                        else (0..steps).any { i ->val t=i.toFloat()/steps;o.hit(from.x+(q.x-from.x)*t,from.y+(q.y-from.y)*t,radius)}
-                    if(removed)dirtyRegion?.union(bounds)
-                    removed
-                }
-            }
-        }
-        selected.retainAll(store.page.items.map { it.id }.toSet())
-    }
-
-    private fun navigate(e: MotionEvent) {
-        if(e.actionMasked==MotionEvent.ACTION_DOWN)navigationActive=true
-        if(e.actionMasked==MotionEvent.ACTION_UP || e.actionMasked==MotionEvent.ACTION_CANCEL)navigationActive=false
-        backingDirty=true
-        val indices=(0 until e.pointerCount).filter{pointerPanes[e.getPointerId(it)]==activePane}
-        if(indices.isEmpty())return
-        val x = indices.sumOf { e.getX(it).toDouble() }.toFloat() / indices.size
-        val y = indices.sumOf { e.getY(it).toDouble() }.toFloat() / indices.size
-        val newSpan =
-            if (indices.size > 1) hypot(e.getX(indices[0]) - e.getX(indices[1]), e.getY(indices[0]) - e.getY(indices[1])) else 0f
-        if (e.actionMasked == MotionEvent.ACTION_MOVE) {
-            val before = world(x, y)
-            if (span > 0 && newSpan > 0) {
-                zoom = (zoom * newSpan / span).coerceIn(.15f, 6f)
-                val rect=paneRect(activePane)
-                tx = (x-rect.left) / density - before.x * zoom
-                ty = (y-rect.top) / density - before.y * zoom
-            }
-            tx += (x - lastFocus.x) / density
-            ty += (y - lastFocus.y) / density
-        } else span = 0f
-        span = if (e.actionMasked == MotionEvent.ACTION_MOVE) newSpan else 0f
-        lastFocus = PointF(x, y)
-        invalidate()
-        if (e.actionMasked == MotionEvent.ACTION_UP) {store.changed();pointerPanes.clear();performClick()}
-    }
-
     override fun performClick(): Boolean {
         super.performClick()
         return true
