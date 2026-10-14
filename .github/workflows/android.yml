@@ -148,3 +148,5 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: python3 scripts/check-source.py
+      - name: AI proxy checks
+        run: node server/ai-proxy/worker.test.mjs
