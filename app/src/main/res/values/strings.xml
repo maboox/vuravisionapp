@@ -135,6 +135,7 @@
 <string name="auto">Auto</string>
 <string name="player1">Player 1</string>
 <string name="player2">Player 2</string>
+<string name="game_round">Round</string>
 <string name="round">Ink pen</string>
 <string name="winner">Winner</string>
 <string name="tie">Tie</string>

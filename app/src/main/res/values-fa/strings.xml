@@ -135,6 +135,7 @@
 <string name="auto">خودکار</string>
 <string name="player1">بازیکن ۱</string>
 <string name="player2">بازیکن ۲</string>
+<string name="game_round">دور</string>
 <string name="round">قلم معمولی</string>
 <string name="winner">برنده</string>
 <string name="tie">مساوی</string>

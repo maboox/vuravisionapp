@@ -403,7 +403,7 @@ object Games {
             nameLabels.forEachIndexed { i, v -> v.text = GamePlayers.name(context, i) }
             val now = gameNow()
             score.text =
-                "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("round")} ${game.round}"
+                "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("game_round")} ${game.round}"
             area.removeAllViews()
             prompts.clear()
             if (!started) {
@@ -560,7 +560,7 @@ object Games {
                                     render()
                                 } else {
                                     score.text =
-                                        "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("round")} ${game.round}"
+                                        "${game.scores[0]} : ${game.scores[1]}    ·    ${context.s("game_round")} ${game.round}"
                                     if (key != "tap_race") {
                                         for (j in 0 until opts.childCount) {
                                             opts

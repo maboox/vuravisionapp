@@ -533,7 +533,7 @@ class ArcadeView(context: Context, val key: String) : View(context) {
         last = now
         // The score swells for a moment when it changes, so everyone notices the point.
         val pop = fx.pop()
-        text(c, "${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round", width / 2f, 42f + pop * 6f, 28f * (1f + pop * .45f))
+        text(c, "${scores[0]}   :   ${scores[1]}    ·    ${context.s("game_round")} $round", width / 2f, 42f + pop * 6f, 28f * (1f + pop * .45f))
         if (key in setOf("ttt", "c4")) {
             drawBoard(c)
             fx.confetti(c, height)
