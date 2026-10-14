@@ -84,6 +84,7 @@ object PeriodicTable {
     /** Family colors: soft enough for black text, distinct enough to see the blocks from the back of the class. */
     private val colors = mapOf("Nonmetal" to 0xffbfe8d8.toInt(), "Noble gas" to 0xffcfdcff.toInt(), "Alkali metal" to 0xffffc9a8.toInt(), "Alkaline earth metal" to 0xffffe1a3.toInt(), "Metalloid" to 0xffd5ecb5.toInt(), "Halogen" to 0xffb8e3e8.toInt(), "Transition metal" to 0xffe0d4f7.toInt(), "Post-transition metal" to 0xffd3dde8.toInt(), "Lanthanide" to 0xfff6cfe6.toInt(), "Actinide" to 0xffffc8cc.toInt())
     fun color(e: Element) = colors[e.value("GroupBlock")] ?: INK_PAPER
+
     /** The family color, deep and saturated: for card headers and cell numbers (plain darkening looked grey). */
     private fun darker(color: Int): Int {
         val hsv = FloatArray(3)
