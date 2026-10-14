@@ -5,6 +5,8 @@ import android.graphics.*
 import android.os.*
 import android.view.*
 import android.widget.*
+import com.vuravision.classroom.board.HOLD_MAX_MS
+import com.vuravision.classroom.board.HOLD_MIN_MS
 import com.vuravision.classroom.board.Item
 import com.vuravision.classroom.board.Page
 import com.vuravision.classroom.board.Point
@@ -17,6 +19,7 @@ import com.vuravision.classroom.ui.AboutGesture
 import com.vuravision.classroom.ui.CHALKBOARD
 import com.vuravision.classroom.ui.DARK_BOARD
 import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.ui.INK_NAVY
 import com.vuravision.classroom.ui.MUTED
 import com.vuravision.classroom.ui.Motion
 import com.vuravision.classroom.ui.NAVY
@@ -47,7 +50,6 @@ import com.vuravision.classroom.ui.sectionTitle
 import com.vuravision.classroom.ui.switchRow
 import com.vuravision.classroom.ui.tr
 import com.vuravision.classroom.voice.VoiceSettings
-import com.vuravision.classroom.voice.VoiceSettingsUi
 import java.util.Locale
 import kotlin.math.*
 
@@ -135,7 +137,7 @@ internal fun MainActivity.settingsAt(tab: String?) {
                     board.gestures.pieEnabled = v
                 },
                 page(s("pie_settings")) { pieSettings() },
-                page(s("calibration"), { tr("Pen tips, palm and real centimetres", "سر قلم، کف دست و سانتی‌متر واقعی") }) { calibrationSettings() }
+                page(s("calibration"), { tr("Pen tips, palm, shape hold time and real centimetres", "سر قلم، کف دست، زمان مکث شکل و سانتی‌متر واقعی") }) { calibrationSettings() }
             )
         ),
         SettingsCategory(
@@ -175,10 +177,10 @@ internal fun MainActivity.settingsAt(tab: String?) {
             tr("Class", "کلاس"),
             "users",
             listOf(
+                page(s("shared_room"), { tr("Students and other boards join by QR on the same network", "دانش‌آموزان و تخته‌های دیگر با QR روی همان شبکه وارد می‌شوند") }) { sharedRoom() },
                 SettingRow.Choice(tr("I teach", "درس من"), Subjects.keys.map { it to Subjects.name(this, it) }, { Subjects.current(this) }) { v -> prefs.edit().putString("subject", v).apply() },
                 SettingRow.Toggle(tr("Game sounds", "صدای بازی‌ها"), tr("Short sounds for right answers and winners", "صدای کوتاه برای پاسخ درست و برنده"), { Sounds.enabled(this) }) { prefs.edit().putBoolean("gameSounds", it).apply() },
-                page(s("device_profile"), { DeviceProfiles.load(this).name }) { roomUi?.profile(menuReturn) },
-                page(s("shared_room"), { tr("Share this board with devices on the same network", "اشتراک همین تخته با دستگاه‌های همان شبکه") }) { sharedRoom() }
+                page(s("device_profile"), { DeviceProfiles.load(this).name }) { roomUi?.profile(menuReturn) }
             )
         ),
         SettingsCategory(
@@ -316,15 +318,12 @@ internal fun MainActivity.historySettings() {
     )
 }
 internal fun MainActivity.engineering() {
-    val keys = listOf("shared_room", "history_settings", "report", "stress", "advanced_board", "secret_studio", "maboox", "voice_behavior")
+    // Only diagnostics and the secret studio live here; every teacher setting is in Settings.
+    val keys = listOf("secret_studio", "report", "stress", "maboox")
     choices(s("engineering"), keys) {
         when (keys[it]) {
-            "history_settings" -> historySettings()
-            "shared_room" -> sharedRoom()
-            "advanced_board" -> advancedBoard()
             "secret_studio" -> secretStudio()
             "maboox" -> maboox()
-            "voice_behavior" -> VoiceSettingsUi(this, menuReturn.also { menuReturn = null }).advanced { stopVoice() }
             "report" -> {
                 val report =
                     "VuraVision ${BuildConfig.VERSION_NAME}\n${Build.MANUFACTURER} ${Build.MODEL}\nAndroid ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}\n${resources.displayMetrics}\nPointers: device-reported only\nObjects: ${store.page.items.size}\nLast error: $lastError\n" +
@@ -372,94 +371,64 @@ internal fun MainActivity.engineering() {
     }
 }
 
-internal fun MainActivity.advancedBoard() {
-    if (board.hasActiveInteraction) {
-        toast(tr("Finish the stroke first", "ابتدا رسم را تمام کنید"))
-        return
-    }
-    val c = column().apply { pad(20) }
-    c.addView(label(tr("Behind the board", "پشت پردهٔ تخته"), 22f, NAVY, true))
+/** Hold-to-shape and the pen guides, shown inside Calibration (it was in the hidden Engineering menu). */
+internal fun MainActivity.holdSettings(): View {
+    val c = column()
     fun toggle(en: String, fa: String, initial: Boolean, change: (Boolean) -> Unit) {
         c.addView(
             Switch(this).apply {
                 text = tr(en, fa)
+                textSize = 15f * uiScale()
+                setTextColor(NAVY)
                 isChecked = initial
                 setOnCheckedChangeListener { _, v -> change(v) }
-            }
+            },
+            LinearLayout.LayoutParams(-1, dp(48))
         )
     }
-    toggle("Hold to recognize geometry", "تشخیص هندسی با مکث", board.holdRecognitionEnabled) { v ->
+    toggle("Hold the pen still to turn a stroke into a shape", "با نگه داشتن قلم، خط به شکل تبدیل شود", board.holdRecognitionEnabled) { v ->
         board.holdRecognitionEnabled = v
         prefs.edit().putBoolean("holdRecognition", v).apply()
     }
-    val delayLabel = label("")
-    c.addView(delayLabel)
-    fun delayText() {
-        delayLabel.text = tr("Hold time: ${board.holdDelayMillis} ms", "زمان مکث: ${board.holdDelayMillis} میلی‌ثانیه")
-    }
-    delayText()
-    c.addView(
-        SeekBar(this).apply {
-            max = 20
-            progress = ((board.holdDelayMillis - 500) / 100).toInt()
-            contentDescription = tr("Shape hold time", "زمان مکث تشخیص شکل")
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onStartTrackingTouch(v: SeekBar?) {}
-                override fun onStopTrackingTouch(v: SeekBar?) {}
-                override fun onProgressChanged(v: SeekBar?, n: Int, user: Boolean) {
-                    if (user) {
-                        board.holdDelayMillis = 500L + n * 100L
-                        prefs.edit().putLong("holdDelay", board.holdDelayMillis).apply()
-                        delayText()
+    fun slider(text: () -> String, steps: Int, at: Int, change: (Int) -> Unit) {
+        val title = label(text(), 14f, MUTED)
+        c.addView(title)
+        c.addView(
+            SeekBar(this).apply {
+                max = steps
+                progress = at
+                contentDescription = title.text
+                setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onStartTrackingTouch(v: SeekBar?) {}
+                    override fun onStopTrackingTouch(v: SeekBar?) {}
+                    override fun onProgressChanged(v: SeekBar?, n: Int, user: Boolean) {
+                        if (!user)return
+                        change(n)
+                        title.text = text()
                     }
-                }
-            })
-        }
-    )
-    val toleranceLabel = label("")
-    c.addView(toleranceLabel)
-    fun toleranceText() {
-        toleranceLabel.text = tr("Stationary pen tolerance: ${board.holdTolerance.toInt()}", "حساسیت ثابت‌ماندن قلم: ${board.holdTolerance.toInt()}")
+                })
+            },
+            LinearLayout.LayoutParams(-1, dp(44))
+        )
     }
-    toleranceText()
-    c.addView(
-        SeekBar(this).apply {
-            max = 10
-            progress = board.holdTolerance.toInt() - 2
-            contentDescription = tr("Stationary pen tolerance", "حساسیت ثابت‌ماندن قلم")
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onStartTrackingTouch(v: SeekBar?) {}
-                override fun onStopTrackingTouch(v: SeekBar?) {}
-                override fun onProgressChanged(v: SeekBar?, n: Int, user: Boolean) {
-                    if (user) {
-                        board.holdTolerance = (n + 2).toFloat()
-                        prefs.edit().putFloat("holdTolerance", board.holdTolerance).apply()
-                        toleranceText()
-                    }
-                }
-            })
-        }
-    )
-    toggle("Snap pen to ruler / compass", "اتصال قلم به خط‌کش و پرگار", board.guideSnapEnabled) { v ->
+    fun seconds() = String.format(java.util.Locale.US, "%.1f", board.holdDelayMillis / 1000f)
+    slider({ tr("Hold time: ${seconds()} s", "زمان مکث: ${seconds()} ثانیه") }, ((HOLD_MAX_MS - HOLD_MIN_MS) / 100).toInt(), ((board.holdDelayMillis - HOLD_MIN_MS) / 100).toInt()) { n ->
+        board.holdDelayMillis = HOLD_MIN_MS + n * 100L
+        prefs.edit().putLong("holdDelay", board.holdDelayMillis).apply()
+    }
+    slider({ tr("Allowed hand shake while holding: ${board.holdTolerance.toInt()}", "لرزش مجاز دست هنگام مکث: ${board.holdTolerance.toInt()}") }, 10, board.holdTolerance.toInt() - 2) { n ->
+        board.holdTolerance = (n + 2).toFloat()
+        prefs.edit().putFloat("holdTolerance", board.holdTolerance).apply()
+    }
+    toggle("Snap the pen to the ruler and compass", "قلم به خط‌کش و پرگار بچسبد", board.guideSnapEnabled) { v ->
         board.guideSnapEnabled = v
         prefs.edit().putBoolean("guideSnap", v).apply()
     }
-    toggle("Reject palm instead of erasing", "نادیده‌گرفتن کف دست به‌جای پاک‌کردن", !board.profile.palmErase) { v ->
+    toggle("Ignore the palm instead of erasing with it", "کف دست نادیده گرفته شود (به‌جای پاک‌کردن)", !board.profile.palmErase) { v ->
         board.profile.palmErase = !v
         prefs.edit().putBoolean("palmErase", !v).apply()
     }
-    c.addView(infoTitle(tr("Information", "اطلاعات"), tr("Lower hold time responds faster. A larger tolerance accepts more small hand movements. These settings are saved on this device.", "زمان مکث کمتر، تشخیص سریع‌تر می‌دهد. مقدار حساسیت بزرگ‌تر، لرزش بیشتری را می‌پذیرد. تنظیمات روی همین دستگاه ذخیره می‌شوند.")))
-    c.addView(
-        button(tr("Reset advanced settings", "بازنشانی تنظیمات پیشرفته")) {
-            board.holdRecognitionEnabled = true
-            board.holdDelayMillis = 1000L
-            board.holdTolerance = 4f
-            board.guideSnapEnabled = true
-            prefs.edit().remove("holdRecognition").remove("holdDelay").remove("holdTolerance").remove("guideSnap").apply()
-            toast(tr("Defaults restored; reopen this panel to refresh controls", "مقادیر پیش‌فرض برگشت؛ برای نمایش مقادیر تازه پنل را دوباره باز کنید"))
-        }
-    )
-    dialog(tr("Behind the board", "پشت پردهٔ تخته"), ScrollView(this).apply { addView(c) })
+    return c
 }
 internal fun MainActivity.calibrationSettings() {
     val c = column().apply { pad(16) }
@@ -470,6 +439,8 @@ internal fun MainActivity.calibrationSettings() {
             addView(button(s("touch_test")) { dialog(s("touch_test"), TouchDiagnostics(this@calibrationSettings, board.profile).apply { minimumHeight = dp(320) }) }, LinearLayout.LayoutParams(0, dp(52), 1f))
         }
     )
+    c.addView(sectionTitle(tr("Shapes by holding the pen", "شکل با نگه‌داشتن قلم")))
+    c.addView(holdSettings())
     c.addView(sectionTitle(tr("Size on screen", "اندازه روی صفحه")))
     c.addView(infoTitle(tr("Real centimetres", "سانتی‌متر واقعی"), tr("Measure the line below with a physical ruler, then enter its length in cm. Calibration belongs to this display. Without calibration, geometry uses board units (u).", "خط زیر را با خطکش واقعی اندازه بگیرید و طولش را به سانتی‌متر وارد کنید. کالیبراسیون مخصوص همین نمایشگر است. بدون آن، واحد هندسی u است.")))
     val line = object : View(this) {
@@ -522,7 +493,7 @@ internal fun MainActivity.defaultBackgroundSettings() {
     var color = prefs.getInt("defaultBackground", Color.WHITE)
     c.addView(sectionTitle(tr("Pattern", "الگو")))
     val current = (prefs.getString("defaultPattern", "dots") ?: "dots").let { if (it in listOf("white", "dark"))"plain" else it }
-    val grid = PatternGrid(this, board.renderer, patternChoices(), current, 4, { color }) { prefs.edit().putString("defaultPattern", it).apply() }
+    val grid = PatternGrid(this, board.renderer, patternChoices(), current, 5, { color }) { prefs.edit().putString("defaultPattern", it).apply() }
     c.addView(grid)
     c.addView(sectionTitle(tr("Color", "رنگ")))
     palette(c, color, true) {
@@ -683,19 +654,27 @@ internal fun MainActivity.models() {
  * Board style: page color for new pages plus a first pen that reads on it (white chalk on green or dark boards).
  * The current page changes too, but only while it is empty: existing navy ink would vanish on a dark board.
  */
-internal fun MainActivity.applyBoardStyle(style: String) {
-    val background = when (style) {
-        "chalk" -> CHALKBOARD
-        "dark" -> DARK_BOARD
-        else -> Color.WHITE
-    }
-    val ink = if (style == "white")NAVY else 0xfff4f4f0.toInt()
+internal fun boardStyleColor(style: String) = when (style) {
+    "chalk" -> CHALKBOARD
+    "dark" -> DARK_BOARD
+    else -> Color.WHITE
+}
+
+/** The first two pens follow the board style: navy and red on white, chalk white and yellow on dark boards. */
+internal fun MainActivity.boardStylePens(style: String) {
+    val ink = if (style == "white")INK_NAVY else 0xfff4f4f0.toInt()
     val second = if (style == "white")0xffdc2626.toInt() else 0xfffff176.toInt()
-    prefs.edit().putInt("defaultBackground", background).putInt("dockPen0Color", ink).putInt("dockPen1Color", second).apply()
+    prefs.edit().putInt("dockPen0Color", ink).putInt("dockPen1Color", second).apply()
     if (store.page.visiblePaneCount == 1 && board.tool == "pen" && prefs.getInt("dockPen", 0) < 2) {
         board.penColor = if (prefs.getInt("dockPen", 0) == 0)ink else second
         savePens()
     }
+    refreshDock()
+}
+internal fun MainActivity.applyBoardStyle(style: String) {
+    val background = boardStyleColor(style)
+    prefs.edit().putInt("defaultBackground", background).apply()
+    boardStylePens(style)
     val page = store.page
     if (board === whiteboard && page.items.none { it.pane in page.visiblePaneIndices }) {
         store.editMetadata { page.visiblePaneIndices.forEach { page.panes[it].background = background } }

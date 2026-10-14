@@ -6,7 +6,7 @@
     <string name="profile_photo">انتخاب عکس پروفایل</string>
     <string name="profile_remove_photo">استفاده از ایموجی به‌جای عکس</string>
     <string name="profile_name_needed">یک نام نمایشی تا ۶۰ حرف وارد کنید.</string>
-    <string name="shared_room">اتاق مشترک · آزمایشی</string>
+    <string name="shared_room">اتاق مشترک</string>
     <string name="room_network_hint">دستگاه‌ها به یک وای‌فای، شبکهٔ محلی یا هات‌اسپات وصل باشند. QR آدرس اتاق را منتقل می‌کند؛ وای‌فای را وصل نمی‌کند و شبکه‌های جدا را به هم پیوند نمی‌دهد.</string>
     <string name="room_create">ساخت اتاق</string>
     <string name="room_join">پیوستن به اتاق</string>

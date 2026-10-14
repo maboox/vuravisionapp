@@ -57,9 +57,9 @@ class LayersPaletteAndConversionTest {
             val focus = icons.single { it.contentDescription.toString().contains("Presentation mode") }
             focus.performClick()
             assertFalse(a.findViewById<View>(R.id.main_menu_button).isShown)
-            // Presentation keeps a small pen bar: pens, eraser and Undo, nothing else.
-            val kept = views(a.findViewById(R.id.tool_dock)).filterIsInstance<WorkspaceIcon>().filter { it.isShown }.map { it.key }
-            assertEquals(listOf("pen", "pen", "highlight", "erase", "undo"), kept)
+            // Hide-UI leaves only the button that brings everything back.
+            val kept = views(a.window.decorView).filterIsInstance<View>().filter { it.isShown && (it is WorkspaceIcon || it is Button) }
+            assertEquals(listOf(focus), kept)
             assertTrue(focus.isShown)
             focus.performClick()
             assertTrue(a.findViewById<View>(R.id.main_menu_button).isShown)

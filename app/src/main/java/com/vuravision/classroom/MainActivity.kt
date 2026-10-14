@@ -19,6 +19,9 @@ import com.vuravision.classroom.board.Board
 import com.vuravision.classroom.board.FramePresenter
 import com.vuravision.classroom.board.GeometryTools
 import com.vuravision.classroom.board.GuideLabels
+import com.vuravision.classroom.board.HOLD_DEFAULT_MS
+import com.vuravision.classroom.board.HOLD_MAX_MS
+import com.vuravision.classroom.board.HOLD_MIN_MS
 import com.vuravision.classroom.board.Item
 import com.vuravision.classroom.board.Layer
 import com.vuravision.classroom.board.Lesson
@@ -62,7 +65,9 @@ import com.vuravision.classroom.tools.Spotlight
 import com.vuravision.classroom.tools.StepReveal
 import com.vuravision.classroom.tools.UserGuide
 import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.ui.CHALKBOARD
 import com.vuravision.classroom.ui.ColorPickerDialog
+import com.vuravision.classroom.ui.DARK_BOARD
 import com.vuravision.classroom.ui.FlowRow
 import com.vuravision.classroom.ui.Fonts
 import com.vuravision.classroom.ui.HistoryScrubView
@@ -92,6 +97,7 @@ import com.vuravision.classroom.ui.ToolDock
 import com.vuravision.classroom.ui.TouchDiagnostics
 import com.vuravision.classroom.ui.UiTheme
 import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.boardStyleRow
 import com.vuravision.classroom.ui.button
 import com.vuravision.classroom.ui.card
 import com.vuravision.classroom.ui.colorPalette
@@ -244,7 +250,7 @@ class MainActivity : Activity() {
         smartSource = prefs.getString("smartSource", "auto") ?: "auto"
         board.smartMode = prefs.getString("smartMode", "text") ?: "text"
         board.holdRecognitionEnabled = prefs.getBoolean("holdRecognition", true)
-        board.holdDelayMillis = prefs.getLong("holdDelay", 1000L).coerceIn(500L, 2500L)
+        board.holdDelayMillis = prefs.getLong("holdDelay", HOLD_DEFAULT_MS).coerceIn(HOLD_MIN_MS, HOLD_MAX_MS)
         board.holdTolerance = prefs.getFloat("holdTolerance", 4f).coerceIn(2f, 12f)
         board.guideSnapEnabled = prefs.getBoolean("guideSnap", true)
         buildUI()
@@ -347,9 +353,11 @@ class MainActivity : Activity() {
             chrome.add(v)
         }
         val header = row().apply { pad(4) }
-        header.addView(icon("menu", s("main_menu")) { menu() }.apply { id = R.id.main_menu_button })
+        // No hamburger menu: labs and games are in the Add panel, so settings and the guide sit here directly.
         header.addView(icon("files", s("files")) { fileMenu() })
         header.addView(icon("share", s("share")) { shareOptions() })
+        header.addView(icon("help", s("help")) { quickGuide() })
+        header.addView(icon("settings", s("settings")) { settings() }.apply { id = R.id.main_menu_button })
         val headerHost = HorizontalScrollView(this).apply {
             id = R.id.main_bar
             isHorizontalScrollBarEnabled = false
@@ -397,15 +405,14 @@ class MainActivity : Activity() {
             elevation = dp(6).toFloat()
         }
         canvasHost.addView(selectionHost, FrameLayout.LayoutParams(-2, dp(72), Gravity.TOP or Gravity.LEFT))
-        // Presentation mode: everything but a small pen bar (3 pens, eraser, Undo) fades away. Before, this hid every tool,
-        // so writing one word meant leaving the mode and entering it again.
+        // Hide-UI mode: only this button stays, so the board is clean for the class (teachers asked for nothing else on screen).
         lateinit var focus: WorkspaceIcon
         focus = icon("fullscreen", tr("Presentation mode", "حالت ارائه")) {
             focusMode = !focusMode
             focus.showActive(focusMode)
             window.decorView.systemUiVisibility = if (focusMode)View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY else View.SYSTEM_UI_FLAG_VISIBLE
             chrome.forEach { if (it !== toolDock)it.visibility = if (focusMode)View.GONE else View.VISIBLE }
-            toolDock.setPresentation(focusMode)
+            toolDock.setChromeVisible(!focusMode)
             if (focusMode) {
                 closeSidePanel()
                 selectionHost.visibility = View.GONE
@@ -463,7 +470,8 @@ class MainActivity : Activity() {
                     width = min(dp(344), (r - l - dp(24)).coerceAtLeast(dp(144)))
                 }
                 pageHost.requestLayout()
-                (headerHost.layoutParams as FrameLayout.LayoutParams).apply { width = min(dp(248), (r - l - dp(96)).coerceAtLeast(dp(144))) }
+                // As wide as its icons (no empty space), scrolling only when the screen is too narrow.
+                (headerHost.layoutParams as FrameLayout.LayoutParams).apply { width = if (header.width > 0 && header.width > r - l - dp(96)) (r - l - dp(96)).coerceAtLeast(dp(144)) else FrameLayout.LayoutParams.WRAP_CONTENT }
                 headerHost.requestLayout()
                 positionSelectionBar()
                 refreshSplitControls()
@@ -1116,18 +1124,40 @@ class MainActivity : Activity() {
         val page = store.page
         val pane = page.panes[paneIndex.coerceIn(page.panes.indices)]
         val c = column().apply { pad(16) }
-        c.addView(label(tr("Page pattern", "الگوی صفحه"), 17f, NAVY, true))
-        c.addView(infoTitle(tr("Background scope", "محدودهٔ پس‌زمینه"), tr("Pattern and color apply only to this panel.", "طرح و رنگ فقط برای همین بخش اعمال می‌شوند.")))
+        c.addView(label(tr("Style, pattern and color apply to this page only", "سبک، الگو و رنگ فقط برای همین صفحه"), 13f, MUTED))
         val initial = if (page.pattern(paneIndex) == "dark" && pane.background == Color.WHITE)0xff172a36.toInt() else pane.background
         var color = initial
-        val grid = PatternGrid(this, board.renderer, patternChoices(), page.pattern(paneIndex).let { if (it in listOf("white", "dark"))"plain" else it }, 3, { color }) { key ->
+        lateinit var grid: PatternGrid
+        // Board style per page (whiteboard, chalkboard, dark): the board color plus pen colors that read on it.
+        c.addView(sectionTitle(tr("Board style", "سبک تخته")))
+        c.addView(
+            boardStyleRow(
+                when (initial) {
+                    CHALKBOARD -> "chalk"
+                    DARK_BOARD -> "dark"
+                    Color.WHITE -> "white"
+                    else -> null
+                }
+            ) { style ->
+                val picked = boardStyleColor(style)
+                color = picked
+                store.editMetadata {
+                    if (page.pattern(paneIndex) == "dark")pane.pattern = "plain"
+                    pane.background = picked
+                }
+                boardStylePens(style)
+                grid.refresh()
+            }
+        )
+        c.addView(sectionTitle(tr("Pattern", "الگو")))
+        grid = PatternGrid(this, board.renderer, patternChoices(), page.pattern(paneIndex).let { if (it in listOf("white", "dark"))"plain" else it }, 5, { color }) { key ->
             store.editMetadata {
                 if (page.pattern(paneIndex) == "dark" && pane.background == Color.WHITE)pane.background = 0xff172a36.toInt()
                 pane.pattern = key
             }
         }
         c.addView(grid)
-        c.addView(label(tr("Background color", "رنگ پس‌زمینه"), 17f, NAVY, true))
+        c.addView(sectionTitle(tr("Color", "رنگ")))
         palette(c, initial, background = true) { picked ->
             color = picked
             store.editMetadata {
@@ -2376,17 +2406,6 @@ class MainActivity : Activity() {
                         error(e)
                     }
                 }
-            }
-        }
-    }
-
-    internal fun menu() {
-        choices(projectStore.lesson.title.ifBlank { "VuraVision" } + " · " + status.text, listOf("lab", "games", "settings", "help")) {
-            when (it) {
-                0 -> openExplorer(true)
-                1 -> openExplorer(false)
-                2 -> settings()
-                3 -> quickGuide()
             }
         }
     }

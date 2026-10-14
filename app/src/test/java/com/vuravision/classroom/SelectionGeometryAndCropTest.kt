@@ -80,13 +80,6 @@ class SelectionGeometryAndCropTest {
     }
     private fun views(v: View): List<View> = listOf(v) + if (v is ViewGroup)(0 until v.childCount).flatMap { views(v.getChildAt(it)) } else emptyList()
     private fun call(a: MainActivity, name: String) = a.callHidden(name)
-    private fun choose(d: AlertDialog, label: String) {
-        val list = requireNotNull(d.listView) { "Expected an open menu containing $label" }
-        val labels = (0 until list.adapter.count).map { list.adapter.getItem(it).toString() }
-        val index = labels.indexOf(label)
-        assertTrue("Menu must contain $label; actual items: $labels", index >= 0)
-        list.performItemClick(list.adapter.getView(index, null, list), index, index.toLong())
-    }
 
     @Test fun freeAndBoxSelectionHaveDifferentHitRegions() {
         val inside = Item(kind = "shape", x = 20f, y = 20f, w = 10f, h = 10f)
@@ -213,8 +206,7 @@ class SelectionGeometryAndCropTest {
         val ctl = Robolectric.buildActivity(MainActivity::class.java).setup()
         val a = ctl.get()
         try {
-            call(a, "menu")
-            choose(ShadowDialog.getLatestDialog() as AlertDialog, a.s("settings"))
+            a.findViewById<View>(R.id.main_menu_button).performClick()
             val screen = MainActivity::class.java.getDeclaredField("settingsScreen").apply { isAccessible = true }.get(a) as SettingsScreen
             assertTrue(a.s("pie_settings") in screen.titles())
             assertFalse(a.s("selection_settings") in screen.titles())

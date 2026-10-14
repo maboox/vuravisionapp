@@ -3,6 +3,11 @@ package com.vuravision.classroom.board
 import com.vuravision.classroom.ui.INK_NAVY
 import com.vuravision.classroom.ui.INK_TEAL
 
+/** Hold-to-shape time: half a second by default (teachers found one second slow); 0.2-2.5 s in Calibration. */
+const val HOLD_DEFAULT_MS = 500L
+const val HOLD_MIN_MS = 200L
+const val HOLD_MAX_MS = 2500L
+
 /**
  * Everything the teacher has chosen for drawing (item 13): tool, pens and highlighter, eraser, shape, fill, smart mode
  * and hold settings. One object instead of fields spread over the board; boards copy it when the teacher moves
@@ -19,7 +24,7 @@ class EditorState {
     var eraserRadius = 18f
     var eraseObjects = true
     var holdRecognitionEnabled = true
-    var holdDelayMillis = 1000L
+    var holdDelayMillis = HOLD_DEFAULT_MS
     var holdTolerance = 4f
     var guideSnapEnabled = true
     var smartMode = "text"

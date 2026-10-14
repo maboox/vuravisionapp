@@ -64,7 +64,7 @@ data class RoomTools(
     val activeLayer: String = "base",
     val guideSnap: Boolean = true,
     val holdRecognition: Boolean = true,
-    val holdDelay: Long = 1000,
+    val holdDelay: Long = 500,
     val holdTolerance: Float = 4f
 ) {
     fun validate() {

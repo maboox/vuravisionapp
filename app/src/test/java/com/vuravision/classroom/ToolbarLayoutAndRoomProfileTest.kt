@@ -47,11 +47,12 @@ class ToolbarLayoutAndRoomProfileTest {
             val screen = screen(a)
             assertTrue(a.s("device_profile") in screen.titles())
             assertTrue(a.s("pie_settings") in screen.titles())
-            // The shared class is now reachable from Settings (marked experimental) and still from Engineering.
+            // The shared class is a normal setting; Engineering keeps only diagnostics and the secret studio.
             assertTrue(a.s("shared_room") in screen.titles())
             screen.dialog.dismiss()
             call(a, "engineering")
-            assertTrue(a.s("shared_room") in keys())
+            assertFalse(a.s("shared_room") in keys())
+            assertTrue(a.s("secret_studio") in keys())
             ShadowDialog.getLatestDialog().dismiss()
         } finally {
             ctl.pause().stop().destroy()

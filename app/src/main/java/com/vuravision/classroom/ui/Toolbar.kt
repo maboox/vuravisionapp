@@ -94,6 +94,7 @@ class ToolDock(
     /** Up to two tools the teacher pinned from the Add panel (long press), e.g. ruler for maths, text for literature. */
     private var pinButtons = pins().map { key -> icon(key, context.s(key)) { perform(key) } }
     private fun pins() = prefs.getString("dockPins", "")!!.split(',').filter { it.isNotBlank() }.take(2)
+    fun isPinned(key: String) = key in pins()
 
     /** Long press in the Add panel: pin, or unpin if already pinned. Returns true when the tool is now pinned. */
     fun togglePin(key: String): Boolean {
@@ -352,7 +353,7 @@ class ToolDock(
                 host.width - right - 2 * gap
             }
             ).coerceAtLeast(context.dp(200))
-        addPanel = AddPanel(context, host, freeWidth, (bottomObstacle() - 2 * gap).coerceAtLeast(context.dp(200)), { closeAdd() }, { key -> togglePin(key) }) { key ->
+        addPanel = AddPanel(context, host, freeWidth, (bottomObstacle() - 2 * gap).coerceAtLeast(context.dp(200)), { closeAdd() }, { key -> togglePin(key) }, { key -> isPinned(key) }) { key ->
             closeAdd()
             used(key)
             perform(key)
@@ -513,6 +514,7 @@ class AddPanel(
     private val maxHeight: Int,
     private val dismiss: () -> Unit,
     private val pin: (String) -> Boolean = { false },
+    private val pinned: (String) -> Boolean = { false },
     private val pick: (String) -> Unit
 ) {
     companion object {
@@ -637,9 +639,8 @@ class AddPanel(
         setPadding(context.dp(4), context.dp(4), context.dp(4), context.dp(6))
         val icon = WorkspaceIcon(context, key, label(key)) { pick(key) }.apply {
             sizeDp = 56
-            setOnLongClickListener {
-                val now = pin(key)
-                Toast.makeText(context, if (now)context.tr("Pinned to the toolbar", "به نوار ابزار سنجاق شد")else context.tr("Unpinned", "از نوار برداشته شد"), Toast.LENGTH_SHORT).show()
+            setOnLongClickListener { v ->
+                askPin(key, v)
                 true
             }
         }
@@ -655,6 +656,53 @@ class AddPanel(
             LinearLayout.LayoutParams(context.dp(84), context.dp(40))
         )
         layoutParams = GridLayout.LayoutParams().apply { width = context.dp(88) }
+    }
+
+    /** Long press asks first (a pin changes the dock): a small bubble over the tile, "Pin to toolbar?" with a yes and a no. */
+    private var bubble: View? = null
+    private fun askPin(key: String, anchor: View) {
+        bubble?.let { scrim.removeView(it) }
+        val unpin = pinned(key)
+        val row = context.row().apply {
+            gravity = Gravity.CENTER_VERTICAL
+            background = rounded(NAVY, context.dp(16).toFloat())
+            elevation = context.dp(12).toFloat()
+            setPadding(context.dp(12), context.dp(6), context.dp(6), context.dp(6))
+            isClickable = true
+        }
+        row.addView(context.label(if (unpin)context.tr("Remove from the toolbar?", "از نوار ابزار برداشته شود؟")else context.tr("Pin to the toolbar?", "به نوار ابزار سنجاق شود؟"), 14f, ON_NAVY).apply { setPadding(0, 0, context.dp(8), 0) })
+        fun choice(text: String, primary: Boolean, action: () -> Unit) = context.label(text, 14f, if (primary) NAVY else ON_NAVY, primary).apply {
+            gravity = Gravity.CENTER
+            minWidth = context.dp(56)
+            setPadding(context.dp(12), 0, context.dp(12), 0)
+            background = if (primary) rounded(SURFACE, context.dp(12).toFloat()) else null
+            setOnClickListener {
+                scrim.removeView(row)
+                bubble = null
+                action()
+            }
+        }
+        row.addView(
+            choice(if (unpin)context.tr("Remove", "برداشتن")else context.tr("Pin", "سنجاق"), true) {
+                val now = pin(key)
+                Toast.makeText(context, if (now)context.tr("Pinned to the toolbar", "به نوار ابزار سنجاق شد")else context.tr("Unpinned", "از نوار برداشته شد"), Toast.LENGTH_SHORT).show()
+            },
+            LinearLayout.LayoutParams(-2, context.dp(40))
+        )
+        row.addView(choice(context.tr("No", "نه"), false) {}, LinearLayout.LayoutParams(-2, context.dp(40)))
+        bubble = row
+        row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val at = IntArray(2).also { anchor.getLocationInWindow(it) }
+        val base = IntArray(2).also { scrim.getLocationInWindow(it) }
+        val left = (at[0] - base[0] + anchor.width / 2 - row.measuredWidth / 2).coerceIn(context.dp(8), (scrim.width - row.measuredWidth - context.dp(8)).coerceAtLeast(context.dp(8)))
+        val top = (at[1] - base[1] - row.measuredHeight - context.dp(6)).let { if (it < context.dp(8)) at[1] - base[1] + anchor.height + context.dp(6) else it }
+        scrim.addView(
+            row,
+            FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.LEFT).apply {
+                leftMargin = left
+                topMargin = top
+            }
+        )
     }
     fun close() {
         host.removeView(scrim)

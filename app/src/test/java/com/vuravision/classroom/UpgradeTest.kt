@@ -268,7 +268,7 @@ class UpgradeTest {
             val menus = views(decor).filter { it.id == R.id.main_menu_button }
             assertEquals("Expected one main menu button", 1, menus.size)
             val menu = menus.single()
-            assertEquals(a.s("main_menu"), menu.contentDescription)
+            assertEquals(a.s("settings"), menu.contentDescription)
             assertEquals("Test must exercise RTL layout", View.LAYOUT_DIRECTION_RTL, menu.layoutDirection)
             val geometry = generateSequence(menu) { it.parent as? View }.joinToString(" <- ") {
                 "${it.javaClass.simpleName}[${it.left},${it.top},${it.right},${it.bottom}; visibility=${it.visibility}; scroll=${it.scrollX},${it.scrollY}]"

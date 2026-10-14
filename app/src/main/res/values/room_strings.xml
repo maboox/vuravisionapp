@@ -6,7 +6,7 @@
     <string name="profile_photo">Choose profile photo</string>
     <string name="profile_remove_photo">Use emoji instead of photo</string>
     <string name="profile_name_needed">Enter a display name (up to 60 characters).</string>
-    <string name="shared_room">Shared room · experimental</string>
+    <string name="shared_room">Shared room</string>
     <string name="room_network_hint">Connect devices to the same Wi-Fi, local network or hotspot. QR shares the room address; it does not connect Wi-Fi or bridge separate networks.</string>
     <string name="room_create">Create room</string>
     <string name="room_join">Join room</string>

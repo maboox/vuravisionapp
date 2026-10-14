@@ -220,10 +220,17 @@ class UiScenarioTest {
             // Long press pins a tool to the dock; again unpins it.
             views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first { it.key == "ruler" }.performLongClick()
             settle(a)
+            // It asks first; nothing is pinned until the teacher says yes.
+            assertFalse("$tag: pinned without asking", views(dock(a)).filterIsInstance<WorkspaceIcon>().any { it.key == "ruler" })
+            shot(a, "$tag-3c-pin-ask")
+            views(a.window.decorView).filterIsInstance<TextView>().first { it.text.toString() == a.tr("Pin", "سنجاق") }.performClick()
+            settle(a)
             assertTrue("$tag: ruler not pinned", views(dock(a)).filterIsInstance<WorkspaceIcon>().any { it.key == "ruler" })
             shot(a, "$tag-3c-pinned")
             checkChrome(a, "$tag pinned")
             views(a.findViewById(R.id.add_panel)).filterIsInstance<WorkspaceIcon>().first { it.key == "ruler" }.performLongClick()
+            settle(a)
+            views(a.window.decorView).filterIsInstance<TextView>().first { it.text.toString() == a.tr("Remove", "برداشتن") }.performClick()
             settle(a)
             assertFalse("$tag: ruler not unpinned", views(dock(a)).filterIsInstance<WorkspaceIcon>().any { it.key == "ruler" })
             // A math teacher sees math tools first; nothing else disappears.

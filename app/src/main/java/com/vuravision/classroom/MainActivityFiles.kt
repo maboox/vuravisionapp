@@ -246,8 +246,8 @@ internal fun MainActivity.shareOptions() {
         tr("Send PDF via another app / cloud", "فرستادن PDF با برنامهٔ دیگر / فضای ابری"),
         tr("QR for a public HTTPS link", "QR برای لینک عمومی HTTPS"),
         tr("QR on the same local network", "QR روی شبکهٔ محلی"),
-        // Where a teacher looks for "share with the class"; it was only in the hidden Engineering menu.
-        tr("Live class on this network (experimental)", "کلاس زنده روی همین شبکه (آزمایشی)")
+        // Where a teacher looks for "share with the class".
+        tr("Live class on this network (students join by QR)", "کلاس زنده روی همین شبکه (ورود دانش‌آموزان با QR)")
     )
     MaterialAlertDialogBuilder(this).setTitle(s("share"))
         .setItems(choices) { _, index ->
