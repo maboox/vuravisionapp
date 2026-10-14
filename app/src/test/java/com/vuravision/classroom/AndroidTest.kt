@@ -3,6 +3,20 @@ package com.vuravision.classroom
 import android.graphics.*
 import android.view.*
 import android.widget.*
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.board.newId
+import com.vuravision.classroom.games.Games
+import com.vuravision.classroom.labs.LabView
+import com.vuravision.classroom.ui.ORANGE
+import com.vuravision.classroom.ui.TEAL
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.s
 import java.io.*
 import java.util.zip.*
 import org.junit.*
@@ -10,20 +24,6 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
-import com.vuravision.classroom.board.Board
-import com.vuravision.classroom.games.Games
-import com.vuravision.classroom.board.Item
-import com.vuravision.classroom.labs.LabView
-import com.vuravision.classroom.board.Lesson
-import com.vuravision.classroom.ui.ORANGE
-import com.vuravision.classroom.board.Page
-import com.vuravision.classroom.board.Renderer
-import com.vuravision.classroom.board.Store
-import com.vuravision.classroom.ui.TEAL
-import com.vuravision.classroom.ui.WorkspaceIcon
-import com.vuravision.classroom.board.fit
-import com.vuravision.classroom.ui.s
-import com.vuravision.classroom.board.newId
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], qualifiers = "en-land-xhdpi")
@@ -51,15 +51,15 @@ class AndroidTest {
             Lesson(
                 title = "Lesson فارسی",
                 pages =
-                    mutableListOf(
-                        Page(
-                            items =
-                                mutableListOf(
-                                    Item(kind = "image", asset = name),
-                                    Item(kind = "text", text = "سلام"),
-                                )
+                mutableListOf(
+                    Page(
+                        items =
+                        mutableListOf(
+                            Item(kind = "image", asset = name),
+                            Item(kind = "text", text = "سلام")
                         )
-                    ),
+                    )
+                )
             )
         val out = ByteArrayOutputStream()
         LessonFiles(media).write(doc, out)
@@ -93,14 +93,14 @@ class AndroidTest {
                     .toJson(
                         Lesson(
                             pages =
-                                mutableListOf(
-                                    Page(
-                                        items =
-                                            mutableListOf(
-                                                Item(kind = "image", asset = "missing.png")
-                                            )
+                            mutableListOf(
+                                Page(
+                                    items =
+                                    mutableListOf(
+                                        Item(kind = "image", asset = "missing.png")
                                     )
                                 )
+                            )
                         )
                     )
                     .toByteArray()
@@ -137,7 +137,7 @@ class AndroidTest {
         val page =
             Page(
                 background = "white",
-                items = mutableListOf(Item(kind = "image", asset = name, w = 100f, h = 100f)),
+                items = mutableListOf(Item(kind = "image", asset = name, w = 100f, h = 100f))
             )
         val output = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
         Renderer(media).page(Canvas(output), page, 400, 400, true)
@@ -180,15 +180,15 @@ class AndroidTest {
     @Test
     fun labSnapshots() {
         listOf(
-                "projectile" to floatArrayOf(22f, 45f, 9.8f),
-                "pendulum" to floatArrayOf(1.5f, 9.8f, 12f),
-                "spring" to floatArrayOf(1f, 12f, 1f),
-                "waves" to floatArrayOf(2f, 1f, .7f),
-                "quadratic" to floatArrayOf(1f, 0f, 0f),
-                "trig" to floatArrayOf(45f),
-                "ph" to floatArrayOf(7f),
-                "coin" to floatArrayOf(.5f, 100f),
-            )
+            "projectile" to floatArrayOf(22f, 45f, 9.8f),
+            "pendulum" to floatArrayOf(1.5f, 9.8f, 12f),
+            "spring" to floatArrayOf(1f, 12f, 1f),
+            "waves" to floatArrayOf(2f, 1f, .7f),
+            "quadratic" to floatArrayOf(1f, 0f, 0f),
+            "trig" to floatArrayOf(45f),
+            "ph" to floatArrayOf(7f),
+            "coin" to floatArrayOf(.5f, 100f)
+        )
             .forEach { (key, values) ->
                 val b = LabView(media.context, key, values).snapshot()
                 assertEquals(1200, b.width)
@@ -203,21 +203,21 @@ class AndroidTest {
         fun event(action: Int, ids: IntArray, shift: Float, time: Long) {
             val props =
                 ids.map {
-                        MotionEvent.PointerProperties().apply {
-                            id = it
-                            toolType = MotionEvent.TOOL_TYPE_FINGER
-                        }
+                    MotionEvent.PointerProperties().apply {
+                        id = it
+                        toolType = MotionEvent.TOOL_TYPE_FINGER
                     }
+                }
                     .toTypedArray()
             val coords =
                 ids.mapIndexed { i, _ ->
-                        MotionEvent.PointerCoords().apply {
-                            x = 100f + i * 150 + shift
-                            y = 100f + shift
-                            pressure = 1f
-                            size = 1f
-                        }
+                    MotionEvent.PointerCoords().apply {
+                        x = 100f + i * 150 + shift
+                        y = 100f + shift
+                        pressure = 1f
+                        size = 1f
                     }
+                }
                     .toTypedArray()
             val e =
                 MotionEvent.obtain(
@@ -234,7 +234,7 @@ class AndroidTest {
                     0,
                     0,
                     android.view.InputDevice.SOURCE_TOUCHSCREEN,
-                    0,
+                    0
                 )
             b.onTouchEvent(e)
             e.recycle()
@@ -268,7 +268,7 @@ class AndroidTest {
             .filterIsInstance<EditText>()
             .first()
             .setText("Beta classroom")
-        views(input.window!!.decorView).filterIsInstance<Button>().first{it.text.toString()==a.s("apply")}.performClick()
+        views(input.window!!.decorView).filterIsInstance<Button>().first { it.text.toString() == a.s("apply") }.performClick()
         assertEquals("Beta classroom", a.store.page.items.single().text)
         a.store.undo()
         assertTrue(a.store.page.items.isEmpty())
@@ -283,12 +283,12 @@ class AndroidTest {
         val d = org.robolectric.shadows.ShadowDialog.getLatestDialog()
         views(d.window!!.decorView)
             .filterIsInstance<Button>()
-            .first { it.text.toString()== a.s("start") }
+            .first { it.text.toString() == a.s("start") }
             .performClick()
         val options =
             views(d.window!!.decorView)
                 .filterIsInstance<Button>()
-                .filter { it.text.toString()== a.s("rock") }
+                .filter { it.text.toString() == a.s("rock") }
                 .toList()
         assertEquals(2, options.size)
         options[0].performClick()
@@ -307,7 +307,7 @@ class AndroidTest {
     private fun capture(view: View, name: String, after: () -> Unit = {}) {
         view.measure(
             View.MeasureSpec.makeMeasureSpec(1600, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY)
         )
         view.layout(0, 0, 1600, 1000)
         after()
@@ -321,63 +321,62 @@ class AndroidTest {
         File(dir, name).outputStream().use { b.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
-    private fun demo() =
-        Lesson(
-            title = "The shape of motion",
-            pages =
+    private fun demo() = Lesson(
+        title = "The shape of motion",
+        pages =
+        mutableListOf(
+            Page(
+                items =
                 mutableListOf(
-                    Page(
-                        items =
-                            mutableListOf(
-                                Item(
-                                    kind = "text",
-                                    text = "The shape of motion",
-                                    x = 65f,
-                                    y = 40f,
-                                    w = 660f,
-                                    h = 75f,
-                                    width = 44f,
-                                ),
-                                Item(
-                                    kind = "text",
-                                    text = "Explore • predict • explain",
-                                    x = 65f,
-                                    y = 110f,
-                                    w = 500f,
-                                    h = 50f,
-                                    width = 21f,
-                                    color = TEAL,
-                                ),
-                                Item(
-                                    kind = "graph",
-                                    text = "-0.1*x^2+5; sin(x)",
-                                    x = 65f,
-                                    y = 210f,
-                                    w = 580f,
-                                    h = 340f,
-                                ),
-                                Item(
-                                    kind = "sticky",
-                                    text =
-                                        "Think together\n\nWhat changes when the initial speed doubles?",
-                                    x = 715f,
-                                    y = 230f,
-                                    w = 270f,
-                                    h = 300f,
-                                    width = 25f,
-                                ),
-                                Item(
-                                    kind = "shape",
-                                    shape = "arrow",
-                                    x = 620f,
-                                    y = 145f,
-                                    w = 120f,
-                                    h = 70f,
-                                    color = ORANGE,
-                                    width = 4f,
-                                ),
-                            )
+                    Item(
+                        kind = "text",
+                        text = "The shape of motion",
+                        x = 65f,
+                        y = 40f,
+                        w = 660f,
+                        h = 75f,
+                        width = 44f
+                    ),
+                    Item(
+                        kind = "text",
+                        text = "Explore • predict • explain",
+                        x = 65f,
+                        y = 110f,
+                        w = 500f,
+                        h = 50f,
+                        width = 21f,
+                        color = TEAL
+                    ),
+                    Item(
+                        kind = "graph",
+                        text = "-0.1*x^2+5; sin(x)",
+                        x = 65f,
+                        y = 210f,
+                        w = 580f,
+                        h = 340f
+                    ),
+                    Item(
+                        kind = "sticky",
+                        text =
+                        "Think together\n\nWhat changes when the initial speed doubles?",
+                        x = 715f,
+                        y = 230f,
+                        w = 270f,
+                        h = 300f,
+                        width = 25f
+                    ),
+                    Item(
+                        kind = "shape",
+                        shape = "arrow",
+                        x = 620f,
+                        y = 145f,
+                        w = 120f,
+                        h = 70f,
+                        color = ORANGE,
+                        width = 4f
                     )
-                ),
+                )
+            )
         )
+    )
 }

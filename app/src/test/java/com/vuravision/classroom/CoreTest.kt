@@ -1,19 +1,18 @@
 package com.vuravision.classroom
 
-import kotlin.random.Random
-import org.junit.Assert.*
-import org.junit.Test
-import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.ai.MathTools
 import com.vuravision.classroom.board.Item
 import com.vuravision.classroom.board.Lesson
-import com.vuravision.classroom.ai.MathTools
 import com.vuravision.classroom.board.Page
-import com.vuravision.classroom.labs.Physics
 import com.vuravision.classroom.board.Point
 import com.vuravision.classroom.board.Store
 import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.labs.Physics
 import com.vuravision.classroom.ui.s
-import com.vuravision.classroom.board.erase
+import kotlin.random.Random
+import org.junit.Assert.*
+import org.junit.Test
 
 class CoreTest {
     @Test
@@ -69,7 +68,7 @@ class CoreTest {
                 h = 100f,
                 inkW = 100f,
                 inkH = 100f,
-                points = mutableListOf(Point(0f, 0f), Point(100f, 100f)),
+                points = mutableListOf(Point(0f, 0f), Point(100f, 100f))
             )
         assertTrue(o.hit(100f, 50f, 2f))
         assertFalse(o.hit(20f, 70f, 2f))

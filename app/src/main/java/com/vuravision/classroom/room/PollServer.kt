@@ -1,13 +1,11 @@
 package com.vuravision.classroom.room
 
+import com.vuravision.classroom.ui.s
 import fi.iki.elonen.NanoHTTPD
-import org.json.JSONArray
-import org.json.JSONObject
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
-import com.vuravision.classroom.ui.button
-import com.vuravision.classroom.ui.s
-import com.vuravision.classroom.board.center
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Answers from students' phones (item 83), on the classroom network only, with no app and no internet:
@@ -18,19 +16,34 @@ import com.vuravision.classroom.board.center
 class PollServer : NanoHTTPD("0.0.0.0", 0) {
     val token = ByteArray(9).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
     data class Question(val id: Int, val text: String, val options: List<String>)
+
     @Volatile var question: Question? = null
         private set
+
     @Volatile var revealed: Int? = null
     private val votes = ConcurrentHashMap<String, Int>()
     private val seen = ConcurrentHashMap.newKeySet<String>()
 
     fun ask(id: Int, text: String, options: List<String>) {
         if (question?.id == id) return
-        votes.clear(); revealed = null; question = Question(id, text.take(1000), options.take(4).map { it.take(300) })
+        votes.clear()
+        revealed = null
+        question = Question(id, text.take(1000), options.take(4).map { it.take(300) })
     }
-    fun clear() { question = null; votes.clear(); revealed = null }
+    fun clear() {
+        question = null
+        votes.clear()
+        revealed = null
+    }
+
     /** Votes per option for the current question. */
-    fun tally(): IntArray { val n = question?.options?.size ?: 0; val t = IntArray(n); votes.values.forEach { if (it in 0 until n) t[it]++ }; return t }
+    fun tally(): IntArray {
+        val n = question?.options?.size ?: 0
+        val t = IntArray(n)
+        votes.values.forEach { if (it in 0 until n) t[it]++ }
+        return t
+    }
+
     /** Phones that opened the page during this quiz. */
     val people get() = seen.size
 
@@ -38,27 +51,41 @@ class PollServer : NanoHTTPD("0.0.0.0", 0) {
         val base = "/$token"
         return when {
             session.uri == base && session.method == Method.GET -> html(page())
-            session.uri == "$base/state" -> { voter(session.parameters["v"]?.firstOrNull())?.let { if (seen.size < 500) seen.add(it) }; json(state()) }
+            session.uri == "$base/state" -> {
+                voter(session.parameters["v"]?.firstOrNull())?.let { if (seen.size < 500) seen.add(it) }
+                json(state())
+            }
             session.uri == "$base/vote" && session.method == Method.POST -> vote(session)
             else -> newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not found")
-        }.apply { addHeader("Cache-Control", "no-store"); addHeader("X-Content-Type-Options", "nosniff") }
+        }.apply {
+            addHeader("Cache-Control", "no-store")
+            addHeader("X-Content-Type-Options", "nosniff")
+        }
     }
     private fun voter(raw: String?) = raw?.takeIf { it.matches(Regex("[a-z0-9]{8,40}")) }
     private fun vote(session: IHTTPSession): Response {
-        try { session.parseBody(HashMap()) } catch (_: Exception) { return bad() }
+        try {
+            session.parseBody(HashMap())
+        } catch (_: Exception) {
+            return bad()
+        }
         val p = session.parameters
         val id = voter(p["v"]?.firstOrNull()) ?: return bad()
         val q = question ?: return bad()
         val choice = p["c"]?.firstOrNull()?.toIntOrNull() ?: return bad()
         if (p["q"]?.firstOrNull()?.toIntOrNull() != q.id || choice !in q.options.indices || revealed != null) return bad()
         if (!votes.containsKey(id) && votes.size >= 500) return bad()
-        seen.add(id); votes[id] = choice
+        seen.add(id)
+        votes[id] = choice
         return json(state())
     }
     private fun state() = JSONObject().apply {
         val q = question
-        put("id", q?.id ?: -1); put("text", q?.text ?: ""); put("options", JSONArray(q?.options ?: emptyList<String>()))
-        put("revealed", revealed ?: -1); put("total", votes.size)
+        put("id", q?.id ?: -1)
+        put("text", q?.text ?: "")
+        put("options", JSONArray(q?.options ?: emptyList<String>()))
+        put("revealed", revealed ?: -1)
+        put("total", votes.size)
     }
     private fun bad() = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Bad request")
     private fun json(o: JSONObject) = newFixedLengthResponse(Response.Status.OK, "application/json; charset=utf-8", o.toString())

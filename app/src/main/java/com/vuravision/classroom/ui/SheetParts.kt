@@ -14,25 +14,40 @@ import com.vuravision.classroom.pick
  */
 
 /** A few mutually exclusive options side by side; tapping one applies it at once. */
-fun Context.segmented(items:List<Pair<String,String>>,current:String?,pick:(String)->Unit):LinearLayout {
-    val r=row()
-    fun fill(selected:String?){
+fun Context.segmented(items: List<Pair<String, String>>, current: String?, pick: (String) -> Unit): LinearLayout {
+    val r = row()
+    fun fill(selected: String?) {
         r.removeAllViews()
-        items.forEachIndexed{i,(key,title)->
-            r.addView(button(title,key==selected){fill(key);pick(key)},LinearLayout.LayoutParams(0,dp(44),1f).apply{if(i>0)marginStart=dp(6)})
+        items.forEachIndexed { i, (key, title) ->
+            r.addView(
+                button(title, key == selected) {
+                    fill(key)
+                    pick(key)
+                },
+                LinearLayout.LayoutParams(0, dp(44), 1f).apply { if (i > 0)marginStart = dp(6) }
+            )
         }
     }
-    fill(current);return r
+    fill(current)
+    return r
 }
 
 /** An on/off option. The switch text is the option itself; [detail] explains it in one muted line. */
-fun Context.switchRow(title:String,checked:Boolean,detail:String?=null,changed:(Boolean)->Unit):View=column().apply{
-    addView(Switch(this@switchRow).apply{
-        text=title;textSize=15f*uiScale();setTextColor(NAVY);isChecked=checked;minHeight=dp(48);Fonts.bind(this,false)
-        setOnCheckedChangeListener{_,value->changed(value)}
-    },LinearLayout.LayoutParams(-1,-2))
-    if(detail!=null)addView(label(detail,13f,MUTED).apply{setPadding(dp(4),0,dp(56),dp(6))})
+fun Context.switchRow(title: String, checked: Boolean, detail: String? = null, changed: (Boolean) -> Unit): View = column().apply {
+    addView(
+        Switch(this@switchRow).apply {
+            text = title
+            textSize = 15f * uiScale()
+            setTextColor(NAVY)
+            isChecked = checked
+            minHeight = dp(48)
+            Fonts.bind(this, false)
+            setOnCheckedChangeListener { _, value -> changed(value) }
+        },
+        LinearLayout.LayoutParams(-1, -2)
+    )
+    if (detail != null)addView(label(detail, 13f, MUTED).apply { setPadding(dp(4), 0, dp(56), dp(6)) })
 }
 
 /** Small muted heading above a group of options. */
-fun Context.sectionTitle(text:String)=label(text,13f,MUTED,true).apply{setPadding(dp(4),dp(14),dp(4),dp(6))}
+fun Context.sectionTitle(text: String) = label(text, 13f, MUTED, true).apply { setPadding(dp(4), dp(14), dp(4), dp(6)) }

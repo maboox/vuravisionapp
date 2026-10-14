@@ -1,5 +1,8 @@
 import java.time.Duration
-plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
 android {
     namespace = "com.vuravision.classroom"
     compileSdk = 36
@@ -13,11 +16,13 @@ android {
     }
     val signingPath = System.getenv("ANDROID_KEYSTORE_PATH")
     signingConfigs {
-        if (!signingPath.isNullOrBlank()) create("production") {
-            storeFile = file(signingPath)
-            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+        if (!signingPath.isNullOrBlank()) {
+            create("production") {
+                storeFile = file(signingPath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
@@ -29,7 +34,10 @@ android {
             if (!signingPath.isNullOrBlank()) signingConfig = signingConfigs.getByName("production")
         }
     }
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { buildConfig = true }
     testOptions { unitTests.isIncludeAndroidResources = true }

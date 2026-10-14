@@ -6,14 +6,14 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
-import org.junit.Assert.*
-import org.junit.Test
-import org.junit.runner.RunWith
 import com.vuravision.classroom.board.Item
 import com.vuravision.classroom.board.Page
 import com.vuravision.classroom.board.Renderer
 import com.vuravision.classroom.board.newId
+import java.io.File
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DeviceTest {
@@ -36,7 +36,7 @@ class DeviceTest {
             val doc =
                 Page(
                     background = "white",
-                    items = mutableListOf(Item(kind = "pdf", asset = asset, w = 100f, h = 100f)),
+                    items = mutableListOf(Item(kind = "pdf", asset = asset, w = 100f, h = 100f))
                 )
             val file = File(context.cacheDir, "export-test.pdf")
             val export = PdfDocument()

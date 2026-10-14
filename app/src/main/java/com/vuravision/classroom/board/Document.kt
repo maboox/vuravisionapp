@@ -1,22 +1,28 @@
 package com.vuravision.classroom.board
 
-import java.util.UUID
-import kotlin.math.*
 import com.vuravision.classroom.AssetNames
 import com.vuravision.classroom.pdf.PdfWorkspaceState
 import com.vuravision.classroom.ui.field
+import java.util.UUID
+import kotlin.math.*
 
 fun newId(): String = UUID.randomUUID().toString()
 
 /** Keep connections within a copied tree; detach references outside the selection. */
 fun duplicateItems(items: List<Item>): List<Item> {
-    val ids=items.associate{it.id to newId()}
-    return items.map{it.deepCopy().apply{id=ids.getValue(it.id);parentNode=ids[it.parentNode].orEmpty();links=linkIds().mapNotNull{l->ids[l]}.joinToString(" ").ifEmpty{null}}}
+    val ids = items.associate { it.id to newId() }
+    return items.map {
+        it.deepCopy().apply {
+            id = ids.getValue(it.id)
+            parentNode = ids[it.parentNode].orEmpty()
+            links = linkIds().mapNotNull { l -> ids[l] }.joinToString(" ").ifEmpty { null }
+        }
+    }
 }
 
-data class FillRun(val y:Float=0f,val x:Float=0f,val end:Float=0f,val height:Float=1f)
+data class FillRun(val y: Float = 0f, val x: Float = 0f, val end: Float = 0f, val height: Float = 1f)
 
-data class PlotPoint(val x:Double=0.0,val y:Double=0.0)
+data class PlotPoint(val x: Double = 0.0, val y: Double = 0.0)
 
 data class Point(var x: Float = 0f, var y: Float = 0f, var t: Long = 0, var pressure: Float = 1f)
 
@@ -66,10 +72,10 @@ data class Item(
     var plotIntersections: List<PlotPoint>? = emptyList(),
     var fillRuns: List<FillRun>? = emptyList(),
     /** Ids of objects this one points to with a connector arrow, separated by spaces; arrows follow both ends. */
-    var links: String? = null,
+    var links: String? = null
 
 ) {
-    fun linkIds()=links.orEmpty().split(' ').filter{it.isNotBlank()}
+    fun linkIds() = links.orEmpty().split(' ').filter { it.isNotBlank() }
     fun deepCopy() = copy(points = points.map { it.copy() }.toMutableList(), cuts = cuts.map { it.copy() }, plotPoints = plotPoints?.map { it.copy() })
 
     fun local(px: Float, py: Float): Pair<Float, Float> {
@@ -91,15 +97,17 @@ data class Item(
     fun hit(px: Float, py: Float, tolerance: Float = 10f): Boolean {
         val (a, b) = local(px, py)
         if (a < -tolerance || b < -tolerance || a > w + tolerance || b > h + tolerance) return false
-        if(cuts.any { (it.pdfPage<0||it.pdfPage==pdfPage) && it.contains(a,b,w,h) })return false
+        if (cuts.any { (it.pdfPage < 0 || it.pdfPage == pdfPage) && it.contains(a, b, w, h) })return false
         if (kind != "ink") return true
-        if(shape=="region_fill")return ShapeFill.contains(this,px,py)
-        val sx=w/inkW;val sy=h/inkH;val limit=tolerance+width/2
-        var prev:Point?=null
-        for(point in points) {
-            if(hypot(a-point.x*sx,b-point.y*sy)<limit) return true
-            prev?.let { if(distance(a,b,it.x*sx,it.y*sy,point.x*sx,point.y*sy)<limit)return true }
-            prev=point
+        if (shape == "region_fill")return ShapeFill.contains(this, px, py)
+        val sx = w / inkW
+        val sy = h / inkH
+        val limit = tolerance + width / 2
+        var prev: Point? = null
+        for (point in points) {
+            if (hypot(a - point.x * sx, b - point.y * sy) < limit) return true
+            prev?.let { if (distance(a, b, it.x * sx, it.y * sy, point.x * sx, point.y * sy) < limit)return true }
+            prev = point
         }
         return false
     }
@@ -114,50 +122,73 @@ fun distance(px: Float, py: Float, ax: Float, ay: Float, bx: Float, by: Float): 
 }
 
 data class Layer(var id: String = newId(), var name: String = "Layer", var visible: Boolean = true, var locked: Boolean = false, var opacity: Float = 1f)
-data class Pane(var color:Int=0xff20194f.toInt(),var background:Int=-1,var zoom:Float=1f,var tx:Float=0f,var ty:Float=0f,var penWidth:Float=4f,var penStyle:String="round",var dashLength:Float=12f,var dashGap:Float=8f,var pattern:String?=null)
+data class Pane(var color: Int = 0xff20194f.toInt(), var background: Int = -1, var zoom: Float = 1f, var tx: Float = 0f, var ty: Float = 0f, var penWidth: Float = 4f, var penStyle: String = "round", var dashLength: Float = 12f, var dashGap: Float = 8f, var pattern: String? = null)
 
 /** One independent workspace. The inactive solo/split workspace remains in the lesson. */
 data class CanvasState(
-    var background:String="dots", var items:MutableList<Item> = mutableListOf(),
-    var layers:MutableList<Layer> = mutableListOf(Layer(id="base",name="Layer 1")),
-    var activeLayerId:String="base", var panes:MutableList<Pane> = mutableListOf(Pane()),
-    var paneCount:Int=1,
+    var background: String = "dots",
+    var items: MutableList<Item> = mutableListOf(),
+    var layers: MutableList<Layer> = mutableListOf(Layer(id = "base", name = "Layer 1")),
+    var activeLayerId: String = "base",
+    var panes: MutableList<Pane> = mutableListOf(Pane()),
+    var paneCount: Int = 1
 ) {
-    fun duplicate(deep:Boolean=true)=copy(items=items.map{if(deep)it.deepCopy()else it.copy()}.toMutableList(),layers=layers.map{it.copy()}.toMutableList(),panes=panes.map{it.copy()}.toMutableList())
-    fun asPage()=Page(background=background,items=items,layers=layers,activeLayerId=activeLayerId,panes=panes,paneCount=paneCount)
+    fun duplicate(deep: Boolean = true) = copy(items = items.map { if (deep)it.deepCopy()else it.copy() }.toMutableList(), layers = layers.map { it.copy() }.toMutableList(), panes = panes.map { it.copy() }.toMutableList())
+    fun asPage() = Page(background = background, items = items, layers = layers, activeLayerId = activeLayerId, panes = panes, paneCount = paneCount)
 }
 
 data class Page(
-    var id: String = newId(), var background: String = "dots",
+    var id: String = newId(),
+    var background: String = "dots",
     var items: MutableList<Item> = mutableListOf(),
-    var layers: MutableList<Layer> = mutableListOf(Layer(id="base", name="Layer 1")),
-    var activeLayerId: String = "base", var panes: MutableList<Pane> = mutableListOf(Pane()),
-    var paneCount:Int?=null, var alternateCanvas:CanvasState?=null,
+    var layers: MutableList<Layer> = mutableListOf(Layer(id = "base", name = "Layer 1")),
+    var activeLayerId: String = "base",
+    var panes: MutableList<Pane> = mutableListOf(Pane()),
+    var paneCount: Int? = null,
+    var alternateCanvas: CanvasState? = null
 ) {
-    val visiblePaneCount get()=(paneCount?:panes.size).coerceIn(1,panes.size)
-    val visiblePaneIndices get()=0 until visiblePaneCount
-    fun pattern(index:Int=0)=panes.getOrNull(index)?.pattern?:background
-    fun canvas()=CanvasState(background,items,layers,activeLayerId,panes,visiblePaneCount)
-    fun validationCanvases()=listOf(this)+listOfNotNull(alternateCanvas?.asPage())
-    fun copied(deep:Boolean=true)=copy(items=items.map{if(deep)it.deepCopy()else it.copy()}.toMutableList(),layers=layers.map{it.copy()}.toMutableList(),panes=panes.map{it.copy()}.toMutableList(),alternateCanvas=alternateCanvas?.duplicate(deep))
-    private fun restore(state:CanvasState){val c=state.duplicate();background=c.background;items=c.items;layers=c.layers;activeLayerId=c.activeLayerId;panes=c.panes;paneCount=c.paneCount}
-    fun switchPanels(count:Int){
+    val visiblePaneCount get() = (paneCount ?: panes.size).coerceIn(1, panes.size)
+    val visiblePaneIndices get() = 0 until visiblePaneCount
+    fun pattern(index: Int = 0) = panes.getOrNull(index)?.pattern ?: background
+    fun canvas() = CanvasState(background, items, layers, activeLayerId, panes, visiblePaneCount)
+    fun validationCanvases() = listOf(this) + listOfNotNull(alternateCanvas?.asPage())
+    fun copied(deep: Boolean = true) = copy(items = items.map { if (deep)it.deepCopy()else it.copy() }.toMutableList(), layers = layers.map { it.copy() }.toMutableList(), panes = panes.map { it.copy() }.toMutableList(), alternateCanvas = alternateCanvas?.duplicate(deep))
+    private fun restore(state: CanvasState) {
+        val c = state.duplicate()
+        background = c.background
+        items = c.items
+        layers = c.layers
+        activeLayerId = c.activeLayerId
+        panes = c.panes
+        paneCount = c.paneCount
+    }
+    fun switchPanels(count: Int) {
         require(count in 1..4)
-        val before=visiblePaneCount
-        if(before==count)return
-        if((before==1)!=(count==1)){
-            val saved=canvas().duplicate(false)
-            val next=alternateCanvas ?: if(count==1){
+        val before = visiblePaneCount
+        if (before == count)return
+        if ((before == 1) != (count == 1)) {
+            val saved = canvas().duplicate(false)
+            val next = alternateCanvas ?: if (count == 1) {
                 // Older split documents have no solo archive: recover only panel one.
-                saved.duplicate().apply{items.removeAll{it.pane!=0};panes=mutableListOf(panes.first().copy());paneCount=1}
-            }else saved.duplicate()
-            restore(next);alternateCanvas=saved
+                saved.duplicate().apply {
+                    items.removeAll { it.pane != 0 }
+                    panes = mutableListOf(panes.first().copy())
+                    paneCount = 1
+                }
+            } else {
+                saved.duplicate()
+            }
+            restore(next)
+            alternateCanvas = saved
         }
-        while(panes.size<count)panes.add(Pane(color=intArrayOf(0xff20194f.toInt(),0xff218c91.toInt(),0xffba4058.toInt(),0xff7754ad.toInt())[panes.size],background=panes.first().background,pattern=panes.first().pattern))
-        paneCount=count
+        while (panes.size < count)panes.add(Pane(color = intArrayOf(0xff20194f.toInt(), 0xff218c91.toInt(), 0xffba4058.toInt(), 0xff7754ad.toInt())[panes.size], background = panes.first().background, pattern = panes.first().pattern))
+        paneCount = count
     }
     fun layer(item: Item) = layers.first { it.id == item.layerId }
-    fun visibleItems():List<Item> {val grouped=items.filter{it.pane in visiblePaneIndices}.groupBy{it.layerId};return layers.filter{it.visible&&it.opacity>0f}.flatMap{grouped[it.id].orEmpty()}}
+    fun visibleItems(): List<Item> {
+        val grouped = items.filter { it.pane in visiblePaneIndices }.groupBy { it.layerId }
+        return layers.filter { it.visible && it.opacity > 0f }.flatMap { grouped[it.id].orEmpty() }
+    }
     fun editable(item: Item) = layer(item).let { it.visible && !it.locked && it.opacity > 0f }
     fun canDraw() = layers.first { it.id == activeLayerId }.let { it.visible && !it.locked && it.opacity > 0f }
 }
@@ -170,42 +201,44 @@ data class Lesson(
     var pdf: PdfWorkspaceState? = null,
     var customColors: MutableList<Int>? = mutableListOf(),
     /** Class quizzes kept with this lesson (written by the teacher or made by the AI), ready to play again. */
-    var quizzes: MutableList<SavedQuiz>? = null,
+    var quizzes: MutableList<SavedQuiz>? = null
 ) {
     // Committed point lists are immutable; Store.edit detaches them before edits.
-    fun copyForSave(): Lesson = copy(customColors=customColors?.toMutableList(),quizzes=quizzes?.map{it.copy(questions=it.questions.map{q->q.copy(options=q.options.toList())})}?.toMutableList(),pdf=pdf?.copyForSave(),pages=pages.map{it.copied(false)}.toMutableList())
-    fun copyDeep(): Lesson = copy(customColors=customColors?.toMutableList(),quizzes=quizzes?.map{it.copy(questions=it.questions.map{q->q.copy(options=q.options.toList())})}?.toMutableList(),pdf=pdf?.deepCopy(),pages=pages.map{it.copied()}.toMutableList())
+    fun copyForSave(): Lesson = copy(customColors = customColors?.toMutableList(), quizzes = quizzes?.map { it.copy(questions = it.questions.map { q -> q.copy(options = q.options.toList()) }) }?.toMutableList(), pdf = pdf?.copyForSave(), pages = pages.map { it.copied(false) }.toMutableList())
+    fun copyDeep(): Lesson = copy(customColors = customColors?.toMutableList(), quizzes = quizzes?.map { it.copy(questions = it.questions.map { q -> q.copy(options = q.options.toList()) }) }?.toMutableList(), pdf = pdf?.deepCopy(), pages = pages.map { it.copied() }.toMutableList())
 
     fun validate() {
         require(schema in 2..3) { "Unsupported lesson version" }
         if (schema == 2) {
             pages.forEach { page ->
-                page.layers = mutableListOf(Layer(id="base", name="Layer 1"))
+                page.layers = mutableListOf(Layer(id = "base", name = "Layer 1"))
                 page.activeLayerId = "base"
                 page.items.forEach { it.layerId = "base" }
             }
             schema = 3
         }
         require(pages.size in 1..200 && current in pages.indices)
-        require(pages.map{it.id}.distinct().size==pages.size && pages.all{it.id.isNotBlank()})
+        require(pages.map { it.id }.distinct().size == pages.size && pages.all { it.id.isNotBlank() })
         customColors = (customColors ?: mutableListOf()).distinct().take(40).toMutableList()
-        quizzes?.let{list->
-            require(list.size<=50)
-            list.forEach{q->require(q.title.length<=200 && q.questions.size in 1..100)
-                q.questions.forEach{x->require(x.q.length<=1000 && x.options.size in 2..4 && x.options.all{it.length<=300} && x.answer in x.options.indices)}}
+        quizzes?.let { list ->
+            require(list.size <= 50)
+            list.forEach { q ->
+                require(q.title.length <= 200 && q.questions.size in 1..100)
+                q.questions.forEach { x -> require(x.q.length <= 1000 && x.options.size in 2..4 && x.options.all { it.length <= 300 } && x.answer in x.options.indices) }
+            }
         }
         pdf?.validate()
-        val canvases=pages.flatMap{it.validationCanvases()}
+        val canvases = pages.flatMap { it.validationCanvases() }
         require(canvases.sumOf { it.items.size } <= 20000)
         var points = 0
         canvases.forEach { page ->
             require(page.panes.size in 1..4)
-            require(page.paneCount==null || page.paneCount!! in 1..page.panes.size)
-            require(page.background in listOf("plain","white","dark")+PagePatterns.drawn)
-            require(page.panes.all{it.pattern==null || it.pattern in listOf("plain","white","dark")+PagePatterns.drawn})
-            require(page.panes.all{it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in PenStyles.keys && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f})
-            require(page.panes.all{it.zoom.isFinite() && it.zoom in .0001f..100000f && it.tx.isFinite() && it.ty.isFinite()})
-            require(page.items.all{it.pane in page.panes.indices})
+            require(page.paneCount == null || page.paneCount!! in 1..page.panes.size)
+            require(page.background in listOf("plain", "white", "dark") + PagePatterns.drawn)
+            require(page.panes.all { it.pattern == null || it.pattern in listOf("plain", "white", "dark") + PagePatterns.drawn })
+            require(page.panes.all { it.penWidth.isFinite() && it.penWidth in .1f..80f && it.penStyle in PenStyles.keys && it.dashLength.isFinite() && it.dashLength in 1f..80f && it.dashGap.isFinite() && it.dashGap in 1f..80f })
+            require(page.panes.all { it.zoom.isFinite() && it.zoom in .0001f..100000f && it.tx.isFinite() && it.ty.isFinite() })
+            require(page.items.all { it.pane in page.panes.indices })
             require(page.layers.size in 1..100)
             require(page.layers.map { it.id }.distinct().size == page.layers.size)
             require(page.layers.all { it.id.isNotBlank() && it.name.length <= 200 && it.opacity.isFinite() && it.opacity in 0f..1f })
@@ -225,17 +258,17 @@ data class Lesson(
                 require(o.pageCount > 0 && o.pdfPage in 0 until o.pageCount)
                 require(o.domain in .1f..1000f)
                 require(o.text.length <= 100000)
-                require(listOf(o.fontFa,o.fontEn).all{it==null || it.matches(Regex("[a-z0-9_]{1,40}"))})
+                require(listOf(o.fontFa, o.fontEn).all { it == null || it.matches(Regex("[a-z0-9_]{1,40}")) })
                 require(o.asset.isEmpty() || AssetNames.valid(o.asset))
                 require(o.id.isNotBlank() && o.alpha in 0..255)
                 require(o.cuts.size <= 100000)
-                require(o.cuts.all { c -> listOf(c.ax,c.ay,c.bx,c.by,c.radius,c.basisW,c.basisH).all { it.isFinite() } && c.radius>0 && c.basisW>0 && c.basisH>0 })
-                require(o.fillRuns.orEmpty().size<=50000 && o.fillRuns.orEmpty().all{r->listOf(r.x,r.y,r.end,r.height).all{it.isFinite()} && r.x>=0 && r.y>=0 && r.end>=r.x && r.height>0})
+                require(o.cuts.all { c -> listOf(c.ax, c.ay, c.bx, c.by, c.radius, c.basisW, c.basisH).all { it.isFinite() } && c.radius > 0 && c.basisW > 0 && c.basisH > 0 })
+                require(o.fillRuns.orEmpty().size <= 50000 && o.fillRuns.orEmpty().all { r -> listOf(r.x, r.y, r.end, r.height).all { it.isFinite() } && r.x >= 0 && r.y >= 0 && r.end >= r.x && r.height > 0 })
                 require(o.fillAlpha in 0..255 && o.geometryAngle.isFinite() && o.geometrySweep.isFinite() && o.geometryVersion in 0..1 && o.selectedElement in 0..118)
-                require((o.plotPoints.orEmpty()+o.plotIntersections.orEmpty()).size <= 1000 && (o.plotPoints.orEmpty()+o.plotIntersections.orEmpty()).all{it.x.isFinite() && it.y.isFinite() && abs(it.x)<=100000 && abs(it.y)<=100000})
-                require(o.textAlign in listOf("start","center","end"))
-                require(o.links.orEmpty().length<=4000)
-                points += o.points.size+o.fillRuns.orEmpty().size
+                require((o.plotPoints.orEmpty() + o.plotIntersections.orEmpty()).size <= 1000 && (o.plotPoints.orEmpty() + o.plotIntersections.orEmpty()).all { it.x.isFinite() && it.y.isFinite() && abs(it.x) <= 100000 && abs(it.y) <= 100000 })
+                require(o.textAlign in listOf("start", "center", "end"))
+                require(o.links.orEmpty().length <= 4000)
+                points += o.points.size + o.fillRuns.orEmpty().size
                 require(points <= 1000000)
                 require(o.points.all { it.x.isFinite() && it.y.isFinite() })
             }
@@ -244,11 +277,11 @@ data class Lesson(
 }
 
 class Store(var lesson: Lesson = Lesson()) {
-    var editAllowed:()->Boolean={true}
-    var sessionUndo:(()->Unit)?=null
-    var sessionRedo:(()->Unit)?=null
-    var sessionHistory:(()->Pair<Int,Int>)?=null
-    var sessionSeek:((Int)->Unit)?=null
+    var editAllowed: () -> Boolean = { true }
+    var sessionUndo: (() -> Unit)? = null
+    var sessionRedo: (() -> Unit)? = null
+    var sessionHistory: (() -> Pair<Int, Int>)? = null
+    var sessionSeek: ((Int) -> Unit)? = null
     private val past = ArrayDeque<Lesson>()
     private val future = ArrayDeque<Lesson>()
     var changed: () -> Unit = {}
@@ -256,54 +289,100 @@ class Store(var lesson: Lesson = Lesson()) {
         get() = lesson.pages[lesson.current]
 
     // Point samples are shared in history and detached before arbitrary edits.
-    private fun snapshot() = lesson.copy(customColors=lesson.customColors?.toMutableList(),pages=lesson.pages.map{it.copied(false)}.toMutableList())
-    var historyLimit:Int=50
-        set(value){field=value.coerceIn(10,200);while(past.size>field)past.removeFirst();while(future.size>field)future.removeFirst()}
-    private var historyBefore:Pair<List<Lesson>,List<Lesson>>?=null
-    var isCanceling=false;private set
-    fun cancelCheckpoint(){
-        val before=historyBefore?:return
-        val saved=past.lastOrNull()?:return
-        lesson=saved;past.clear();past.addAll(before.first);future.clear();future.addAll(before.second);while(past.size>historyLimit)past.removeFirst();while(future.size>historyLimit)future.removeFirst();historyBefore=null
-        isCanceling=true;try{changed()}finally{isCanceling=false}
+    private fun snapshot() = lesson.copy(customColors = lesson.customColors?.toMutableList(), pages = lesson.pages.map { it.copied(false) }.toMutableList())
+    var historyLimit: Int = 50
+        set(value) {
+            field = value.coerceIn(10, 200)
+            while (past.size > field)past.removeFirst()
+            while (future.size > field)future.removeFirst()
+        }
+    private var historyBefore: Pair<List<Lesson>, List<Lesson>>? = null
+    var isCanceling = false
+        private set
+    fun cancelCheckpoint() {
+        val before = historyBefore ?: return
+        val saved = past.lastOrNull() ?: return
+        lesson = saved
+        past.clear()
+        past.addAll(before.first)
+        future.clear()
+        future.addAll(before.second)
+        while (past.size > historyLimit)past.removeFirst()
+        while (future.size > historyLimit)future.removeFirst()
+        historyBefore = null
+        isCanceling = true
+        try {
+            changed()
+        } finally {
+            isCanceling = false
+        }
     }
     fun checkpoint() {
-        if(!editAllowed())return
-        historyBefore=past.toList() to future.toList()
+        if (!editAllowed())return
+        historyBefore = past.toList() to future.toList()
         past.addLast(snapshot())
         while (past.size > historyLimit) past.removeFirst()
         future.clear()
     }
 
     fun edit(action: () -> Unit) {
-        if(!editAllowed())return
+        if (!editAllowed())return
         checkpoint()
-        lesson.pages.flatMap{it.validationCanvases()}.forEach { page -> page.items.forEach { o -> if(o.points.isNotEmpty()) o.points=o.points.map { it.copy() }.toMutableList() } }
-        try{action()}catch(e:Exception){cancelCheckpoint();throw e}
-        if(!discardUnchangedCheckpoint())changed()
+        lesson.pages.flatMap { it.validationCanvases() }.forEach { page -> page.items.forEach { o -> if (o.points.isNotEmpty()) o.points = o.points.map { it.copy() }.toMutableList() } }
+        try {
+            action()
+        } catch (e: Exception) {
+            cancelCheckpoint()
+            throw e
+        }
+        if (!discardUnchangedCheckpoint())changed()
     }
 
     /** Only metadata or immutable-list replacements; no copies of existing ink samples. */
-    fun editMetadata(action:()->Unit){if(!editAllowed())return;checkpoint();try{action()}catch(e:Exception){cancelCheckpoint();throw e};if(!discardUnchangedCheckpoint())changed()}
-    fun discardUnchangedCheckpoint():Boolean {
-        if(historyBefore==null || lesson!=past.lastOrNull())return false
-        cancelCheckpoint();return true
+    fun editMetadata(action: () -> Unit) {
+        if (!editAllowed())return
+        checkpoint()
+        try {
+            action()
+        } catch (e: Exception) {
+            cancelCheckpoint()
+            throw e
+        }
+        if (!discardUnchangedCheckpoint())changed()
     }
-    val undoCount get()=sessionHistory?.invoke()?.first?:past.size
-    val redoCount get()=sessionHistory?.invoke()?.second?:future.size
+    fun discardUnchangedCheckpoint(): Boolean {
+        if (historyBefore == null || lesson != past.lastOrNull())return false
+        cancelCheckpoint()
+        return true
+    }
+    val undoCount get() = sessionHistory?.invoke()?.first ?: past.size
+    val redoCount get() = sessionHistory?.invoke()?.second ?: future.size
+
     /** Rebuild only once per scrub update, even when crossing many history steps. */
-    fun seekHistory(position:Int){
-        sessionSeek?.let{it(position);return}
-        val target=position.coerceIn(0,past.size+future.size)
-        if(target==past.size)return
-        historyBefore=null
-        while(past.size>target){future.addLast(snapshot());lesson=past.removeLast()}
-        while(past.size<target){past.addLast(snapshot());lesson=future.removeLast()}
+    fun seekHistory(position: Int) {
+        sessionSeek?.let {
+            it(position)
+            return
+        }
+        val target = position.coerceIn(0, past.size + future.size)
+        if (target == past.size)return
+        historyBefore = null
+        while (past.size > target) {
+            future.addLast(snapshot())
+            lesson = past.removeLast()
+        }
+        while (past.size < target) {
+            past.addLast(snapshot())
+            lesson = future.removeLast()
+        }
         changed()
     }
     fun undo() {
-        sessionUndo?.let{it();return}
-        historyBefore=null
+        sessionUndo?.let {
+            it()
+            return
+        }
+        historyBefore = null
         if (past.isNotEmpty()) {
             future.addLast(snapshot())
             lesson = past.removeLast()
@@ -312,8 +391,11 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun redo() {
-        sessionRedo?.let{it();return}
-        historyBefore=null
+        sessionRedo?.let {
+            it()
+            return
+        }
+        historyBefore = null
         if (future.isNotEmpty()) {
             past.addLast(snapshot())
             lesson = future.removeLast()
@@ -322,8 +404,8 @@ class Store(var lesson: Lesson = Lesson()) {
     }
 
     fun replace(doc: Lesson) {
-        if(!editAllowed())return
-        historyBefore=null
+        if (!editAllowed())return
+        historyBefore = null
         doc.validate()
         lesson = doc
         past.clear()
@@ -340,31 +422,29 @@ data class TouchProfile(
     var multiTouch: Boolean = true,
     var thickWidth: Float = 10f,
     var thickColor: Int = 0xffe45756.toInt(),
-    var thickStyle: String = "round",
+    var thickStyle: String = "round"
 ) {
-    fun classify(tool: Int, major: Float) =
-        when {
-            tool == 4 -> "eraser"
-            tool == 2 && (!calibrated || major <= 0) -> "stylus"
-            !calibrated || major <= 0 -> "unknown"
-            major >= palm -> "palm"
-            major <= thin -> "thin"
-            else -> "finger / thick tip"
-        }
+    fun classify(tool: Int, major: Float) = when {
+        tool == 4 -> "eraser"
+        tool == 2 && (!calibrated || major <= 0) -> "stylus"
+        !calibrated || major <= 0 -> "unknown"
+        major >= palm -> "palm"
+        major <= thin -> "thin"
+        else -> "finger / thick tip"
+    }
 
-    fun style(tool:Int, major:Float, normal:String) = if(classify(tool,major)=="finger / thick tip") thickStyle else normal
+    fun style(tool: Int, major: Float, normal: String) = if (classify(tool, major) == "finger / thick tip") thickStyle else normal
 
-    fun color(tool:Int, major:Float, normal:Int) = if(classify(tool,major)=="finger / thick tip") thickColor else normal
+    fun color(tool: Int, major: Float, normal: Int) = if (classify(tool, major) == "finger / thick tip") thickColor else normal
 
-    fun width(tool:Int, major:Float, normal:Float) = if(classify(tool,major)=="finger / thick tip") thickWidth else normal
+    fun width(tool: Int, major: Float, normal: Float) = if (classify(tool, major) == "finger / thick tip") thickWidth else normal
 
-    fun action(tool: Int, major: Float) =
-        when (classify(tool, major)) {
-            "eraser" -> "erase"
-            "palm" -> if (palmErase) "erase" else "reject"
-            else -> "draw"
-        }
+    fun action(tool: Int, major: Float) = when (classify(tool, major)) {
+        "eraser" -> "erase"
+        "palm" -> if (palmErase) "erase" else "reject"
+        else -> "draw"
+    }
 }
 
-data class SavedQuestion(val q:String="",val options:List<String> = emptyList(),val answer:Int=0)
-data class SavedQuiz(val id:String=newId(),val title:String="",val questions:List<SavedQuestion> = emptyList())
+data class SavedQuestion(val q: String = "", val options: List<String> = emptyList(), val answer: Int = 0)
+data class SavedQuiz(val id: String = newId(), val title: String = "", val questions: List<SavedQuestion> = emptyList())

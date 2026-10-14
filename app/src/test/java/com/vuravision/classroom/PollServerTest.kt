@@ -1,5 +1,8 @@
 package com.vuravision.classroom
 
+import com.vuravision.classroom.room.PollServer
+import java.net.HttpURLConnection
+import java.net.URL
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.*
@@ -8,11 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.net.HttpURLConnection
-import java.net.URL
-import com.vuravision.classroom.room.PollServer
-import com.vuravision.classroom.board.reveal
-import com.vuravision.classroom.ui.s
 
 /** Phones answering the class quiz: one vote per phone, changeable until the reveal, and nothing outside the token. */
 // Robolectric for the real org.json (plain JVM tests get Android's stubs).
@@ -20,15 +18,27 @@ import com.vuravision.classroom.ui.s
 @Config(sdk = [28])
 class PollServerTest {
     private lateinit var server: PollServer
-    @Before fun start() { server = PollServer(); server.start(5000, false) }
-    @After fun stop() { server.stop() }
+
+    @Before fun start() {
+        server = PollServer()
+        server.start(5000, false)
+    }
+
+    @After fun stop() {
+        server.stop()
+    }
     private fun call(path: String, post: Boolean = false): Pair<Int, String> {
         val c = URL("http://127.0.0.1:${server.listeningPort}$path").openConnection() as HttpURLConnection
-        if (post) { c.requestMethod = "POST"; c.doOutput = true; c.outputStream.use { } }
+        if (post) {
+            c.requestMethod = "POST"
+            c.doOutput = true
+            c.outputStream.use { }
+        }
         val code = c.responseCode
         val body = (if (code < 400) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
         return code to body
     }
+
     @Test fun votesAreCountedOncePerPhoneAndCloseAtTheReveal() {
         val base = "/${server.token}"
         assertEquals(200, call(base).first)

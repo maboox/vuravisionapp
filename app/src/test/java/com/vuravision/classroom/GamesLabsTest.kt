@@ -3,22 +3,22 @@ package com.vuravision.classroom
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.view.MotionEvent
+import com.vuravision.classroom.games.ArcadeRound
+import com.vuravision.classroom.games.ArcadeView
+import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.games.QuizQuestion
+import com.vuravision.classroom.labs.LabView
+import kotlin.random.Random
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.Config
-import kotlin.random.Random
-import com.vuravision.classroom.games.ArcadeRound
-import com.vuravision.classroom.games.ArcadeView
-import com.vuravision.classroom.games.GameEngine
-import com.vuravision.classroom.labs.LabView
-import com.vuravision.classroom.games.QuizQuestion
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk=[28])
+@Config(sdk = [28])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class GamesLabsTest {
     private val context get() = RuntimeEnvironment.getApplication()
@@ -73,8 +73,7 @@ class GamesLabsTest {
     }
 
     @Test fun visualLabControlsChangeTheRenderedDiagram() {
-        fun snapshot(key: String, vararg values: Float): Bitmap =
-            LabView(context, key, values.copyOf()).snapshot()
+        fun snapshot(key: String, vararg values: Float): Bitmap = LabView(context, key, values.copyOf()).snapshot()
         val gasSmall = snapshot("native_gas", .1f, 273f, 2f)
         val gasLarge = snapshot("native_gas", 2.5f, 273f, 48f)
         val dilutionWeak = snapshot("dilution", .1f, 20f, 500f)
@@ -86,13 +85,23 @@ class GamesLabsTest {
             listOf(gasSmall, gasLarge, dilutionWeak, dilutionStrong).forEach { it.recycle() }
         }
     }
+
     /** Items 68/81: a class quiz plays as a duel, its own questions in order, ending after the last one. */
-    @Test fun classQuizPlaysAsADuel(){
-        val questions=listOf(QuizQuestion("۲ + ۲ ؟",listOf("۳","۴"),1),QuizQuestion("پایتخت ایران؟",listOf("تهران","شیراز","تبریز"),0))
-        val g=GameEngine("custom_quiz").apply{custom=questions}
-        g.next(0);assertEquals("۲ + ۲ ؟",g.question);g.answer(0,1,100);g.answer(1,0,120);g.tick(20000)
-        assertEquals(1,g.scores[0]);assertFalse(g.finished)
-        g.next(21000);assertEquals("پایتخت ایران؟",g.question);g.answer(1,0,21100);g.tick(40000)
-        assertTrue("ends after the last question",g.finished);assertEquals(1,g.scores[1])
+    @Test fun classQuizPlaysAsADuel() {
+        val questions = listOf(QuizQuestion("۲ + ۲ ؟", listOf("۳", "۴"), 1), QuizQuestion("پایتخت ایران؟", listOf("تهران", "شیراز", "تبریز"), 0))
+        val g = GameEngine("custom_quiz").apply { custom = questions }
+        g.next(0)
+        assertEquals("۲ + ۲ ؟", g.question)
+        g.answer(0, 1, 100)
+        g.answer(1, 0, 120)
+        g.tick(20000)
+        assertEquals(1, g.scores[0])
+        assertFalse(g.finished)
+        g.next(21000)
+        assertEquals("پایتخت ایران؟", g.question)
+        g.answer(1, 0, 21100)
+        g.tick(40000)
+        assertTrue("ends after the last question", g.finished)
+        assertEquals(1, g.scores[1])
     }
 }

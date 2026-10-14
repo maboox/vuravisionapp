@@ -144,9 +144,14 @@ jobs:
           path: app/build/reports/androidTests/
   source-checks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - run: python3 scripts/check-source.py
       - name: AI proxy checks
         run: node server/ai-proxy/worker.test.mjs
+      - name: Kotlin formatting (ktlint)
+        run: |
+          curl -sSLf -o ktlint https://github.com/pinterest/ktlint/releases/download/1.5.0/ktlint
+          chmod +x ktlint
+          ./ktlint "app/src/**/*.kt" "*.kts" "app/*.kts"

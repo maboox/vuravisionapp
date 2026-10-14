@@ -42,7 +42,7 @@ topics=json.loads((root/'app/src/main/assets/guide/topics.json').read_text())
 assert len(topics)==28 and len({t['id'] for t in topics})==28
 assert all(len(t['stepsEn'])==len(t['stepsFa']) for t in topics)
 assets=root/'app/src/main/java/com/vuravision/classroom'
-lab_ids=re.search(r'val ids=listOf\((.*?)\)',(assets/'labs/NativeLabs.kt').read_text()).group(1)
+lab_ids=re.search(r'val ids\s*=\s*listOf\((.*?)\)',(assets/'labs/NativeLabs.kt').read_text()).group(1)
 keys=re.findall(r'"([^"]+)"',lab_ids)+['energy','triangle_area','statistics','dilution','trig','periodic_table']
 classified=[]
 for ids in re.findall(r'"([a-z_ ]+)"\.split\(" "\)',(assets/'labs/LabCatalog.kt').read_text()):classified+=ids.split()
