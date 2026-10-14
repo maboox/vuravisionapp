@@ -56,6 +56,8 @@ class GamesLabsTest {
         game.face = true
         game.layout(0, 0, 500, 1300)
         game.startRound()
+        // Past the 3-2-1 countdown, when answers count.
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(2500))
         val round = ArcadeView::class.java.getDeclaredField("game").apply { isAccessible = true }
             .get(game) as ArcadeRound
         val scale = 580f / 600f

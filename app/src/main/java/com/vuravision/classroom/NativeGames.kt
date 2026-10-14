@@ -93,6 +93,10 @@ class ArcadeView(context:Context,val key:String):View(context){
  private var round=0
  private var start=0L
  private var readyDelay=2000L
+ /** Item 55: "3, 2, 1" before a race, so both sides start together; not for turn games or those that are about waiting. */
+ private val countdownKeys get()=if(key in setOf("ttt","c4","reaction","draw","potato","balloon"))emptySet() else setOf(key)
+ private val COUNTDOWN=2400L
+ private var lastCount=0
  private var last=0L
  private var message=""
  private var ballX=.5;private var ballY=.5;private var ballVX=.3;private var ballVY=.2
@@ -107,7 +111,7 @@ class ArcadeView(context:Context,val key:String):View(context){
  init{setBackgroundColor(Color.WHITE);isFocusable=true;contentDescription=context.s("arc_$key")}
  fun stop(){active=false;contacts.clear();previous.clear();pressed.fill(0)}
  fun restart(){scores.fill(0);round=0;startRound(true)}
- fun startRound(force:Boolean=false){if(active&&!force)return;if(scores.any{it>=5})scores.fill(0);round++;game=ArcadeRound(key).apply{prepare()};progress.fill(0);choices.fill(-1);used.forEach{it.clear()};opened.forEach{it.clear()};flipAt.fill(0);measure.fill(Double.NaN);pressed.fill(0);cells.fill(-1);turn=0;message="";ended=false;active=true;start=clock.now();last=start;readyDelay=random.nextLong(1700,4300);ballX=.5;ballY=.5;ballVX=if(random.nextBoolean()).3 else -.3;ballVY=.2;paddles.fill(.5);invalidate()}
+ fun startRound(force:Boolean=false){if(active&&!force)return;if(scores.any{it>=5})scores.fill(0);round++;game=ArcadeRound(key).apply{prepare()};progress.fill(0);choices.fill(-1);used.forEach{it.clear()};opened.forEach{it.clear()};flipAt.fill(0);measure.fill(Double.NaN);pressed.fill(0);cells.fill(-1);turn=0;message="";ended=false;active=true;start=clock.now();last=start;readyDelay=random.nextLong(1700,4300);if(key in countdownKeys){start+=COUNTDOWN;last=start};ballX=.5;ballY=.5;ballVX=if(random.nextBoolean()).3 else -.3;ballVY=.2;paddles.fill(.5);invalidate()}
  private val fx=GameFx()
  /** Every round ends here, so feedback lives here too: a sound, a green flash for the winner, confetti for the match. */
  private fun finish(winner:Int){if(!active)return;active=false;ended=true;resultWinner=winner;if(winner>=0)scores[winner]++;message=resultMessage(winner)
@@ -149,16 +153,23 @@ class ArcadeView(context:Context,val key:String):View(context){
   // The score swells for a moment when it changes, so everyone notices the point.
   val pop=fx.pop();text(c,"${scores[0]}   :   ${scores[1]}    ·    ${context.s("round")} $round",width/2f,42f+pop*6f,28f*(1f+pop*.45f))
   if(key in setOf("ttt","c4")){drawBoard(c);fx.confetti(c,height);if(fx.busy&&isAttachedToWindow)postInvalidateOnAnimation();return}
-  if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);fx.confetti(c,height);if((active&&!clock.paused||fx.busy)&&isShown)postInvalidateOnAnimation();return}
+  if(key=="pong"){rect(c,RectF(0f,70f,width.toFloat(),height.toFloat()),PAPER);val h=height-70f;rect(c,RectF(20f,70+(paddles[0].toFloat()-.12f)*h,34f,70+(paddles[0].toFloat()+.12f)*h),TEAL);rect(c,RectF(width-34f,70+(paddles[1].toFloat()-.12f)*h,width-20f,70+(paddles[1].toFloat()+.12f)*h),ORANGE);circle(c,(ballX*width).toFloat(),70+(ballY*h).toFloat(),12f,NAVY);if(!active)text(c,message.ifBlank{context.s("start")},width/2f,height/2f,28f);countdown(c,now);fx.confetti(c,height);if((active&&!clock.paused||fx.busy)&&isShown)postInvalidateOnAnimation();return}
   panels().forEachIndexed{player,r->c.save();c.clipRect(r);c.translate(fx.shake(player),0f);rect(c,r,if(player==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());
    val scale=min(r.width()/500f,r.height()/600f).coerceAtLeast(.001f)
    c.translate(r.left+(r.width()-500f*scale)/2,r.top+(r.height()-600f*scale)/2)
    if(face&&player==0){c.translate(500f*scale,600f*scale);c.rotate(180f)}
    c.scale(scale,scale);drawPanel(c,player,now,elapsed);c.restore();fx.flash(c,player,r)}
+  countdown(c,now)
   fx.confetti(c,height)
   if(fx.busy&&isAttachedToWindow&&isShown)postInvalidateOnAnimation()
   val animating=key in timed || (key in memory&&elapsed<2.5) || key in setOf("reaction","draw","potato","timing","balloon") || (key=="pairs"&&opened.any{it.size==2})
   if(active&&!clock.paused&&isAttachedToWindow&&isShown&&animating)postInvalidateOnAnimation()
+ }
+ private fun countdown(c:Canvas,now:Long){
+  if(active&&now<start){val left=((start-now+799)/800).toInt().coerceIn(1,3);val t=((start-now)%800)/800f
+   p.color=0x99000000.toInt();p.style=Paint.Style.FILL;c.drawRect(0f,70f,width.toFloat(),height.toFloat(),p)
+   text(c,left.toString(),width/2f,height/2f+60f,min(width,height)*.32f*(1f+(1f-t)*.25f),Color.WHITE)
+   if(left!=lastCount){lastCount=left;Sounds.play(context,Sounds.Cue.TICK)};postInvalidateOnAnimation()}else lastCount=0
  }
  private fun drawPanel(c:Canvas,i:Int,now:Long,elapsed:Double){
   val accent=if(i==0)TEAL else ORANGE;rect(c,RectF(0f,0f,500f,600f),if(i==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());text(c,GamePlayers.name(context,i),250f,38f,24f,accent)
@@ -225,7 +236,7 @@ class ArcadeView(context:Context,val key:String):View(context){
    val i=panels().indexOfFirst{it.contains(e.x,e.y)}
    if(i>=0){val q=local(e.x,e.y,i);if(q.x in 0f..1f&&q.y in 0f.. .10f){onRename(i);return true}}
   }
-  if(!active||clock.paused||renaming)return true
+  if(!active||clock.paused||renaming||clock.now()<start)return true
   val idx=e.actionIndex;val pid=e.getPointerId(idx);val now=clock.now()
   when(e.actionMasked){
    MotionEvent.ACTION_DOWN,MotionEvent.ACTION_POINTER_DOWN->{requestUnbufferedDispatch(e);parent?.requestDisallowInterceptTouchEvent(true);if(key in setOf("ttt","c4")){boardTap(e.getX(idx),e.getY(idx));invalidate();return true};val i=if(key=="pong")if(e.getX(idx)<width/2)0 else 1 else panels().indexOfFirst{it.contains(e.getX(idx),e.getY(idx))};if(i<0)return true;contacts[pid]=i;previous[pid]=PointF(e.getX(idx),e.getY(idx));if(key in setOf("hold","balloon")&&pressed[i]==0L)pressed[i]=now

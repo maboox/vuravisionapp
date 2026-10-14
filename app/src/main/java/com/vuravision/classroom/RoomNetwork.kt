@@ -122,7 +122,7 @@ class RoomServer(val engine:RoomEngine,private val media:Media):NanoWSD("0.0.0.0
     override fun openWebSocket(handshake:IHTTPSession):NanoWSD.WebSocket=object:NanoWSD.WebSocket(handshake){
         val id=handshake.headers["x-vura-peer"].orEmpty()
         val key=keys[id]
-        val authorized=key!=null&&handshake.uri=="$base/ws"&&runCatching{opened(id,key,RoomCrypto.bytes(handshake.headers["x-vura-auth"].orEmpty()),"auth GET /ws")}.isSuccess
+        val authorized=handshake.uri=="$base/ws"&&key?.let{k->runCatching{opened(id,k,RoomCrypto.bytes(handshake.headers["x-vura-auth"].orEmpty()),"auth GET /ws")}.isSuccess}==true
         override fun onOpen(){if(!authorized)runCatching{close(NanoWSD.WebSocketFrame.CloseCode.PolicyViolation,"removed",false)}}
         override fun onClose(code:NanoWSD.WebSocketFrame.CloseCode?,reason:String?,remote:Boolean){}
         override fun onPong(pong:NanoWSD.WebSocketFrame?){}
