@@ -79,4 +79,13 @@ class GamesLabsTest {
             listOf(gasSmall, gasLarge, dilutionWeak, dilutionStrong).forEach { it.recycle() }
         }
     }
+    /** Items 68/81: a class quiz plays as a duel, its own questions in order, ending after the last one. */
+    @Test fun classQuizPlaysAsADuel(){
+        val questions=listOf(QuizQuestion("۲ + ۲ ؟",listOf("۳","۴"),1),QuizQuestion("پایتخت ایران؟",listOf("تهران","شیراز","تبریز"),0))
+        val g=GameEngine("custom_quiz").apply{custom=questions}
+        g.next(0);assertEquals("۲ + ۲ ؟",g.question);g.answer(0,1,100);g.answer(1,0,120);g.tick(20000)
+        assertEquals(1,g.scores[0]);assertFalse(g.finished)
+        g.next(21000);assertEquals("پایتخت ایران؟",g.question);g.answer(1,0,21100);g.tick(40000)
+        assertTrue("ends after the last question",g.finished);assertEquals(1,g.scores[1])
+    }
 }

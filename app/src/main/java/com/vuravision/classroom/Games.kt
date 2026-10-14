@@ -41,6 +41,9 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
     var result = ""
         private set
 
+    /** Items 68 and 81: the teacher's own (or the AI's) questions, played as a two-player race, in order. */
+    var custom: List<QuizQuestion>? = null
+
     val cells = IntArray(9) { -1 }
     var turn = 0
         private set
@@ -58,6 +61,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
         result = ""
         start = now
         go = now + if (key == "reaction") random.nextLong(1500, 4501) else 0
+        custom?.takeIf { it.isNotEmpty() }?.let { list -> val q = list[(round - 1) % list.size]; question = q.prompt; options = q.options; correct = q.correct; return }
         if(key in QuizCatalog.keys) { val q=QuizCatalog.question(key,random);question=q.prompt;options=q.options;correct=q.correct;return }
         when (key) {
             "math_race" -> {
@@ -186,7 +190,7 @@ class GameEngine(val key: String, private val random: Random = Random.Default) {
     }
 
     private fun finishIfNeeded() {
-        if (round >= 10 || key == "tictac") finished = true
+        if (round >= (custom?.size?.coerceIn(1, 30) ?: 10) || key == "tictac") finished = true
     }
 
     fun leader() =
@@ -238,7 +242,7 @@ object Games {
         }
         g.onSearch{refresh()};refresh();g.dialog.show()
     }
-    private fun rule(key:String)="rule_"+when(key){"tap_race"->"tap";"math_race"->"math";"even_odd"->"evenodd";else->if(key in QuizCatalog.keys)"math" else key}
+    private fun rule(key:String)="rule_"+when(key){"tap_race"->"tap";"math_race","custom_quiz"->"math";"even_odd"->"evenodd";else->if(key in QuizCatalog.keys)"math" else key}
     /** A card per game: who plays (two players or the class), the name, the rule in short, and a sample question for quizzes. */
     private fun card(context:Context,key:String,open:()->Unit):View{
         val duel=key in NativeGames.keys
@@ -256,11 +260,13 @@ object Games {
         return context.card(content,cornerRadius=20,elevation=1).apply{isClickable=true;isFocusable=true;contentDescription=context.s(key);setOnClickListener{open()}}
     }
 
-    fun open(context: Context, key: String, back:(()->Unit)?=null) {
+    /** A class quiz as a duel: same rules and screen as the math race, with the quiz's own questions. */
+    fun duel(context: Context, title: String, questions: List<QuizQuestion>) = open(context, "custom_quiz", null, questions, title)
+    fun open(context: Context, key: String, back:(()->Unit)?=null, custom:List<QuizQuestion>?=null, title:String?=null) {
         if(key in NativeGames.keys){NativeGames.open(context,key,back);return}
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val handler = Handler(Looper.getMainLooper())
-        var game = GameEngine(key)
+        var game = GameEngine(key).apply { this.custom = custom }
         var face = context.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT
         var started = false
         var namePause:Long?=null;var pausedDuration=0L
@@ -276,7 +282,7 @@ object Games {
                 pad(14)
             }
         val header = context.row()
-        root.addView(context.navigationHeading(context.s(key),back?.let{action->{d.dismiss();action()}}))
+        root.addView(context.navigationHeading(title?:context.s(key),back?.let{action->{d.dismiss();action()}}))
         val score = context.label("0 : 0", 27f, NAVY, true).apply { gravity = Gravity.CENTER }
         val names=context.row();repeat(2){i->val label=context.label(GamePlayers.name(context,i),16f,if(i==0)TEAL else ORANGE,true).apply{gravity=Gravity.CENTER;minimumHeight=context.dp(48);setOnClickListener{rename(i)}};nameLabels.add(label);names.addView(label,LinearLayout.LayoutParams(0,-2,1f))};root.addView(names)
         root.addView(score)
@@ -468,7 +474,7 @@ object Games {
         header.addView(context.button(context.s("close")) { d.dismiss() })
         action.setOnClickListener {
             if (!started || game.finished || !game.resolved) {
-                game = GameEngine(key)
+                game = GameEngine(key).apply { this.custom = custom }
             }
             started = true
             game.next(gameNow())

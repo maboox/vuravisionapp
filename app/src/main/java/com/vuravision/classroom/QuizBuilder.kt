@@ -31,6 +31,7 @@ object QuizBuilder {
                     addView(c.label(c.tr("${q.questions.size} questions","${q.questions.size} سؤال"),13f,MUTED))
                 },LinearLayout.LayoutParams(0,-2,1f))
                 addView(c.button(c.tr("Play","اجرا"),true){dialog.dismiss();play(c,q)},LinearLayout.LayoutParams(-2,c.dp(48)))
+                addView(c.button(c.tr("Duel","مسابقهٔ دونفره")){dialog.dismiss();Games.duel(c,q.title.ifBlank{c.s("class_quiz")},q.questions.map{x->QuizQuestion(x.q,x.options,x.answer)})},LinearLayout.LayoutParams(-2,c.dp(48)).apply{marginStart=c.dp(6)})
                 addView(c.button(c.tr("Edit","ویرایش")){editor(c,q){save(it);refresh()}},LinearLayout.LayoutParams(-2,c.dp(48)).apply{marginStart=c.dp(6)})
                 addView(WorkspaceIcon(c,"delete",c.s("delete")){MaterialAlertDialogBuilder(c).setMessage(c.tr("Delete “${q.title.ifBlank{"…"}}”?","«${q.title.ifBlank{"…"}}» حذف شود؟")).setNegativeButton(c.s("cancel"),null).setPositiveButton(c.s("delete")){_,_->delete(q.id);refresh()}.show().also{Fonts.onShown(it)}},LinearLayout.LayoutParams(c.dp(48),c.dp(48)).apply{marginStart=c.dp(4)})
             },LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=c.dp(8)})}
