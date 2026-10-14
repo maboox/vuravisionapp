@@ -540,6 +540,9 @@ class AddPanel(
         background = rounded(SURFACE, context.dp(20).toFloat(), OUTLINE)
         elevation = context.dp(8).toFloat()
     }
+    /** Not offered: the lesson summary (not needed), and AI pictures unless switched on in the hidden settings (costly). */
+    private val hidden = setOf("ai_summary") + if (context.getSharedPreferences("vura", 0).getBoolean("aiImages", false)) emptySet() else setOf("ai_image")
+
     private val columns = ((freeWidth - context.dp(28)) / context.dp(88)).coerceIn(2, 4)
     private val body = context.column()
 
@@ -578,9 +581,6 @@ class AddPanel(
         )
         host.addView(scrim, FrameLayout.LayoutParams(-1, -1))
     }
-
-    /** Not offered: the lesson summary (not needed), and AI pictures unless switched on in the hidden settings (costly). */
-    private val hidden = setOf("ai_summary") + if (context.getSharedPreferences("vura", 0).getBoolean("aiImages", false)) emptySet() else setOf("ai_image")
 
     /** Every searchable command: the tiles here first, then the rest of the app's commands. */
     private fun searchable() = (groups.flatMap { it.second } + ShortcutCatalog.keys).distinct().filter { it !in listOf("insert", "pen", "erase", "select", "undo", "redo") && it !in hidden }
