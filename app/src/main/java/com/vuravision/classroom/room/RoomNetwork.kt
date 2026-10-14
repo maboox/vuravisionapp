@@ -89,6 +89,7 @@ class RoomSocket(address:RoomAddress,peer:String,private val credential:String,p
         object:okhttp3.WebSocketListener(){
             override fun onOpen(webSocket:okhttp3.WebSocket,response:okhttp3.Response){open=true}
             override fun onMessage(webSocket:okhttp3.WebSocket,text:String){answers.offer(text)}
+            override fun onClosing(webSocket:okhttp3.WebSocket,code:Int,reason:String){open=false;failed=true;webSocket.close(1000,null)}
             override fun onClosed(webSocket:okhttp3.WebSocket,code:Int,reason:String){open=false;failed=true}
             override fun onFailure(webSocket:okhttp3.WebSocket,t:Throwable,response:okhttp3.Response?){open=false;failed=true}
         })

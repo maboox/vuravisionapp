@@ -194,6 +194,7 @@ class ArcadeView(context:Context,val key:String):View(context){
  private fun drawPanel(c:Canvas,i:Int,now:Long,elapsed:Double){
   val accent=if(i==0)TEAL else ORANGE;rect(c,RectF(0f,0f,500f,600f),if(i==0)0xffeef8f7.toInt()else 0xfffff6e8.toInt());text(c,GamePlayers.name(context,i),250f,38f,24f,accent)
   if(!active){text(c,message.ifBlank{context.s("start")},250f,250f,24f);return}
+  if(now<start)return // the 3-2-1 countdown is drawn over both panels
   if(choices[i]>=0&&key in setOf("rps","penalty","dice","hilo")){text(c,context.tr("Choice locked","انتخاب ثبت شد"),250f,270f,25f);return}
   if(measure[i].isFinite()){text(c,context.tr("Done — wait","ثبت شد — صبر کنید"),250f,270f,24f);return}
   val revealing=key in memory&&elapsed<2.5

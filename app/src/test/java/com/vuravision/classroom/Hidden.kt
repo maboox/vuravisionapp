@@ -5,7 +5,8 @@ package com.vuravision.classroom
  * (item 11): a member (internal members carry a "$module" suffix on the JVM) or an extension in MainActivity*Kt.
  */
 fun MainActivity.callHidden(name: String, vararg args: Any?): Any? {
-    fun matches(n: String) = n == name || n.startsWith("$name$")
+    // The function itself, or its internal JVM name "name${'$'}module"; never Kotlin's synthetic "${'$'}lambda" / "${'$'}default" helpers.
+    fun matches(n: String) = n == name || (n.startsWith("$name$") && n.count { it == '$' } == 1 && "lambda" !in n && "default" !in n)
     MainActivity::class.java.declaredMethods.firstOrNull { matches(it.name) && it.parameterCount == args.size }?.let {
         it.isAccessible = true; return it.invoke(this, *args)
     }
