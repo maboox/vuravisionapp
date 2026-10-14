@@ -37,19 +37,21 @@ class Sharing(private val file: File, private val mime: String) : NanoHTTPD("0.0
             }
     }
 
-    fun urls(context:android.content.Context?=null):List<String>{
-        val preferred=mutableListOf<String>()
-        if(context!=null){val manager=context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            manager.allNetworks.forEach{network->val caps=manager.getNetworkCapabilities(network)
-                if(caps!=null && !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) && (caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)||caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))){manager.getLinkProperties(network)?.linkAddresses?.forEach{addr->val ip=addr.address;if(ip is java.net.Inet4Address&&!ip.isLoopbackAddress)preferred.add(ip.hostAddress!!)}}
-            }
-        }
-        val fallback=NetworkInterface.getNetworkInterfaces().toList().filter{it.isUp&&!it.isLoopback&&!it.name.startsWith("tun")&&!it.name.startsWith("rmnet")}.flatMap{it.inetAddresses.toList()}.filter{it is java.net.Inet4Address&&it.isSiteLocalAddress}.mapNotNull{it.hostAddress}
-        return (preferred+fallback).distinct().map{"http://$it:$listeningPort/$token"}
-    }
+    fun urls(context:android.content.Context?=null):List<String> = localAddresses(context).map{"http://$it:$listeningPort/$token"}
     fun url():String?=urls().firstOrNull()
 
     companion object {
+        /** The panel's addresses on the classroom network (Wi-Fi or Ethernet first, never VPN or mobile data). */
+        fun localAddresses(context:android.content.Context?):List<String>{
+            val preferred=mutableListOf<String>()
+            if(context!=null){val manager=context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                manager.allNetworks.forEach{network->val caps=manager.getNetworkCapabilities(network)
+                    if(caps!=null && !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) && (caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)||caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))){manager.getLinkProperties(network)?.linkAddresses?.forEach{addr->val ip=addr.address;if(ip is java.net.Inet4Address&&!ip.isLoopbackAddress)preferred.add(ip.hostAddress!!)}}
+                }
+            }
+            val fallback=try{NetworkInterface.getNetworkInterfaces()?.toList().orEmpty().filter{it.isUp&&!it.isLoopback&&!it.name.startsWith("tun")&&!it.name.startsWith("rmnet")}.flatMap{it.inetAddresses.toList()}.filter{it is java.net.Inet4Address&&it.isSiteLocalAddress}.mapNotNull{it.hostAddress}}catch(_:Exception){emptyList()}
+            return (preferred+fallback).distinct()
+        }
         /** Any text, UTF-8 (Persian included), so a phone camera shows it without a network or an app. */
         fun qr(url: String): Bitmap {
             val hints=mapOf(com.google.zxing.EncodeHintType.CHARACTER_SET to "UTF-8",com.google.zxing.EncodeHintType.MARGIN to 2)
