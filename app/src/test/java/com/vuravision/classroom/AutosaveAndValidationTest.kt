@@ -6,7 +6,7 @@ import java.util.concurrent.Executor
 import org.junit.Assert.*
 import org.junit.Test
 
-class Studio117CoreTest {
+class AutosaveAndValidationTest {
     private class ManualExecutor:Executor {
         val tasks=ArrayDeque<Runnable>()
         override fun execute(command:Runnable){tasks.addLast(command)}

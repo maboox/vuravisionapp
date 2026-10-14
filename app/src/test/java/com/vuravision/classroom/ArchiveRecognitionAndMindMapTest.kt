@@ -17,7 +17,7 @@ import kotlin.math.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Version13Test {
+class ArchiveRecognitionAndMindMapTest {
  private val ctx get()=RuntimeEnvironment.getApplication()
  @Before fun clean(){ctx.getSharedPreferences("vura",0).edit().clear().commit()}
  private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()

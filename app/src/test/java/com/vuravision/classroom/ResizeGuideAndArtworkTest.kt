@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Release18Test {
+class ResizeGuideAndArtworkTest {
     private val ctx get()=RuntimeEnvironment.getApplication()
     @Before fun reset(){ctx.getSharedPreferences("vura",0).edit().clear().commit()}
     private fun all(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{all(v.getChildAt(it))}else emptyList()

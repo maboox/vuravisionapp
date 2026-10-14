@@ -15,7 +15,7 @@ import java.io.ByteArrayOutputStream
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])
-class Release19Test {
+class PdfProjectPersistenceTest {
     private val context: Context get() = RuntimeEnvironment.getApplication()
     private fun state():PdfWorkspaceState {
         val asset="source.pdf"

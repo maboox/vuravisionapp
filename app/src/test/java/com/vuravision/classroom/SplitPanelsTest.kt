@@ -18,7 +18,7 @@ import kotlin.math.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Studio116Test {
+class SplitPanelsTest {
     private val context get()=RuntimeEnvironment.getApplication()
     private lateinit var media:Media
     @Before fun setup(){context.getSharedPreferences("vura",0).edit().clear().commit();Fonts.initialize(context);media=Media(context)}

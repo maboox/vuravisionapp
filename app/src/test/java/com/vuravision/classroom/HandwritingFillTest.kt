@@ -17,7 +17,7 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Studio113Test {
+class HandwritingFillTest {
     private val context get()=RuntimeEnvironment.getApplication()
     private lateinit var media:Media
     @Before fun setup(){context.getSharedPreferences("vura",0).edit().clear().commit();media=Media(context);Fonts.initialize(context)}

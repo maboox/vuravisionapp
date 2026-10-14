@@ -16,7 +16,7 @@ import kotlin.math.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Studio114Test {
+class SelectionGeometryAndCropTest {
     private val context get()=RuntimeEnvironment.getApplication()
     private lateinit var media:Media
     private lateinit var store:Store

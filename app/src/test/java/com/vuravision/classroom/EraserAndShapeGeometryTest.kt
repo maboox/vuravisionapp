@@ -14,7 +14,7 @@ import org.robolectric.shadows.ShadowDialog
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Version11Test {
+class EraserAndShapeGeometryTest {
  private val ctx get()=RuntimeEnvironment.getApplication()
  private lateinit var media:Media
  private lateinit var board:Board

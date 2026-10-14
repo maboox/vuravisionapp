@@ -14,7 +14,7 @@ import org.robolectric.shadows.ShadowDialog
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Studio115Test {
+class ToolbarLayoutAndRoomProfileTest {
     private val context get()=RuntimeEnvironment.getApplication()
     @Before fun clean(){context.getSharedPreferences("vura",0).edit().clear().commit()}
     private fun views(v:View):List<View> = listOf(v)+if(v is ViewGroup)(0 until v.childCount).flatMap{views(v.getChildAt(it))}else emptyList()

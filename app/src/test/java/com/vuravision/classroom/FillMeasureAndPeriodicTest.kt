@@ -13,7 +13,7 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class Studio112Test {
+class FillMeasureAndPeriodicTest {
     private val context get()=RuntimeEnvironment.getApplication()
     @Test fun closedFillFollowsRotationAndRejectsOpenInk(){
         val o=Item(kind="shape",shape="triangle",x=40f,y=60f,w=200f,h=160f,rotation=41f)

@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])
-class Release193Test {
+class UnlockPdfCacheAndSolverTest {
     private val context get() = RuntimeEnvironment.getApplication()
 
     @Test fun unlockRecoversLockedItemsAndLayersPreservesPdfBaseAndSupportsUndo(){
