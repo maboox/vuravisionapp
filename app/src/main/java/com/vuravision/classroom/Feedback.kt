@@ -72,8 +72,8 @@ class GameFx {
     private fun now()=SystemClock.uptimeMillis()
     /** A round ended: [winner] is 0 or 1, or -1 for a draw. */
     private var popAt=0L
-    /** 1 right after a point, easing back to 0 over 450 ms. */
-    fun pop():Float{val e=now()-popAt;return if(popAt==0L||e>450)0f else (1f-e/450f).let{it*it}}
+    /** A springy bump right after a point: overshoots, settles back to 0 within 450 ms (a damped spring, not a fade). */
+    fun pop():Float{val e=now()-popAt;return if(popAt==0L||e>450)0f else Spring.bounce(e/1000f)}
     fun round(winner:Int,panels:List<RectF>,match:Boolean){
         val t=now();if(winner in 0..1)popAt=t
         if(winner in 0..1){flashAt[winner]=t;shakeAt[1-winner]=t}
@@ -95,12 +95,27 @@ class GameFx {
         if(pieces.isEmpty())return
         val e=(now()-confettiAt)/1000f
         if(e>2.2f){pieces.clear();return}
-        val dt=1/60f
+        // Real elapsed time, not a fixed 1/60 s: on a 120 Hz panel confetti used to fall twice as fast.
+        val t=now();val dt=((if(lastFrame==0L)16L else t-lastFrame).coerceIn(1L,50L))/1000f;lastFrame=t
         pieces.forEach{p->p.vy+=1400f*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.turn+=p.spin*dt
             paint.color=p.color;paint.alpha=(255*(1-(e/2.2f))).toInt().coerceIn(0,255)
             c.save();c.rotate(p.turn,p.x,p.y);c.drawRect(p.x-p.size/2,p.y-p.size/4,p.x+p.size/2,p.y+p.size/4,paint);c.restore()}
-        pieces.removeAll{it.y>height+40}
+        pieces.removeAll{it.y>height+40};if(pieces.isEmpty())lastFrame=0L
     }
+    private var lastFrame=0L
     /** True while anything is still moving, so the view keeps drawing frames. */
     val busy get()=pieces.isNotEmpty()||(popAt!=0L&&now()-popAt<450)||(0..1).any{(flashAt[it]!=0L&&now()-flashAt[it]<600)||(shakeAt[it]!=0L&&now()-shakeAt[it]<350)}
+}
+
+/** Item 52: shared motion pieces for labs and games: a damped spring and a short haptic tick on a win. */
+object Spring {
+    /** Damped oscillation from 1 to 0: about 450 ms, one overshoot, the "pop" of a score or a card. */
+    fun bounce(seconds:Float,frequency:Float=3.2f,damping:Float=9f)=(kotlin.math.exp(-damping*seconds)*kotlin.math.cos(2*Math.PI.toFloat()*frequency*seconds)).toFloat()
+}
+object Haptics {
+    /** A short confirmation buzz where the panel has a motor; nothing with "Reduce motion". */
+    fun win(view:android.view.View){
+        if(Motion.reduced)return
+        view.performHapticFeedback(if(android.os.Build.VERSION.SDK_INT>=30)android.view.HapticFeedbackConstants.CONFIRM else android.view.HapticFeedbackConstants.LONG_PRESS)
+    }
 }

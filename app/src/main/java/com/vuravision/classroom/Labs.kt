@@ -315,7 +315,7 @@ class LabView(context: Context, val key: String, val values: FloatArray) : View(
         last = now
         render(c, width, height)
         dragLabel?.let{chip(c,it,true)}?:dragHint?.let{chip(c,it,false)}
-        if(canAnimate()&&((key.removePrefix("native_") in NativeLabs.growing&&time<NativeLabs.GROW_SECONDS+.2)||key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postDelayed(frame,16)}
+        if(canAnimate()&&((key.removePrefix("native_") in NativeLabs.growing&&time<NativeLabs.GROW_SECONDS+.2)||key in listOf("projectile","pendulum","spring","waves") || key.removePrefix("native_") in listOf("orbit","pendulum","projectile","spring","collision","standing","gas","states","diffusion","reaction","halflife","waves","interference","atom","periodic","doppler","heat","electrolysis","flame","equilibrium","freefall","lightclock","bonding","sorting","osmosis","markov","circuit","incline"))){removeCallbacks(frame);postOnAnimation(frame)}
     }
 
     override fun onAttachedToWindow() {

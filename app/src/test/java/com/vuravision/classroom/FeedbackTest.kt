@@ -42,4 +42,10 @@ class FeedbackTest {
         val bitmap=android.graphics.Bitmap.createBitmap(1000,600,android.graphics.Bitmap.Config.ARGB_8888)
         try{fx.confetti(android.graphics.Canvas(bitmap),600);assertTrue(fx.busy)}finally{bitmap.recycle()}
     }
+    /** Item 52: the score pop is a spring (one overshoot, settles), and it is over within half a second. */
+    @Test fun scorePopIsASpringThatSettles(){
+        assertEquals(1f,Spring.bounce(0f),.001f)
+        assertTrue("overshoots below zero once",(0..45).map{Spring.bounce(it/100f)}.any{it<-.05f})
+        assertTrue("settled by 450 ms",kotlin.math.abs(Spring.bounce(.45f))<.03f)
+    }
 }

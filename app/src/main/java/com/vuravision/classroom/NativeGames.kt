@@ -112,7 +112,7 @@ class ArcadeView(context:Context,val key:String):View(context){
  /** Every round ends here, so feedback lives here too: a sound, a green flash for the winner, confetti for the match. */
  private fun finish(winner:Int){if(!active)return;active=false;ended=true;resultWinner=winner;if(winner>=0)scores[winner]++;message=resultMessage(winner)
   val match=winner>=0&&scores[winner]>=5
-  fx.round(winner,panels(),match);Sounds.play(context,if(match)Sounds.Cue.WIN else if(winner<0)Sounds.Cue.TICK else Sounds.Cue.CORRECT)
+  fx.round(winner,panels(),match);if(winner>=0)Haptics.win(this);Sounds.play(context,if(match)Sounds.Cue.WIN else if(winner<0)Sounds.Cue.TICK else Sounds.Cue.CORRECT)
   invalidate()}
  private fun bothMeasured(){if(measure.all{it.isFinite()})finish(if(abs(measure[0]-measure[1])<.001)-1 else if(measure[0]<measure[1])0 else 1)}
  private fun panels():List<RectF> = if(face || width<height)listOf(RectF(8f,70f,width-8f,height/2f),RectF(8f,height/2f+8,width-8f,height-8f))else listOf(RectF(8f,70f,width/2f-4,height-8f),RectF(width/2f+4,70f,width-8f,height-8f))
