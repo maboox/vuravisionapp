@@ -41,7 +41,7 @@ class SocketVoiceWire(private val endpoint:String,private val authHeader:String)
 class GoogleVoiceWire:VoiceWire by SocketVoiceWire(VoiceProtocol.ENDPOINT,"x-goog-api-key")
 class OpenaiVoiceWire(settings:VoiceSettings):VoiceWire by SocketVoiceWire("wss://api.openai.com/v1/realtime?model=${settings.openaiModel}","Authorization")
 
-/** Owns a single foreground conversation. No Store/document mutator is exposed. */
+/** Owns a single foreground conversation. The board is reachable only through [VoiceCommands]' short, reversible list. */
 class VoiceAssistant(
     private val settings:VoiceSettings,private val key:String,private val knowledge:String,
     private val audio:VoiceAudioPort,
@@ -49,6 +49,8 @@ class VoiceAssistant(
     private val wireFactory:()->VoiceWire={if(settings.provider=="openai")OpenaiVoiceWire(settings)else GoogleVoiceWire()},
     private val handler:Handler=Handler(Looper.getMainLooper()),
     private val connected:()->Unit={},
+    /** Runs a whitelisted voice command on the board and returns a short result for the model; null = commands off. */
+    private val commands:((VoiceCommands.Call)->String)?=null,
 ) :VoiceConversation {
     private val codec=if(settings.provider=="openai")OpenaiVoiceCodec else GeminiVoiceCodec
     @Volatile override var active=false;private set
@@ -88,7 +90,7 @@ class VoiceAssistant(
         connectTimeout?.let{handler.removeCallbacks(it)}
         connectTimeout=Runnable{if(current() && !ready)stop("voice_network_error")}.also{handler.postDelayed(it,25_000)}
         try{next.connect(key,object:VoiceWire.Events{
-            override fun opened(){ui{if(!next.send(codec.setup(settings,knowledge,handle)))stop("voice_network_error")}}
+            override fun opened(){ui{if(!next.send(codec.setup(settings,knowledge,handle,commands!=null)))stop("voice_network_error")}}
             override fun message(text:String){
                 if(!current())return
                 if(text.length>4_000_000){ui{stop("voice_protocol_error")};return}
@@ -101,6 +103,10 @@ class VoiceAssistant(
                     ui{
                         if(packet.error){stop(when(packet.errorCode){"invalid_api_key","insufficient_quota","rate_limit_exceeded"->"voice_key_or_quota";"model_not_found"->"voice_model_error";else->"voice_service_error"});return@ui}
                         packet.resumable?.let{if(!it)handle=null else packet.resumeHandle?.let{h->handle=h}}
+                        packet.calls.forEach{call->
+                            val result=if(commands==null||!VoiceCommands.valid(call))"not allowed" else try{commands.invoke(call)}catch(_:Exception){"failed"}
+                            codec.toolResult(call,result).forEach{wire?.send(it)}
+                        }
                         if(packet.ready){
                             ready=true;failures=0;connectTimeout?.let{handler.removeCallbacks(it)}
                             connected()

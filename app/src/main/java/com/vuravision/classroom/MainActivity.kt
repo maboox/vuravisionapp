@@ -2486,6 +2486,26 @@ c.addView(row().apply{
             bitmap.recycle();addAndSelect(listOf(item),near.takeIf{it.width()>0})
         }
     }
+    /**
+     * Voice commands (item 70), on the main thread, only from [VoiceCommands]' list; off with the "Voice commands" switch.
+     * Each one is reversible and a toast shows what was done, so a misheard command is visible and easy to undo.
+     */
+    private val voiceCommand:((VoiceCommands.Call)->String)? get()=if(!prefs.getBoolean("voiceCommands",true))null else {call->
+        val a=call.args
+        val done=when(call.name){
+            "go_to_page"->when(a.optString("where")){"next"->{switchPage(projectStore.lesson.current+1);tr("Next page","صفحهٔ بعد")}
+                "previous"->{switchPage(projectStore.lesson.current-1);tr("Previous page","صفحهٔ قبل")}else->{addPage();tr("New page","صفحهٔ جدید")}}
+            "set_tool"->{val tool=when(a.optString("tool")){"highlighter"->"highlight";"eraser"->"erase";"select"->"select";else->"pen"}
+                board.tool=tool;refreshDock();tr("Tool: ","ابزار: ")+s(tool)}
+            "set_pen_color"->{val color=when(a.optString("color")){"blue"->InkStrip.colors[1];"red"->InkStrip.colors[2];"green"->InkStrip.colors[3];"orange"->InkStrip.colors[4];"purple"->InkStrip.colors[5];else->InkStrip.colors[0]}
+                if(board.tool!in listOf("pen","highlight"))board.tool="pen";board.inkColor=color;savePens();refreshDock();tr("Pen color changed","رنگ قلم عوض شد")}
+            "start_timer"->{val m=a.optInt("minutes",5).coerceIn(1,60);floatingTools.open("timer",m);tr("Timer: $m min","تایمر: $m دقیقه")}
+            "open"->{when(a.optString("what")){"name_picker"->runShortcut("picker");"labs"->runShortcut("lab");else->runShortcut(a.optString("what"))};s(a.optString("what").let{if(it=="name_picker")"picker" else if(it=="labs")"lab" else it})}
+            "undo"->{board.undo();tr("Undone","برگشت داده شد")}
+            else->null
+        }
+        if(done==null)"not allowed" else {toast("🎙 $done");"done"}
+    }
     private var spotlight:Spotlight?=null
     private var replay:Replay?=null
     /** Recap: the page redrawn stroke by stroke, over the board; the page itself is untouched. */
@@ -2546,6 +2566,7 @@ c.addView(row().apply{
             SettingsCategory("smart",tr("Smart","هوشمند"),"sparkle",listOf(
                 page(tr("AI service","سرویس هوش"),{if(smartAi.configured())smartAi.settings.let{"${providerName(it.provider)} · ${it.model} · "+tr("${smartAi.usedToday()} of ${it.dailyLimit} today","${smartAi.usedToday()} از ${it.dailyLimit} امروز")}else tr("Not set up","راه‌اندازی نشده")}){aiSettings()},
                 page(s("voice_assistant"),{if(VoiceSettings.enabled(this))tr("On","روشن")+" · "+(providers[VoiceSettings.load(this).provider]?:VoiceSettings.load(this).provider)else tr("Off","خاموش")}){voiceSettings()},
+                SettingRow.Toggle(tr("Voice commands","فرمان صوتی"),tr("The assistant can turn pages, change pen and tool, start a timer or open a class tool when you ask; never deletes","دستیار در صورت درخواست صفحه را عوض می‌کند، قلم و ابزار را تغییر می‌دهد، تایمر می‌گذارد یا ابزار کلاس باز می‌کند؛ هرگز چیزی پاک نمی‌کند"),{prefs.getBoolean("voiceCommands",true)}){v->prefs.edit().putBoolean("voiceCommands",v).apply()},
                 page(s("models"),{tr("Handwriting recognition","تشخیص دست‌خط")}){models()},
                 page(s("google_search_settings")){GoogleSearchSettingsUi(this).show(menuReturn)},
             )),
@@ -2880,8 +2901,8 @@ c.addView(row().apply{
                         if(reason!=null)toast(s(reason))
                     }
                     val audio=VoiceAudio(this,if(settings.provider=="openai")24000 else 16000)
-                    val assistant:VoiceConversation=if(settings.provider in listOf("openrouter","avalai"))RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key,RouterEndpoint.of(settings)),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
-                        else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()})
+                    val assistant:VoiceConversation=if(settings.provider in listOf("openrouter","avalai"))RouterVoiceAssistant(settings,knowledge,audio,RouterVoiceHttp(key,RouterEndpoint.of(settings)),{setVoiceState(it)},ended,connected={voiceScreen?.refresh()},commands=voiceCommand)
+                        else VoiceAssistant(settings,key,knowledge,audio,{setVoiceState(it)},ended,connected={voiceScreen?.refresh()},commands=voiceCommand)
                     voiceAssistant=assistant
                     assistant.setMuted(voiceMuted)
                     voiceScreen=VoiceScreen(this,workspaceHost,settings.frameSeconds,{assistant.active && assistant.ready},

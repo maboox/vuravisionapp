@@ -23,14 +23,17 @@ interface VoiceConversation {
 }
 
 interface LiveVoiceCodec {
-    fun setup(settings:VoiceSettings,knowledge:String,resume:String?):String
+    fun setup(settings:VoiceSettings,knowledge:String,resume:String?,tools:Boolean=false):String
+    /** What to send back after running a voice command. */
+    fun toolResult(call:VoiceCommands.Call,result:String):List<String>
     fun audio(bytes:ByteArray,count:Int):String
     fun image(jpeg:ByteArray):String
     fun parse(message:String):VoiceProtocol.Packet
 }
 
 object GeminiVoiceCodec:LiveVoiceCodec {
-    override fun setup(settings:VoiceSettings,knowledge:String,resume:String?)=VoiceProtocol.setup(settings,knowledge,resume)
+    override fun setup(settings:VoiceSettings,knowledge:String,resume:String?,tools:Boolean)=VoiceProtocol.setup(settings,knowledge,resume,tools)
+    override fun toolResult(call:VoiceCommands.Call,result:String)=listOf(VoiceProtocol.toolResult(call,result))
     override fun audio(bytes:ByteArray,count:Int)=VoiceProtocol.audio(bytes,count)
     override fun image(jpeg:ByteArray)=VoiceProtocol.image(jpeg)
     override fun parse(message:String)=VoiceProtocol.parse(message)
@@ -38,16 +41,20 @@ object GeminiVoiceCodec:LiveVoiceCodec {
 
 /** GA Realtime events; image updates add context without triggering a response. */
 object OpenaiVoiceCodec:LiveVoiceCodec {
-    override fun setup(settings:VoiceSettings,knowledge:String,resume:String?):String {
+    override fun setup(settings:VoiceSettings,knowledge:String,resume:String?,tools:Boolean):String {
         val format=JSONObject().put("type","audio/pcm").put("rate",24000)
         val session=JSONObject().put("type","realtime").put("model",settings.openaiModel)
-            .put("instructions",settings.instruction(knowledge)).put("output_modalities",JSONArray().put("audio"))
+            .put("instructions",settings.instruction(knowledge,tools)+if(tools)"\n"+VoiceCommands.INSTRUCTION else "").put("output_modalities",JSONArray().put("audio"))
             .put("audio",JSONObject().put("input",JSONObject().put("format",format)
                 .put("turn_detection",JSONObject().put("type","server_vad").put("silence_duration_ms",700)
                     .put("create_response",true).put("interrupt_response",true)))
                 .put("output",JSONObject().put("format",format).put("voice",settings.openaiVoice)))
+        if(tools)session.put("tools",VoiceCommands.openai()).put("tool_choice","auto")
         return JSONObject().put("type","session.update").put("session",session).toString()
     }
+    override fun toolResult(call:VoiceCommands.Call,result:String)=listOf(
+        JSONObject().put("type","conversation.item.create").put("item",JSONObject().put("type","function_call_output").put("call_id",call.id).put("output",JSONObject().put("result",result).toString())).toString(),
+        JSONObject().put("type","response.create").toString())
     override fun audio(bytes:ByteArray,count:Int)=JSONObject().put("type","input_audio_buffer.append")
         .put("audio",Base64.encodeToString(bytes,0,count,Base64.NO_WRAP)).toString()
     override fun image(jpeg:ByteArray)=JSONObject().put("type","conversation.item.create")
@@ -64,6 +71,8 @@ object OpenaiVoiceCodec:LiveVoiceCodec {
                 require(bytes.size<=2_000_000 && bytes.size%2==0)
                 VoiceProtocol.Packet(audio=listOf(bytes))
             }
+            "response.function_call_arguments.done"->VoiceProtocol.Packet(calls=listOf(VoiceCommands.Call(root.optString("call_id"),root.optString("name"),
+                try{JSONObject(root.optString("arguments","{}"))}catch(_:Exception){JSONObject()})))
             "response.done"->VoiceProtocol.Packet(complete=true,error=root.optJSONObject("response")?.optString("status")=="failed")
             "error"->VoiceProtocol.Packet(error=true,errorCode=root.optJSONObject("error")?.optString("code"))
             else->VoiceProtocol.Packet()

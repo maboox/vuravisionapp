@@ -62,7 +62,7 @@ data class RouterEndpoint(val base:String,val model:String,val speechModel:Strin
 
 object RouterVoiceProtocol {
     const val BASE="https://openrouter.ai/api/v1"
-    data class Reply(val user:String,val text:String)
+    data class Reply(val user:String,val text:String,val command:VoiceCommands.Call?=null)
     fun wav(pcm:ByteArray):ByteArray {
         require(pcm.size%2==0 && pcm.size<=650000)
         return ByteBuffer.allocate(44+pcm.size).order(ByteOrder.LITTLE_ENDIAN)
@@ -81,8 +81,8 @@ object RouterVoiceProtocol {
         }
         return false
     }
-    fun request(settings:VoiceSettings,knowledge:String,history:List<Pair<String,String>>,pcm:ByteArray,jpeg:ByteArray?):String {
-        val instruction=settings.instruction(knowledge)+"\nاین مسیر نوبتی است. در خروجی فقط یک شیء JSON با understood (boolean)، user_text و reply (string) بده. user_text فقط متن سؤال شنیده‌شده برای حافظهٔ مکالمه است، نه چیزی که باید بلند خوانده شود. اگر صدا یا منظور نامفهوم است understood=false، user_text خالی و reply دقیقاً «متوجه نشدم، لطفاً دوباره بگید.» باشد. هرگز برداشت نامطمئن را بازگو نکن. اگر سؤال مشخص است understood=true و reply پاسخ فارسی طبق قواعد آموزشی باشد. نام مدل، سرویس یا شرکت را در reply نگو."
+    fun request(settings:VoiceSettings,knowledge:String,history:List<Pair<String,String>>,pcm:ByteArray,jpeg:ByteArray?,tools:Boolean=false):String {
+        val instruction=settings.instruction(knowledge,tools)+(if(tools)"\n"+VoiceCommands.INSTRUCTION+" Commands: "+VoiceCommands.text()+". To run one, add a field command: {\"name\": ..., \"args\": {...}} to the JSON." else "")+"\nاین مسیر نوبتی است. در خروجی فقط یک شیء JSON با understood (boolean)، user_text و reply (string) بده. user_text فقط متن سؤال شنیده‌شده برای حافظهٔ مکالمه است، نه چیزی که باید بلند خوانده شود. اگر صدا یا منظور نامفهوم است understood=false، user_text خالی و reply دقیقاً «متوجه نشدم، لطفاً دوباره بگید.» باشد. هرگز برداشت نامطمئن را بازگو نکن. اگر سؤال مشخص است understood=true و reply پاسخ فارسی طبق قواعد آموزشی باشد. نام مدل، سرویس یا شرکت را در reply نگو."
         val messages=JSONArray().put(JSONObject().put("role","system").put("content",instruction))
         history.takeLast(6).forEach{(user,reply)->messages.put(JSONObject().put("role","user").put("content",user)).put(JSONObject().put("role","assistant").put("content",reply))}
         val parts=JSONArray().put(JSONObject().put("type","text").put("text",if(jpeg==null)"به سؤال در صدای پیوست پاسخ بده. تصویر در دسترس نیست؛ جزئیات تخته را حدس نزن."else"به سؤال در صدای پیوست پاسخ بده. تصویر پیوست آخرین نمای ثبت‌شدهٔ تخته و PDF است؛ فقط همان محتوای قابل مشاهده را می‌توانی ببینی."))
@@ -99,7 +99,8 @@ object RouterVoiceProtocol {
         val data=JSONObject(raw)
         if(!data.getBoolean("understood"))return Reply("","متوجه نشدم، لطفاً دوباره بگید.")
         val text=data.getString("reply").trim();require(text.isNotBlank() && text.length<=4500)
-        return Reply(data.optString("user_text").take(1500),text)
+        val command=data.optJSONObject("command")?.let{c->VoiceCommands.Call("turn",c.optString("name"),c.optJSONObject("args")?:JSONObject())}
+        return Reply(data.optString("user_text").take(1500),text,command)
     }
     fun speech(settings:VoiceSettings,text:String):String {
         val endpoint=RouterEndpoint.of(settings)
@@ -186,6 +187,7 @@ class RouterVoiceAssistant(
     private val service:RouterVoiceService,private val state:(String)->Unit,private val stopped:(String?)->Unit,
     private val handler:Handler=Handler(Looper.getMainLooper()),
     private val worker:ExecutorService=Executors.newSingleThreadExecutor(),private val connected:()->Unit={},
+    private val commands:((VoiceCommands.Call)->String)?=null,
 ):VoiceConversation {
     @Volatile override var active=false;private set
     @Volatile override var ready=false;private set
@@ -219,8 +221,9 @@ class RouterVoiceAssistant(
         accepting=false
         ui{state("voice_thinking")}
         work{
-            val reply=RouterVoiceProtocol.reply(service.answer(RouterVoiceProtocol.request(settings,knowledge,history,turn,image)))
+            val reply=RouterVoiceProtocol.reply(service.answer(RouterVoiceProtocol.request(settings,knowledge,history,turn,image,commands!=null)))
             if(!active)return@work
+            reply.command?.takeIf{commands!=null&&VoiceCommands.valid(it)}?.let{call->handler.post{if(active)try{commands?.invoke(call)}catch(_:Exception){}}}
             if(reply.user.isNotBlank()){history.add(reply.user to reply.text);while(history.size>6)history.removeAt(0)}
             speak(reply.text)
         }

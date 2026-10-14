@@ -8,7 +8,9 @@ class ClassroomWidgets(private val context:Context,private val host:FrameLayout)
  private val handler=Handler(Looper.getMainLooper());private val widgets=mutableMapOf<String,View>()
  init {host.addOnLayoutChangeListener{_,_,_,_,_,_,_,_,_->widgets.values.forEach{v->v.x=v.x.coerceIn(0f,(host.width-v.width).coerceAtLeast(0).toFloat());v.y=v.y.coerceIn(0f,(host.height-v.height).coerceAtLeast(0).toFloat())}}}
  fun closeAll(){handler.removeCallbacksAndMessages(null);widgets.values.forEach{host.removeView(it)};widgets.clear()}
- fun open(key:String){
+ /** [startMinutes]: a timer that starts counting down at once (voice command "a five minute timer"). */
+ fun open(key:String,startMinutes:Int?=null){
+  if(startMinutes!=null)widgets.remove(key)?.let{host.removeView(it)}
   widgets[key]?.let{it.bringToFront();return}
   val content=context.column().apply{pad(12)}
   val card=context.card(content,cornerRadius=22,elevation=8,stroke=OUTLINE_STRONG)
@@ -28,7 +30,8 @@ class ClassroomWidgets(private val context:Context,private val host:FrameLayout)
     tasks.add(tick);handler.post(tick)
     btn("▶"){if(!running&&(key!="timer"||elapsed<duration)){since=SystemClock.elapsedRealtime();running=true}}
     btn("Ⅱ"){elapsed=total();running=false};btn("↺"){running=false;elapsed=0;display.setTextColor(NAVY)}
-    if(key=="timer"){val minutes=context.field("5",context.s("minutes")).apply{inputType=android.text.InputType.TYPE_CLASS_NUMBER;setSingleLine(true)};val row=context.row();row.addView(minutes,LinearLayout.LayoutParams(0,-2,1f));row.addView(context.button(context.s("minutes")){val n=minutes.text.toString().toIntOrNull();if(n!=null&&n in 1..240){duration=n*60000L;elapsed=0;running=false;display.setTextColor(NAVY)}else minutes.error="1–240"});body.addView(row)}
+    if(key=="timer"&&startMinutes!=null){duration=startMinutes.coerceIn(1,240)*60000L;since=SystemClock.elapsedRealtime();running=true}
+    if(key=="timer"){val minutes=context.field("${(duration/60000).toInt()}",context.s("minutes")).apply{inputType=android.text.InputType.TYPE_CLASS_NUMBER;setSingleLine(true)};val row=context.row();row.addView(minutes,LinearLayout.LayoutParams(0,-2,1f));row.addView(context.button(context.s("minutes")){val n=minutes.text.toString().toIntOrNull();if(n!=null&&n in 1..240){duration=n*60000L;elapsed=0;running=false;display.setTextColor(NAVY)}else minutes.error="1–240"});body.addView(row)}
    }
    "dice"->{display.text="⚄";btn(context.s("roll")){display.text="${(1..6).random()}"}}
    // Name picker: names spin past, then one lands; nobody is picked twice until everyone has had a turn (fairness the class can see).

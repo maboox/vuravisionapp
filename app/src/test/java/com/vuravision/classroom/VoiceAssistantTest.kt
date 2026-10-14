@@ -77,6 +77,31 @@ class VoiceAssistantTest {
         assertTrue(VoiceProtocol.parse("""{"setupComplete":{}}""").ready)
         assertTrue(VoiceProtocol.parse("""{"goAway":{"timeLeft":"10s"}}""").goAway)
     }
+    /** Item 70: commands are declared only when on, run only from the list, and every call gets an answer. */
+    @Test fun voiceCommandsRunOnlyFromTheListAndAreAnswered(){
+        val setup=JSONObject(VoiceProtocol.setup(VoiceSettings(),"help",null,true)).getJSONObject("setup")
+        val names=setup.getJSONArray("tools").getJSONObject(0).getJSONArray("functionDeclarations").let{a->(0 until a.length()).map{a.getJSONObject(it).getString("name")}}
+        assertEquals(VoiceCommands.names,names);assertFalse(names.any{"clear" in it||"delete" in it})
+        assertFalse("with commands the assistant is told what it may do",setup.getJSONObject("systemInstruction").getJSONArray("parts").getJSONObject(0).getString("text").contains("هیچ ابزار تغییر"))
+        val openai=JSONObject(OpenaiVoiceCodec.setup(VoiceSettings(provider="openai"),"g",null,true)).getJSONObject("session")
+        assertEquals("function",openai.getJSONArray("tools").getJSONObject(0).getString("type"))
+        val parsed=OpenaiVoiceCodec.parse("""{"type":"response.function_call_arguments.done","call_id":"c1","name":"start_timer","arguments":"{\"minutes\":5}"}""").calls.single()
+        assertEquals(5,parsed.args.getInt("minutes"))
+        val audio=Audio();val wire=Wire();val ran=mutableListOf<String>()
+        val session=VoiceAssistant(VoiceSettings(),"fake-key","guide",audio,{}, {},{wire},commands={call->ran.add(call.name+":"+call.args);"done"})
+        try{
+            session.start();wire.events.opened();idle()
+            assertTrue("tools are declared",JSONObject(wire.sent[0]).getJSONObject("setup").has("tools"))
+            wire.events.message("""{"setupComplete":{}}""");idle()
+            wire.events.message("""{"toolCall":{"functionCalls":[{"id":"1","name":"go_to_page","args":{"where":"next"}},{"id":"2","name":"delete_everything","args":{}},{"id":"3","name":"set_pen_color","args":{"color":"pink"}}]}}""");idle()
+            assertEquals("only the listed command with valid arguments runs",listOf("go_to_page:{\"where\":\"next\"}"),ran)
+            val replies=wire.sent.filter{JSONObject(it).has("toolResponse")}.map{JSONObject(it).getJSONObject("toolResponse").getJSONArray("functionResponses").getJSONObject(0)}
+            assertEquals(listOf("1","2","3"),replies.map{it.getString("id")})
+            assertEquals(listOf("done","not allowed","not allowed"),replies.map{it.getJSONObject("response").getString("result")})
+        }finally{session.stop()}
+        val router=RouterVoiceProtocol.reply(JSONObject().put("choices",org.json.JSONArray().put(JSONObject().put("message",JSONObject().put("content","""{"understood":true,"user_text":"صفحه بعد","reply":"باشه","command":{"name":"go_to_page","args":{"where":"next"}}}""")))).toString())
+        assertEquals("go_to_page",router.command!!.name);assertTrue(VoiceCommands.valid(router.command!!))
+    }
     @Test(expected=IllegalArgumentException::class) fun unsupportedAudioRateIsRejected(){
         VoiceProtocol.parse("""{"serverContent":{"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=16000","data":"AQI="}}]}}}""")
     }
