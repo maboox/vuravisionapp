@@ -261,8 +261,9 @@ object Games {
     }
 
     /** A class quiz as a duel: same rules and screen as the math race, with the quiz's own questions. */
-    fun duel(context: Context, title: String, questions: List<QuizQuestion>) = open(context, "custom_quiz", null, questions, title)
-    fun open(context: Context, key: String, back:(()->Unit)?=null, custom:List<QuizQuestion>?=null, title:String?=null) {
+    fun duel(context: Context, title: String, questions: List<QuizQuestion>) = open(context, "custom_quiz", questions, title, null)
+    fun open(context: Context, key: String, back:(()->Unit)?=null) = open(context, key, null, null, back)
+    private fun open(context: Context, key: String, custom:List<QuizQuestion>?, title:String?, back:(()->Unit)?) {
         if(key in NativeGames.keys){NativeGames.open(context,key,back);return}
         val d = Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen)
         val handler = Handler(Looper.getMainLooper())
