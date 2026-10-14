@@ -55,7 +55,7 @@ internal fun MainActivity.toggleVoice(){
     }
 }
 internal fun MainActivity.setVoiceState(value:String){
-    if(!::voiceButton.isInitialized)return
+    if(!voiceButtonReady)return
     voiceButton.visibility=if(VoiceSettings.enabled(this))View.VISIBLE else View.GONE
     voiceButton.text=s(value)
     refreshMute()
@@ -74,7 +74,7 @@ internal fun MainActivity.stopVoice(){
 }
 
 internal fun MainActivity.refreshMute(){
-    if(!::voiceMuteButton.isInitialized)return
+    if(!voiceMuteButtonReady)return
     voiceMuteButton.visibility=if(VoiceSettings.enabled(this)&&(voiceStarting||voiceAssistant?.active==true))View.VISIBLE else View.GONE
     voiceMuteButton.isSelected=voiceMuted;voiceMuteButton.alpha=if(voiceMuted)1f else .6f
     voiceMuteButton.setImageResource(IconCatalog.resource(if(voiceMuted)"mute"else"voice_assistant"))

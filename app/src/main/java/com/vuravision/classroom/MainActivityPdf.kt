@@ -18,7 +18,7 @@ import kotlin.math.*
 // The PDF workspace beside the board (split from MainActivity, item 11).
 
 internal fun MainActivity.syncPdfWorkspace(){
-    if(!::workspaceHost.isInitialized)return
+    if(!workspaceHostReady)return
     val state=projectStore.lesson.pdf
     if(shownPdf===state)return
     shownPdf=state

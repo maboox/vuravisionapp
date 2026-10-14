@@ -233,7 +233,7 @@ internal fun MainActivity.publicQr(){
         c.addView(label(tr("Anyone with access to this public link can open it from another network. Check sharing permissions in the cloud app.","هر کسی که به این لینک عمومی دسترسی داشته باشد می‌تواند از شبکهٔ دیگر آن را باز کند. مجوزهای اشتراک را در برنامهٔ ابری بررسی کنید."),14f,MUTED))
         c.addView(ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url},LinearLayout.LayoutParams(dp(230),dp(230)))
         c.addView(label(url,12f).apply{setTextIsSelectable(true)})
-        c.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",url));toast(s("done"))})
+        c.addView(button(s("copy")){(getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",url));toast(s("done"))})
         dialog(s("share"),c)
     }
 }
@@ -261,7 +261,7 @@ internal fun MainActivity.share() {
             val qr=ImageView(this).apply{setImageBitmap(Sharing.qr(url));contentDescription=url}
             c.addView(qr,LinearLayout.LayoutParams(dp(230),dp(230)))
             val address=label(url,12f).apply{setTextIsSelectable(true)};c.addView(address)
-            c.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",address.text));toast(s("done"))})
+            c.addView(button(s("copy")){(getSystemService(Context.CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision",address.text));toast(s("done"))})
             if(urls.size>1)c.addView(button(s("network_address")){MaterialAlertDialogBuilder(this).setItems(urls.toTypedArray()){_,index->address.text=urls[index];qr.setImageBitmap(Sharing.qr(urls[index]));qr.contentDescription=urls[index]}.show()})
             c.addView(label(s("share_troubleshoot"),12f,MUTED))
             val count = label("${s("downloads")}: 0", 12f, MUTED)

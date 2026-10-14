@@ -62,6 +62,10 @@ class MainActivity : Activity() {
     private var loading = false
     internal var lastError = ""
     @Volatile internal var destroyed = false
+    // lateinit checks for the feature files (isInitialized is only allowed inside the class).
+    internal val workspaceHostReady get()=::workspaceHost.isInitialized
+    internal val voiceButtonReady get()=::voiceButton.isInitialized
+    internal val voiceMuteButtonReady get()=::voiceMuteButton.isInitialized
     internal var voiceAssistant:VoiceConversation?=null
     private var googleSearch:GoogleSearchWindow?=null
     internal var voiceScreen:VoiceScreen?=null
@@ -1771,7 +1775,7 @@ class MainActivity : Activity() {
 }
 
 /** InputStream.readNBytes needs API 33; this reads at most [limit] bytes on every supported version. */
-private fun java.io.InputStream.readNBytesCompat(limit:Int):ByteArray{
+internal fun java.io.InputStream.readNBytesCompat(limit:Int):ByteArray{
     val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(16384);var total=0
     while(total<limit){val n=read(buffer,0,minOf(buffer.size,limit-total));if(n<0)break;out.write(buffer,0,n);total+=n}
     return out.toByteArray()

@@ -289,7 +289,7 @@ internal fun MainActivity.models(){
         install.setOnClickListener{download()}
         r.addView(button(tr("Retry download","تلاش مجدد")){if(!busy){recognition.installed(lang,{ready->if(ready)update()else download()},::failed)}})
         r.addView(button(s("check_status")){if(!busy)update()})
-        r.addView(button(tr("Details","جزئیات")){val details="Model: $lang\nSDK: digital-ink 19.0.0\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\nAPI: ${Build.VERSION.SDK_INT}\nLocale: ${Locale.getDefault()}\n\n${raw.ifBlank{tr("No error recorded","خطایی ثبت نشده است")}}";val body=column().apply{pad(16)};body.addView(label(details,12f).apply{setTextIsSelectable(true)});body.addView(button(s("copy")){(getSystemService(CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision diagnostics",details));toast(s("done"))});dialog(tr("Download diagnostics","گزارش دانلود"),ScrollView(this).apply{addView(body)})})
+        r.addView(button(tr("Details","جزئیات")){val details="Model: $lang\nSDK: digital-ink 19.0.0\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\nAPI: ${Build.VERSION.SDK_INT}\nLocale: ${Locale.getDefault()}\n\n${raw.ifBlank{tr("No error recorded","خطایی ثبت نشده است")}}";val body=column().apply{pad(16)};body.addView(label(details,12f).apply{setTextIsSelectable(true)});body.addView(button(s("copy")){(getSystemService(Context.CLIPBOARD_SERVICE)as android.content.ClipboardManager).setPrimaryClip(ClipData.newPlainText("VuraVision diagnostics",details));toast(s("done"))});dialog(tr("Download diagnostics","گزارش دانلود"),ScrollView(this).apply{addView(body)})})
         update()
     }
     dialog(s("models"),ScrollView(this).apply{addView(c)})
