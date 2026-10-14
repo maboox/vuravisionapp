@@ -153,7 +153,7 @@ class RoomUi(private val activity: Activity, private val rooms: RoomController) 
         )
         val dialog = show(c.s("device_profile"), body, back)
         body.addView(
-            c.button(c.s("save"), true) {
+            c.button(c.tr("Save", "ذخیره"), true) {
                 val clean = name.text.toString().trim()
                 try {
                     value = value.copy(name = clean)
