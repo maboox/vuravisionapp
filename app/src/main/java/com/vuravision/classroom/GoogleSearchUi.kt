@@ -13,6 +13,7 @@ import com.vuravision.classroom.ui.MUTED
 import com.vuravision.classroom.ui.NAVY
 import com.vuravision.classroom.ui.OUTLINE
 import com.vuravision.classroom.ui.SURFACE
+import com.vuravision.classroom.ui.TEAL
 import com.vuravision.classroom.ui.WorkspaceIcon
 import com.vuravision.classroom.ui.button
 import com.vuravision.classroom.ui.column
@@ -84,7 +85,7 @@ object GoogleSearchBrowser {
 }
 
 /** One interactive in-app window; WebView exists only while the window is open. */
-class GoogleSearchWindow(private val activity: Activity, private val host: FrameLayout, private val addImage: ((String) -> Unit)? = null) {
+class GoogleSearchWindow(private val activity: Activity, private val host: FrameLayout, private val addBitmap: ((android.graphics.Bitmap) -> Unit)? = null, private val addImage: ((String) -> Unit)? = null) {
     private var images = false
     private var panel: LinearLayout? = null
     private var web: WebView? = null
@@ -131,7 +132,20 @@ class GoogleSearchWindow(private val activity: Activity, private val host: Frame
                 control("image", tr("Images (long-press one to add it to the board)", "تصویرها (یکی را نگه دارید تا به تخته اضافه شود)")) {
                     images = !images
                     web?.loadUrl(if (images)GoogleSearchQuery.imageUrl(currentQuery)else GoogleSearchQuery.url(currentQuery))
-                    Toast.makeText(activity, if (images)tr("Long-press a picture to add it to the board", "تصویری را نگه دارید تا به تخته اضافه شود")else tr("Web results", "نتایج وب"), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, if (images)tr("Long-press a picture to add it to the board", "تصویری را نگه دارید تا به تخته اضافه شود")else tr("Web results", "نتایج وب"), Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+        if (addBitmap != null) {
+            // What the window shows right now, as a picture on the board (a map, a diagram, a page of text).
+            heading.addView(
+                control("crop", tr("Add what you see here to the board", "افزودن همین نما به تخته")) {
+                    val view = web ?: return@control
+                    if (view.width <= 0 || view.height <= 0)return@control
+                    val shot = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+                    view.draw(android.graphics.Canvas(shot))
+                    addBitmap.invoke(shot)
+                    Toast.makeText(activity, tr("Snapshot added to the board", "نما به تخته اضافه شد"), Toast.LENGTH_SHORT).show()
                 }
             )
         }
@@ -226,16 +240,26 @@ class GoogleSearchWindow(private val activity: Activity, private val host: Frame
             setPadding(0, 0, activity.dp(12), 0)
         }
         box.addView(resize)
+        /*
+         * Moving slides the window (translation, no layout); resizing shows an outline that follows the finger.
+         * The real size is applied once, on release: relaying out the web page on every move made it lag behind.
+         */
+        val ghost = View(activity).apply {
+            background = rounded(0x1420194f, activity.dp(12).toFloat(), TEAL)
+            visibility = View.GONE
+        }
         fun gesture(target: View, resizing: Boolean) {
             var startX = 0f
             var startY = 0f
             var initial = bounds
+            var next = bounds
             target.setOnTouchListener { v, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         startX = event.rawX
                         startY = event.rawY
                         initial = bounds
+                        next = bounds
                         true
                     }
                     MotionEvent.ACTION_MOVE -> {
@@ -243,14 +267,32 @@ class GoogleSearchWindow(private val activity: Activity, private val host: Frame
                         expanded = false
                         val dx = (event.rawX - startX).toInt()
                         val dy = (event.rawY - startY).toInt()
-                        place(if (resizing)initial.copy(width = initial.width + dx, height = initial.height + dy)else initial.copy(x = initial.x + dx, y = initial.y + dy))
+                        next = (if (resizing)initial.copy(width = initial.width + dx, height = initial.height + dy)else initial.copy(x = initial.x + dx, y = initial.y + dy))
+                            .fit(host.width, host.height, activity.dp(280), activity.dp(240))
+                        if (resizing) {
+                            if (ghost.parent == null)host.addView(ghost, FrameLayout.LayoutParams(1, 1, Gravity.TOP or Gravity.LEFT))
+                            ghost.visibility = View.VISIBLE
+                            ghost.translationX = next.x.toFloat()
+                            ghost.translationY = next.y.toFloat()
+                            ghost.layoutParams = ghost.layoutParams.apply {
+                                width = next.width
+                                height = next.height
+                            }
+                        } else {
+                            box.translationX = (next.x - initial.x).toFloat()
+                            box.translationY = (next.y - initial.y).toFloat()
+                        }
                         true
                     }
-                    MotionEvent.ACTION_UP -> {
-                        v.performClick()
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        box.translationX = 0f
+                        box.translationY = 0f
+                        ghost.visibility = View.GONE
+                        (ghost.parent as? android.view.ViewGroup)?.removeView(ghost)
+                        if (next != initial)place(next)
+                        if (event.actionMasked == MotionEvent.ACTION_UP)v.performClick()
                         true
                     }
-                    MotionEvent.ACTION_CANCEL -> true
                     else -> false
                 }
             }

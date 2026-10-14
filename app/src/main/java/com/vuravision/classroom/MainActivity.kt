@@ -3268,7 +3268,7 @@ class MainActivity : Activity() {
         val target = GoogleSearchSettings.load(this)
         val floating: (String) -> Unit = { query ->
             googleSearch?.close()
-            googleSearch = GoogleSearchWindow(this, canvasHost) { src -> addWebImage(src) }.also { it.open(query) }
+            googleSearch = GoogleSearchWindow(this, canvasHost, { shot -> insertBitmap(shot) }) { src -> addWebImage(src) }.also { it.open(query) }
         }
         val browser: (String, Boolean) -> Unit = { query, adjacent ->
             googleSearch?.close()
