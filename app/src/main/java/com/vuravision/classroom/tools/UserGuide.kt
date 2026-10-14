@@ -43,6 +43,7 @@ import com.vuravision.classroom.ui.tr
 
 data class GuideTopic(
     val id: String,
+    val section: String? = null,
     val titleEn: String,
     val titleFa: String,
     val stepsEn: List<String>,
@@ -56,17 +57,30 @@ object UserGuide {
         Gson().fromJson(it, Array<GuideTopic>::class.java).toList()
     }
     fun show(context: Context, media: Media, secret: () -> Unit) = show(context, media, secret, null)
+    private val sections = listOf(
+        "start" to ("Getting started" to "شروع"),
+        "draw" to ("Writing and drawing" to "نوشتن و رسم"),
+        "organize" to ("Pages and organizing" to "صفحه و سازمان‌دهی"),
+        "class" to ("Class tools" to "ابزارهای کلاس"),
+        "smart" to ("Smart tools" to "ابزارهای هوشمند"),
+        "files" to ("Files, PDF and sharing" to "فایل، PDF و اشتراک")
+    )
+
+    /**
+     * The guide as a small book: chapters grouped by section on the side (above on narrow screens), the chapter
+     * itself with a picture, numbered steps and something to try, and Previous / Next at the bottom.
+     */
     fun show(context: Context, media: Media, secret: () -> Unit, back: (() -> Unit)?) {
         val topics = topics(context)
         var fa = context.resources.configuration.locales[0].language == "fa"
         var index = 0
-        var taps = 0
+        val wide = context.resources.configuration.screenWidthDp >= 900
         val dialog = Dialog(context, UiTheme.style())
         val root = context.column().apply {
-            pad(12)
+            setPadding(context.dp(16), context.dp(12), context.dp(16), context.dp(12))
             setBackgroundColor(PAPER)
         }
-        val header = context.row()
+        val header = context.row().apply { gravity = Gravity.CENTER_VERTICAL }
         root.addView(header)
         if (back != null) {
             header.addView(
@@ -79,114 +93,110 @@ object UserGuide {
                 }
             )
         }
-        val heading = context.label("", 22f, NAVY, true)
+        val heading = context.label("", 24f, NAVY, true)
         header.addView(heading, LinearLayout.LayoutParams(0, -2, 1f))
         val language = context.button("فارسی / EN") {}
-        header.addView(language)
-        header.addView(context.button("×") { dialog.dismiss() }.apply { contentDescription = context.tr("Close guide", "بستن راهنما") })
+        header.addView(language, LinearLayout.LayoutParams(-2, context.dp(48)))
+        header.addView(context.button("×") { dialog.dismiss() }.apply { contentDescription = context.tr("Close guide", "بستن راهنما") }, LinearLayout.LayoutParams(context.dp(56), context.dp(48)).apply { marginStart = context.dp(8) })
         val search = context.field()
-        root.addView(search)
-        val chapterIndex = context.button("") {}
-        root.addView(chapterIndex)
-        val chapters = context.row()
-        root.addView(context.scrollRow(chapters))
-        val body = context.column().apply { pad(12) }
+        val chapters = context.column()
+        val middle = if (wide) context.row().apply { gravity = Gravity.TOP } else context.column()
+        val side = context.column().apply { setPadding(0, 0, context.dp(12), 0) }
+        side.addView(search)
+        if (wide) {
+            side.addView(ScrollView(context).apply { addView(chapters) }, LinearLayout.LayoutParams(-1, 0, 1f))
+            middle.addView(side, LinearLayout.LayoutParams(context.dp(300), -1))
+        } else {
+            side.addView(context.scrollRow(chapters.apply { orientation = LinearLayout.HORIZONTAL }))
+            middle.addView(side, LinearLayout.LayoutParams(-1, -2))
+        }
+        val body = context.column().apply { setPadding(context.dp(16), context.dp(8), context.dp(16), context.dp(16)) }
         val scroll = ScrollView(context).apply {
             addView(body)
             isFillViewport = true
         }
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        val footer = context.row()
+        middle.addView(scroll, if (wide) LinearLayout.LayoutParams(0, -1, 1f) else LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(middle, LinearLayout.LayoutParams(-1, 0, 1f))
+        val footer = context.row().apply {
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, context.dp(8), 0, 0)
+        }
         root.addView(footer)
         val previous = context.button("") {}
-        val next = context.button("") {}
-        val position = context.label("", 14f, MUTED)
-        footer.addView(previous)
+        val next = context.button("", true) {}
+        val position = context.label("", 14f, MUTED).apply { gravity = Gravity.CENTER }
+        footer.addView(previous, LinearLayout.LayoutParams(-2, context.dp(52)))
         footer.addView(position, LinearLayout.LayoutParams(0, -2, 1f))
-        footer.addView(next)
+        footer.addView(next, LinearLayout.LayoutParams(-2, context.dp(52)))
         fun lang(en: String, persian: String) = if (fa)persian else en
+        fun sectionName(key: String?) = sections.firstOrNull { it.first == key }?.second?.let { lang(it.first, it.second) }.orEmpty()
         fun renderBody() {
             root.layoutDirection = if (fa)View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
-            chapterIndex.text = lang("All chapters · ${topics.size}", "فهرست همهٔ فصل‌ها · ${topics.size}")
-            chapterIndex.setOnClickListener {
-                val names = topics.mapIndexed { i, t -> "${i + 1} · " + if (fa)t.titleFa else t.titleEn }.toTypedArray()
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(context).setTitle(lang("Chapters in order", "فصل‌ها به ترتیب"))
-                    .setSingleChoiceItems(names, index) { d, i ->
-                        index = i
-                        search.setText("")
-                        renderBody()
-                        d.dismiss()
-                    }.show()
-            }
-            heading.text = lang("Learn VuraVision", "آموزش VuraVision")
-            search.hint = lang("Search tools and lessons…", "جست‌وجوی ابزار و آموزش…")
+            heading.text = lang("Learn VuraVision", "آموزش ویراویژن")
+            search.hint = lang("Search the guide…", "جستجو در راهنما…")
             previous.text = lang("Previous", "قبلی")
             next.text = lang("Next", "بعدی")
             previous.isEnabled = index > 0
             next.isEnabled = index < topics.lastIndex
-            position.text = lang("${index + 1} / ${topics.size}", "${index + 1} از ${topics.size}")
+            position.text = lang("${index + 1} of ${topics.size}", "${index + 1} از ${topics.size}")
             val topic = topics[index]
             body.removeAllViews()
-            body.addView(context.label(if (fa)topic.titleFa else topic.titleEn, 25f, NAVY, true))
-            val imageKey: String? = null // Current chrome is illustrated with the native tools below.
-            val screenshot = imageKey?.let { key ->
-                try {
-                    context.assets.open("guide/$key-${if (fa)"fa"else "en"}.png").use { BitmapFactory.decodeStream(it) }
-                } catch (_: java.io.IOException) {
-                    null
-                }
-            }
-            if (screenshot != null) {
-                body.addView(
-                    ImageView(context).apply {
-                        setImageBitmap(screenshot)
-                        adjustViewBounds = true
-                        scaleType = ImageView.ScaleType.FIT_CENTER
-                        contentDescription = if (fa)topic.titleFa else topic.titleEn
-                    },
-                    LinearLayout.LayoutParams(-1, -2)
-                )
-            } else {
-                body.addView(GuideFigure(context, media, topic.id, fa), LinearLayout.LayoutParams(-1, context.dp(240)))
-            }
-            body.addView(context.label(lang("Illustrated example", "نمونهٔ تصویری"), 12f, MUTED))
+            body.addView(context.label(sectionName(topic.section), 13f, TEAL, true))
+            body.addView(context.label(if (fa)topic.titleFa else topic.titleEn, 28f, NAVY, true).apply { setPadding(0, context.dp(2), 0, context.dp(12)) })
+            body.addView(context.card(GuideFigure(context, media, topic.id, fa).apply { minimumHeight = context.dp(220) }, SURFACE), LinearLayout.LayoutParams(-1, context.dp(240)))
             (if (fa)topic.stepsFa else topic.stepsEn).forEachIndexed { i, step ->
                 val line = context.row().apply {
                     gravity = Gravity.TOP
-                    pad(4)
+                    setPadding(context.dp(14), context.dp(12), context.dp(14), context.dp(12))
+                    background = com.vuravision.classroom.ui.rounded(SURFACE, context.dp(16).toFloat())
                 }
-                line.addView(context.label("${i + 1}", 18f, TEAL, true), LinearLayout.LayoutParams(context.dp(32), -2))
                 line.addView(
-                    context.label(step, 17f).apply {
-                        setLineSpacing(context.dp(5).toFloat(), 1.05f)
+                    context.label("${i + 1}", 16f, android.graphics.Color.WHITE, true).apply {
+                        gravity = Gravity.CENTER
+                        background = com.vuravision.classroom.ui.rounded(TEAL, context.dp(16).toFloat())
+                    },
+                    LinearLayout.LayoutParams(context.dp(32), context.dp(32))
+                )
+                line.addView(
+                    context.label(step, 17f, NAVY).apply {
+                        setLineSpacing(context.dp(4).toFloat(), 1.05f)
                         textDirection = if (fa)View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
                     },
-                    LinearLayout.LayoutParams(0, -2, 1f)
+                    LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = context.dp(12) }
                 )
-                body.addView(line)
+                body.addView(line, LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(10) })
             }
             val tip = context.column().apply { pad(16) }
-            tip.addView(context.label(lang("Try it / remember", "تمرین / نکته"), 16f, TEAL, true))
-            tip.addView(context.label(if (fa)topic.tipFa else topic.tipEn, 16f))
-            body.addView(context.card(tip, SECONDARY_CONTAINER))
+            tip.addView(context.label(lang("Try it", "امتحان کنید"), 15f, TEAL, true))
+            tip.addView(context.label(if (fa)topic.tipFa else topic.tipEn, 16f, NAVY))
+            body.addView(context.card(tip, SECONDARY_CONTAINER), LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(14) })
             scroll.post { scroll.scrollTo(0, 0) }
         }
         fun renderChapters() {
             chapters.removeAllViews()
             val query = search.text?.toString()?.trim().orEmpty()
+            var lastSection: String? = "-"
             topics.forEachIndexed { i, t ->
                 val haystack = listOf(t.titleEn, t.titleFa, t.stepsEn.joinToString(), t.stepsFa.joinToString()).joinToString(" ")
                 if (query.isBlank() || haystack.contains(query, ignoreCase = true)) {
+                    if (wide && t.section != lastSection) {
+                        lastSection = t.section
+                        chapters.addView(context.label(sectionName(t.section), 12f, MUTED, true).apply { setPadding(context.dp(6), context.dp(14), context.dp(6), context.dp(4)) })
+                    }
                     chapters.addView(
-                        context.button("${i + 1} · " + if (fa)t.titleFa else t.titleEn, i == index) {
+                        context.button((if (fa)t.titleFa else t.titleEn), i == index) {
                             index = i
                             renderBody()
                             renderChapters()
-                        }.apply { textDirection = if (fa)View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR }
+                        }.apply {
+                            textDirection = if (fa)View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
+                            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+                        },
+                        if (wide) LinearLayout.LayoutParams(-1, context.dp(48)).apply { bottomMargin = context.dp(4) } else LinearLayout.LayoutParams(-2, context.dp(48)).apply { marginEnd = context.dp(6) }
                     )
                 }
             }
-            if (chapters.childCount == 0)chapters.addView(context.label(lang("No chapters found", "فصلی پیدا نشد"), 15f, MUTED))
+            if (chapters.childCount == 0)chapters.addView(context.label(lang("Nothing found", "چیزی پیدا نشد"), 15f, MUTED))
         }
 
         language.setOnClickListener {
@@ -268,7 +278,7 @@ class GuideFigure(context: Context, private val media: Media, private val topic:
                 paint.color = SURFACE
                 canvas.drawRoundRect(505f, 333f, 858f, 389f, 12f, 12f, paint)
                 canvas.drawRoundRect(42f, 112f, 98f, 342f, 12f, 12f, paint)
-                listOf("menu", "files", "undo", "redo", "share").forEachIndexed { i, key ->
+                listOf("files", "share", "help", "settings").forEachIndexed { i, key ->
                     val icon = WorkspaceIcon(context, key, key) {}
                     icon.measure(48, 48)
                     icon.layout(0, 0, 48, 48)
@@ -285,7 +295,7 @@ class GuideFigure(context: Context, private val media: Media, private val topic:
                 badge(1, 480f, 360f)
                 badge(2, 123f, 157f)
                 badge(3, 125f, 365f)
-                text("Menu · Undo · files", "منو، Undo، فایل", 485f, 70f)
+                text("Files · share · guide · settings", "فایل، اشتراک، راهنما، تنظیمات", 485f, 70f)
                 text("Drawing tools", "ابزار رسم", 485f, 110f)
                 text("1 / 12", "۱ / ۱۲", 166f, 370f)
             }
@@ -397,6 +407,39 @@ class GuideFigure(context: Context, private val media: Media, private val topic:
                 }
                 text("Local profiles · shared board", "پروفایل محلی · تختهٔ مشترک", 120f, 70f)
                 text("Same Wi-Fi / LAN / hotspot", "یک وای‌فای، شبکه یا هات‌اسپات", 120f, 360f)
+            }
+            "replay" -> {
+                line(listOf(90f to 150f, 180f to 90f, 270f to 170f, 360f to 100f), NAVY, 6f)
+                line(listOf(420f to 150f, 520f to 110f), NAVY, 6f)
+                line(listOf(520f to 110f, 560f to 95f), MUTED, 6f, true)
+                paint.color = OUTLINE_STRONG
+                canvas.drawRoundRect(90f, 300f, 810f, 310f, 5f, 5f, paint)
+                paint.color = TEAL
+                canvas.drawRoundRect(90f, 300f, 520f, 310f, 5f, 5f, paint)
+                canvas.drawCircle(520f, 305f, 14f, paint)
+                text("1 min · 2× · Start here", "۱ دقیقه · ۲× · شروع از اینجا", 330f, 365f)
+            }
+            "quiz" -> {
+                note(260f, 40f, 0xffffe8b2.toInt(), if (fa)"۷ × ۸ = ؟"else "7 × 8 = ?")
+                listOf("54", "56", "48", "64").forEachIndexed { i, v ->
+                    val x = 120f + (i % 2) * 340f
+                    val y = 160f + (i / 2) * 110f
+                    paint.color = if (i == 1) TEAL else SURFACE
+                    canvas.drawRoundRect(x, y, x + 300f, y + 90f, 18f, 18f, paint)
+                    text(v, v, x + 130f, y + 55f, if (i == 1) Color.WHITE else NAVY)
+                }
+            }
+            "search" -> {
+                paint.color = SURFACE
+                canvas.drawRoundRect(430f, 40f, 860f, 380f, 18f, 18f, paint)
+                paint.color = PRIMARY_CONTAINER
+                canvas.drawRoundRect(430f, 40f, 860f, 92f, 18f, 18f, paint)
+                text("Google", "گوگل", 455f, 76f)
+                shape("rectangle", 470f, 120f, 160f, 110f, TEAL, 3f)
+                shape("triangle", 660f, 120f, 160f, 110f, ORANGE, 3f)
+                shape("arrow", 300f, 175f, 150f, 1f, ORANGE)
+                shape("rectangle", 80f, 120f, 190f, 140f, TEAL, 3f)
+                text("Long-press → board", "نگه دارید ← تخته", 80f, 330f)
             }
             "games" -> {
                 shape("rectangle", 130f, 63f, 550f, 280f, MUTED, 2f)
