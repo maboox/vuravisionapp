@@ -57,7 +57,8 @@ import kotlin.math.*
  * Runs one AI request off the main thread. The selection bar shows what is happening with Cancel, the board stays
  * usable, and any failure becomes one sentence saying what to do (never a dialog full of errors).
  */
-internal fun <T> MainActivity.runAi(label: String, work: (SmartAi) -> T, done: (T) -> Unit) {
+/** [again] repeats the whole action for Try again; needed when [work] uses a picture it recycles. */
+internal fun <T> MainActivity.runAi(label: String, work: (SmartAi) -> T, again: (() -> Unit)? = null, done: (T) -> Unit) {
     if (!smartAi.configured()) {
         toast(AiMessages.text(this, "no_key"))
         aiSettings()
@@ -67,13 +68,20 @@ internal fun <T> MainActivity.runAi(label: String, work: (SmartAi) -> T, done: (
     aiBusyLabel = label
     selectionBarMode = "busy"
     refreshSelectionBar()
-    if (board.chosen().isEmpty())toast(label)
+    // Always visible, with seconds counting and Cancel; a failure stays on screen with Try again.
+    aiStatus.working(label) { cancelAi() }
     aiWorker.execute {
         val result = runCatching { work(smartAi) }
         handler.post {
             if (destroyed || ticket != aiTicket)return@post
             if (selectionBarMode == "busy")selectionBarMode = "main"
-            result.onSuccess { done(it) }.onFailure { e -> toast(AiMessages.text(this, (e as? AiException)?.reason ?: "service")) }
+            result.onSuccess {
+                aiStatus.hide()
+                done(it)
+            }.onFailure { e ->
+                val reason = (e as? AiException)?.reason ?: if (e is IllegalArgumentException)"format" else "service"
+                aiStatus.failed(AiMessages.text(this, reason), if (reason in listOf("no_key", "key", "limit", "model"))null else (again ?: { runAi(label, work, null, done) }))
+            }
             refreshSelectionBar()
         }
     }
@@ -254,23 +262,31 @@ internal fun MainActivity.installLabAssistant() {
 }
 internal fun MainActivity.cancelAi() {
     aiTicket++
+    aiStatus.hide()
     selectionBarMode = "main"
     refreshSelectionBar()
 }
-internal fun MainActivity.aiSystem() = AiTasks.system(this, smartAi.settings.grade)
+
+/** Typed words in the current selection, for the request running on this worker thread (see [aiOnSelection]). */
+private val selectionWords = ThreadLocal<String>()
+internal fun MainActivity.aiSystem() = AiTasks.system(this, smartAi.settings.grade) + selectionWords.get().orEmpty().takeIf { it.isNotBlank() }?.let { "\nTyped text in the selection (exact): $it" }.orEmpty()
 
 /** Sends only the selection, as one picture; the bitmap is released as soon as the request is built. */
 internal fun <T> MainActivity.aiOnSelection(label: String, ask: (SmartAi, android.graphics.Bitmap) -> T, done: (T, RectF) -> Unit) {
     val items = board.chosen()
     if (items.isEmpty())return
     val (bitmap, bounds) = board.snapshotItems(items)
+    // Typed text goes along as text too: exact words (and their language) instead of only a picture of them.
+    val words = items.filter { it.kind in listOf("text", "sticky") && it.text.isNotBlank() }.joinToString(" | ") { it.text.replace('\n', ' ') }.take(2000)
     runAi(label, { ai ->
         try {
+            selectionWords.set(words)
             ask(ai, bitmap)
         } finally {
+            selectionWords.remove()
             bitmap.recycle()
         }
-    }) { done(it, bounds) }
+    }, { aiOnSelection(label, ask, done) }) { done(it, bounds) }
 }
 
 /**
@@ -323,7 +339,7 @@ internal fun MainActivity.addAndSelect(items: List<Item>, about: RectF? = null) 
 internal fun MainActivity.aiExplain(kind: String) {
     val prompt = when (kind) {
         "simplify" -> AiTasks.simplify()
-        "translate" -> AiTasks.translate(this)
+        "translate" -> AiTasks.translate()
         else -> AiTasks.explain()
     }
     val label = when (kind) {
@@ -416,7 +432,7 @@ internal fun MainActivity.aiCleanup() {
         } finally {
             bitmap.recycle()
         }
-    }) { text ->
+    }, { aiCleanup() }) { text ->
         if (text.isBlank()) {
             toast(AiMessages.text(this, "format"))
             return@runAi
@@ -619,7 +635,7 @@ internal fun MainActivity.aiSummary() {
         } finally {
             sheet.recycle()
         }
-    }) { summary ->
+    }, { aiSummary() }) { summary ->
         if (projectStore.lesson.pages.size >= 200)return@runAi
         activateBoard(whiteboard)
         val page = newBoardPage(projectStore.page)

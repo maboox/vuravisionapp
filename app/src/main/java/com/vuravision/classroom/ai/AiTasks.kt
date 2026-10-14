@@ -23,24 +23,38 @@ object AiTasks {
         "high" -> "high school students (grades 10 to 12)"
         else -> "middle school students (grades 7 to 9)"
     }
+
+    /**
+     * Teachers saw answers in English for Persian boards, and tasks about "handwriting" instead of the subject (a quiz on
+     * Asian populations asked what handwriting is for). So: read first, work on the meaning, answer in its language.
+     */
     fun system(c: Context, grade: String) = """
-        You help a teacher during a lesson. The image shows only what the teacher selected on an interactive whiteboard:
-        handwriting, typed text, drawings, graphs or formulas. Write in ${language(c)} for ${audience(grade)}.
-        Be accurate and kind. If the image is unreadable or empty, say so in one short sentence.
+        You help a teacher during a lesson, for ${audience(grade)}. The image is a picture of part of the teacher's
+        interactive whiteboard: handwriting, typed text, drawings, graphs or formulas.
+        First read everything written in it. What is written is the lesson content: a topic, a question, an exercise or
+        a student's work. Always work on its meaning and subject. Never treat the handwriting itself as the topic, never
+        talk about handwriting, the image, translation or "identifying the text", unless the task asks for that.
+        Language: answer in the language the content is written in (Persian content gets a Persian answer, English
+        content an English answer). If the content has no words, answer in ${language(c)}. JSON keys stay in English.
+        Be accurate and kind. If nothing readable is there, say so in one short sentence in that language.
         Never use Markdown, LaTeX commands, bullet symbols or emoji. Write mathematics with plain Unicode such as x², √, ≤, π, ÷.
     """.trimIndent()
 
-    fun explain() = "Explain what this shows so that a student understands it. At most 90 words in 2 to 4 short sentences."
-    fun simplify() = "Say the same thing in simpler words for younger students. At most 70 words."
-    fun translate(c: Context) = "Translate all text in the image into ${if (persian(c))"English" else "Persian (Farsi)"}. Reply with the translation only."
+    fun explain() = "Explain the subject written here so that a student understands it: what it means and why. At most 90 words in 2 to 4 short sentences."
+    fun simplify() = "Say what is written here again in simpler words for younger students. Same language as the content. At most 70 words."
+    fun translate() = "Translate what is written here: Persian content into English, any other language into Persian (Farsi). Reply with the translation only, without notes."
     fun check() = """
-        Check this work for mistakes (calculation, spelling, grammar, facts or logic).
+        Check whether this work is right: calculations, answers, facts and reasoning. Handwriting style and small spelling
+        slips are not mistakes, unless the content is itself a spelling or grammar exercise. If the content is only a
+        question or a topic (no answer to check), set "correct" to true and use the summary to say what a correct answer needs.
         Reply with JSON only: {"correct": true or false, "summary": "one short sentence",
         "mistakes": [{"box": [left, top, right, bottom], "note": "the fix in at most 12 words"}]}.
         Each box frames one mistake in image coordinates from 0 to 1 (0,0 is the top-left corner). At most 4 mistakes.
     """.trimIndent()
     fun steps() = """
-        Solve or explain this step by step for the class. Reply with JSON only:
+        The content is an exercise or a question for the class (in mathematics, science, language or any subject).
+        Solve it, or answer it, step by step, the way a teacher would on the board. Do not describe reading,
+        identifying or translating the text: start with the first real step of the solution. Reply with JSON only:
         {"steps": ["step 1", "step 2", ...], "answer": "final answer or conclusion"}. 2 to 8 steps, each at most 20 words.
     """.trimIndent()
     fun transcribe() = """
@@ -48,12 +62,13 @@ object AiTasks {
         Reply with JSON only: {"text": "..."}.
     """.trimIndent()
     fun quiz(count: Int) = """
-        Write $count multiple-choice questions that check understanding of this content. Each has 4 short options and exactly
-        one correct option. Reply with JSON only: {"questions": [{"q": "...", "options": ["...","...","...","..."], "answer": index of the correct option from 0}]}.
+        Write $count multiple-choice questions for students about the subject of this content (for example, if it says
+        "populations of Asian countries", ask about the populations of Asian countries). Never ask about handwriting,
+        the board or the image. Each question has 4 short options and exactly one correct option; vary the correct position. Reply with JSON only: {"questions": [{"q": "...", "options": ["...","...","...","..."], "answer": index of the correct option from 0}]}.
     """.trimIndent()
     fun quizFromTopic(topic: String, count: Int) = "The topic is: \"${topic.take(300)}\". There is no image; use the topic. " + quiz(count)
     fun mindMap() = """
-        Turn this content into a mind map. Reply with JSON only: {"title": "...", "children": [{"title": "...", "children": [{"title": "..."}]}]}.
+        Turn the subject of this content into a mind map of its main ideas (not about the handwriting or the image). Reply with JSON only: {"title": "...", "children": [{"title": "...", "children": [{"title": "..."}]}]}.
         3 to 5 main branches, at most 3 sub-branches each; every title at most 4 words.
     """.trimIndent()
     fun mindMapFromTopic(topic: String) = "The topic is: \"${topic.take(300)}\". There is no image; use the topic. " + mindMap()

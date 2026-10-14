@@ -59,14 +59,20 @@ fun interface AiTransport {
     fun post(url: String, headers: Map<String, String>, body: String): String
 }
 
-class HttpAiTransport : AiTransport {
-    private val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(90, TimeUnit.SECONDS).callTimeout(120, TimeUnit.SECONDS)
+/**
+ * [callSeconds] and [maxChars] are larger for pictures: a 1024 px image comes back as several megabytes of base64 and
+ * can take minutes. With the text limits, AvalAI images failed after a long wait as "the answer could not be read".
+ */
+class HttpAiTransport(callSeconds: Long = 120, private val maxChars: Int = 4_000_000) : AiTransport {
+    private val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(callSeconds, TimeUnit.SECONDS).callTimeout(callSeconds, TimeUnit.SECONDS)
         .followRedirects(false).followSslRedirects(false).build()
     override fun post(url: String, headers: Map<String, String>, body: String): String {
         val request = Request.Builder().url(url).post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))
         headers.forEach { (k, v) -> request.header(k, v) }
         val response = try {
             client.newCall(request.build()).execute()
+        } catch (e: java.io.InterruptedIOException) {
+            throw AiException("timeout", e.message ?: "timeout")
         } catch (e: java.io.IOException) {
             throw AiException("offline", e.message ?: "offline")
         }
@@ -83,7 +89,7 @@ class HttpAiTransport : AiTransport {
                 )
             }
             val text = r.body?.string() ?: throw AiException("format")
-            if (text.length > 4_000_000)throw AiException("format")
+            if (text.length > maxChars)throw AiException("too_big")
             return text
         }
     }
@@ -97,6 +103,7 @@ class HttpAiTransport : AiTransport {
 class SmartAi(private val context: Context, keySource: (String) -> String, transportSource: AiTransport? = null) {
     private val key: (String) -> String = testKey ?: keySource
     private val transport: AiTransport = transportSource ?: testTransport ?: HttpAiTransport()
+    private val imageTransport: AiTransport = transportSource ?: testTransport ?: HttpAiTransport(300, 60_000_000)
     companion object {
         /** Test seams: a fake service and key, so board actions can be exercised without a network or keystore. */
         var testTransport: AiTransport? = null
@@ -214,7 +221,7 @@ class SmartAi(private val context: Context, keySource: (String) -> String, trans
                 if (sketch64 != null)parts.put(JSONObject().put("inline_data", JSONObject().put("mime_type", "image/png").put("data", sketch64)))
                 val body = JSONObject().put("contents", JSONArray().put(JSONObject().put("role", "user").put("parts", parts)))
                     .put("generationConfig", JSONObject().put("responseModalities", JSONArray().put("TEXT").put("IMAGE")))
-                val raw = transport.post("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent", mapOf("x-goog-api-key" to secret), body.toString())
+                val raw = imageTransport.post("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent", mapOf("x-goog-api-key" to secret), body.toString())
                 try {
                     val p = JSONObject(raw).getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
                     val image = (0 until p.length()).map { p.getJSONObject(it) }.firstNotNullOfOrNull { it.optJSONObject("inline_data") ?: it.optJSONObject("inlineData") } ?: throw AiException("format")
@@ -230,7 +237,7 @@ class SmartAi(private val context: Context, keySource: (String) -> String, trans
                 if (sketch64 != null)content.put(JSONObject().put("type", "image_url").put("image_url", JSONObject().put("url", "data:image/png;base64,$sketch64")))
                 val body = JSONObject().put("model", model).put("modalities", JSONArray().put("image").put("text"))
                     .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", content)))
-                val raw = transport.post(base(s.provider, context) + "/chat/completions", mapOf("Authorization" to "Bearer $secret", "X-Title" to "VuraVision"), body.toString())
+                val raw = imageTransport.post(base(s.provider, context) + "/chat/completions", mapOf("Authorization" to "Bearer $secret", "X-Title" to "VuraVision"), body.toString())
                 try {
                     decode(JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getJSONArray("images").getJSONObject(0).getJSONObject("image_url").getString("url"))
                 } catch (e: AiException) {
@@ -242,7 +249,9 @@ class SmartAi(private val context: Context, keySource: (String) -> String, trans
             else -> {
                 val text = if (sketch != null)ask("Describe this classroom sketch precisely for an illustrator: objects, layout, labels. At most 60 words.", description.ifBlank { "Describe the sketch." }, sketch) + ". " + description else description
                 val body = JSONObject().put("model", model).put("prompt", safe + text).put("n", 1).put("size", "1024x1024")
-                val raw = transport.post(base(s.provider, context) + "/images/generations", mapOf("Authorization" to "Bearer $secret"), body.toString())
+                // gpt-image models: medium quality answers in well under a minute; the default (high) often took minutes.
+                if (model.startsWith("gpt-image"))body.put("quality", "medium")
+                val raw = imageTransport.post(base(s.provider, context) + "/images/generations", mapOf("Authorization" to "Bearer $secret"), body.toString())
                 try {
                     val item = JSONObject(raw).getJSONArray("data").getJSONObject(0)
                     if (item.has("b64_json")) {
@@ -276,6 +285,8 @@ object AiMessages {
         "model" -> c.tr("The service does not accept this model. Choose another in Settings → Smart.", "سرویس این مدل را نمی‌پذیرد. مدل دیگری در تنظیمات ← هوشمند انتخاب کنید.")
         "limit" -> c.tr("Today's request limit on this panel is reached (Settings → Smart).", "سقف درخواست امروز این پنل پر شده است (تنظیمات ← هوشمند).")
         "format" -> c.tr("The answer could not be read. Please try again.", "پاسخ قابل خواندن نبود. دوباره امتحان کنید.")
+        "timeout" -> c.tr("The service took too long to answer. Pictures can take a minute or two; try again, or a faster model in Settings → Smart.", "پاسخ سرویس بیش از حد طول کشید. ساخت تصویر ممکن است یکی دو دقیقه طول بکشد؛ دوباره امتحان کنید یا مدل سریع‌تری در تنظیمات ← هوشمند انتخاب کنید.")
+        "too_big" -> c.tr("The answer was too large to use. Try again, or choose another model in Settings → Smart.", "پاسخ برای استفاده بیش از حد بزرگ بود. دوباره امتحان کنید یا مدل دیگری در تنظیمات ← هوشمند انتخاب کنید.")
         else -> c.tr("The service did not answer. Please try again.", "سرویس پاسخ نداد. دوباره امتحان کنید.")
     }
 }

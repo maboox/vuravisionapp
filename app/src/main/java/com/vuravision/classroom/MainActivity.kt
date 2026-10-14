@@ -65,6 +65,7 @@ import com.vuravision.classroom.tools.Spotlight
 import com.vuravision.classroom.tools.StepReveal
 import com.vuravision.classroom.tools.UserGuide
 import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.ui.AiStatus
 import com.vuravision.classroom.ui.CHALKBOARD
 import com.vuravision.classroom.ui.ColorPickerDialog
 import com.vuravision.classroom.ui.DARK_BOARD
@@ -591,11 +592,12 @@ class MainActivity : Activity() {
                 val notes = groupableNotes(items)
                 if (smartAi.configured()) {
                     if (notes.size >= 3)action("ai_group", tr("Group ideas", "دسته‌بندی ایده‌ها"), tr("Sort the notes into groups by meaning (AI)", "چیدن یادداشت‌ها در دسته‌های هم‌معنا (هوش)")) { aiGroups() }
-                    action("ai_explain", tr("Explain", "توضیح")) { aiExplain("explain") }
-                    action("ai_check", tr("Check", "غلط‌یابی")) { aiCheck() }
-                    action("ai_steps", tr("Steps", "گام‌به‌گام")) { aiSteps() }
-                    action("ai_quiz", tr("Quiz", "آزمونک")) { aiQuiz() }
-                    action("ai_mindmap", tr("Mind map", "نقشهٔ ذهنی")) { aiMindMap() }
+                    // Names say what happens; the long press / tooltip says what comes back (teachers found "Check" and "Clean up" unclear).
+                    action("ai_explain", tr("Explain", "توضیح بده"), tr("Explains the topic for students in a note beside it (AI)", "موضوع را برای دانش‌آموز در یادداشتی کنارش توضیح می‌دهد (هوش)")) { aiExplain("explain") }
+                    action("ai_check", tr("Is it right?", "درسته؟"), tr("Checks the answer or the work and circles mistakes in red (AI)", "جواب یا راه‌حل را بررسی و اشتباه‌ها را با قرمز مشخص می‌کند (هوش)")) { aiCheck() }
+                    action("ai_steps", tr("Solve step by step", "حل قدم‌به‌قدم"), tr("Solves the exercise; each step appears when you tap Next (AI)", "تمرین را حل می‌کند؛ هر قدم با «بعدی» نمایش داده می‌شود (هوش)")) { aiSteps() }
+                    action("ai_quiz", tr("Quiz on this", "آزمونک از این"), tr("Five questions about this topic for the class (AI)", "پنج سؤال دربارهٔ همین موضوع برای کلاس (هوش)")) { aiQuiz() }
+                    action("ai_mindmap", tr("Mind map", "نقشهٔ ذهنی"), tr("A mind map of this topic beside it (AI)", "نقشهٔ ذهنی همین موضوع، کنارش (هوش)")) { aiMindMap() }
                     action("more", tr("More", "بیشتر")) { open("smart_more") }
                 } else {
                     if (notes.size >= 3)action("group_color", tr("By color", "بر اساس رنگ"), tr("Arrange the notes in columns by color", "چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")) { groupByColor(notes) }
@@ -608,9 +610,9 @@ class MainActivity : Activity() {
             }
             "smart_more" -> {
                 action(if (resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL)"next" else "menu_back", tr("Back", "بازگشت")) { open("smart") }
-                action("ai_simplify", tr("Simpler", "ساده‌تر")) { aiExplain("simplify") }
-                action("ai_translate", tr("Translate", "ترجمه")) { aiExplain("translate") }
-                if (ink)action("ai_cleanup", tr("Clean up", "تمیز کن"), tr("Handwriting to typed text (AI)", "دست‌خط به متن تایپی (هوش)")) { aiCleanup() }
+                action("ai_simplify", tr("Say it simpler", "ساده‌تر بگو"), tr("The same content in simpler words, in a note (AI)", "همین مطلب با کلمات ساده‌تر، در یک یادداشت (هوش)")) { aiExplain("simplify") }
+                action("ai_translate", tr("Translate", "ترجمه کن"), tr("Persian to English, other languages to Persian (AI)", "فارسی به انگلیسی، زبان‌های دیگر به فارسی (هوش)")) { aiExplain("translate") }
+                if (ink)action("ai_cleanup", tr("To typed text", "به متن تایپی"), tr("Replaces the handwriting with typed text; Undo brings it back (AI)", "دست‌خط را با متن تایپی جایگزین می‌کند؛ با بازگردانی برمی‌گردد (هوش)")) { aiCleanup() }
                 if (ink)action("ai_picture", tr("To picture", "به تصویر"), tr("Turn the sketch into a clean picture (AI)", "تبدیل طرح به تصویر تمیز (هوش)")) { aiSketchToPicture() }
                 if (groupableNotes(items).size >= 3)action("group_color", tr("By color", "بر اساس رنگ"), tr("Arrange the notes in columns by color", "چیدن یادداشت‌ها در ستون‌ها بر اساس رنگ")) { groupByColor(groupableNotes(items)) }
                 offlineSmart(smart, ink) { symbol, text, title, run -> action(symbol, text, title) { run() } }
@@ -3294,6 +3296,7 @@ class MainActivity : Activity() {
     }
     internal var spotlight: Spotlight? = null
     internal var replay: Replay? = null
+    internal val aiStatus by lazy { AiStatus(this, canvasHost) }
 
     /** Replay start marks per page: the ids on the page when the teacher pressed "Start here" (this session only). */
     internal val replayMarks = mutableMapOf<String, Set<String>>()
