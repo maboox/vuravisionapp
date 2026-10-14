@@ -357,6 +357,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         backingDirty=true;invalidate()
     }
 
+    var keepToolAfterInsert = false
     fun insert(o: Item) {
         if(!sessionCanEdit||!store.editAllowed()||!store.page.canDraw())return
         o.layerId=store.page.activeLayerId
@@ -367,6 +368,10 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         o.y = c.y - o.h / 2
         store.editMetadata { store.page.items.add(o) }
         selected.clear()
+        // Item 50, tool lock: with "keep my tool" on, the pen stays in hand after adding text or a note.
+        if (keepToolAfterInsert && tool in listOf("pen", "highlight", "shape")) {
+            onSelection(); invalidate(); return
+        }
         selected.add(o.id)
         tool = "select"
         onSelection()

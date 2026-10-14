@@ -405,6 +405,18 @@ class UiScenarioTest {
         }finally{ctl.pause().stop().destroy()}
     }
 
+    /** Tool lock (item 50): by default a new note is selected; with "keep my tool" the pen stays in hand. */
+    @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun keepToolAfterAddingANote(){
+        val ctl=open();val a=ctl.get()
+        try{
+            settle(a);a.board.tool="pen";a.board.insert(Item(kind="sticky",text="۱",w=200f,h=120f))
+            assertEquals("select",a.board.tool);assertEquals(1,a.board.selected.size)
+            a.board.keepToolAfterInsert=true;a.board.tool="pen";a.board.insert(Item(kind="sticky",text="۲",w=200f,h=120f))
+            assertEquals("pen",a.board.tool);assertTrue(a.board.selected.isEmpty())
+            assertEquals(2,a.store.page.items.count{it.kind=="sticky"})
+        }finally{ctl.pause().stop().destroy()}
+    }
+
     /** Replay redraws the page in order without touching it; the controls sit at the bottom and Close removes it. */
     @Test @Config(qualifiers="fa-w1280dp-h720dp-land-hdpi") fun replayRedrawsThePage(){
         val ctl=open();val a=ctl.get()

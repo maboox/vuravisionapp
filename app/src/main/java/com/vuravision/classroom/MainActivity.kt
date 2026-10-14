@@ -659,6 +659,7 @@ class MainActivity : Activity() {
     }
     private fun bindBoardExtras(target:Board){
         target.store.historyLimit=HistorySettings.load(this)
+        target.keepToolAfterInsert=prefs.getBoolean("keepTool",false)
         target.onViewportChanged={positionSelectionBar()}
         target.gestures.onHistory=::historyHud
         target.gestures.undoEnabled=prefs.getBoolean("twoFingerUndo",true);target.gestures.pieEnabled=prefs.getBoolean("pieEnabled",false)
@@ -2489,6 +2490,7 @@ c.addView(row().apply{
                 page(s("fonts"),{Fonts.persian.first{it.id==Fonts.persianId}.let{tr(it.en,it.fa)}+" · "+Fonts.english.first{it.id==Fonts.englishId}.let{tr(it.en,it.fa)}}){fontSettings()},
             )),
             SettingsCategory("input",tr("Pen and touch","قلم و لمس"),"pen",listOf(
+                SettingRow.Toggle(tr("Keep my tool after adding text or a note","بعد از افزودن متن یا یادداشت، ابزار عوض نشود"),tr("Off: the new object is selected so it can be moved at once","خاموش: شیء تازه انتخاب می‌شود تا فوراً جابه‌جا شود"),{prefs.getBoolean("keepTool",false)}){v->prefs.edit().putBoolean("keepTool",v).apply();whiteboard.keepToolAfterInsert=v;board.keepToolAfterInsert=v},
                 SettingRow.Toggle(tr("Pen + touch (off: two tips)","قلم + لمس (خاموش: دو سر قلم)"),null,{board.touchMode}){v->if(!board.hasActiveInteraction){board.touchMode=v;prefs.edit().putBoolean("touchMode",v).apply();refreshDock()}},
                 SettingRow.Toggle(s("multi_touch_short"),null,{board.profile.multiTouch}){v->if(!board.hasActiveInteraction){board.profile.multiTouch=v;prefs.edit().putBoolean("multiTouch",v).apply()}},
                 SettingRow.Toggle(tr("Two-finger double tap: Undo","دو بار ضربه با دو انگشت: بازگردانی"),tr("Hold the second tap and slide to browse history","ضربهٔ دوم را نگه دارید و بکشید تا تاریخچه را مرور کنید"),{prefs.getBoolean("twoFingerUndo",true)}){v->
