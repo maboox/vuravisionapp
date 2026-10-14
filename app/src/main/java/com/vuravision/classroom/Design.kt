@@ -47,6 +47,14 @@ fun Context.s(key: String): String {
 }
 
 fun Context.uiScale()=getSharedPreferences("vura",Context.MODE_PRIVATE).getFloat("uiScale",1f).coerceIn(.75f,1.5f)
+
+/** Item 32: "Reduce motion" in Settings, or animations turned off for the whole device. */
+object Motion {
+    @Volatile var reduced=false
+    fun load(c:Context){reduced=c.getSharedPreferences("vura",Context.MODE_PRIVATE).getBoolean("reduceMotion",false)||
+        android.provider.Settings.Global.getFloat(c.contentResolver,android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f}
+    fun ms(duration:Long)=if(reduced)0L else duration
+}
 fun Context.dp(n: Int) = (n * resources.displayMetrics.density * uiScale() + .5f).toInt()
 
 fun rounded(color: Int, radius: Float = 16f, stroke: Int = Color.TRANSPARENT) =
@@ -67,7 +75,8 @@ fun Context.row() =
 fun Context.label(value: String, size: Float = 16f, color: Int = NAVY, bold: Boolean = false) =
     TextView(this).apply {
         text = value
-        textSize = size * uiScale()
+        // Item 28: nothing smaller than 14sp; small captions were hard to read from the back of a classroom.
+        textSize = maxOf(size,14f) * uiScale()
         setTextColor(color)
         if (bold) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         Fonts.bind(this,bold)

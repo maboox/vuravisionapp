@@ -77,7 +77,7 @@ class GameFx {
     fun round(winner:Int,panels:List<RectF>,match:Boolean){
         val t=now();if(winner in 0..1)popAt=t
         if(winner in 0..1){flashAt[winner]=t;shakeAt[1-winner]=t}
-        if(match&&winner in 0..1){confettiAt=t;burst(panels[winner],90)}
+        if(match&&winner in 0..1&&!Motion.reduced){confettiAt=t;burst(panels[winner],90)}
     }
     private fun burst(r:RectF,count:Int){
         val random=Random(now())
@@ -85,7 +85,7 @@ class GameFx {
             (random.nextFloat()-.5f)*900f,-500f-random.nextFloat()*700f,colors[random.nextInt(colors.size)],8f+random.nextFloat()*10f,random.nextFloat()*360f,(random.nextFloat()-.5f)*720f))}
     }
     /** Sideways offset for a panel that just lost a round: a damped wobble over 350 ms. */
-    fun shake(player:Int):Float{val e=now()-shakeAt[player];if(shakeAt[player]==0L||e>350)return 0f;return (sin(e/350.0*PI*6)*14*(1-e/350.0)).toFloat()}
+    fun shake(player:Int):Float{val e=now()-shakeAt[player];if(Motion.reduced||shakeAt[player]==0L||e>350)return 0f;return (sin(e/350.0*PI*6)*14*(1-e/350.0)).toFloat()}
     /** Drawn after a panel: a green wash that fades over 600 ms. */
     fun flash(c:Canvas,player:Int,r:RectF){
         val e=now()-flashAt[player];if(flashAt[player]==0L||e>600)return

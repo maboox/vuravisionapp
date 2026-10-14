@@ -87,6 +87,7 @@ class MainActivity : Activity() {
     }
 
     override fun onCreate(state: Bundle?) {
+        Motion.load(this)
         super.onCreate(state)
         Fonts.initialize(this)
         pendingExport = prefs.getString("pendingExport", null)?.let { name ->
@@ -2441,6 +2442,7 @@ c.addView(row().apply{
      * One settings screen with categories (item 44). On/off and few-option settings apply in place;
      * only settings that need room open a page, which returns here with its back arrow.
      */
+    private val panelSizes get()=listOf(Triple("tablet",tr("Tablet / small","تبلت / کوچک"),.8f),Triple("65","65″",1f),Triple("75","75″",1.1f),Triple("86","86″",1.25f),Triple("98","98–110″",1.4f))
     private fun settingsAt(tab:String?){
         menuReturn=null
         fun page(title:String,value:()->String={""},open:()->Unit)=SettingRow.Page(title,value){menuReturn={};try{open()}finally{menuReturn=null}}
@@ -2450,8 +2452,10 @@ c.addView(row().apply{
         val categories=listOf(
             SettingsCategory("general",tr("General","عمومی"),"settings",listOf(
                 SettingRow.Choice(s("language"),listOf("en" to "English","fa" to "فارسی"),{prefs.getString("language","en")?:"en"}){v->roomSafe{restart{putString("language",v)}}},
-                SettingRow.Choice(s("ui_size"),listOf("0.8" to tr("Small","کوچک"),"1.0" to tr("Medium","متوسط"),"1.4" to tr("Large","بزرگ")),
-                    {prefs.getFloat("uiScale",1f).let{if(it<.9f)"0.8" else if(it>1.2f)"1.4" else "1.0"}}){v->roomSafe{restart{putFloat("uiScale",v.toFloat())}}},
+                // Item 29: the panel's size, not "small/large": bigger panels are read from farther away, so controls grow with them.
+                SettingRow.Choice(tr("Panel size","اندازهٔ نمایشگر"),panelSizes.map{it.first to it.second},
+                    {prefs.getFloat("uiScale",1f).let{v->panelSizes.minByOrNull{kotlin.math.abs(it.third-v)}!!.first}}){v->roomSafe{restart{putFloat("uiScale",panelSizes.first{it.first==v}.third)}}},
+                SettingRow.Toggle(tr("Reduce motion","کاهش حرکت"),tr("No sliding panels, shaking or confetti","بدون لغزش پنل‌ها، لرزش و کاغذ رنگی"),{prefs.getBoolean("reduceMotion",false)}){v->prefs.edit().putBoolean("reduceMotion",v).apply();Motion.load(this)},
                 SettingRow.Choice(tr("Toolbar height on the side","ارتفاع نوار ابزار کنار صفحه"),listOf("top" to tr("Higher","بالاتر"),"middle" to tr("Middle","وسط"),"bottom" to tr("Lower","پایین‌تر")),
                     {toolDock.position}){toolDock.position=it},
                 page(s("fonts"),{Fonts.persian.first{it.id==Fonts.persianId}.let{tr(it.en,it.fa)}+" · "+Fonts.english.first{it.id==Fonts.englishId}.let{tr(it.en,it.fa)}}){fontSettings()},

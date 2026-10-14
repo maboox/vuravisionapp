@@ -199,7 +199,7 @@ class ToolDock(
         if(!isLaidOut)return
         // A short slide from the old edge makes the move easy to follow on a large panel.
         translationX=(if(end==(layoutDirection==LAYOUT_DIRECTION_RTL))-1 else 1)*context.dp(48).toFloat();alpha=.4f
-        animate().translationX(0f).alpha(1f).setDuration(260).start()
+        animate().translationX(0f).alpha(1f).setDuration(Motion.ms(260)).start()
     }
     // The strip and Add panel are placed from the dock's width; re-place them whenever it changes.
     private fun bottomMargin()=if(position=="bottom"&&host.height>0)(host.height-bottomObstacle()+context.dp(12)).coerceAtLeast(context.dp(12)) else context.dp(12)
@@ -336,7 +336,7 @@ class AddPanel(private val context:Context,private val host:FrameLayout,freeWidt
         val h=scroll.measuredHeight.coerceAtMost(maxHeight);val w=scroll.measuredWidth
         val top=((maxHeight-h)/2+context.dp(12)).coerceAtLeast(context.dp(12))
         scrim.addView(scroll,FrameLayout.LayoutParams(w,h,Gravity.TOP or Gravity.LEFT).apply{leftMargin=left(w);topMargin=top})
-        scroll.alpha=0f;scroll.translationY=context.dp(12).toFloat();scroll.animate().alpha(1f).translationY(0f).setDuration(180).start()
+        scroll.alpha=0f;scroll.translationY=context.dp(12).toFloat();scroll.animate().alpha(1f).translationY(0f).setDuration(Motion.ms(180)).start()
     }
     private fun title(group:String)=when(group){
         "board"->context.tr("On the board","روی تخته");"geometry"->context.tr("Geometry","هندسه")
