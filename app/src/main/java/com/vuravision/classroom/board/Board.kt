@@ -67,7 +67,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
     var selectionMode by state::selectionMode
     var touchMode by state::touchMode
     var activePane=0
-        private set
+        internal set
     internal val pointerPanes=mutableMapOf<Int,Int>()
     fun split(count:Int){
         if(hasActiveInteraction)return
@@ -123,7 +123,7 @@ class Board(context: Context, val store: Store, val renderer: Renderer) : View(c
         if(store.page.visiblePaneCount>1)store.page.panes[index.coerceIn(store.page.visiblePaneIndices)].penWidth else inkWidth
     val isDrawing get()=live.isNotEmpty() || geometry.active
     var isCommitting=false
-        private set
+        internal set
     private var backing:Bitmap?=null
     private val bitmapPaint=Paint(Paint.FILTER_BITMAP_FLAG)
     private var backingCanvas:Canvas?=null
