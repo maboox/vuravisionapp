@@ -84,7 +84,14 @@ object PeriodicTable {
     /** Family colors: soft enough for black text, distinct enough to see the blocks from the back of the class. */
     private val colors = mapOf("Nonmetal" to 0xffbfe8d8.toInt(), "Noble gas" to 0xffcfdcff.toInt(), "Alkali metal" to 0xffffc9a8.toInt(), "Alkaline earth metal" to 0xffffe1a3.toInt(), "Metalloid" to 0xffd5ecb5.toInt(), "Halogen" to 0xffb8e3e8.toInt(), "Transition metal" to 0xffe0d4f7.toInt(), "Post-transition metal" to 0xffd3dde8.toInt(), "Lanthanide" to 0xfff6cfe6.toInt(), "Actinide" to 0xffffc8cc.toInt())
     fun color(e: Element) = colors[e.value("GroupBlock")] ?: INK_PAPER
-    private fun darker(color: Int) = Color.rgb((Color.red(color) * .55f).toInt(), (Color.green(color) * .55f).toInt(), (Color.blue(color) * .55f).toInt())
+    /** The family color, deep and saturated: for card headers and cell numbers (plain darkening looked grey). */
+    private fun darker(color: Int): Int {
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        hsv[1] = (hsv[1] * 2.6f).coerceIn(.45f, .85f)
+        hsv[2] = .58f
+        return Color.HSVToColor(hsv)
+    }
     fun family(c: Context, key: String) = when (key) {
         "Nonmetal" -> c.tr(key, "نافلز")
         "Noble gas" -> c.tr(key, "گاز نجیب")
@@ -175,7 +182,7 @@ object PeriodicTable {
         canvas.drawText(e.number.toString(), 16f, 30f, p)
         p.typeface = Fonts.face(Fonts.en(o), true)
         p.textSize = 64f
-        canvas.drawText(e.symbol, 16f, 98f, p)
+        canvas.drawText(e.symbol, 16f, 92f, p)
         val symbolEnd = 16f + p.measureText(e.symbol) + 18f
         p.typeface = Fonts.face(if (persian) Fonts.fa(o) else Fonts.en(o), true)
         p.textSize = 24f
@@ -186,7 +193,7 @@ object PeriodicTable {
         p.color = 0xddffffff.toInt()
         canvas.drawText(e.value("AtomicMass") + " u", symbolEnd, 94f, p)
         p.textSize = 14f
-        canvas.drawText(family(c, e.value("GroupBlock")), 16f, h - 10f, p)
+        canvas.drawText(family(c, e.value("GroupBlock")), 16f, h - 6f, p)
     }
     fun hit(c: Context, o: Item, x: Float, y: Float): Element? {
         val (lx, ly) = o.local(x, y)
