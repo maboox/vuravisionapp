@@ -12,6 +12,21 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.labs.LabCatalog
+import com.vuravision.classroom.labs.Labs
+import com.vuravision.classroom.board.Layer
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfTouch
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.tools.UserGuide
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])

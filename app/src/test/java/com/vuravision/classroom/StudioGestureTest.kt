@@ -12,6 +12,20 @@ import org.robolectric.*
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.util.concurrent.TimeUnit
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.EditorState
+import com.vuravision.classroom.board.GeometryInteraction
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.pdf.PdfPane
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.erase
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

@@ -19,6 +19,10 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowDialog
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ui.button
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")

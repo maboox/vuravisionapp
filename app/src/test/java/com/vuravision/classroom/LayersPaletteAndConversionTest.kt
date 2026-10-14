@@ -10,6 +10,18 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Layer
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Pane
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.ai.Recognition
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.dp
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.erase
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")

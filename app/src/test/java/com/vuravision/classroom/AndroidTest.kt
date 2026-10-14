@@ -10,6 +10,20 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.games.Games
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.labs.LabView
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.ui.ORANGE
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.ui.TEAL
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.newId
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], qualifiers = "en-land-xhdpi")

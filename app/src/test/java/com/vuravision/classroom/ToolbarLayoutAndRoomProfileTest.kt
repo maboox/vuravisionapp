@@ -10,6 +10,15 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.room.DeviceProfiles
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ui.SettingsScreen
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.ui.TEAL
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.s
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

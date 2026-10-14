@@ -12,6 +12,16 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import java.io.File
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.TextLayout
+import com.vuravision.classroom.ui.field
+import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.board.newId
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

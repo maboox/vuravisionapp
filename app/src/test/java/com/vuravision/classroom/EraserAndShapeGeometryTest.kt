@@ -11,6 +11,25 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Erasing
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.ai.MathTools
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.Shapes
+import com.vuravision.classroom.ai.SmartMath
+import com.vuravision.classroom.board.SmartSelection
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.TextLayout
+import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.board.newId
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.center
+import com.vuravision.classroom.board.erase
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

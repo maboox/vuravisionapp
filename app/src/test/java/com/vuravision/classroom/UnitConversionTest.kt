@@ -2,6 +2,8 @@ package com.vuravision.classroom
 
 import org.junit.Test
 import org.junit.Assert.*
+import com.vuravision.classroom.ai.UnitConversion
+import com.vuravision.classroom.ui.s
 
 class UnitConversionTest {
     @Test fun lengthMassAndPersianDigits(){

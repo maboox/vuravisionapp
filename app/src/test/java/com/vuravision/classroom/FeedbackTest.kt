@@ -7,6 +7,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import com.vuravision.classroom.games.GameFx
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.games.Sounds
+import com.vuravision.classroom.games.Spring
+import com.vuravision.classroom.ui.s
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])

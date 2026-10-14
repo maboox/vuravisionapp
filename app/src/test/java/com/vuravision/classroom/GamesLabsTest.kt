@@ -11,6 +11,11 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.Config
 import kotlin.random.Random
+import com.vuravision.classroom.games.ArcadeRound
+import com.vuravision.classroom.games.ArcadeView
+import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.labs.LabView
+import com.vuravision.classroom.games.QuizQuestion
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])

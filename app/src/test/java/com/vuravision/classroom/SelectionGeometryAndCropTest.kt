@@ -12,6 +12,29 @@ import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import kotlin.math.*
+import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.ui.ImageCropView
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.labs.Labs
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.games.NativeGames
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ui.SettingsScreen
+import com.vuravision.classroom.tools.ShortcutCatalog
+import com.vuravision.classroom.board.SmartSelection
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.ui.button
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.board.measureScale
+import com.vuravision.classroom.board.newId
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.world
+import com.vuravision.classroom.board.fit
+import com.vuravision.classroom.ui.row
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

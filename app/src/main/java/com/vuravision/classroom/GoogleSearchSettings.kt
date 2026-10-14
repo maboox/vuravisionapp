@@ -4,6 +4,14 @@ import android.app.Activity
 import android.content.Context
 import android.widget.*
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.ui.OptionAdapter
+import com.vuravision.classroom.ui.column
+import com.vuravision.classroom.ui.infoTitle
+import com.vuravision.classroom.ui.navigationHeading
+import com.vuravision.classroom.ui.pad
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
 
 data class GoogleSearchSettings(val destination:String="ask",val adjacent:Boolean=false,val review:Boolean=true) {
     companion object {

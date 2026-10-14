@@ -14,6 +14,21 @@ import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.*
+import com.vuravision.classroom.ui.IconCatalog
+import com.vuravision.classroom.ui.PRIMARY_CONTAINER
+import com.vuravision.classroom.voice.RouterEndpoint
+import com.vuravision.classroom.voice.RouterVoiceAssistant
+import com.vuravision.classroom.voice.RouterVoiceHttp
+import com.vuravision.classroom.ui.SURFACE
+import com.vuravision.classroom.voice.VoiceAssistant
+import com.vuravision.classroom.voice.VoiceAudio
+import com.vuravision.classroom.voice.VoiceConversation
+import com.vuravision.classroom.voice.VoiceKnowledge
+import com.vuravision.classroom.voice.VoiceScreen
+import com.vuravision.classroom.voice.VoiceSettings
+import com.vuravision.classroom.voice.VoiceSettingsUi
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
 
 // The voice assistant session (split from MainActivity, item 11).
 

@@ -5,6 +5,11 @@ import java.io.File
 import java.util.concurrent.Executor
 import org.junit.Assert.*
 import org.junit.Test
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Store
 
 class AutosaveAndValidationTest {
     private class ManualExecutor:Executor {

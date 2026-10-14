@@ -1,6 +1,7 @@
 package com.vuravision.classroom
 
 import java.net.URLEncoder
+import com.vuravision.classroom.board.fit
 
 object GoogleSearchQuery {
     const val MAX_LENGTH=4096

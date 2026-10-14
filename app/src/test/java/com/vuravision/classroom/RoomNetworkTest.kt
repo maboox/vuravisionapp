@@ -6,6 +6,23 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.Config
+import com.vuravision.classroom.room.DeviceProfile
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.room.RoomAddress
+import com.vuravision.classroom.room.RoomCrypto
+import com.vuravision.classroom.room.RoomDocuments
+import com.vuravision.classroom.room.RoomEngine
+import com.vuravision.classroom.room.RoomEnvelope
+import com.vuravision.classroom.room.RoomFrame
+import com.vuravision.classroom.room.RoomHttp
+import com.vuravision.classroom.room.RoomJoin
+import com.vuravision.classroom.room.RoomPoll
+import com.vuravision.classroom.room.RoomRoles
+import com.vuravision.classroom.room.RoomServer
+import com.vuravision.classroom.room.RoomSocket
+import com.vuravision.classroom.room.RoomWelcome
+import com.vuravision.classroom.board.newId
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])

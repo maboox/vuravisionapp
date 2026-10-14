@@ -11,6 +11,41 @@ import org.robolectric.*
 import org.robolectric.annotation.*
 import java.io.File
 import java.util.concurrent.TimeUnit
+import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.ui.CHALKBOARD
+import com.vuravision.classroom.board.FramePresenter
+import com.vuravision.classroom.board.Frames
+import com.vuravision.classroom.games.Games
+import com.vuravision.classroom.ui.INK_NAVY
+import com.vuravision.classroom.ui.InkStrip
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.labs.LabView
+import com.vuravision.classroom.labs.Labs
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Maps
+import com.vuravision.classroom.ui.NAVY
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.tools.Replay
+import com.vuravision.classroom.ui.SURFACE
+import com.vuravision.classroom.ui.SettingsScreen
+import com.vuravision.classroom.tools.Spotlight
+import com.vuravision.classroom.board.Tables
+import com.vuravision.classroom.ui.ToolDock
+import com.vuravision.classroom.ui.UiTheme
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.column
+import com.vuravision.classroom.board.contentBounds
+import com.vuravision.classroom.board.duplicateItems
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.ui.uiScale
+import com.vuravision.classroom.board.world
+import com.vuravision.classroom.ui.button
+import com.vuravision.classroom.board.center
 
 /**
  * Scenario screenshots plus layout rules for the canvas chrome, run for each screen class.

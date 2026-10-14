@@ -9,6 +9,11 @@ import com.google.gson.Gson
 import java.io.*
 import java.util.concurrent.Executors
 import java.util.zip.*
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.allAssetItems
+import com.vuravision.classroom.board.newId
 
 fun boundedCopy(input: InputStream, out: OutputStream, max: Long): Long {
     val buffer = ByteArray(32768)

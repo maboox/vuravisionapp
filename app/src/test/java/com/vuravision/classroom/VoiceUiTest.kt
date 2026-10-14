@@ -10,6 +10,12 @@ import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import java.io.File
+import com.vuravision.classroom.voice.VoiceKeyStore
+import com.vuravision.classroom.voice.VoiceKeys
+import com.vuravision.classroom.voice.VoiceSettings
+import com.vuravision.classroom.voice.VoiceSettingsUi
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.s
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

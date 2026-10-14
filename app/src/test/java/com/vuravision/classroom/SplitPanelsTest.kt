@@ -14,6 +14,34 @@ import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import java.io.ByteArrayOutputStream
 import kotlin.math.*
+import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.games.ArcadeView
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.tools.CoordinateTools
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.games.GamePlayers
+import com.vuravision.classroom.board.GeometryInteraction
+import com.vuravision.classroom.board.GeometryTools
+import com.vuravision.classroom.board.GuideLabels
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Pane
+import com.vuravision.classroom.tools.PeriodicTable
+import com.vuravision.classroom.board.PlotPoint
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.tools.ShortcutCatalog
+import com.vuravision.classroom.ui.SlideToClearView
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.board.center
+import com.vuravision.classroom.ui.dp
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.ui.row
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.ui.uiScale
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

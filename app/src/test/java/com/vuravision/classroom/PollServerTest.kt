@@ -10,6 +10,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.HttpURLConnection
 import java.net.URL
+import com.vuravision.classroom.room.PollServer
+import com.vuravision.classroom.board.reveal
+import com.vuravision.classroom.ui.s
 
 /** Phones answering the class quiz: one vote per phone, changeable until the reveal, and nothing outside the token. */
 // Robolectric for the real org.json (plain JVM tests get Android's stubs).

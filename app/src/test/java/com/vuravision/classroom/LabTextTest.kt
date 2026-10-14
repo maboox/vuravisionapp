@@ -6,6 +6,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import com.vuravision.classroom.labs.LabText
+import com.vuravision.classroom.labs.Labs
+import com.vuravision.classroom.ui.label
 
 /** Lab captions and slider names were English even in the Persian interface. */
 @RunWith(RobolectricTestRunner::class)

@@ -14,6 +14,18 @@ import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.*
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.PdfExport
+import com.vuravision.classroom.pdf.PdfPane
+import com.vuravision.classroom.pdf.PdfRegionSelector
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfSplitLayout
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ui.dp
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
 
 // The PDF workspace beside the board (split from MainActivity, item 11).
 

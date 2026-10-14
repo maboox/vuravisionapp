@@ -9,6 +9,18 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Layer
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.PdfPane
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfSplitLayout
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.ai.SmartMath
+import com.vuravision.classroom.board.Store
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])

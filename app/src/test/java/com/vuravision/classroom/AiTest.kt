@@ -13,6 +13,24 @@ import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import java.io.File
 import java.util.concurrent.TimeUnit
+import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.ai.AiException
+import com.vuravision.classroom.ai.AiTasks
+import com.vuravision.classroom.ai.AiTransport
+import com.vuravision.classroom.board.Charts
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.SavedQuestion
+import com.vuravision.classroom.board.SavedQuiz
+import com.vuravision.classroom.ai.SmartAi
+import com.vuravision.classroom.tools.StepReveal
+import com.vuravision.classroom.ui.button
+import com.vuravision.classroom.board.contentBounds
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.ui.column
+import com.vuravision.classroom.board.reveal
+import com.vuravision.classroom.ui.s
 
 /** The AI layer against a fake service: request formats, caching, limits, parsing, and every board action end to end. */
 @RunWith(RobolectricTestRunner::class)

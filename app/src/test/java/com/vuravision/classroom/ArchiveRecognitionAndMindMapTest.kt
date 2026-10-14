@@ -13,6 +13,16 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import kotlin.math.*
+import com.vuravision.classroom.ui.ActionIcon
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.ShapeRecognition
+import com.vuravision.classroom.board.SmartSelection
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.newId
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")

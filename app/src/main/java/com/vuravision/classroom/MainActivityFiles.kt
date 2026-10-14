@@ -14,6 +14,20 @@ import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.*
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.ui.MUTED
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.room.Sharing
+import com.vuravision.classroom.ui.button
+import com.vuravision.classroom.ui.column
+import com.vuravision.classroom.ui.dp
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.board.newId
+import com.vuravision.classroom.ui.pad
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.board.Board
 
 // Lesson files: open, save, recent, export and sharing with the class (split from MainActivity, item 11).
 

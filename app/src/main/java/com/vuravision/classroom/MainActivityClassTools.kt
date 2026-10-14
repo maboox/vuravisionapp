@@ -14,6 +14,19 @@ import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.*
+import com.vuravision.classroom.board.FramePresenter
+import com.vuravision.classroom.board.Frames
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Maps
+import com.vuravision.classroom.tools.Replay
+import com.vuravision.classroom.tools.Spotlight
+import com.vuravision.classroom.ui.Subjects
+import com.vuravision.classroom.board.Tables
+import com.vuravision.classroom.board.center
+import com.vuravision.classroom.board.contentBounds
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.showArea
+import com.vuravision.classroom.ui.tr
 
 // Class tools and board objects: frames, map, table, replay, spotlight, page patterns (split from MainActivity, item 11).
 

@@ -10,6 +10,10 @@ import java.io.File
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.newId
 
 @RunWith(AndroidJUnit4::class)
 class DeviceTest {

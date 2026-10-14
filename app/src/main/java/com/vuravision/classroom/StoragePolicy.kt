@@ -4,6 +4,7 @@ import java.io.File
 import java.io.OutputStream
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import com.vuravision.classroom.board.Lesson
 
 /** Serialize file operations across Activity recreation as well as within one screen. */
 object ProjectIO { val executor=Executors.newSingleThreadExecutor() }

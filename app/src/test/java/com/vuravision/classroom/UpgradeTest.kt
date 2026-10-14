@@ -13,6 +13,27 @@ import org.junit.runner.RunWith
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
+import com.vuravision.classroom.games.ArcadeView
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.games.Games
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.labs.LabView
+import com.vuravision.classroom.labs.Labs
+import com.vuravision.classroom.ui.NAVY
+import com.vuravision.classroom.games.NativeGames
+import com.vuravision.classroom.games.QuizCatalog
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.labs.Science
+import com.vuravision.classroom.board.Shapes
+import com.vuravision.classroom.room.Sharing
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.ui.TEAL
+import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.button
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

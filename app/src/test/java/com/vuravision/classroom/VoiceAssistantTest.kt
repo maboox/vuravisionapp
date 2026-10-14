@@ -16,6 +16,20 @@ import org.robolectric.*
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 import java.util.concurrent.TimeUnit
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.voice.OpenaiVoiceCodec
+import com.vuravision.classroom.voice.RouterVoiceProtocol
+import com.vuravision.classroom.voice.VoiceAssistant
+import com.vuravision.classroom.voice.VoiceAudioPort
+import com.vuravision.classroom.voice.VoiceCommands
+import com.vuravision.classroom.voice.VoiceKnowledge
+import com.vuravision.classroom.voice.VoiceProtocol
+import com.vuravision.classroom.voice.VoiceSettings
+import com.vuravision.classroom.voice.VoiceSettingsUi
+import com.vuravision.classroom.voice.VoiceWire
+import com.vuravision.classroom.ui.button
+import com.vuravision.classroom.ui.s
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

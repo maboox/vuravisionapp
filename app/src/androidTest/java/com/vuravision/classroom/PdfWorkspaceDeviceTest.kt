@@ -14,6 +14,13 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import com.vuravision.classroom.board.EraseCut
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.pdf.PdfExport
+import com.vuravision.classroom.pdf.PdfSheet
+import com.vuravision.classroom.pdf.PdfWorkspaceState
+import com.vuravision.classroom.board.newId
 
 @RunWith(AndroidJUnit4::class)
 class PdfWorkspaceDeviceTest {

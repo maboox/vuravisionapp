@@ -9,6 +9,25 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.vuravision.classroom.tools.CoordinateTools
+import com.vuravision.classroom.board.EraseCut
+import com.vuravision.classroom.board.GeometryTools
+import com.vuravision.classroom.ui.IconCatalog
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Measurements
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Pane
+import com.vuravision.classroom.board.PenStyles
+import com.vuravision.classroom.tools.PeriodicTable
+import com.vuravision.classroom.board.PlotPoint
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.ShapeFill
+import com.vuravision.classroom.tools.ShortcutCatalog
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.center
+import com.vuravision.classroom.ui.row
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

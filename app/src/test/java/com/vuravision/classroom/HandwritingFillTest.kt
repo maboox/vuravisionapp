@@ -13,6 +13,28 @@ import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import java.util.concurrent.TimeUnit
 import java.io.File
+import com.vuravision.classroom.ui.AboutGesture
+import com.vuravision.classroom.board.Board
+import com.vuravision.classroom.board.Erasing
+import com.vuravision.classroom.ui.Fonts
+import com.vuravision.classroom.board.GeometryTools
+import com.vuravision.classroom.board.HandFill
+import com.vuravision.classroom.ui.HistoryScrubView
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.board.Measurements
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.tools.PeriodicTable
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Renderer
+import com.vuravision.classroom.board.ShapeFill
+import com.vuravision.classroom.tools.ShortcutCatalog
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.TextLayout
+import com.vuravision.classroom.ui.card
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.board.erase
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")

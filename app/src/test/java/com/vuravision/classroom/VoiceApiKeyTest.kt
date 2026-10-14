@@ -2,6 +2,7 @@ package com.vuravision.classroom
 
 import org.junit.Test
 import org.junit.Assert.*
+import com.vuravision.classroom.voice.VoiceApiKey
 
 class VoiceApiKeyTest {
     private val fake="AIzaSyFakeKeyForTestsOnly0123456789012"

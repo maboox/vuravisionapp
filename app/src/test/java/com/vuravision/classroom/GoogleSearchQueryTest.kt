@@ -4,6 +4,7 @@ import org.junit.Test
 import org.junit.Assert.*
 import java.net.URI
 import java.net.URLDecoder
+import com.vuravision.classroom.board.fit
 
 class GoogleSearchQueryTest {
     @Test fun persianQuestionAndMixedMathRoundTripWithoutExtraParameters(){

@@ -3,6 +3,17 @@ package com.vuravision.classroom
 import kotlin.random.Random
 import org.junit.Assert.*
 import org.junit.Test
+import com.vuravision.classroom.games.GameEngine
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Lesson
+import com.vuravision.classroom.ai.MathTools
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.labs.Physics
+import com.vuravision.classroom.board.Point
+import com.vuravision.classroom.board.Store
+import com.vuravision.classroom.board.TouchProfile
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.board.erase
 
 class CoreTest {
     @Test

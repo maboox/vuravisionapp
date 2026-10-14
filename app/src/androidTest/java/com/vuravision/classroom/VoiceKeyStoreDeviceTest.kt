@@ -7,6 +7,8 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.security.KeyStore
+import com.vuravision.classroom.voice.VoiceKeyStore
+import com.vuravision.classroom.board.newId
 
 @RunWith(AndroidJUnit4::class)
 class VoiceKeyStoreDeviceTest {

@@ -10,6 +10,21 @@ import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.ShadowDialog
 import java.io.File
+import com.vuravision.classroom.board.Item
+import com.vuravision.classroom.board.Page
+import com.vuravision.classroom.board.Pane
+import com.vuravision.classroom.board.PenStyles
+import com.vuravision.classroom.tools.PeriodicTable
+import com.vuravision.classroom.ui.SettingsScreen
+import com.vuravision.classroom.voice.VoiceSettings
+import com.vuravision.classroom.ui.WorkspaceIcon
+import com.vuravision.classroom.ui.colorPalette
+import com.vuravision.classroom.ui.dp
+import com.vuravision.classroom.ui.label
+import com.vuravision.classroom.board.reset
+import com.vuravision.classroom.ui.s
+import com.vuravision.classroom.ui.tr
+import com.vuravision.classroom.ui.uiScale
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],qualifiers="en-land-mdpi")
